@@ -14,7 +14,7 @@ dep.dir := dep
 obj.dir := obj
 
 # support generation of dep files
-CXXFLAGS += -MT $@ -MMD -MP -MF $(dep.dir)/$(^F).d
+CXXFLAGS += -MT $@ -MMD -MP -MF $(dep.dir)/$(<F).d
 
 xsrc := $(wildcard $(src.dir)/xtest_*.cpp)
 src := $(filter-out $(xsrc),$(wildcard $(src.dir)/*.cpp))

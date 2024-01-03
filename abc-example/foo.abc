@@ -9,5 +9,6 @@ fn foo(a: i16, b: i16, :u8): i16
 
 fn bar()
 {
+    return;
 }
 

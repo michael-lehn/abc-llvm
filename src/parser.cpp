@@ -46,6 +46,7 @@ static bool parseFn(void);
 void
 parser(void)
 {
+    getToken();
     while (token.kind != TokenKind::EOI) {
 	if (!parseFn()) {
 	    expectedError("function declaration or EOF");
@@ -248,12 +249,10 @@ parseReturnStmt(void)
 	return false;
     }
     getToken();
-    if (!parseExpr()) {
-	expectedError("expression");
-	return false;
-    }
+    auto expr = parseExpr();
     expected(TokenKind::SEMICOLON);
     getToken();
+    gen::ret(load(expr.get()));
     return true;
 }
 

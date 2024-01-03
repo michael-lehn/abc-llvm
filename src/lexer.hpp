@@ -78,6 +78,7 @@ extern struct Token {
     UStr val;
 } token;
 
+bool setLexerInputfile(const char *path);
 const char *tokenCStr(TokenKind kind);
 TokenKind getToken(void);
 

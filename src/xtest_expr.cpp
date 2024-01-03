@@ -39,13 +39,17 @@ main(void)
 	"a",
 	"b",
     };
-    auto fn = Type::getFunction(nullptr, arg);
+    auto fn = Type::getFunction(ret, arg);
     gen::fnDef("foo", fn, param);
 
     auto r = load(binary.get());
     gen::ret(r);
 
 
-    gen::dump("expr.bc");
+    gen::dump_bc("expr");
+    gen::dump_asm("expr0", 0);
+    gen::dump_asm("expr1", 1);
+    gen::dump_asm("expr2", 2);
+    gen::dump_asm("expr3", 3);
     
 }

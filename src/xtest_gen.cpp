@@ -25,5 +25,5 @@ main(void)
 
     gen::ret(r);
 
-    gen::dump();
+    gen::dump_bc();
 }

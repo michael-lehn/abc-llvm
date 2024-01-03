@@ -1,10 +1,19 @@
 #include <cassert>
+#include <cstdio>
 #include <string>
 #include <unordered_map>
 
 #include "lexer.hpp"
 
 Token token;
+
+static FILE* fp = stdin;
+
+bool
+setLexerInputfile(const char *path)
+{
+    return fp = std::fopen(path, "r");
+}
 
 const char *
 tokenCStr(TokenKind kind)
@@ -128,7 +137,7 @@ static char ch;
 static char
 nextCh(void)
 {
-    ch = getchar();
+    ch = std::fgetc(fp);
     ++curr.col;
     if (ch == '\n') {
 	++curr.line;

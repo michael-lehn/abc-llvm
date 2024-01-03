@@ -4,16 +4,16 @@
 
 struct Literal
 {
-    std::string val;
+    const char *val;
 
-    Literal(std::string &&val) : val{val} {}
+    Literal(const char *val) : val{val} {}
 };
 
 struct Identifier
 {
-    std::string val;
+    const char *val;
 
-    Identifier(std::string &&val) : val{val} {}
+    Identifier(const char *val) : val{val} {}
 };
 
 struct Binary
@@ -42,15 +42,15 @@ ExprDeleter::operator()(Expr *expr) const
 };
 
 ExprUniquePtr
-makeLiteralExpr(std::string &&val)
+makeLiteralExpr(const char *val)
 {
-    return ExprUniquePtr(new Expr{Literal{std::move(val)}});
+    return ExprUniquePtr(new Expr{Literal{val}});
 }
 
 ExprUniquePtr
-makeIdentifierExpr(std::string &&val)
+makeIdentifierExpr(const char *val)
 {
-    return ExprUniquePtr(new Expr{Identifier{std::move(val)}});
+    return ExprUniquePtr(new Expr{Identifier{val}});
 }
 
 ExprUniquePtr
@@ -111,10 +111,10 @@ print(const Expr *expr, int indent)
 
     if (std::holds_alternative<Literal>(expr->variant)) {
 	const auto &lit = std::get<Literal>(expr->variant);
-	std::printf("Literal: %s\n", lit.val.c_str());
+	std::printf("Literal: %s\n", lit.val);
     } else if (std::holds_alternative<Identifier>(expr->variant)) {
 	const auto &ident = std::get<Identifier>(expr->variant);
-	std::printf("Identifier: %s\n", ident.val.c_str());
+	std::printf("Identifier: %s\n", ident.val);
     } else if (std::holds_alternative<Binary>(expr->variant)) {
 	const auto &binary = std::get<Binary>(expr->variant);
 	std::printf("[%s]\n", exprKindCStr(binary.kind));
@@ -140,12 +140,14 @@ getGenOp(ExprKind kind)
 gen::Reg *
 load(const Expr *expr)
 {
-    if (std::holds_alternative<Literal>(expr->variant)) {
+    if (!expr) {
+	return nullptr;
+    } else if (std::holds_alternative<Literal>(expr->variant)) {
 	const auto &lit = std::get<Literal>(expr->variant);
-	return gen::loadConst(lit.val.c_str(), Type::getUnsignedInteger(64));
+	return gen::loadConst(lit.val, Type::getUnsignedInteger(64));
     } else if (std::holds_alternative<Identifier>(expr->variant)) {
 	const auto &ident = std::get<Identifier>(expr->variant);
-	return gen::fetch(ident.val.c_str(), Type::getUnsignedInteger(64));
+	return gen::fetch(ident.val, Type::getUnsignedInteger(64));
     } else if (std::holds_alternative<Binary>(expr->variant)) {
 	const auto &binary = std::get<Binary>(expr->variant);
 	auto l = load(binary.left.get());
@@ -153,5 +155,6 @@ load(const Expr *expr)
 	auto op = getGenOp(binary.kind);
 	return gen::op2r(op, l, r);
     }
-    return nullptr;
+    assert(0);
+    return nullptr; // never reached
 }

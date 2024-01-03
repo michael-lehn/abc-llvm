@@ -41,7 +41,8 @@ Reg *op2r(Op op, Reg *l, Reg *r);
 // if reg is nullpoint return void, otherwise return value in *reg
 void ret(Reg *reg = nullptr);
 
-void dump(const char *filename = "out");
+void dump_bc(const char *filename = "out");
+void dump_asm(const char *filename = "out", int codeGenOptLevel = 0);
 
 } // namespace gen
 

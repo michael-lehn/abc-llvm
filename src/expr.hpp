@@ -43,8 +43,8 @@ struct ExprDeleter
 
 using ExprUniquePtr = std::unique_ptr<Expr, ExprDeleter>;
 
-ExprUniquePtr makeLiteralExpr(std::string &&val);
-ExprUniquePtr makeIdentifierExpr(std::string &&val);
+ExprUniquePtr makeLiteralExpr(const char *val);
+ExprUniquePtr makeIdentifierExpr(const char *val);
 ExprUniquePtr makeUnaryMinusExpr(ExprUniquePtr &&expr);
 ExprUniquePtr makeBinaryExpr(ExprKind kind, ExprUniquePtr &&left,
 			     ExprUniquePtr &&right);

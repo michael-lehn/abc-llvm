@@ -5,30 +5,34 @@
 #include "parseexpr.hpp"
 #include "symtab.hpp"
 
-static bool parseAssignment(void);
-static bool parseBinary(int prec);
-static bool parseUnary(void);
-static bool parsePrimary(void);
+static ExprUniquePtr parseAssignment(void);
+static ExprUniquePtr parseBinary(int prec);
+static ExprUniquePtr parseUnary(void);
+static ExprUniquePtr parsePrimary(void);
 
-bool
+ExprUniquePtr
 parseExpr(void)
 {
     return parseAssignment();
 }
 
-static bool
+static ExprUniquePtr
 parseAssignment(void)
 {
-    if (!parseBinary(1)) {
-	return false;
+    auto expr = parseBinary(1);
+    if (!expr) {
+	return nullptr;
     }
     while (token.kind == TokenKind::EQUAL) {
 	getToken();
-	if (!parseAssignment()) {
+	auto right = parseAssignment();
+	if (!right) {
 	    expectedError("assignment expression");
 	}
+	expr = makeBinaryExpr(ExprKind::ASSIGN, std::move(expr),
+			      std::move(right));
     }
-    return true;
+    return expr;
 }
 
 static std::unordered_map<TokenKind, int> binaryOpPrec = {
@@ -39,13 +43,6 @@ static std::unordered_map<TokenKind, int> binaryOpPrec = {
     { TokenKind::PLUS, 11},
     { TokenKind::MINUS, 11},
 
-    { TokenKind::LESS, 10},
-    { TokenKind::LESS_EQUAL, 10},
-    { TokenKind::GREATER, 10},
-    { TokenKind::GREATER_EQUAL, 10},
-    
-    { TokenKind::EQUAL2, 9},
-    { TokenKind::NOT_EQUAL, 9},
 };
 
 static int
@@ -54,38 +51,64 @@ tokenKindPrec(TokenKind kind)
     return binaryOpPrec.contains(kind) ? binaryOpPrec[kind] : 0;
 }
 
-static bool
+static ExprKind
+getBinaryExprKind(TokenKind kind)
+{
+    switch (kind) {
+	case TokenKind::ASTERISK:
+	    return ExprKind::MUL;
+	case TokenKind::SLASH:
+	    return ExprKind::DIV;
+	case TokenKind::PERCENT:
+	    return ExprKind::MOD;
+	case TokenKind::PLUS:
+	    return ExprKind::ADD;
+	case TokenKind::MINUS:
+	    return ExprKind::SUB;
+	default:
+	    assert(0);
+	    return ExprKind::ADD; // never reached
+    }
+}
+
+static ExprUniquePtr
 parseBinary(int prec)
 {
-    if (!parseUnary()) {
-	return false;
+    auto expr = parseUnary();
+    if (!expr) {
+	return nullptr;
     }
     for (int p = tokenKindPrec(token.kind); p >= prec; --p) {
         while (tokenKindPrec(token.kind) == p) {
+	    auto op = getBinaryExprKind(token.kind);
             getToken();
-            if (!parseBinary(p + 1)) {
+	    auto right = parseBinary(p + 1);
+            if (!expr) {
                 expectedError("non-empty expression");
             }
+	    expr = makeBinaryExpr(op, std::move(expr), std::move(right));
         }
     }
-    return true;
+    return expr;
 }
 
-static bool
+static ExprUniquePtr
 parseUnary(void)
 {
-    if (token.kind == TokenKind::PLUS || token.kind == TokenKind::MINUS
-     || token.kind == TokenKind::NOT)
-    {
+    if (token.kind == TokenKind::PLUS || token.kind == TokenKind::MINUS) {
         getToken();
-        if (!parseUnary()) {
+	auto expr = parseUnary();
+        if (!expr) {
             expectedError("non-empty expression");
         }
+	if (token.kind == TokenKind::MINUS) {
+	    expr = makeUnaryMinusExpr(std::move(expr));
+	}
     }
     return parsePrimary();
 } 
 
-static bool
+static ExprUniquePtr
 parsePrimary(void)
 {
     if (token.kind == TokenKind::IDENTIFIER) {
@@ -95,25 +118,32 @@ parsePrimary(void)
 	    msg += "'";
 	    semanticError(msg.c_str());
 	}
+	auto expr = makeIdentifierExpr(token.val.c_str());
         getToken();
-        return true;
+        return expr;
     } else if (token.kind == TokenKind::DECIMAL_LITERAL) {
+	auto expr = makeLiteralExpr(token.val.c_str());
         getToken();
-        return true;
+        return expr;
     } else if (token.kind == TokenKind::HEXADECIMAL_LITERAL) {
+	// TODO: hex!
+	auto expr = makeLiteralExpr(token.val.c_str());
         getToken();
-        return true;
+        return expr;
     } else if (token.kind == TokenKind::OCTAL_LITERAL) {
+	// TODO: oct!
+	auto expr = makeLiteralExpr(token.val.c_str());
         getToken();
-        return true;
+        return expr;
     } else if (token.kind == TokenKind::LPAREN) {
         getToken();
-        if (!parseAssignment()) {
+	auto expr = parseAssignment();
+        if (!expr) {
             expectedError("expression");
 	}
         expected(TokenKind::RPAREN);
         getToken();
-        return true;
+        return expr;
     }
-    return false;
+    return nullptr;
 } 
