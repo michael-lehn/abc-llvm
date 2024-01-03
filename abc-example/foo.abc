@@ -1,0 +1,13 @@
+fn bar();
+fn dummy(a:i8);
+
+fn foo(a: i16, b: i16, :u8): i16
+{
+    b = a * b;
+    return b;
+}
+
+fn bar()
+{
+}
+
