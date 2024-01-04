@@ -30,7 +30,7 @@ parseAssignment(void)
 	if (!right) {
 	    expectedError("assignment expression");
 	}
-	expr = makeBinaryExpr(ExprKind::ASSIGN, std::move(expr),
+	expr = makeBinaryExpr(BinaryExprKind::ASSIGN, std::move(expr),
 			      std::move(right));
     }
     return expr;
@@ -44,6 +44,11 @@ static std::unordered_map<TokenKind, int> binaryOpPrec = {
     { TokenKind::PLUS, 11},
     { TokenKind::MINUS, 11},
 
+    { TokenKind::GREATER, 10},
+    { TokenKind::GREATER_EQUAL, 10},
+    { TokenKind::LESS, 10},
+    { TokenKind::LESS_EQUAL, 10},
+
     { TokenKind::EQUAL2, 9},
     { TokenKind::NOT_EQUAL, 9},
 
@@ -55,27 +60,35 @@ tokenKindPrec(TokenKind kind)
     return binaryOpPrec.contains(kind) ? binaryOpPrec[kind] : 0;
 }
 
-static ExprKind
+static BinaryExprKind
 getBinaryExprKind(TokenKind kind)
 {
     switch (kind) {
 	case TokenKind::ASTERISK:
-	    return ExprKind::MUL;
+	    return BinaryExprKind::MUL;
 	case TokenKind::SLASH:
-	    return ExprKind::DIV;
+	    return BinaryExprKind::DIV;
 	case TokenKind::PERCENT:
-	    return ExprKind::MOD;
+	    return BinaryExprKind::MOD;
 	case TokenKind::PLUS:
-	    return ExprKind::ADD;
+	    return BinaryExprKind::ADD;
 	case TokenKind::MINUS:
-	    return ExprKind::SUB;
+	    return BinaryExprKind::SUB;
 	case TokenKind::EQUAL2:
-	    return ExprKind::EQUAL;
+	    return BinaryExprKind::EQUAL;
 	case TokenKind::NOT_EQUAL:
-	    return ExprKind::NOT_EQUAL;
+	    return BinaryExprKind::NOT_EQUAL;
+	case TokenKind::LESS:
+	    return BinaryExprKind::LESS;
+	case TokenKind::LESS_EQUAL:
+	    return BinaryExprKind::LESS_EQUAL;
+	case TokenKind::GREATER:
+	    return BinaryExprKind::GREATER;
+	case TokenKind::GREATER_EQUAL:
+	    return BinaryExprKind::GREATER_EQUAL;
 	default:
 	    assert(0);
-	    return ExprKind::ADD; // never reached
+	    return BinaryExprKind::ADD; // never reached
     }
 }
 

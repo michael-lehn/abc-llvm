@@ -243,6 +243,114 @@ parseType(void)
 static bool parseStmt(void);
 
 static bool
+parseCompoundStmt(bool openScope)
+{
+    if (token.kind != TokenKind::LBRACE) {
+	return false;
+    }
+    getToken();
+
+    if (openScope) {
+	symtab::openScope();
+    }
+
+    while (parseStmt()) {
+    }
+
+    expected(TokenKind::RBRACE);
+    getToken();
+    if (openScope) {
+	symtab::closeScope();
+    }
+    return true;
+}
+
+static bool
+parseIfStmt(void)
+{
+    if (token.kind != TokenKind::IF) {
+	return false;
+    }
+    getToken();
+
+    // parse expr
+    expected(TokenKind::LPAREN);
+    getToken();
+    auto expr = parseExpr();
+    if (!expr) {
+	expectedError("non-empty expression");
+    }
+    expected(TokenKind::RPAREN);
+    getToken();
+
+    auto thenLabel = gen::getLabel("then");
+    auto elseLabel = gen::getLabel("else");
+    auto endLabel = gen::getLabel("end");
+
+    condJmp(expr.get(), thenLabel, elseLabel);
+    
+    // parse 'then' block
+    gen::labelDef(thenLabel);
+    if (!parseCompoundStmt(true)) {
+	expectedError("compound statement block");
+    }
+
+    gen::jmp(endLabel);
+
+    // parse optional 'else' block
+    gen::labelDef(elseLabel);
+    if (token.kind == TokenKind::ELSE) {
+	getToken();
+	if (!parseCompoundStmt(true)) {
+	    expectedError("compound statement block");
+	}
+    }
+    gen::jmp(endLabel); // connect with 'end' (even if 'else' is empyt)
+
+    // end of 'then' and 'else' block
+    gen::labelDef(endLabel);
+    return true;
+}
+
+static bool
+parseWhileStmt(void)
+{
+    if (token.kind != TokenKind::WHILE) {
+	return false;
+    }
+    getToken();
+
+    // parse expr
+    expected(TokenKind::LPAREN);
+    getToken();
+    auto expr = parseExpr();
+    if (!expr) {
+	expectedError("non-empty expression");
+    }
+    expected(TokenKind::RPAREN);
+    getToken();
+
+    auto condLabel = gen::getLabel("cond");
+    auto loopLabel = gen::getLabel("loop");
+    auto endLabel = gen::getLabel("end");
+
+    gen::jmp(condLabel);
+    gen::labelDef(condLabel);
+    condJmp(expr.get(), loopLabel, endLabel);
+    
+    // parse loop block
+    gen::labelDef(loopLabel);
+    if (!parseCompoundStmt(true)) {
+	expectedError("compound statement block");
+    }
+    gen::jmp(condLabel);
+
+    // end of loop
+    gen::labelDef(endLabel);
+    return true;
+}
+
+static bool
 parseReturnStmt(void)
 {
     if (token.kind != TokenKind::RETURN) {
@@ -270,32 +378,11 @@ parseExprStmt(void)
 }
 
 static bool
-parseCompoundStmt(bool openScope)
-{
-    if (token.kind != TokenKind::LBRACE) {
-	return false;
-    }
-    getToken();
-
-    if (openScope) {
-	symtab::openScope();
-    }
-
-    while (parseStmt()) {
-    }
-
-    expected(TokenKind::RBRACE);
-    getToken();
-    if (openScope) {
-	symtab::closeScope();
-    }
-    return true;
-}
-
-static bool
 parseStmt(void)
 {
     return parseCompoundStmt(true)
+	|| parseIfStmt()
+	|| parseWhileStmt()
 	|| parseReturnStmt()
 	|| parseExprStmt();
 }

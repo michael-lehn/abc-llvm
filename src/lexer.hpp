@@ -33,6 +33,9 @@ enum class TokenKind {
     LOCAL,
     STATIC,
     FOR,
+    WHILE,
+    IF,
+    ELSE,
 
     // punctuators
     SEMICOLON,

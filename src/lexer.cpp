@@ -61,6 +61,8 @@ tokenCStr(TokenKind kind)
 	    return "LOCAL";
 	case TokenKind::STATIC:
 	    return "STATIC";
+	case TokenKind::WHILE:
+	    return "WHILE";
 	case TokenKind::FOR:
 	    return "FOR";
 	case TokenKind::SEMICOLON:
@@ -193,7 +195,10 @@ static std::unordered_map<UStr, TokenKind> kw = {
     { "global", TokenKind::GLOBAL },
     { "local", TokenKind::LOCAL },
     { "static", TokenKind::STATIC },
+    { "while", TokenKind::WHILE },
     { "for", TokenKind::FOR },
+    { "if", TokenKind::IF },
+    { "else", TokenKind::ELSE },
 };
 
 static std::string token_str;

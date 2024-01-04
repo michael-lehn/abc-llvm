@@ -158,7 +158,11 @@ fnDecl(const char *ident, const Type *fnType)
     makeFnDecl(ident, fnType);
 }
 
-static llvm::Function *currFnDef;
+static struct {
+    llvm::Function *llvmFn;
+    Label leave;
+    const Type *retType;
+} currFn;
 
 void
 fnDef(const char *ident, const Type *fnType,
@@ -177,16 +181,48 @@ fnDef(const char *ident, const Type *fnType,
 	allocLocal(param[i], argType[i]);
 	store(fn->getArg(i), param[i], argType[i]);
     }
-    currFnDef = fn;
+
+    // set current function
+    currFn.llvmFn = fn;
+    currFn.leave = getLabel("leave");
+    if ((currFn.retType = fnType->getRetType())) {
+	// reserve space for return value on stack
+	allocLocal(".retVal", currFn.retType);
+    }
+
 }
 
 void
 fnDefEnd(void)
 {
-    assert(currFnDef);
-    llvm::verifyFunction(*currFnDef);
-    llvmFPM->run(*currFnDef, *llvmFAM);
+    assert(currFn.llvmFn);
+
+    // leave function
+    jmp(currFn.leave);
+    labelDef(currFn.leave);
+
+    if (currFn.retType) {
+	auto ret = fetch(".retVal", currFn.retType);
+	llvmBuilder->CreateRet(ret);
+    } else {
+	llvmBuilder->CreateRetVoid();
+    }
+
+    // optimize function code
+    llvm::verifyFunction(*currFn.llvmFn);
+    //llvmFPM->run(*currFn.llvmFn, *llvmFAM);
+    //llvmFPM->run(*currFn.llvmFn, *llvmFAM);
 }
+
+void
+ret(Reg reg)
+{
+    if (reg) {
+	store(reg, ".retVal", currFn.retType);
+    }
+    jmp(currFn.leave);
+}
+
 
 //------------------------------------------------------------------------------
 
@@ -228,7 +264,7 @@ getLabel(const char *name)
 void
 labelDef(Label label)
 {
-    currFnDef->insert(currFnDef->end(), label);
+    currFn.llvmFn->insert(currFn.llvmFn->end(), label);
     llvmBuilder->SetInsertPoint(label);
 }
 
@@ -318,15 +354,6 @@ aluInstr(AluOp op, Reg l, Reg r)
 	    assert(0);
 	    return nullptr;
     }
-}
-
-//------------------------------------------------------------------------------
-
-void
-ret(Reg reg)
-{
-    assert(llvmBB);
-    reg ? llvmBuilder->CreateRet(reg) : llvmBuilder->CreateRetVoid();
 }
 
 //------------------------------------------------------------------------------

@@ -6,11 +6,9 @@
 
 #include "gen.hpp"
 
-enum class ExprKind
+enum class BinaryExprKind
 {
-    // binary expression
-    BINARY,
-    ADD = BINARY,
+    ADD,
     ASSIGN,
     EQUAL,
     NOT_EQUAL,
@@ -24,14 +22,6 @@ enum class ExprKind
     MUL,
     DIV,
     MOD,
-    BINARY_END,
-
-    // primary expression
-    PRIMARY = BINARY_END,
-    INTEGER_LITERAL = PRIMARY,
-    STRING_LITERAL,
-    IDENTIFIER,
-    PRIMARY_END,
 };
 
 struct Expr;
@@ -46,10 +36,11 @@ using ExprUniquePtr = std::unique_ptr<Expr, ExprDeleter>;
 ExprUniquePtr makeLiteralExpr(const char *val);
 ExprUniquePtr makeIdentifierExpr(const char *val);
 ExprUniquePtr makeUnaryMinusExpr(ExprUniquePtr &&expr);
-ExprUniquePtr makeBinaryExpr(ExprKind kind, ExprUniquePtr &&left,
+ExprUniquePtr makeBinaryExpr(BinaryExprKind kind, ExprUniquePtr &&left,
 			     ExprUniquePtr &&right);
 
 void print(const Expr *expr, int indent = 0);
 gen::Reg load(const Expr *expr);
+void condJmp(const Expr *expr, gen::Label trueLabel, gen::Label falseLabel);
 
 #endif // EXPR_HPP

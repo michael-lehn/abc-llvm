@@ -18,6 +18,7 @@ void fnDecl(const char *ident, const Type *fn);
 void fnDef(const char *ident, const Type *fn,
 	   const std::vector<const char *> &param);
 void fnDefEnd(void);
+void ret(Reg reg = nullptr);
 
 // labels and jumps
 enum CondOp {
@@ -59,8 +60,6 @@ enum AluOp {
 Reg loadConst(const char *val, const Type *type);
 Reg aluInstr(AluOp op, Reg l, Reg r);
 
-// if reg is nullpoint return void, otherwise return value in *reg
-void ret(Reg reg = nullptr);
 
 void dump_bc(const char *filename = "out");
 void dump_asm(const char *filename = "out", int codeGenOptLevel = 0);
