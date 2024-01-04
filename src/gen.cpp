@@ -16,9 +16,13 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/MC/TargetRegistry.h"
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/StandardInstrumentations.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/TargetSelect.h"
@@ -26,6 +30,12 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/TargetParser/Host.h"
+#include "llvm/Transforms/InstCombine/InstCombine.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Scalar/GVN.h"
+#include "llvm/Transforms/Scalar/Reassociate.h"
+#include "llvm/Transforms/Scalar/SimplifyCFG.h"
+#include "llvm/Transforms/Utils.h"
 
 #include <cassert>
 #include <cstdlib>
@@ -41,6 +51,31 @@ static auto llvmContext = std::make_unique<llvm::LLVMContext>();
 static auto llvmModule = std::make_unique<llvm::Module>("llvm", *llvmContext);
 static auto llvmBuilder = std::make_unique<llvm::IRBuilder<>>(*llvmContext);
 static llvm::BasicBlock *llvmBB;
+
+static auto llvmFPM = std::make_unique<llvm::FunctionPassManager>();
+static auto llvmLAM = std::make_unique<llvm::LoopAnalysisManager>();
+static auto llvmFAM = std::make_unique<llvm::FunctionAnalysisManager>();
+static auto llvmCGAM = std::make_unique<llvm::CGSCCAnalysisManager>();
+static auto llvmMAM = std::make_unique<llvm::ModuleAnalysisManager>();
+static auto llvmPIC = std::make_unique<llvm::PassInstrumentationCallbacks>();
+static auto llvmSI = std::make_unique<llvm::StandardInstrumentations>(
+			*llvmContext, /*DebugLogging*/ true);
+
+static struct InitPM {
+    InitPM()
+    {
+	llvmSI->registerCallbacks(*llvmPIC, llvmMAM.get());
+	llvmFPM->addPass(llvm::InstCombinePass());
+	llvmFPM->addPass(llvm::ReassociatePass());
+	llvmFPM->addPass(llvm::GVNPass());
+	llvmFPM->addPass(llvm::SimplifyCFGPass());
+
+	llvm::PassBuilder pb;
+	pb.registerModuleAnalyses(*llvmMAM);
+	pb.registerFunctionAnalyses(*llvmFAM);
+	pb.crossRegisterProxies(*llvmLAM, *llvmFAM, *llvmCGAM, *llvmMAM);
+    }
+} initPm;
 
 struct TypeMap
 {
@@ -123,6 +158,8 @@ fnDecl(const char *ident, const Type *fnType)
     makeFnDecl(ident, fnType);
 }
 
+static llvm::Function *currFnDef;
+
 void
 fnDef(const char *ident, const Type *fnType,
       const std::vector<const char *> &param)
@@ -140,9 +177,85 @@ fnDef(const char *ident, const Type *fnType,
 	allocLocal(param[i], argType[i]);
 	store(fn->getArg(i), param[i], argType[i]);
     }
+    currFnDef = fn;
+}
+
+void
+fnDefEnd(void)
+{
+    assert(currFnDef);
+    llvm::verifyFunction(*currFnDef);
+    llvmFPM->run(*currFnDef, *llvmFAM);
 }
 
 //------------------------------------------------------------------------------
+
+Cond
+cond(CondOp op, Reg a, Reg b)
+{
+    switch (op) {
+	case EQ:
+	    return llvmBuilder->CreateICmpEQ(a, b);
+	case NE:
+	    return llvmBuilder->CreateICmpNE(a, b);
+	case SGT:
+	    return llvmBuilder->CreateICmpSGT(a, b);
+    	case SGE:
+	    return llvmBuilder->CreateICmpSGE(a, b);
+    	case SLT:
+	    return llvmBuilder->CreateICmpSLT(a, b);
+    	case SLE:
+	    return llvmBuilder->CreateICmpSLE(a, b);
+    	case UGT:
+	    return llvmBuilder->CreateICmpUGT(a, b);
+    	case UGE:
+	    return llvmBuilder->CreateICmpUGE(a, b);
+    	case ULT:
+	    return llvmBuilder->CreateICmpULT(a, b);
+    	case ULE:
+	    return llvmBuilder->CreateICmpULE(a, b);
+    }
+    assert(0);
+    return nullptr; // never reached
+}
+
+Label
+getLabel(const char *name)
+{
+    return llvm::BasicBlock::Create(*llvmContext, name);
+}
+
+void
+labelDef(Label label)
+{
+    currFnDef->insert(currFnDef->end(), label);
+    llvmBuilder->SetInsertPoint(label);
+}
+
+void
+jmp(Label label)
+{
+    llvmBuilder->CreateBr(label);
+}
+
+void
+jmp(Cond cond, Label trueLabel, Label falseLabel)
+{
+    llvmBuilder->CreateCondBr(cond, trueLabel, falseLabel);
+}
+
+Reg
+phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type)
+{
+    auto ty = TypeMap::get(type);
+    auto phi = llvmBuilder->CreatePHI(ty, 2);
+    phi->addIncoming(a, labelA);
+    phi->addIncoming(b, labelB);
+    return phi;
+}
+
+//------------------------------------------------------------------------------
+
 static std::unordered_map<std::string, llvm::AllocaInst *> local;
 
 void
@@ -154,7 +267,7 @@ allocLocal(const char *ident, const Type *type)
 
 //------------------------------------------------------------------------------
 
-Reg *
+Reg
 fetch(const char *ident, const Type *type)
 {
     auto ty = TypeMap::get(type);
@@ -163,7 +276,7 @@ fetch(const char *ident, const Type *type)
 }
 
 void
-store(Reg *reg, const char *ident, const Type *type)
+store(Reg reg, const char *ident, const Type *type)
 {
     auto var = local[ident];
     llvmBuilder->CreateStore(reg, var);
@@ -171,7 +284,7 @@ store(Reg *reg, const char *ident, const Type *type)
 
 //------------------------------------------------------------------------------
 
-Reg *
+Reg
 loadConst(const char *val, const Type *type)
 {
     if (type->isInteger()) {
@@ -183,18 +296,24 @@ loadConst(const char *val, const Type *type)
 
 //------------------------------------------------------------------------------
 
-Reg *
-op2r(Op op, Reg *l, Reg *r)
+Reg
+aluInstr(AluOp op, Reg l, Reg r)
 {
     switch (op) {
-	case Add:
+	case ADD:
 	    return llvmBuilder->CreateAdd(l, r);
-	case Sub:
+	case SUB:
 	    return llvmBuilder->CreateSub(l, r);
-	case SMul:
+	case SMUL:
 	    return llvmBuilder->CreateMul(l, r);
-	case SDiv:
+	case SDIV:
 	    return llvmBuilder->CreateSDiv(l, r);
+	case SMOD:
+	    return llvmBuilder->CreateSRem(l, r);
+	case UDIV:
+	    return llvmBuilder->CreateUDiv(l, r);
+	case UMOD:
+	    return llvmBuilder->CreateURem(l, r);
 	default:
 	    assert(0);
 	    return nullptr;
@@ -204,7 +323,7 @@ op2r(Op op, Reg *l, Reg *r)
 //------------------------------------------------------------------------------
 
 void
-ret(Reg *reg)
+ret(Reg reg)
 {
     assert(llvmBB);
     reg ? llvmBuilder->CreateRet(reg) : llvmBuilder->CreateRetVoid();
@@ -248,8 +367,12 @@ dump_asm(const char *filename, int codeGenOptLevel)
     }
 
     auto targetMachine = target->createTargetMachine(
-	    targetTriple, "generic", "", llvm::TargetOptions{},
-	    llvm::Reloc::PIC_, std::nullopt,
+	    targetTriple,
+	    "generic",
+	    "",
+	    llvm::TargetOptions{},
+	    llvm::Reloc::PIC_,
+	    std::nullopt,
 	    llvm::CodeGenOpt::Level{codeGenOptLevel});
     llvmModule->setDataLayout(targetMachine->createDataLayout());
 
@@ -274,6 +397,7 @@ dump_asm(const char *filename, int codeGenOptLevel)
     }
     pass.run(*llvmModule);
     dest.flush();
+    llvmModule->print(llvm::errs(), nullptr);
 }
 
 

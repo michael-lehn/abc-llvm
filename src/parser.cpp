@@ -259,11 +259,13 @@ parseReturnStmt(void)
 static bool
 parseExprStmt(void)
 {
-    if (!parseExpr()) {
+    auto expr = parseExpr();
+    if (!expr) {
 	return false;
     }
     expected(TokenKind::SEMICOLON);
     getToken();
+    load(expr.get());
     return true;
 }
 
@@ -316,6 +318,7 @@ parseFn(void)
 	expected(TokenKind::LBRACE);
 	gen::fnDef(fnDecl->ident.c_str(), fnDecl->type, fnParamIdent);
 	assert(parseCompoundStmt(false));
+	gen::fnDefEnd();
     }
 
     symtab::print(std::cout);

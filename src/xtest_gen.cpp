@@ -1,4 +1,4 @@
-#include <cstdio>
+#include <iostream>
 
 #include "gen.hpp"
 #include "types.hpp"
@@ -6,8 +6,6 @@
 int
 main(void)
 {
-    std::printf("testing gen\n");
-
     auto ret = Type::getUnsignedInteger(64);
     std::vector<const Type *>	arg{2};
     arg[0] = Type::getUnsignedInteger(64);
@@ -19,11 +17,37 @@ main(void)
     param[1] = "b";
     gen::fnDef("foo", fn, param);
 
+    auto thenLabel = gen::getLabel("then");
+    auto elseLabel = gen::getLabel("else");
+    auto endLabel = gen::getLabel("end");
+
     auto a = gen::fetch("a", Type::getUnsignedInteger(64));
-    auto b = gen::fetch("b", Type::getUnsignedInteger(64));
-    auto r = gen::op2r(gen::Add, a, b);
+    auto zero = gen::loadConst("0", Type::getUnsignedInteger(64));
+    auto cond = gen::cond(gen::EQ, a, zero);
+    gen::jmp(cond, thenLabel, elseLabel);
 
+    gen::labelDef(thenLabel);
+    {
+	auto a = gen::fetch("a", Type::getUnsignedInteger(64));
+	auto b = gen::fetch("b", Type::getUnsignedInteger(64));
+	auto t = gen::aluInstr(gen::ADD, a, b);
+	gen::store(t, "a", Type::getUnsignedInteger(64));
+	gen::jmp(endLabel);
+    }
+    gen::labelDef(elseLabel);
+    {
+	auto a = gen::fetch("a", Type::getUnsignedInteger(64));
+	auto b = gen::fetch("b", Type::getUnsignedInteger(64));
+	auto t = gen::aluInstr(gen::SUB, a, b);
+	gen::store(t, "a", Type::getUnsignedInteger(64));
+	gen::jmp(endLabel);
+    }
+    gen::labelDef(endLabel);
+
+    auto r = gen::fetch("a", Type::getUnsignedInteger(64));
     gen::ret(r);
+    //gen::fnDefEnd();
 
-    gen::dump_bc();
+    std::cerr << "writing to 'ex_gen.bc'" << std::endl;
+    gen::dump_bc("ex_gen");
 }

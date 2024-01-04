@@ -50,6 +50,6 @@ ExprUniquePtr makeBinaryExpr(ExprKind kind, ExprUniquePtr &&left,
 			     ExprUniquePtr &&right);
 
 void print(const Expr *expr, int indent = 0);
-gen::Reg *load(const Expr *expr);
+gen::Reg load(const Expr *expr);
 
 #endif // EXPR_HPP

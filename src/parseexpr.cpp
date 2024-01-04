@@ -1,3 +1,4 @@
+#include <iostream>
 #include <unordered_map>
 
 #include "lexer.hpp"
@@ -43,6 +44,9 @@ static std::unordered_map<TokenKind, int> binaryOpPrec = {
     { TokenKind::PLUS, 11},
     { TokenKind::MINUS, 11},
 
+    { TokenKind::EQUAL2, 9},
+    { TokenKind::NOT_EQUAL, 9},
+
 };
 
 static int
@@ -65,6 +69,10 @@ getBinaryExprKind(TokenKind kind)
 	    return ExprKind::ADD;
 	case TokenKind::MINUS:
 	    return ExprKind::SUB;
+	case TokenKind::EQUAL2:
+	    return ExprKind::EQUAL;
+	case TokenKind::NOT_EQUAL:
+	    return ExprKind::NOT_EQUAL;
 	default:
 	    assert(0);
 	    return ExprKind::ADD; // never reached
