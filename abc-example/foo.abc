@@ -1,23 +1,32 @@
-fn foo2(n: u64): u64
+fn foo3(n: u64): u64
 {
     if (n) {
-	return n * foo2(n - 1);
+	return n * foo3(n - 1);
     }
     return 1;
+}
+
+fn foo2(n: u64): u64
+{
+    local r: u64;
+
+    r = 1;
+    while (n) {
+	r = r * n;
+	n = n - 1;
+    }
+    return r;
+    n = 0;
 }
 
 fn foo(n: u64): u64
 {
     local r: u64;
-    {
-	local r: u64;
+    local i: u64;
 
-	r = 1;
-	while (n) {
-	    r = r * n;
-	    n = n - 1;
-	}
-	return r;
-	n = 0;
+    r = 1;
+    for (i = 1; i <= n; i = i + 1) {
+	r = r * i;
     }
+    return r;
 }

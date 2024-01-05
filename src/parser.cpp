@@ -387,6 +387,62 @@ parseWhileStmt(void)
 }
 
 static bool
+parseForStmt(void)
+{
+    if (token.kind != TokenKind::FOR) {
+	return false;
+    }
+    getToken();
+
+    expected(TokenKind::LPAREN);
+    getToken();
+    // parse 'init' expr
+    auto init = parseExpr();
+    expected(TokenKind::SEMICOLON);
+    getToken();
+    // parse 'cond' expr
+    auto cond = parseExpr();
+    if (!cond) {
+	cond = getLiteralExpr("1");
+    }
+    expected(TokenKind::SEMICOLON);
+    getToken();
+    // parse 'update' expr
+    auto update = parseExpr();
+    expected(TokenKind::RPAREN);
+    getToken();
+
+    if (init) {
+	load(init.get());
+    }
+
+    auto condLabel = gen::getLabel("cond");
+    auto loopLabel = gen::getLabel("loop");
+    auto endLabel = gen::getLabel("end");
+
+    gen::jmp(condLabel);
+
+    // 'for-cond' block
+    gen::labelDef(condLabel);
+    condJmp(cond.get(), loopLabel, endLabel);
+    
+    // 'for-loop' block
+    gen::labelDef(loopLabel);
+    if (!parseCompoundStmt(true)) {
+	expectedError("compound statement block");
+    }
+    if (update) {
+	load(update.get());
+    }
+    gen::jmp(condLabel);
+
+    // end of loop
+    gen::labelDef(endLabel);
+    return true;
+}
+
+
+static bool
 parseReturnStmt(void)
 {
     if (token.kind != TokenKind::RETURN) {
@@ -419,6 +475,7 @@ parseStmt(void)
     return parseCompoundStmt(true)
 	|| parseIfStmt()
 	|| parseWhileStmt()
+	|| parseForStmt()
 	|| parseReturnStmt()
 	|| parseExprStmt()
 	|| parseLocalDef();
