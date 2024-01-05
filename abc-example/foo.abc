@@ -19,5 +19,5 @@ fn foo2(r: u64, n: u64): u64
 
 fn bar(): u64
 {
-    return foo2(1, 5);
+    return foo2(1, 1, 5);
 }

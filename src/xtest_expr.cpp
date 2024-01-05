@@ -8,22 +8,22 @@ main(void)
     /*
     auto ident = makeIdentifierExpr("foo");
     auto lit = makeLiteralExpr("42");
-    auto unary = makeUnaryExpr(ExprKind::UNARY_MINUS, std::move(ident));
-    auto binary = makeBinaryExpr(
-			ExprKind::ADD,
+    auto unary = makeUnaryExpr(BinaryExprKind::UNARY_MINUS, std::move(ident));
+    auto binary = getBinaryExpr(
+			BinaryExprKind::ADD,
 			std::move(unary),
 			std::move(lit));
 			*/
-    auto lit42 = makeLiteralExpr("42");
-    auto a = makeIdentifierExpr("a");
-    auto b = makeIdentifierExpr("b");
-    auto binary = makeBinaryExpr(
-			ExprKind::ADD,
-			makeBinaryExpr(
-			    ExprKind::SUB,
+    auto lit42 = getLiteralExpr("42");
+    auto a = getIdentifierExpr("a");
+    auto b = getIdentifierExpr("b");
+    auto binary = getBinaryExpr(
+			BinaryExprKind::ADD,
+			getBinaryExpr(
+			    BinaryExprKind::SUB,
 			    std::move(lit42),
 			    std::move(a)),
-			makeUnaryMinusExpr(
+			getUnaryMinusExpr(
 			    std::move(b)));
 
     print(binary.get());

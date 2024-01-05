@@ -1,3 +1,4 @@
+#include <sstream>
 #include <iostream>
 #include <unordered_map>
 
@@ -133,7 +134,8 @@ static ExprPtr
 parsePrimary(void)
 {
     if (token.kind == TokenKind::IDENTIFIER) {
-	if (!symtab::get(token.val.c_str())) {
+	auto symEntry = symtab::get(token.val.c_str());
+	if (!symEntry) {
 	    std::string msg = "undeclared identifier '";
 	    msg += token.val.c_str();
 	    msg += "'";
@@ -143,7 +145,14 @@ parsePrimary(void)
         getToken();
 	if (token.kind == TokenKind::LPAREN) {
 	    // function call
+	    if (!symEntry->type->isFunction()) {
+		std::string msg = "'";
+		msg += token.val.c_str();
+		msg += "' is not a function";
+		semanticError(msg.c_str());
+	    }
 	    getToken();
+
 	    
 	    // parse parameter list
 	    ExprVector param;
@@ -156,6 +165,15 @@ parsePrimary(void)
 	    }
 	    expected(TokenKind::RPAREN);
 	    getToken();
+
+	    // check parameters
+	    auto numArgs = symEntry->type->getArgType().size();
+	    if (numArgs != param.size()) {
+		std::stringstream msg;
+		msg << "function '" << symEntry->ident.c_str() << "' expects "
+		    << numArgs << " paramaters, not " << param.size();
+		semanticError(msg.str().c_str());
+	    }
 
 	    expr = getCallExpr(std::move(expr), std::move(param));
 	}
