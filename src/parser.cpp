@@ -69,7 +69,7 @@ parseFnParamDeclOrType(std::vector<const Type *> &argType,
     {
 	// if parameter has no identifier give it an interal identifier 
 	UStr ident = ".param";
-	Token::Loc loc = token.loc;
+	auto loc = token.loc;
 	if (token.kind == TokenKind::IDENTIFIER) {
 	    ident = token.val.c_str();
 	    getToken();
@@ -93,7 +93,7 @@ parseFnParamDeclOrType(std::vector<const Type *> &argType,
 		msg += " already defined";
 		semanticError(msg.c_str());
 	    }
-	    paramIdent->push_back(s->ident.c_str());
+	    paramIdent->push_back(s->internalIdent.c_str());
 	}
 
 	// done if we don't get a COMMA
@@ -235,6 +235,41 @@ parseType(void)
 	default:
 	    return nullptr;		
     }
+}
+
+//------------------------------------------------------------------------------
+
+static bool
+parseLocalDef(void)
+{
+    if (token.kind != TokenKind::LOCAL) {
+	return false;
+    }
+    getToken();
+
+    expected(TokenKind::IDENTIFIER);
+    auto loc = token.loc;
+    auto ident = token.val;
+    getToken();
+
+    expected(TokenKind::COLON);
+    getToken();
+
+    auto type = parseType();
+    if (!type) {
+	expectedError("type");
+    }
+
+    auto s = symtab::add(loc, ident.c_str(), type);
+    if (!s) {
+	std::string msg = ident.c_str();
+	msg += " already defined";
+	semanticError(msg.c_str());
+    }
+    gen::allocLocal(s->internalIdent.c_str(), s->type);
+    expected(TokenKind::SEMICOLON);
+    getToken();
+    return true; 
 }
 
 //------------------------------------------------------------------------------
@@ -385,7 +420,8 @@ parseStmt(void)
 	|| parseIfStmt()
 	|| parseWhileStmt()
 	|| parseReturnStmt()
-	|| parseExprStmt();
+	|| parseExprStmt()
+	|| parseLocalDef();
 }
 
 //------------------------------------------------------------------------------

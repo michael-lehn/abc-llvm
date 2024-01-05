@@ -51,6 +51,7 @@ int
 main(void)
 {
     addToRootScope("A");
+
     symtab::openScope();
     add("a");
     symtab::print(std::cout);
@@ -62,14 +63,15 @@ main(void)
     symtab::print(std::cout);
 
     symtab::openScope();
-
     add("a");
     add("b");
     addToRootScope("X");
     symtab::print(std::cout);
-
     symtab::closeScope();
 
+
+    symtab::openScope();
     add("c");
     symtab::print(std::cout);
+    symtab::closeScope();
 }

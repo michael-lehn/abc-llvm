@@ -141,8 +141,8 @@ parsePrimary(void)
 	    msg += "'";
 	    semanticError(msg.c_str());
 	}
-	auto expr = getIdentifierExpr(token.val.c_str());
         getToken();
+	auto expr = getIdentifierExpr(symEntry->internalIdent.c_str());
 	if (token.kind == TokenKind::LPAREN) {
 	    // function call
 	    if (!symEntry->type->isFunction()) {
@@ -153,7 +153,6 @@ parsePrimary(void)
 	    }
 	    getToken();
 
-	    
 	    // parse parameter list
 	    ExprVector param;
 	    while (auto p = parseExpr()) {

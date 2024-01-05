@@ -20,6 +20,7 @@ struct SymEntry
     Token::Loc loc;
     const Type *type;
     UStr ident;
+    UStr internalIdent;
 };
 
 void openScope(void);

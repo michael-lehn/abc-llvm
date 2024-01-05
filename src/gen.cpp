@@ -140,6 +140,20 @@ std::unordered_map<const Type *, llvm::Type *> TypeMap::typeMap;
 
 //------------------------------------------------------------------------------
 
+static bool opt;
+
+void
+setOpt(bool enableOpt)
+{
+    opt = enableOpt;
+}
+
+//------------------------------------------------------------------------------
+
+// local variables
+static std::unordered_map<std::string, llvm::AllocaInst *> local;
+
+
 static llvm::Function *
 makeFnDecl(const char *ident, const Type *fnType)
 {
@@ -169,6 +183,8 @@ void
 fnDef(const char *ident, const Type *fnType,
       const std::vector<const char *> &param)
 {
+    local.clear();
+
     auto fn = makeFnDecl(ident, fnType);
     fn->setDoesNotThrow();
     llvmBB = llvm::BasicBlock::Create(*llvmContext, "entry", fn);
@@ -210,8 +226,10 @@ fnDefEnd(void)
 
     // optimize function code
     llvm::verifyFunction(*currFn.llvmFn);
-    llvmFPM->run(*currFn.llvmFn, *llvmFAM);
-    llvmFPM->run(*currFn.llvmFn, *llvmFAM);
+    if (opt) {
+	llvmFPM->run(*currFn.llvmFn, *llvmFAM);
+	llvmFPM->run(*currFn.llvmFn, *llvmFAM);
+    }
 }
 
 void
@@ -224,8 +242,6 @@ ret(Reg reg)
     }
     jmp(currFn.leave);
 }
-
-static std::unordered_map<std::string, llvm::AllocaInst *> local;
 
 void
 allocLocal(const char *ident, const Type *type)

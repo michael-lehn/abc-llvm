@@ -1,7 +1,8 @@
 #include <cassert>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <memory>
+#include <sstream>
 #include <unordered_map>
 
 #include "symtab.hpp"
@@ -14,6 +15,7 @@ struct ScopeNode
 {
     std::unordered_map<UStr, SymEntry> symtab;
     std::unique_ptr<ScopeNode> up;
+    std::size_t id = 0;
 
     ScopeNode() { std::cerr << "New scope." << std::endl; }
     ~ScopeNode() { std::cerr << "Closing scope." << std::endl; }
@@ -25,8 +27,15 @@ static ScopeNode *root = curr.get();
 void
 openScope(void)
 {
+    static std::size_t id;
+
+    if (curr.get() == root) {
+	id = 0;
+    }
+
     std::unique_ptr<ScopeNode> s = std::make_unique<ScopeNode>();
     s->up = std::move(curr);
+    s->id = ++id;
     curr = std::move(s);
 }
 
@@ -68,7 +77,14 @@ add(Token::Loc loc, UStr ident, const Type *type, ScopeNode *sn)
 	return nullptr;
     }
 
-    sn->symtab[ident] = {loc, type, ident};
+    UStr internalIdent = ident;
+    if (sn->id) {
+	std::stringstream ss;
+	ss << "._" << ident.c_str() << sn->id << "_.";
+	internalIdent = ss.str();
+    }
+
+    sn->symtab[ident] = {loc, type, ident, internalIdent};
     return &sn->symtab[ident];
 }
 
@@ -99,7 +115,9 @@ print(std::ostream &out, ScopeNode *sn)
 	out << std::setfill(' ') << std::setw(indent * 4) << " "
 	    << sym.first.c_str() << ": "
 	    << sym.second.loc << ", "
-	    << sym.second.type << std::endl;
+	    << sym.second.type << ", "
+	    << sym.second.internalIdent.c_str()
+	    << std::endl;
     }
     out << std::setfill(' ') << std::setw(indent * 4) << " " << "end of scope"
 	<< indent << std::endl;

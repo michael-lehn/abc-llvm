@@ -44,6 +44,7 @@ main(void)
 
     auto r = load(binary.get());
     gen::ret(r);
+    gen::fnDefEnd();
 
 
     gen::dump_bc("expr");

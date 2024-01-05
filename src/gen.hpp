@@ -13,6 +13,9 @@ using Cond = llvm::Value *;
 using Label = llvm::BasicBlock *;
 using Reg = llvm::Value *;
 
+// enable/disable optimization
+void setOpt(bool);
+
 // functions definition
 void fnDecl(const char *ident, const Type *fn);
 void fnDef(const char *ident, const Type *fn,
