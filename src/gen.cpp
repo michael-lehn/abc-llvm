@@ -162,6 +162,7 @@ static struct {
     llvm::Function *llvmFn;
     Label leave;
     const Type *retType;
+    bool retCalled;
 } currFn;
 
 void
@@ -189,6 +190,7 @@ fnDef(const char *ident, const Type *fnType,
 	// reserve space for return value on stack
 	allocLocal(".retVal", currFn.retType);
     }
+    currFn.retCalled = false;
 
 }
 
@@ -198,7 +200,7 @@ fnDefEnd(void)
     assert(currFn.llvmFn);
 
     // leave function
-    jmp(currFn.leave);
+    ret(nullptr);
     labelDef(currFn.leave);
 
     if (currFn.retType) {
@@ -210,13 +212,17 @@ fnDefEnd(void)
 
     // optimize function code
     llvm::verifyFunction(*currFn.llvmFn);
-    //llvmFPM->run(*currFn.llvmFn, *llvmFAM);
-    //llvmFPM->run(*currFn.llvmFn, *llvmFAM);
+    llvmFPM->run(*currFn.llvmFn, *llvmFAM);
+    llvmFPM->run(*currFn.llvmFn, *llvmFAM);
 }
 
 void
 ret(Reg reg)
 {
+    if (currFn.retCalled) {
+	return;
+    }
+    currFn.retCalled = true;
     if (reg) {
 	store(reg, ".retVal", currFn.retType);
     }

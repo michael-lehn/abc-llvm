@@ -335,10 +335,12 @@ parseWhileStmt(void)
     auto endLabel = gen::getLabel("end");
 
     gen::jmp(condLabel);
+
+    // 'while-cond' block
     gen::labelDef(condLabel);
     condJmp(expr.get(), loopLabel, endLabel);
     
-    // parse loop block
+    // 'while-loop' block
     gen::labelDef(loopLabel);
     if (!parseCompoundStmt(true)) {
 	expectedError("compound statement block");
