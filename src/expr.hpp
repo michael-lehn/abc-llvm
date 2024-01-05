@@ -8,6 +8,7 @@
 
 enum class BinaryExprKind
 {
+    CALL,
     ADD,
     ASSIGN,
     EQUAL,
@@ -28,16 +29,20 @@ struct Expr;
 
 struct ExprDeleter
 {
-    void operator()(Expr *) const;
+    void operator()(const Expr *) const;
 };
 
-using ExprUniquePtr = std::unique_ptr<Expr, ExprDeleter>;
+using ExprPtr = std::unique_ptr<const Expr, ExprDeleter>;
 
-ExprUniquePtr makeLiteralExpr(const char *val);
-ExprUniquePtr makeIdentifierExpr(const char *val);
-ExprUniquePtr makeUnaryMinusExpr(ExprUniquePtr &&expr);
-ExprUniquePtr makeBinaryExpr(BinaryExprKind kind, ExprUniquePtr &&left,
-			     ExprUniquePtr &&right);
+using ExprVector = std::vector<ExprPtr>;
+using ExprVectorPtr = std::unique_ptr<ExprVector>;
+
+ExprPtr getLiteralExpr(const char *val);
+ExprPtr getIdentifierExpr(const char *ident);
+ExprPtr getUnaryMinusExpr(ExprPtr &&expr);
+ExprPtr getBinaryExpr(BinaryExprKind kind, ExprPtr &&left, ExprPtr &&right);
+ExprPtr getCallExpr(ExprPtr &&fn, ExprVector &&param);
+ExprPtr getExprVector(ExprVector &&expr);
 
 void print(const Expr *expr, int indent = 0);
 gen::Reg load(const Expr *expr);

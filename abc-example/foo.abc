@@ -1,10 +1,23 @@
-fn foo(a: u64, b: u64): u64
+fn foo(n: u64): u64
 {
-    a = 0;
-    while (b) {
-	a = a + b;
-	b = b - 1;
+    if (n) {
+	return n * foo(n - 1);
     }
-    b = b;
-    return a;
+    return 1;
+}
+
+fn foo2(r: u64, n: u64): u64
+{
+    r = 1;
+    while (n) {
+	r = r * n;
+	n = n - 1;
+    }
+    return r;
+    n = 0;
+}
+
+fn bar(): u64
+{
+    return foo2(1, 5);
 }

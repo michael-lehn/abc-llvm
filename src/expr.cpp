@@ -20,53 +20,69 @@ struct Identifier
 struct Binary
 {
     BinaryExprKind kind;
-    ExprUniquePtr left, right;
+    ExprPtr left, right;
 
-    Binary(BinaryExprKind kind, ExprUniquePtr &&left, ExprUniquePtr &&right)
+    Binary(BinaryExprKind kind, ExprPtr &&left, ExprPtr &&right)
 	: kind{kind}, left{std::move(left)}, right{std::move(right)}
     {}
 };
 
 struct Expr
 {
-    std::variant<Literal, Identifier, Binary> variant;
+    std::variant<Literal, Identifier, Binary, ExprVector> variant;
 
     Expr(Literal &&val) : variant{std::move(val)} {}
     Expr(Identifier &&ident) : variant{std::move(ident)} {}
     Expr(Binary &&binary) : variant{std::move(binary)} {}
+    Expr(ExprVector &&vec) : variant{std::move(vec)} {}
 };
 
 void
-ExprDeleter::operator()(Expr *expr) const
+ExprDeleter::operator()(const Expr *expr) const
 {
     delete expr;
 };
 
-ExprUniquePtr
-makeLiteralExpr(const char *val)
+ExprPtr
+getLiteralExpr(const char *val)
 {
-    return ExprUniquePtr(new Expr{Literal{val}});
+    return ExprPtr(new Expr{Literal{val}});
 }
 
-ExprUniquePtr
-makeIdentifierExpr(const char *val)
+ExprPtr
+getIdentifierExpr(const char *ident)
 {
-    return ExprUniquePtr(new Expr{Identifier{val}});
+    return ExprPtr(new Expr{Identifier{ident}});
 }
 
-ExprUniquePtr
-makeUnaryMinusExpr(ExprUniquePtr &&expr)
+ExprPtr
+getUnaryMinusExpr(ExprPtr &&expr)
 {
-    auto zero = makeLiteralExpr("0");
-    return makeBinaryExpr(BinaryExprKind::SUB, std::move(zero),
-			  std::move(expr));
+    auto zero = getLiteralExpr("0");
+    return getBinaryExpr(BinaryExprKind::SUB, std::move(zero),
+			 std::move(expr));
 }
 
-ExprUniquePtr
-makeBinaryExpr(BinaryExprKind kind, ExprUniquePtr &&left, ExprUniquePtr &&right)
+ExprPtr
+getBinaryExpr(BinaryExprKind kind, ExprPtr &&left, ExprPtr &&right)
 {
     auto expr = new Expr{Binary{kind, std::move(left), std::move(right)}};
-    return ExprUniquePtr(expr);
+    return ExprPtr(expr);
+}
+
+ExprPtr
+getCallExpr(ExprPtr &&fn, ExprVector &&param)
+{
+    auto p = getExprVector(std::move(param));
+    auto expr = getBinaryExpr(BinaryExprKind::CALL,
+			      std::move(fn), std::move(p));
+    return ExprPtr(std::move(expr));
+}
+
+ExprPtr
+getExprVector(ExprVector &&expr)
+{
+    return ExprPtr{new Expr{std::move(expr)}};
 }
 
 static const char *
@@ -194,10 +210,21 @@ static gen::Reg
 load(const Binary &binary)
 {
     switch (binary.kind) {
+	case BinaryExprKind::CALL:
+	    {
+		auto l = std::get<Identifier>(binary.left.get()->variant);
+		auto &r = std::get<ExprVector>(binary.right.get()->variant);
+		std::vector<gen::Reg> param{r.size()};
+		for (std::size_t i = 0; i < r.size(); ++i) {
+		    param[i] = load(r[i].get());
+		}
+		return gen::call(l.val, param);
+	    }
+
 	case BinaryExprKind::ASSIGN:
 	    {
-		auto r = load(binary.right.get());
 		auto l = std::get<Identifier>(binary.left.get()->variant);
+		auto r = load(binary.right.get());
 		gen::store(r, l.val, Type::getUnsignedInteger(64));
 		return r;
 	    }
@@ -254,6 +281,9 @@ load(const Expr *expr)
 	return load(std::get<Identifier>(expr->variant));
     } else if (std::holds_alternative<Binary>(expr->variant)) {
 	return load(std::get<Binary>(expr->variant));
+    } else if (std::holds_alternative<ExprVector>(expr->variant)) {
+	assert(0);
+	return nullptr;
     }
     assert(0);
     return nullptr; // never reached

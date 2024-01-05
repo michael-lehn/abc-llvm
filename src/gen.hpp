@@ -13,12 +13,16 @@ using Cond = llvm::Value *;
 using Label = llvm::BasicBlock *;
 using Reg = llvm::Value *;
 
-// functions
+// functions definition
 void fnDecl(const char *ident, const Type *fn);
 void fnDef(const char *ident, const Type *fn,
 	   const std::vector<const char *> &param);
 void fnDefEnd(void);
 void ret(Reg reg = nullptr);
+void allocLocal(const char *ident, const Type *type);
+
+// functions call
+Reg call(const char *ident, const std::vector<Reg> &param);
 
 // labels and jumps
 enum CondOp {
@@ -42,7 +46,6 @@ void jmp(Cond cond, Label trueLabel, Label falseLabel);
 Reg phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type);
 
 // memory 
-void allocLocal(const char *ident, const Type *type);
 Reg fetch(const char *ident, const Type *type);
 void store(Reg reg, const char *ident, const Type *type);
 
@@ -59,7 +62,6 @@ enum AluOp {
 
 Reg loadConst(const char *val, const Type *type);
 Reg aluInstr(AluOp op, Reg l, Reg r);
-
 
 void dump_bc(const char *filename = "out");
 void dump_asm(const char *filename = "out", int codeGenOptLevel = 0);

@@ -162,7 +162,7 @@ static struct {
     llvm::Function *llvmFn;
     Label leave;
     const Type *retType;
-    bool retCalled;
+    bool bbClosed;
 } currFn;
 
 void
@@ -174,6 +174,14 @@ fnDef(const char *ident, const Type *fnType,
     llvmBB = llvm::BasicBlock::Create(*llvmContext, "entry", fn);
     llvmBuilder->SetInsertPoint(llvmBB);
 
+    // set current function
+    currFn.llvmFn = fn;
+    currFn.leave = getLabel("leave");
+    if ((currFn.retType = fnType->getRetType())) {
+	// reserve space for return value on stack
+	allocLocal(".retVal", currFn.retType);
+    }
+
     // store param registers on stack
     auto argType = fnType->getArgType();
     assert(argType.size() == param.size());
@@ -182,16 +190,6 @@ fnDef(const char *ident, const Type *fnType,
 	allocLocal(param[i], argType[i]);
 	store(fn->getArg(i), param[i], argType[i]);
     }
-
-    // set current function
-    currFn.llvmFn = fn;
-    currFn.leave = getLabel("leave");
-    if ((currFn.retType = fnType->getRetType())) {
-	// reserve space for return value on stack
-	allocLocal(".retVal", currFn.retType);
-    }
-    currFn.retCalled = false;
-
 }
 
 void
@@ -219,16 +217,39 @@ fnDefEnd(void)
 void
 ret(Reg reg)
 {
-    if (currFn.retCalled) {
-	return;
-    }
-    currFn.retCalled = true;
+    assert(currFn.llvmFn);
+
     if (reg) {
 	store(reg, ".retVal", currFn.retType);
     }
     jmp(currFn.leave);
 }
 
+static std::unordered_map<std::string, llvm::AllocaInst *> local;
+
+void
+allocLocal(const char *ident, const Type *type)
+{
+    assert(currFn.llvmFn);
+
+    // always allocate memory at entry of function
+    llvm::IRBuilder<> tmpBuilder(&currFn.llvmFn->getEntryBlock(),
+				 currFn.llvmFn->getEntryBlock().begin());
+    auto ty = TypeMap::get(type);
+    local[ident] = tmpBuilder.CreateAlloca(ty, nullptr, ident);
+}
+
+//------------------------------------------------------------------------------
+
+Reg
+call(const char *ident, const std::vector<Reg> &param)
+{
+    auto fn = llvmModule->getFunction(ident);
+    assert(fn && "function not declared");
+    std::cerr << "ok" << std::endl;
+
+    return llvmBuilder->CreateCall(fn, param, ident);
+}
 
 //------------------------------------------------------------------------------
 
@@ -270,25 +291,43 @@ getLabel(const char *name)
 void
 labelDef(Label label)
 {
+    if (!currFn.bbClosed) {
+	jmp(label);
+    }
+
     currFn.llvmFn->insert(currFn.llvmFn->end(), label);
     llvmBuilder->SetInsertPoint(label);
+    currFn.bbClosed = false;
 }
 
 void
 jmp(Label label)
 {
-    llvmBuilder->CreateBr(label);
+    if (!currFn.bbClosed) {
+	llvmBuilder->CreateBr(label);
+    }
+    currFn.bbClosed = true;
 }
 
 void
 jmp(Cond cond, Label trueLabel, Label falseLabel)
 {
-    llvmBuilder->CreateCondBr(cond, trueLabel, falseLabel);
+    if (!currFn.bbClosed) {
+	llvmBuilder->CreateCondBr(cond, trueLabel, falseLabel);
+    } else {
+	llvm::errs() << "Warning: not reachable conditional jump\n";
+    }
+    currFn.bbClosed = true;
 }
 
 Reg
 phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type)
 {
+    if (currFn.bbClosed) {
+	llvm::errs() << "Warning: not reachable phi\n";
+	return nullptr;
+    }
+
     auto ty = TypeMap::get(type);
     auto phi = llvmBuilder->CreatePHI(ty, 2);
     phi->addIncoming(a, labelA);
@@ -298,20 +337,14 @@ phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type)
 
 //------------------------------------------------------------------------------
 
-static std::unordered_map<std::string, llvm::AllocaInst *> local;
-
-void
-allocLocal(const char *ident, const Type *type)
-{
-    auto ty = TypeMap::get(type);
-    local[ident] = llvmBuilder->CreateAlloca(ty, nullptr, ident);
-}
-
-//------------------------------------------------------------------------------
-
 Reg
 fetch(const char *ident, const Type *type)
 {
+    if (currFn.bbClosed) {
+	llvm::errs() << "Warning: not reachable fetch\n";
+	return nullptr;
+    }
+
     auto ty = TypeMap::get(type);
     auto var = local[ident];
     return llvmBuilder->CreateLoad(ty, var, ident);
@@ -320,6 +353,11 @@ fetch(const char *ident, const Type *type)
 void
 store(Reg reg, const char *ident, const Type *type)
 {
+    if (currFn.bbClosed) {
+	llvm::errs() << "Warning: not reachable store\n";
+	return;
+    }
+
     auto var = local[ident];
     llvmBuilder->CreateStore(reg, var);
 }
@@ -329,6 +367,11 @@ store(Reg reg, const char *ident, const Type *type)
 Reg
 loadConst(const char *val, const Type *type)
 {
+    if (currFn.bbClosed) {
+	llvm::errs() << "Warning: not reachable load constant\n";
+	return nullptr;
+    }
+
     if (type->isInteger()) {
 	auto apint = llvm::APInt(type->getIntegerNumBits(), val, 10);
 	return llvm::ConstantInt::get(*llvmContext, apint);
@@ -341,6 +384,11 @@ loadConst(const char *val, const Type *type)
 Reg
 aluInstr(AluOp op, Reg l, Reg r)
 {
+    if (currFn.bbClosed) {
+	llvm::errs() << "Warning: not reachable alu instr\n";
+	return nullptr;
+    }
+
     switch (op) {
 	case ADD:
 	    return llvmBuilder->CreateAdd(l, r);
@@ -432,6 +480,5 @@ dump_asm(const char *filename, int codeGenOptLevel)
     dest.flush();
     llvmModule->print(llvm::errs(), nullptr);
 }
-
 
 } // namespace gen

@@ -13,10 +13,10 @@
 void
 expectedError(const char *s)
 {
-    std::fprintf(stderr, "%zu.%zu-%zu.%zu: expected '%s' got '%s'\n",
+    std::fprintf(stderr, "%zu.%zu-%zu.%zu: expected '%s' got '%s' (%s)\n",
 	    token.loc.from.line, token.loc.from.col,
 	    token.loc.to.line, token.loc.to.col,
-	    s, tokenCStr(token.kind));
+	    s, token.val.c_str(), tokenCStr(token.kind));
     exit(1);
 }
 
@@ -38,7 +38,6 @@ expected(TokenKind kind)
 	expectedError(tokenCStr(kind));
     }
 }
-
 
 static const Type *parseType(void);
 static bool parseFn(void);

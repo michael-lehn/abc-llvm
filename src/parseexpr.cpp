@@ -6,18 +6,18 @@
 #include "parseexpr.hpp"
 #include "symtab.hpp"
 
-static ExprUniquePtr parseAssignment(void);
-static ExprUniquePtr parseBinary(int prec);
-static ExprUniquePtr parseUnary(void);
-static ExprUniquePtr parsePrimary(void);
+static ExprPtr parseAssignment(void);
+static ExprPtr parseBinary(int prec);
+static ExprPtr parseUnary(void);
+static ExprPtr parsePrimary(void);
 
-ExprUniquePtr
+ExprPtr
 parseExpr(void)
 {
     return parseAssignment();
 }
 
-static ExprUniquePtr
+static ExprPtr
 parseAssignment(void)
 {
     auto expr = parseBinary(1);
@@ -30,8 +30,8 @@ parseAssignment(void)
 	if (!right) {
 	    expectedError("assignment expression");
 	}
-	expr = makeBinaryExpr(BinaryExprKind::ASSIGN, std::move(expr),
-			      std::move(right));
+	expr = getBinaryExpr(BinaryExprKind::ASSIGN, std::move(expr),
+			     std::move(right));
     }
     return expr;
 }
@@ -92,7 +92,7 @@ getBinaryExprKind(TokenKind kind)
     }
 }
 
-static ExprUniquePtr
+static ExprPtr
 parseBinary(int prec)
 {
     auto expr = parseUnary();
@@ -107,13 +107,13 @@ parseBinary(int prec)
             if (!expr) {
                 expectedError("non-empty expression");
             }
-	    expr = makeBinaryExpr(op, std::move(expr), std::move(right));
+	    expr = getBinaryExpr(op, std::move(expr), std::move(right));
         }
     }
     return expr;
 }
 
-static ExprUniquePtr
+static ExprPtr
 parseUnary(void)
 {
     if (token.kind == TokenKind::PLUS || token.kind == TokenKind::MINUS) {
@@ -123,13 +123,13 @@ parseUnary(void)
             expectedError("non-empty expression");
         }
 	if (token.kind == TokenKind::MINUS) {
-	    expr = makeUnaryMinusExpr(std::move(expr));
+	    expr = getUnaryMinusExpr(std::move(expr));
 	}
     }
     return parsePrimary();
 } 
 
-static ExprUniquePtr
+static ExprPtr
 parsePrimary(void)
 {
     if (token.kind == TokenKind::IDENTIFIER) {
@@ -139,26 +139,44 @@ parsePrimary(void)
 	    msg += "'";
 	    semanticError(msg.c_str());
 	}
-	auto expr = makeIdentifierExpr(token.val.c_str());
+	auto expr = getIdentifierExpr(token.val.c_str());
         getToken();
+	if (token.kind == TokenKind::LPAREN) {
+	    // function call
+	    getToken();
+	    
+	    // parse parameter list
+	    ExprVector param;
+	    while (auto p = parseExpr()) {
+		param.push_back(std::move(p));
+		if (token.kind != TokenKind::COMMA) {
+		    break;
+		}
+		getToken();
+	    }
+	    expected(TokenKind::RPAREN);
+	    getToken();
+
+	    expr = getCallExpr(std::move(expr), std::move(param));
+	}
         return expr;
     } else if (token.kind == TokenKind::DECIMAL_LITERAL) {
-	auto expr = makeLiteralExpr(token.val.c_str());
+	auto expr = getLiteralExpr(token.val.c_str());
         getToken();
         return expr;
     } else if (token.kind == TokenKind::HEXADECIMAL_LITERAL) {
 	// TODO: hex!
-	auto expr = makeLiteralExpr(token.val.c_str());
+	auto expr = getLiteralExpr(token.val.c_str());
         getToken();
         return expr;
     } else if (token.kind == TokenKind::OCTAL_LITERAL) {
 	// TODO: oct!
-	auto expr = makeLiteralExpr(token.val.c_str());
+	auto expr = getLiteralExpr(token.val.c_str());
         getToken();
         return expr;
     } else if (token.kind == TokenKind::LPAREN) {
         getToken();
-	auto expr = parseAssignment();
+	auto expr = parseExpr();
         if (!expr) {
             expectedError("expression");
 	}
