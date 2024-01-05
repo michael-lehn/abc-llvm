@@ -267,9 +267,31 @@ parseLocalDef(void)
 	semanticError(msg.c_str());
     }
     gen::allocLocal(s->internalIdent.c_str(), s->type);
-    expected(TokenKind::SEMICOLON);
-    getToken();
+
+    // parse initalizer
+    if (token.kind == TokenKind::EQUAL) {
+	getToken();
+	auto init = parseExpr();
+	if (!init) {
+	    expectedError("non-empty expression");
+	}
+	init = getBinaryExpr(BinaryExprKind::ASSIGN,
+			     getIdentifierExpr(s->internalIdent.c_str()),
+			     std::move(init));
+	load(init.get());
+    }
     return true; 
+}
+
+static bool
+parseLocalDefStmt(void)
+{
+    if (parseLocalDef()) {
+	expected(TokenKind::SEMICOLON);
+	getToken();
+	return true;
+    }
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -394,10 +416,16 @@ parseForStmt(void)
     }
     getToken();
 
+    symtab::openScope();
     expected(TokenKind::LPAREN);
     getToken();
-    // parse 'init' expr
-    auto init = parseExpr();
+    // parse 'init': local definition or  expr
+    if (!parseLocalDef()) {
+	auto init = parseExpr();
+	if (init) {
+	    load(init.get());
+	}
+    }
     expected(TokenKind::SEMICOLON);
     getToken();
     // parse 'cond' expr
@@ -412,9 +440,6 @@ parseForStmt(void)
     expected(TokenKind::RPAREN);
     getToken();
 
-    if (init) {
-	load(init.get());
-    }
 
     auto condLabel = gen::getLabel("cond");
     auto loopLabel = gen::getLabel("loop");
@@ -428,7 +453,7 @@ parseForStmt(void)
     
     // 'for-loop' block
     gen::labelDef(loopLabel);
-    if (!parseCompoundStmt(true)) {
+    if (!parseCompoundStmt(false)) {
 	expectedError("compound statement block");
     }
     if (update) {
@@ -478,7 +503,7 @@ parseStmt(void)
 	|| parseForStmt()
 	|| parseReturnStmt()
 	|| parseExprStmt()
-	|| parseLocalDef();
+	|| parseLocalDefStmt();
 }
 
 //------------------------------------------------------------------------------
