@@ -17,8 +17,8 @@ struct ScopeNode
     std::unique_ptr<ScopeNode> up;
     std::size_t id = 0;
 
-    ScopeNode() { std::cerr << "New scope." << std::endl; }
-    ~ScopeNode() { std::cerr << "Closing scope." << std::endl; }
+    ScopeNode() { }
+    ~ScopeNode() { }
 };
 
 static std::unique_ptr<ScopeNode> curr = std::make_unique<ScopeNode>();

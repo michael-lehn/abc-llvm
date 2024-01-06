@@ -45,6 +45,8 @@ ExprPtr getCallExpr(ExprPtr &&fn, ExprVector &&param);
 ExprPtr getExprVector(ExprVector &&expr);
 
 void print(const Expr *expr, int indent = 0);
+bool isConst(const Expr *expr);
+
 gen::Reg load(const Expr *expr);
 void condJmp(const Expr *expr, gen::Label trueLabel, gen::Label falseLabel);
 

@@ -35,6 +35,7 @@ struct Expr
     Expr(Identifier &&ident) : variant{std::move(ident)} {}
     Expr(Binary &&binary) : variant{std::move(binary)} {}
     Expr(ExprVector &&vec) : variant{std::move(vec)} {}
+
 };
 
 void
@@ -149,7 +150,6 @@ print(const Expr *expr, int indent)
 static gen::AluOp
 getGenAluOp(BinaryExprKind kind)
 {
-    std::printf("getGenAluOp: [%s]\n", exprKindCStr(kind));
     switch (kind) {
 	case BinaryExprKind::ADD:
 	    return gen::ADD;
@@ -171,7 +171,6 @@ getGenAluOp(BinaryExprKind kind)
 static gen::CondOp
 getGenCondOp(BinaryExprKind kind)
 {
-    std::printf("getGenCondOp: [%s]\n", exprKindCStr(kind));
     switch (kind) {
 	case BinaryExprKind::EQUAL:
 	    return gen::EQ;
@@ -190,7 +189,6 @@ getGenCondOp(BinaryExprKind kind)
 	    return gen::EQ;
     }
 }
-
 
 static gen::Reg
 load(const Literal &l)

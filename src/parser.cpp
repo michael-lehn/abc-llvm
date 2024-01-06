@@ -527,9 +527,7 @@ parseFn(void)
 	gen::fnDefEnd();
     }
 
-    symtab::print(std::cout);
     symtab::closeScope();
-    symtab::print(std::cout);
     return true;
 }
 

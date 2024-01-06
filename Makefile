@@ -24,11 +24,12 @@ dep := $(src:$(src.dir)/%=$(dep.dir)/%.d) $(xsrc:$(src.dir)/%.cpp=$(dep.dir)/%.d
 target := $(patsubst $(src.dir)/%.cpp,$(bin.dir)/%,$(xsrc))
 
 .DEFAULT_GOAL := all
-.PHONY: all
 
+.PHONY: all
 all: $(target)
 	@echo $(dep)	
 
+.PHONY: clean
 clean:
 	$(RM) $(obj) $(dep) $(target)
 

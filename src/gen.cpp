@@ -262,7 +262,6 @@ call(const char *ident, const std::vector<Reg> &param)
 {
     auto fn = llvmModule->getFunction(ident);
     assert(fn && "function not declared");
-    std::cerr << "ok" << std::endl;
 
     return llvmBuilder->CreateCall(fn, param, ident);
 }
@@ -494,7 +493,6 @@ dump_asm(const char *filename, int codeGenOptLevel)
     }
     pass.run(*llvmModule);
     dest.flush();
-    llvmModule->print(llvm::errs(), nullptr);
 }
 
 } // namespace gen
