@@ -1,0 +1,38 @@
+/*
+    Currently no preprocessor is supported. Hence we manually have to declare
+    all functions defined in the library. So later these decalration can be
+    included with something like:
+
+    #include "abclib.h"
+*/
+
+fn getU64(): u64;
+fn getErr(): u64;
+
+fn printU64(val: u64);
+fn printNl();
+
+//
+//   Here the real action begins ...
+//
+
+fn factorial(n: u64): u64
+{
+    if (n) {
+	return n * factorial(n - 1);
+    }
+    return 1;
+}
+
+fn main(): u64
+{
+    local n: u64 = getU64();
+
+    if (getErr() == 0) {
+	printU64(factorial(n));
+	printNl();
+	return 0;
+    }
+
+    return 1;
+}

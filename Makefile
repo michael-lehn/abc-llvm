@@ -27,7 +27,6 @@ target := $(patsubst $(src.dir)/%.cpp,$(bin.dir)/%,$(xsrc))
 
 .PHONY: all
 all: $(target)
-	@echo $(dep)	
 
 .PHONY: clean
 clean:
