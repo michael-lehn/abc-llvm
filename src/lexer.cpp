@@ -1,5 +1,5 @@
 #include <cassert>
-#include <cstdio>
+#include <iostream>
 #include <string>
 #include <unordered_map>
 
@@ -371,6 +371,29 @@ getToken(void)
 	    tokenUpdate();
 	    nextCh();
 	    return tokenSet(TokenKind::SLASH_EQUAL);
+	} else if (ch == '/') {
+	    nextCh();
+	    // ignore rest of line and return next token
+	    while (ch != '\n') {
+		nextCh();
+	    }
+	    return getToken();
+	} else if (ch == '*') {
+	    nextCh();
+	    // skip to next '*', '/'
+	    while (ch != EOF) {
+		char last = ch;
+		nextCh();
+		if (last == '*' && ch == '/') {
+		    nextCh();
+		    break;
+		}
+	    }
+	    if (ch == EOF) {
+		std::cerr << "multi line comment not terminated" << std::endl;
+		return tokenSet(TokenKind::BAD);
+	    }
+	    return getToken();
 	}
 	return tokenSet(TokenKind::SLASH);
      } else if (ch == '%') {
