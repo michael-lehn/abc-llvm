@@ -61,10 +61,14 @@ tokenCStr(TokenKind kind)
 	    return "LOCAL";
 	case TokenKind::STATIC:
 	    return "STATIC";
-	case TokenKind::WHILE:
-	    return "WHILE";
 	case TokenKind::FOR:
 	    return "FOR";
+	case TokenKind::WHILE:
+	    return "WHILE";
+	case TokenKind::IF:
+	    return "IF";
+	case TokenKind::ELSE:
+	    return "ELSE";
 	case TokenKind::SEMICOLON:
 	    return "SEMICOLON";
 	case TokenKind::COLON:
@@ -128,6 +132,7 @@ tokenCStr(TokenKind kind)
 	case TokenKind::LESS_EQUAL:
 	    return "LESS_EQUAL";
 	default:
+	    std::cerr << "kind = " << int(kind) << std::endl;
 	    assert(0); // never reached
 	    return 0;
     }

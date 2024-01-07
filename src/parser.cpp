@@ -247,40 +247,46 @@ parseLocalDef(void)
     }
     getToken();
 
-    expected(TokenKind::IDENTIFIER);
-    auto loc = token.loc;
-    auto ident = token.val;
-    getToken();
-
-    expected(TokenKind::COLON);
-    getToken();
-
-    auto type = parseType();
-    if (!type) {
-	expectedError("type");
-    }
-
-    auto s = symtab::add(loc, ident.c_str(), type);
-    if (!s) {
-	std::string msg = ident.c_str();
-	msg += " already defined";
-	semanticError(msg.c_str());
-    }
-    gen::allocLocal(s->internalIdent.c_str(), s->type);
-
-    // parse initalizer
-    if (token.kind == TokenKind::EQUAL) {
+    do {
+	expected(TokenKind::IDENTIFIER);
+	auto loc = token.loc;
+	auto ident = token.val;
 	getToken();
-	auto init = parseExpr();
-	if (!init) {
-	    expectedError("non-empty expression");
+
+	expected(TokenKind::COLON);
+	getToken();
+
+	auto type = parseType();
+	if (!type) {
+	    expectedError("type");
 	}
-	init = getBinaryExpr(BinaryExprKind::ASSIGN,
-			     getIdentifierExpr(s->internalIdent.c_str()),
-			     std::move(init));
-	load(init.get());
-    }
-    return true; 
+
+	auto s = symtab::add(loc, ident.c_str(), type);
+	if (!s) {
+	    std::string msg = ident.c_str();
+	    msg += " already defined";
+	    semanticError(msg.c_str());
+	}
+	gen::allocLocal(s->internalIdent.c_str(), s->type);
+
+	// parse initalizer
+	if (token.kind == TokenKind::EQUAL) {
+	    getToken();
+	    auto init = parseExpr();
+	    if (!init) {
+		expectedError("non-empty expression");
+	    }
+	    init = getBinaryExpr(BinaryExprKind::ASSIGN,
+				 getIdentifierExpr(s->internalIdent.c_str()),
+				 std::move(init));
+	    load(init.get());
+	}
+	if (token.kind != TokenKind::COMMA) {
+	    return true;
+	}
+	expected(TokenKind::COMMA);
+	getToken();
+    } while (true);
 }
 
 static bool
@@ -357,8 +363,8 @@ parseIfStmt(void)
     gen::labelDef(elseLabel);
     if (token.kind == TokenKind::ELSE) {
 	getToken();
-	if (!parseCompoundStmt(true)) {
-	    expectedError("compound statement block");
+	if (!parseCompoundStmt(true) && !parseIfStmt()) {
+	    expectedError("compound statement block or if statement");
 	}
     }
     gen::jmp(endLabel); // connect with 'end' (even if 'else' is empyt)
