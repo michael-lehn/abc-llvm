@@ -12,6 +12,7 @@ namespace gen {
 using Cond = llvm::Value *;
 using Label = llvm::BasicBlock *;
 using Reg = llvm::Value *;
+using ConstVal = llvm::Constant *;
 
 // enable/disable optimization
 void setOpt(bool);
@@ -22,7 +23,11 @@ void fnDef(const char *ident, const Type *fn,
 	   const std::vector<const char *> &param);
 void fnDefEnd(void);
 void ret(Reg reg = nullptr);
-void allocLocal(const char *ident, const Type *type);
+
+// variables
+void defLocal(const char *ident, const Type *type);
+void defGlobal(const char *ident, const Type *type, ConstVal constVal);
+void defStatic(const char *ident, const Type *type, ConstVal constVal);
 
 // functions call
 Reg call(const char *ident, const std::vector<Reg> &param);

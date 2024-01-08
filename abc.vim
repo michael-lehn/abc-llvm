@@ -24,6 +24,7 @@ syntax match keyword /while/ skipwhite
 syntax match keyword /if/ skipwhite
 syntax match keyword /else/ skipwhite
 syntax match keyword /local/ skipwhite
+syntax match keyword /global/ skipwhite
 syntax match keyword /return/ skipwhite
 
 syntax match type /u8/ skipwhite
@@ -43,7 +44,7 @@ syntax match literal /0x[0-9a-zA-Z][0-9a-zA-Z]*/ skipwhite
 syntax region literal start=/"/ skip=/\\"/ end=/"/ skipwhite
 
 
-syntax region comment start="^//" end="$" skipwhite
+syntax region comment start="//" end="$" skipwhite
 syntax region comment start="/\*" end="\*/" skipwhite
 
 highlight link keyword Statement

@@ -18,6 +18,18 @@ parseExpr(void)
     return parseAssignment();
 }
 
+ExprPtr
+parseConstExpr(void)
+{
+    auto loc = token.loc;
+    auto expr = parseExpr();
+    if (!isConst(expr.get())) {
+	semanticError(loc, "constant expression");
+	return nullptr;
+    }
+    return expr;
+}
+
 static ExprPtr
 parseAssignment(void)
 {

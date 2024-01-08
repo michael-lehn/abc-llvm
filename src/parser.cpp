@@ -23,9 +23,15 @@ expectedError(const char *s)
 void
 semanticError(const char *s)
 {
+    semanticError(token.loc, s);
+}
+
+void
+semanticError(Token::Loc loc, const char *s)
+{
     std::fprintf(stderr, "%zu.%zu-%zu.%zu: %s\n",
-	    token.loc.from.line, token.loc.from.col,
-	    token.loc.to.line, token.loc.to.col,
+	    loc.from.line, loc.from.col,
+	    loc.to.line, loc.to.col,
 	    s);
     exit(1);
 }
@@ -41,16 +47,72 @@ expected(TokenKind kind)
 
 static const Type *parseType(void);
 static bool parseFn(void);
+static bool parseGlobalDef(void);
 
 void
 parser(void)
 {
     getToken();
     while (token.kind != TokenKind::EOI) {
-	if (!parseFn()) {
-	    expectedError("function declaration or EOF");
+	if (!parseGlobalDef() && !parseFn()) {
+	    expectedError("function declaration, global variable definition"
+			  " or EOF");
 	}
     }
+}
+
+//------------------------------------------------------------------------------
+
+static bool
+parseGlobalDef(void)
+{
+    if (token.kind != TokenKind::GLOBAL) {
+	return false;
+    }
+    getToken();
+
+    do {
+	expected(TokenKind::IDENTIFIER);
+	auto loc = token.loc;
+	auto ident = token.val;
+	getToken();
+
+	expected(TokenKind::COLON);
+	getToken();
+
+	auto type = parseType();
+	if (!type) {
+	    expectedError("type");
+	}
+
+	auto s = symtab::add(loc, ident.c_str(), type);
+	if (!s) {
+	    std::string msg = ident.c_str();
+	    msg += " already defined";
+	    semanticError(msg.c_str());
+	}
+
+	// parse initalizer
+	ExprPtr init = nullptr;
+	if (token.kind == TokenKind::EQUAL) {
+	    getToken();
+	    init = parseConstExpr();
+	    if (!init) {
+		expectedError("non-empty constant expression");
+	    }
+	}
+	gen::defGlobal(s->internalIdent.c_str(), s->type, getConst(init.get()));
+	if (token.kind != TokenKind::COMMA) {
+	    break;
+	}
+	expected(TokenKind::COMMA);
+	getToken();
+    } while (true);
+
+    expected(TokenKind::SEMICOLON);
+    getToken();
+    
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -267,7 +329,7 @@ parseLocalDef(void)
 	    msg += " already defined";
 	    semanticError(msg.c_str());
 	}
-	gen::allocLocal(s->internalIdent.c_str(), s->type);
+	gen::defLocal(s->internalIdent.c_str(), s->type);
 
 	// parse initalizer
 	if (token.kind == TokenKind::EQUAL) {

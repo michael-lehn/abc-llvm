@@ -153,6 +153,8 @@ setOpt(bool enableOpt)
 // local variables
 static std::unordered_map<std::string, llvm::AllocaInst *> local;
 
+// global variables
+static std::unordered_map<std::string, llvm::GlobalVariable *> global;
 
 static llvm::Function *
 makeFnDecl(const char *ident, const Type *fnType)
@@ -195,7 +197,7 @@ fnDef(const char *ident, const Type *fnType,
     currFn.leave = getLabel("leave");
     if ((currFn.retType = fnType->getRetType())) {
 	// reserve space for return value on stack
-	allocLocal(".retVal", currFn.retType);
+	defLocal(".retVal", currFn.retType);
     }
 
     // store param registers on stack
@@ -203,7 +205,7 @@ fnDef(const char *ident, const Type *fnType,
     assert(argType.size() == param.size());
 
     for (std::size_t i = 0; i < param.size(); ++i) {
-	allocLocal(param[i], argType[i]);
+	defLocal(param[i], argType[i]);
 	store(fn->getArg(i), param[i], argType[i]);
     }
 }
@@ -244,7 +246,7 @@ ret(Reg reg)
 }
 
 void
-allocLocal(const char *ident, const Type *type)
+defLocal(const char *ident, const Type *type)
 {
     assert(currFn.llvmFn);
 
@@ -253,6 +255,20 @@ allocLocal(const char *ident, const Type *type)
 				 currFn.llvmFn->getEntryBlock().begin());
     auto ty = TypeMap::get(type);
     local[ident] = tmpBuilder.CreateAlloca(ty, nullptr, ident);
+}
+
+void
+defGlobal(const char *ident, const Type *type, ConstVal constVal)
+{
+    auto ty = TypeMap::get(type);
+    if (!constVal) {
+	constVal = llvm::ConstantInt::getNullValue(ty);
+    }
+    global[ident] = new llvm::GlobalVariable(*llvmModule, ty,
+			/*isConstant=*/false,
+			/*Linkage=*/llvm::GlobalValue::ExternalLinkage,
+			/*Initializer=*/constVal,
+			/*Name=*/ident);
 }
 
 //------------------------------------------------------------------------------
@@ -361,7 +377,9 @@ fetch(const char *ident, const Type *type)
     }
 
     auto ty = TypeMap::get(type);
-    auto var = local[ident];
+    auto var = local.contains(ident)
+	? llvm::dyn_cast<llvm::Value>(local[ident])
+	: llvm::dyn_cast<llvm::Value>(global[ident]);
     return llvmBuilder->CreateLoad(ty, var, ident);
 }
 
@@ -373,7 +391,9 @@ store(Reg reg, const char *ident, const Type *type)
 	return;
     }
 
-    auto var = local[ident];
+    auto var = local.contains(ident)
+	? llvm::dyn_cast<llvm::Value>(local[ident])
+	: llvm::dyn_cast<llvm::Value>(global[ident]);
     llvmBuilder->CreateStore(reg, var);
 }
 

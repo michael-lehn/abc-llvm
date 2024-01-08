@@ -1,6 +1,9 @@
 #include <iostream>
 
+#include "llvm/IR/Constants.h"
+
 #include "gen.hpp"
+#include "expr.hpp"
 #include "types.hpp"
 
 int
@@ -46,7 +49,11 @@ main(void)
 
     auto r = gen::fetch("a", Type::getUnsignedInteger(64));
     gen::ret(r);
-    //gen::fnDefEnd();
+    gen::fnDefEnd();
+
+    auto someConst = getLiteralExpr("42");
+    gen::defGlobal("globalFoo", Type::getUnsignedInteger(64),
+		   getConst(someConst.get())); 
 
     std::cerr << "writing to 'ex_gen.bc'" << std::endl;
     gen::dump_bc("ex_gen");

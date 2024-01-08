@@ -16,17 +16,27 @@ fn printNl();
 //   Here the real action begins ...
 //
 
+global foo : u64;  // initial value is zero
+
+fn bar(): u64
+{
+    foo = foo + 1;
+}
+
 fn main(): u64
 {
     local a: u64 = getU64(), aErr: u64 = getErr(),
 	  b: u64 = getU64(), bErr: u64 = getErr();
+
+    bar();
+    bar();
 
     if (aErr) {
 	return 1;
     } else if (bErr) {
 	return 2;
     } else {
-	printU64(a + b);
+	printU64(a + b + foo);
 	printNl();
     }
 

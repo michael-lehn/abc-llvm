@@ -4,5 +4,6 @@
 #include "expr.hpp"
 
 ExprPtr parseExpr(void);
+ExprPtr parseConstExpr(void);
 
 #endif // PARSEEXPR_HPP

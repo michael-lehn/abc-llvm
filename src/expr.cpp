@@ -1,4 +1,5 @@
 #include <iostream>
+#include <type_traits>
 #include <variant>
 
 #include "expr.hpp"
@@ -144,6 +145,40 @@ print(const Expr *expr, int indent)
 	print(binary.left.get(), indent + 4);
 	print(binary.right.get(), indent + 4);
     }
+}
+
+bool
+isConst(const Expr *expr)
+{
+    if (std::holds_alternative<Literal>(expr->variant)) {
+	return true;
+    } else if (std::holds_alternative<Identifier>(expr->variant)) {
+	return false;
+    } else if (std::holds_alternative<Binary>(expr->variant)) {
+	const auto &binary = std::get<Binary>(expr->variant);
+	switch (binary.kind) {
+	    case BinaryExprKind::CALL:
+	    case BinaryExprKind::ASSIGN:
+		return false;
+	    default:
+		return isConst(binary.left.get())
+		    && isConst(binary.right.get());
+	}
+    }
+    assert(0);
+    return false;
+}
+
+gen::ConstVal
+getConst(const Expr *expr)
+{
+    if (!expr) {
+	return nullptr;
+    }
+
+    assert(isConst(expr));
+
+    return llvm::dyn_cast<std::remove_pointer_t<gen::ConstVal>>(load(expr));
 }
 
 // TODO: for div/mod the type is needed
