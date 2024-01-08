@@ -16,9 +16,9 @@ fn printNl();
 //   Here the real action begins ...
 //
 
-global foo : u64;  // initial value is zero
+global foo: u64;  // initial value is zero
 
-fn bar(): u64
+fn bar()
 {
     foo = foo + 1;
 }
