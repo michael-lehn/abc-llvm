@@ -51,9 +51,9 @@ main(void)
     gen::ret(r);
     gen::fnDefEnd();
 
-    auto someConst = getLiteralExpr("42");
+    auto someConst = Expr::getLiteral("42");
     gen::defGlobal("globalFoo", Type::getUnsignedInteger(64),
-		   getConst(someConst.get())); 
+		   someConst->getConst()); 
 
     std::cerr << "writing to 'ex_gen.bc'" << std::endl;
     gen::dump_bc("ex_gen");

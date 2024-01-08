@@ -23,7 +23,7 @@ parseConstExpr(void)
 {
     auto loc = token.loc;
     auto expr = parseExpr();
-    if (!isConst(expr.get())) {
+    if (!expr->isConst()) {
 	semanticError(loc, "constant expression");
 	return nullptr;
     }
@@ -43,8 +43,8 @@ parseAssignment(void)
 	if (!right) {
 	    expectedError("assignment expression");
 	}
-	expr = getBinaryExpr(BinaryExprKind::ASSIGN, std::move(expr),
-			     std::move(right));
+	expr = Expr::getBinary(Binary::Kind::ASSIGN, std::move(expr),
+			       std::move(right));
     }
     return expr;
 }
@@ -73,35 +73,35 @@ tokenKindPrec(TokenKind kind)
     return binaryOpPrec.contains(kind) ? binaryOpPrec[kind] : 0;
 }
 
-static BinaryExprKind
+static Binary::Kind
 getBinaryExprKind(TokenKind kind)
 {
     switch (kind) {
 	case TokenKind::ASTERISK:
-	    return BinaryExprKind::MUL;
+	    return Binary::Kind::MUL;
 	case TokenKind::SLASH:
-	    return BinaryExprKind::DIV;
+	    return Binary::Kind::DIV;
 	case TokenKind::PERCENT:
-	    return BinaryExprKind::MOD;
+	    return Binary::Kind::MOD;
 	case TokenKind::PLUS:
-	    return BinaryExprKind::ADD;
+	    return Binary::Kind::ADD;
 	case TokenKind::MINUS:
-	    return BinaryExprKind::SUB;
+	    return Binary::Kind::SUB;
 	case TokenKind::EQUAL2:
-	    return BinaryExprKind::EQUAL;
+	    return Binary::Kind::EQUAL;
 	case TokenKind::NOT_EQUAL:
-	    return BinaryExprKind::NOT_EQUAL;
+	    return Binary::Kind::NOT_EQUAL;
 	case TokenKind::LESS:
-	    return BinaryExprKind::LESS;
+	    return Binary::Kind::LESS;
 	case TokenKind::LESS_EQUAL:
-	    return BinaryExprKind::LESS_EQUAL;
+	    return Binary::Kind::LESS_EQUAL;
 	case TokenKind::GREATER:
-	    return BinaryExprKind::GREATER;
+	    return Binary::Kind::GREATER;
 	case TokenKind::GREATER_EQUAL:
-	    return BinaryExprKind::GREATER_EQUAL;
+	    return Binary::Kind::GREATER_EQUAL;
 	default:
 	    assert(0);
-	    return BinaryExprKind::ADD; // never reached
+	    return Binary::Kind::ADD; // never reached
     }
 }
 
@@ -120,7 +120,7 @@ parseBinary(int prec)
             if (!expr) {
                 expectedError("non-empty expression");
             }
-	    expr = getBinaryExpr(op, std::move(expr), std::move(right));
+	    expr = Expr::getBinary(op, std::move(expr), std::move(right));
         }
     }
     return expr;
@@ -136,7 +136,7 @@ parseUnary(void)
             expectedError("non-empty expression");
         }
 	if (token.kind == TokenKind::MINUS) {
-	    expr = getUnaryMinusExpr(std::move(expr));
+	    expr = Expr::getUnaryMinus(std::move(expr));
 	}
     }
     return parsePrimary();
@@ -154,7 +154,7 @@ parsePrimary(void)
 	    semanticError(msg.c_str());
 	}
         getToken();
-	auto expr = getIdentifierExpr(symEntry->internalIdent.c_str());
+	auto expr = Expr::getIdentifier(symEntry->internalIdent.c_str());
 	if (token.kind == TokenKind::LPAREN) {
 	    // function call
 	    if (!symEntry->type->isFunction()) {
@@ -186,21 +186,21 @@ parsePrimary(void)
 		semanticError(msg.str().c_str());
 	    }
 
-	    expr = getCallExpr(std::move(expr), std::move(param));
+	    expr = Expr::getCall(std::move(expr), std::move(param));
 	}
         return expr;
     } else if (token.kind == TokenKind::DECIMAL_LITERAL) {
-	auto expr = getLiteralExpr(token.val.c_str());
+	auto expr = Expr::getLiteral(token.val.c_str());
         getToken();
         return expr;
     } else if (token.kind == TokenKind::HEXADECIMAL_LITERAL) {
 	// TODO: hex!
-	auto expr = getLiteralExpr(token.val.c_str());
+	auto expr = Expr::getLiteral(token.val.c_str());
         getToken();
         return expr;
     } else if (token.kind == TokenKind::OCTAL_LITERAL) {
 	// TODO: oct!
-	auto expr = getLiteralExpr(token.val.c_str());
+	auto expr = Expr::getLiteral(token.val.c_str());
         getToken();
         return expr;
     } else if (token.kind == TokenKind::LPAREN) {

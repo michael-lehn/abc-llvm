@@ -4,120 +4,89 @@
 
 #include "expr.hpp"
 
-struct Literal
-{
-    const char *val;
-
-    Literal(const char *val) : val{val} {}
-};
-
-struct Identifier
-{
-    const char *val;
-
-    Identifier(const char *val) : val{val} {}
-};
-
-struct Binary
-{
-    BinaryExprKind kind;
-    ExprPtr left, right;
-
-    Binary(BinaryExprKind kind, ExprPtr &&left, ExprPtr &&right)
-	: kind{kind}, left{std::move(left)}, right{std::move(right)}
-    {}
-};
-
-struct Expr
-{
-    std::variant<Literal, Identifier, Binary, ExprVector> variant;
-
-    Expr(Literal &&val) : variant{std::move(val)} {}
-    Expr(Identifier &&ident) : variant{std::move(ident)} {}
-    Expr(Binary &&binary) : variant{std::move(binary)} {}
-    Expr(ExprVector &&vec) : variant{std::move(vec)} {}
-
-};
+//------------------------------------------------------------------------------
 
 void
 ExprDeleter::operator()(const Expr *expr) const
 {
     delete expr;
-};
+}
+
+//-- class Expr: static member functions ---------------------------------------
 
 ExprPtr
-getLiteralExpr(const char *val)
+Expr::getLiteral(const char *val)
 {
     return ExprPtr(new Expr{Literal{val}});
 }
 
 ExprPtr
-getIdentifierExpr(const char *ident)
+Expr::getIdentifier(const char *ident)
 {
     return ExprPtr(new Expr{Identifier{ident}});
 }
 
 ExprPtr
-getUnaryMinusExpr(ExprPtr &&expr)
+Expr::getUnaryMinus(ExprPtr &&expr)
 {
-    auto zero = getLiteralExpr("0");
-    return getBinaryExpr(BinaryExprKind::SUB, std::move(zero),
-			 std::move(expr));
+    auto zero = getLiteral("0");
+    return getBinary(Binary::Kind::SUB, std::move(zero), std::move(expr));
 }
 
 ExprPtr
-getBinaryExpr(BinaryExprKind kind, ExprPtr &&left, ExprPtr &&right)
+Expr::getBinary(Binary::Kind kind, ExprPtr &&left, ExprPtr &&right)
 {
     auto expr = new Expr{Binary{kind, std::move(left), std::move(right)}};
     return ExprPtr(expr);
 }
 
 ExprPtr
-getCallExpr(ExprPtr &&fn, ExprVector &&param)
+Expr::getCall(ExprPtr &&fn, ExprVector &&param)
 {
     auto p = getExprVector(std::move(param));
-    auto expr = getBinaryExpr(BinaryExprKind::CALL,
-			      std::move(fn), std::move(p));
+    auto expr = getBinary(Binary::Kind::CALL, std::move(fn), std::move(p));
     return ExprPtr(std::move(expr));
 }
 
 ExprPtr
-getExprVector(ExprVector &&expr)
+Expr::getExprVector(ExprVector &&expr)
 {
     return ExprPtr{new Expr{std::move(expr)}};
 }
 
+//-- methods -------------------------------------------------------------------
+
 static const char *
-exprKindCStr(BinaryExprKind kind)
+exprKindCStr(Binary::Kind kind)
 {
     switch (kind) {
-	case BinaryExprKind::ADD:
+	case Binary::Kind::ADD:
 	    return "+";
-	case BinaryExprKind::ASSIGN:
+	case Binary::Kind::ASSIGN:
 	    return "=";
-	case BinaryExprKind::EQUAL:
+	case Binary::Kind::EQUAL:
 	    return "==";
-	case BinaryExprKind::NOT_EQUAL:
+	case Binary::Kind::NOT_EQUAL:
 	    return "!=";
-	case BinaryExprKind::GREATER:
+	case Binary::Kind::GREATER:
 	    return ">";
-	case BinaryExprKind::GREATER_EQUAL:
+	case Binary::Kind::GREATER_EQUAL:
 	    return ">=";
-	case BinaryExprKind::LESS:
+	case Binary::Kind::LESS:
 	    return "<";
-	case BinaryExprKind::LESS_EQUAL:
+	case Binary::Kind::LESS_EQUAL:
 	    return "<=";
-	case BinaryExprKind::LOGICAL_AND:
+	case Binary::Kind::LOGICAL_AND:
 	    return "&&";
-	case BinaryExprKind::LOGICAL_OR:
+	case Binary::Kind::LOGICAL_OR:
 	    return "||";
-	case BinaryExprKind::SUB:
+	case Binary::Kind::SUB:
 	    return "-";
-	case BinaryExprKind::MUL:
+	case Binary::Kind::MUL:
 	    return "*";
-	case BinaryExprKind::DIV:
+	case Binary::Kind::DIV:
 	    return "/";
-	case BinaryExprKind::MOD:
+	case Binary::Kind::MOD:
 	    return "%";
 	default:
 	    return "?";
@@ -125,44 +94,40 @@ exprKindCStr(BinaryExprKind kind)
 }
 
 void
-print(const Expr *expr, int indent)
+Expr::print(int indent) const
 {
-    if (!expr) {
-	std::printf("empty expression\n");
-	return;
-    }
     std::printf("%*s", indent, "");
 
-    if (std::holds_alternative<Literal>(expr->variant)) {
-	const auto &lit = std::get<Literal>(expr->variant);
+    if (std::holds_alternative<Literal>(variant)) {
+	const auto &lit = std::get<Literal>(variant);
 	std::printf("Literal: %s\n", lit.val);
-    } else if (std::holds_alternative<Identifier>(expr->variant)) {
-	const auto &ident = std::get<Identifier>(expr->variant);
+    } else if (std::holds_alternative<Identifier>(variant)) {
+	const auto &ident = std::get<Identifier>(variant);
 	std::printf("Identifier: %s\n", ident.val);
-    } else if (std::holds_alternative<Binary>(expr->variant)) {
-	const auto &binary = std::get<Binary>(expr->variant);
+    } else if (std::holds_alternative<Binary>(variant)) {
+	const auto &binary = std::get<Binary>(variant);
 	std::printf("[%s]\n", exprKindCStr(binary.kind));
-	print(binary.left.get(), indent + 4);
-	print(binary.right.get(), indent + 4);
+	binary.left->print(indent + 4);
+	binary.right->print(indent + 4);
     }
 }
 
 bool
-isConst(const Expr *expr)
+Expr::isConst(void) const
 {
-    if (std::holds_alternative<Literal>(expr->variant)) {
+    if (std::holds_alternative<Literal>(variant)) {
 	return true;
-    } else if (std::holds_alternative<Identifier>(expr->variant)) {
+    } else if (std::holds_alternative<Identifier>(variant)) {
 	return false;
-    } else if (std::holds_alternative<Binary>(expr->variant)) {
-	const auto &binary = std::get<Binary>(expr->variant);
+    } else if (std::holds_alternative<Binary>(variant)) {
+	const auto &binary = std::get<Binary>(variant);
 	switch (binary.kind) {
-	    case BinaryExprKind::CALL:
-	    case BinaryExprKind::ASSIGN:
+	    case Binary::Kind::CALL:
+	    case Binary::Kind::ASSIGN:
 		return false;
 	    default:
-		return isConst(binary.left.get())
-		    && isConst(binary.right.get());
+		return binary.left->isConst()
+		    && binary.right->isConst();
 	}
     }
     assert(0);
@@ -170,31 +135,28 @@ isConst(const Expr *expr)
 }
 
 gen::ConstVal
-getConst(const Expr *expr)
+Expr::getConst(void) const
 {
-    if (!expr) {
-	return nullptr;
-    }
+    assert(isConst());
 
-    assert(isConst(expr));
-
-    return llvm::dyn_cast<std::remove_pointer_t<gen::ConstVal>>(load(expr));
+    using T = std::remove_pointer_t<gen::ConstVal>;
+    return llvm::dyn_cast<T>(load());
 }
 
 // TODO: for div/mod the type is needed
 static gen::AluOp
-getGenAluOp(BinaryExprKind kind)
+getGenAluOp(Binary::Kind kind)
 {
     switch (kind) {
-	case BinaryExprKind::ADD:
+	case Binary::Kind::ADD:
 	    return gen::ADD;
-	case BinaryExprKind::SUB:
+	case Binary::Kind::SUB:
 	    return gen::SUB;
-	case BinaryExprKind::MUL:
+	case Binary::Kind::MUL:
 	    return gen::SMUL;
-	case BinaryExprKind::DIV:
+	case Binary::Kind::DIV:
 	    return gen::UDIV;
-	case BinaryExprKind::MOD:
+	case Binary::Kind::MOD:
 	    return gen::UMOD;
 	default:
 	    assert(0);
@@ -204,20 +166,20 @@ getGenAluOp(BinaryExprKind kind)
 
 // TODO: for >,<,>=,<= the type is needed
 static gen::CondOp
-getGenCondOp(BinaryExprKind kind)
+getGenCondOp(Binary::Kind kind)
 {
     switch (kind) {
-	case BinaryExprKind::EQUAL:
+	case Binary::Kind::EQUAL:
 	    return gen::EQ;
-	case BinaryExprKind::NOT_EQUAL:
+	case Binary::Kind::NOT_EQUAL:
 	    return gen::NE;
-	case BinaryExprKind::LESS:
+	case Binary::Kind::LESS:
 	    return gen::ULT;
-	case BinaryExprKind::LESS_EQUAL:
+	case Binary::Kind::LESS_EQUAL:
 	    return gen::ULE;
-	case BinaryExprKind::GREATER:
+	case Binary::Kind::GREATER:
 	    return gen::UGT;
-	case BinaryExprKind::GREATER_EQUAL:
+	case Binary::Kind::GREATER_EQUAL:
 	    return gen::UGE;
 	default:
 	    assert(0);
@@ -243,41 +205,41 @@ static gen::Reg
 load(const Binary &binary)
 {
     switch (binary.kind) {
-	case BinaryExprKind::CALL:
+	case Binary::Kind::CALL:
 	    {
-		auto l = std::get<Identifier>(binary.left.get()->variant);
-		auto &r = std::get<ExprVector>(binary.right.get()->variant);
+		auto l = std::get<Identifier>(binary.left->variant);
+		auto &r = std::get<ExprVector>(binary.right->variant);
 		std::vector<gen::Reg> param{r.size()};
 		for (std::size_t i = 0; i < r.size(); ++i) {
-		    param[i] = load(r[i].get());
+		    param[i] = r[i]->load();
 		}
 		return gen::call(l.val, param);
 	    }
 
-	case BinaryExprKind::ASSIGN:
+	case Binary::Kind::ASSIGN:
 	    {
-		auto l = std::get<Identifier>(binary.left.get()->variant);
-		auto r = load(binary.right.get());
+		auto l = std::get<Identifier>(binary.left->variant);
+		auto r = binary.right->load();
 		gen::store(r, l.val, Type::getUnsignedInteger(64));
 		return r;
 	    }
-	case BinaryExprKind::ADD:
-	case BinaryExprKind::SUB:
-	case BinaryExprKind::MUL:
-	case BinaryExprKind::DIV:
-	case BinaryExprKind::MOD:
+	case Binary::Kind::ADD:
+	case Binary::Kind::SUB:
+	case Binary::Kind::MUL:
+	case Binary::Kind::DIV:
+	case Binary::Kind::MOD:
 	    {
-		auto l = load(binary.left.get());
-		auto r = load(binary.right.get());
+		auto l = binary.left->load();
+		auto r = binary.right->load();
 		auto op = getGenAluOp(binary.kind);
 		return gen::aluInstr(op, l, r);
 	    }
-	case BinaryExprKind::LESS:
-	case BinaryExprKind::LESS_EQUAL:
-	case BinaryExprKind::GREATER:
-	case BinaryExprKind::GREATER_EQUAL:
-	case BinaryExprKind::NOT_EQUAL:
-	case BinaryExprKind::EQUAL:
+	case Binary::Kind::LESS:
+	case Binary::Kind::LESS_EQUAL:
+	case Binary::Kind::GREATER:
+	case Binary::Kind::GREATER_EQUAL:
+	case Binary::Kind::NOT_EQUAL:
+	case Binary::Kind::EQUAL:
 	    {
 		auto ty =  Type::getUnsignedInteger(64);
 
@@ -302,19 +264,16 @@ load(const Binary &binary)
     }
 }
 
-
 gen::Reg
-load(const Expr *expr)
+Expr::load(void) const
 {
-    assert(expr);
-
-    if (std::holds_alternative<Literal>(expr->variant)) {
-	return load(std::get<Literal>(expr->variant));
-    } else if (std::holds_alternative<Identifier>(expr->variant)) {
-	return load(std::get<Identifier>(expr->variant));
-    } else if (std::holds_alternative<Binary>(expr->variant)) {
-	return load(std::get<Binary>(expr->variant));
-    } else if (std::holds_alternative<ExprVector>(expr->variant)) {
+    if (std::holds_alternative<Literal>(variant)) {
+	return ::load(std::get<Literal>(variant));
+    } else if (std::holds_alternative<Identifier>(variant)) {
+	return ::load(std::get<Identifier>(variant));
+    } else if (std::holds_alternative<Binary>(variant)) {
+	return ::load(std::get<Binary>(variant));
+    } else if (std::holds_alternative<ExprVector>(variant)) {
 	assert(0);
 	return nullptr;
     }
@@ -326,16 +285,16 @@ static void
 condJmp(const Binary &binary, gen::Label trueLabel, gen::Label falseLabel)
 {
     switch (binary.kind) {
-	case BinaryExprKind::LESS:
-	case BinaryExprKind::LESS_EQUAL:
-	case BinaryExprKind::GREATER:
-	case BinaryExprKind::GREATER_EQUAL:
-	case BinaryExprKind::NOT_EQUAL:
-	case BinaryExprKind::EQUAL:
+	case Binary::Kind::LESS:
+	case Binary::Kind::LESS_EQUAL:
+	case Binary::Kind::GREATER:
+	case Binary::Kind::GREATER_EQUAL:
+	case Binary::Kind::NOT_EQUAL:
+	case Binary::Kind::EQUAL:
 	    {
 		auto condOp = getGenCondOp(binary.kind);
-		auto l = load(binary.left.get());
-		auto r = load(binary.right.get());
+		auto l = binary.left->load();
+		auto r = binary.right->load();
 		auto cond = gen::cond(condOp, l, r);
 		gen::jmp(cond, trueLabel, falseLabel);
 		return;
@@ -351,16 +310,14 @@ condJmp(const Binary &binary, gen::Label trueLabel, gen::Label falseLabel)
 }
 
 void
-condJmp(const Expr *expr, gen::Label trueLabel, gen::Label falseLabel)
+Expr::condJmp(gen::Label trueLabel, gen::Label falseLabel) const
 {
-    assert(expr);
-
-    if (std::holds_alternative<Binary>(expr->variant)) {
-	condJmp(std::get<Binary>(expr->variant), trueLabel, falseLabel);
+    if (std::holds_alternative<Binary>(variant)) {
+	::condJmp(std::get<Binary>(variant), trueLabel, falseLabel);
     } else {
 	auto ty =  Type::getUnsignedInteger(64);
 	auto zero = gen::loadConst("0", ty);
-	auto cond = gen::cond(gen::NE, load(expr), zero);
+	auto cond = gen::cond(gen::NE, load(), zero);
 	gen::jmp(cond, trueLabel, falseLabel);
     }
 }

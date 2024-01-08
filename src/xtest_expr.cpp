@@ -14,19 +14,19 @@ main(void)
 			std::move(unary),
 			std::move(lit));
 			*/
-    auto lit42 = getLiteralExpr("42");
-    auto a = getIdentifierExpr("a");
-    auto b = getIdentifierExpr("b");
-    auto binary = getBinaryExpr(
-			BinaryExprKind::ADD,
-			getBinaryExpr(
-			    BinaryExprKind::SUB,
+    auto lit42 = Expr::getLiteral("42");
+    auto a = Expr::getIdentifier("a");
+    auto b = Expr::getIdentifier("b");
+    auto binary = Expr::getBinary(
+			Binary::Kind::ADD,
+			Expr::getBinary(
+			    Binary::Kind::SUB,
 			    std::move(lit42),
 			    std::move(a)),
-			getUnaryMinusExpr(
+			Expr::getUnaryMinus(
 			    std::move(b)));
 
-    print(binary.get());
+    binary->print();
 
 
     // generate function 'foo(a: u64, b: 64): u64'
@@ -42,7 +42,7 @@ main(void)
     auto fn = Type::getFunction(ret, arg);
     gen::fnDef("foo", fn, param);
 
-    auto r = load(binary.get());
+    auto r = binary->load();
     gen::ret(r);
     gen::fnDefEnd();
 
