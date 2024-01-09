@@ -139,6 +139,8 @@ tokenCStr(TokenKind kind)
 	    return "OR";
 	case TokenKind::OR2:
 	    return "OR2";
+	case TokenKind::QUERY:
+	    return "QUERY";
 	default:
 	    std::cerr << "kind = " << int(kind) << std::endl;
 	    assert(0); // never reached
@@ -472,6 +474,10 @@ getToken(void)
 	    return tokenSet(TokenKind::OR2);
 	}
 	return tokenSet(TokenKind::OR);
+    } else if (ch == '?') {
+	tokenUpdate();
+	nextCh();
+	return tokenSet(TokenKind::QUERY);
     }
 
     tokenUpdate();

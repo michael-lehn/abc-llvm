@@ -30,3 +30,15 @@ printNl(void)
 {
     printf("\n");
 }
+
+uint16_t
+getChar()
+{
+    return getchar();
+}
+
+void
+putChar(uint16_t ch)
+{
+    putchar(ch);
+}

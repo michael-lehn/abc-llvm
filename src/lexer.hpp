@@ -73,6 +73,7 @@ enum class TokenKind {
     AND2,
     OR,
     OR2,
+    QUERY,
 };
 
 extern struct Token {
