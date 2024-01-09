@@ -156,6 +156,14 @@ Expr::createUnaryMinus(ExprPtr &&expr)
 }
 
 ExprPtr
+Expr::createLogicalNot(ExprPtr &&expr)
+{
+    auto ty = expr->getType();
+    auto lNot = new Expr{Unary{Unary::Kind::LOGICAL_NOT, std::move(expr), ty}};
+    return ExprPtr{lNot};
+}
+
+ExprPtr
 Expr::createCast(ExprPtr &&child, const Type *toType)
 {
     auto expr = new Expr{Unary{Unary::Kind::CAST, std::move(child), toType}};
@@ -376,6 +384,8 @@ loadValue(const Identifier &ident)
     return gen::fetch(ident.val, ident.type);
 }
 
+static void condJmp(const Unary &, gen::Label, gen::Label);
+
 static gen::Reg
 loadValue(const Unary &unary)
 {
@@ -383,6 +393,23 @@ loadValue(const Unary &unary)
 	case Unary::Kind::CAST:
 	    return gen::cast(unary.child->loadValue(), unary.child->getType(),
 			     unary.type);
+	case Unary::Kind::LOGICAL_NOT:
+	    {
+		auto thenLabel = gen::getLabel("then");
+		auto elseLabel = gen::getLabel("else");
+		auto endLabel = gen::getLabel("end");
+
+		condJmp(unary, thenLabel, elseLabel);
+		gen::labelDef(thenLabel);
+		auto one = Expr::createLiteral("1", 10)->loadValue();
+		gen::jmp(endLabel);
+		gen::labelDef(elseLabel);
+		auto zero = Expr::createLiteral("0", 10)->loadValue();
+		gen::jmp(endLabel);
+		gen::labelDef(endLabel);
+		return gen::phi(one, thenLabel, zero, elseLabel, unary.type);
+	    }
+
 	default:
 	    assert(0);
 	    return nullptr;
@@ -472,6 +499,25 @@ Expr::loadValue(void) const
 }
 
 static void
+condJmp(const Unary &unary, gen::Label trueLabel, gen::Label falseLabel)
+{
+    switch (unary.kind) {
+	case Unary::Kind::LOGICAL_NOT:
+	    {
+		unary.child->condJmp(falseLabel, trueLabel);
+		return;
+	    }
+	default:
+	    {
+		auto ty = unary.type;
+		auto zero = Expr::createLiteral("0", 10, ty)->loadValue();
+		auto cond = gen::cond(gen::NE, loadValue(unary), zero);
+		gen::jmp(cond, trueLabel, falseLabel);
+	    }
+    }
+}
+
+static void
 condJmp(const Binary &binary, gen::Label trueLabel, gen::Label falseLabel)
 {
     switch (binary.kind) {
@@ -507,6 +553,8 @@ Expr::condJmp(gen::Label trueLabel, gen::Label falseLabel) const
 {
     if (std::holds_alternative<Binary>(variant)) {
 	::condJmp(std::get<Binary>(variant), trueLabel, falseLabel);
+    } else if (std::holds_alternative<Unary>(variant)) {
+	::condJmp(std::get<Unary>(variant), trueLabel, falseLabel);
     } else {
 	auto zero = createLiteral("0", 10, getType())->loadValue();
 	auto cond = gen::cond(gen::NE, loadValue(), zero);

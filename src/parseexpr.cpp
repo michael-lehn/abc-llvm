@@ -129,7 +129,9 @@ parseBinary(int prec)
 static ExprPtr
 parseUnary(void)
 {
-    if (token.kind == TokenKind::PLUS || token.kind == TokenKind::MINUS) {
+    if (token.kind == TokenKind::PLUS || token.kind == TokenKind::MINUS
+     || token.kind == TokenKind::NOT)
+    {
 	auto op = token.kind;
         getToken();
 	auto expr = parseUnary();
@@ -139,6 +141,8 @@ parseUnary(void)
         }
 	if (op == TokenKind::MINUS) {
 	    expr = Expr::createUnaryMinus(std::move(expr));
+	} else if (op == TokenKind::NOT) {
+	    expr = Expr::createLogicalNot(std::move(expr));
 	}
 	return expr;
     }

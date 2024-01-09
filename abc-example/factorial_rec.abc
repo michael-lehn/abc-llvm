@@ -28,7 +28,7 @@ fn main(): u64
 {
     local n: u64 = getU64();
 
-    if (getErr() == 0) {
+    if (!getErr()) {
 	printU64(factorial(n));
 	printNl();
 	return 0;

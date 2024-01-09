@@ -44,6 +44,7 @@ struct Unary
 	ADDRESS,
 	DEREF,
 	CAST,
+	LOGICAL_NOT,
     };
 
     Kind kind;
@@ -109,6 +110,7 @@ class Expr
 				     const Type *type = nullptr);
 	static ExprPtr createIdentifier(const char *ident, const Type *type);
 	static ExprPtr createUnaryMinus(ExprPtr &&expr);
+	static ExprPtr createLogicalNot(ExprPtr &&expr);
 	static ExprPtr createCast(ExprPtr &&child, const Type *toType);
 	static ExprPtr createBinary(Binary::Kind kind,
 				    ExprPtr &&left, ExprPtr &&right);
