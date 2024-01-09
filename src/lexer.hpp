@@ -69,6 +69,10 @@ enum class TokenKind {
     GREATER_EQUAL,
     LESS,
     LESS_EQUAL,
+    AND,
+    AND2,
+    OR,
+    OR2,
 };
 
 extern struct Token {

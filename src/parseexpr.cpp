@@ -65,6 +65,12 @@ static std::unordered_map<TokenKind, int> binaryOpPrec = {
     { TokenKind::EQUAL2, 9},
     { TokenKind::NOT_EQUAL, 9},
 
+    { TokenKind::AND2, 5},
+
+    { TokenKind::OR2, 4},
+
+    { TokenKind::NOT_EQUAL, 9},
+
 };
 
 static int
@@ -99,6 +105,10 @@ getBinaryExprKind(TokenKind kind)
 	    return Binary::Kind::GREATER;
 	case TokenKind::GREATER_EQUAL:
 	    return Binary::Kind::GREATER_EQUAL;
+	case TokenKind::AND2:
+	    return Binary::Kind::LOGICAL_AND;
+	case TokenKind::OR2:
+	    return Binary::Kind::LOGICAL_OR;
 	default:
 	    assert(0);
 	    return Binary::Kind::ADD; // never reached

@@ -457,6 +457,8 @@ loadValue(const Binary &binary)
 	case Binary::Kind::GREATER_EQUAL:
 	case Binary::Kind::NOT_EQUAL:
 	case Binary::Kind::EQUAL:
+	case Binary::Kind::LOGICAL_AND:
+	case Binary::Kind::LOGICAL_OR:
 	    {
 		auto thenLabel = gen::getLabel("then");
 		auto elseLabel = gen::getLabel("else");
@@ -472,6 +474,7 @@ loadValue(const Binary &binary)
 		gen::labelDef(endLabel);
 		return gen::phi(one, thenLabel, zero, elseLabel, binary.type);
 	    }
+
 	default:
 	    std::cerr << "binary.kind = " << int(binary.kind) << std::endl;
 	    assert(0);
@@ -538,12 +541,32 @@ condJmp(const Binary &binary, gen::Label trueLabel, gen::Label falseLabel)
 		gen::jmp(cond, trueLabel, falseLabel);
 		return;
 	    }
+	case Binary::Kind::LOGICAL_AND:
+            {
+		auto chkRightLabel = gen::getLabel("chkRight");
+		
+
+		binary.left->condJmp(chkRightLabel, falseLabel);
+		gen::labelDef(chkRightLabel);
+		binary.right->condJmp(trueLabel, falseLabel);
+		return;
+            }
+	case Binary::Kind::LOGICAL_OR:
+            {
+		auto chkRightLabel = gen::getLabel("chkRight");
+		
+		binary.left->condJmp(trueLabel, chkRightLabel);
+		gen::labelDef(chkRightLabel);
+		binary.right->condJmp(trueLabel, falseLabel);
+		return;
+            }
 	default:
 	    {
 		auto ty = binary.type;
 		auto zero = Expr::createLiteral("0", 10, ty)->loadValue();
 		auto cond = gen::cond(gen::NE, loadValue(binary), zero);
 		gen::jmp(cond, trueLabel, falseLabel);
+		return;
 	    }
     }
 }

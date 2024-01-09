@@ -131,6 +131,14 @@ tokenCStr(TokenKind kind)
 	    return "LESS";
 	case TokenKind::LESS_EQUAL:
 	    return "LESS_EQUAL";
+	case TokenKind::AND:
+	    return "AND";
+	case TokenKind::AND2:
+	    return "AND2";
+	case TokenKind::OR:
+	    return "OR";
+	case TokenKind::OR2:
+	    return "OR2";
 	default:
 	    std::cerr << "kind = " << int(kind) << std::endl;
 	    assert(0); // never reached
@@ -446,6 +454,24 @@ getToken(void)
 	    return tokenSet(TokenKind::LESS_EQUAL);
 	}
 	return tokenSet(TokenKind::LESS);
+    } else if (ch == '&') {
+	tokenUpdate();
+	nextCh();
+	if (ch == '&') {
+	    tokenUpdate();
+	    nextCh();
+	    return tokenSet(TokenKind::AND2);
+	}
+	return tokenSet(TokenKind::AND);
+    } else if (ch == '|') {
+	tokenUpdate();
+	nextCh();
+	if (ch == '|') {
+	    tokenUpdate();
+	    nextCh();
+	    return tokenSet(TokenKind::OR2);
+	}
+	return tokenSet(TokenKind::OR);
     }
 
     tokenUpdate();

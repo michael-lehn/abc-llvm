@@ -36,9 +36,9 @@ $(obj.dir)/%.o :$(src.dir)/%.cpp
 $(obj.dir)/%.o : $(src.dir)/%.cpp | $(dep.dir) $(obj.dir)
 	$(COMPILE.cc) $(OUTPUT_OPTION) $<
 
-$(bin.dir)/xtest_%: $(src.dir)/%.cpp
-$(bin.dir)/xtest_%: $(obj.dir)/xtest_%.o $(obj) | $(bin.dir)
-	$(CXX) $(LDFLAGS) $(TARGET_ARCH) $^ $(llvm.link) -o $@
+$(bin.dir)/xtest_%: $(src.dir)/xtest_%.cpp
+$(bin.dir)/xtest_%: $(src.dir)/xtest_%.cpp $(obj) | $(bin.dir)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $< $(obj) $(llvm.link) -o $@
 
 $(obj.dir): ; mkdir -p $@
 $(dep.dir): ; mkdir -p $@
