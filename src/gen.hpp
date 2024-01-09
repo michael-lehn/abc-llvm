@@ -1,6 +1,7 @@
 #ifndef GEN_HPP
 #define GEN_HPP
 
+#include <cstdint>
 #include <vector>
 
 #include "llvm/IR/Value.h"
@@ -68,7 +69,8 @@ enum AluOp {
     UMOD,
 };
 
-Reg loadConst(const char *val, const Type *type);
+Reg cast(Reg reg, const Type *fromType, const Type *toType);
+Reg loadConst(const char *val, const Type *type, std::uint8_t radix);
 Reg aluInstr(AluOp op, Reg l, Reg r);
 
 void dump_bc(const char *filename = "out");

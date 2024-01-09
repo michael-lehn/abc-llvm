@@ -400,7 +400,28 @@ store(Reg reg, const char *ident, const Type *type)
 //------------------------------------------------------------------------------
 
 Reg
-loadConst(const char *val, const Type *type)
+cast(Reg reg, const Type *fromType, const Type *toType)
+{
+    if (currFn.bbClosed) {
+	llvm::errs() << "Warning: not reachable cast\n";
+	return nullptr;
+    }
+
+    auto ty = TypeMap::get(toType);
+    if (fromType->isInteger() && toType->isInteger()) {
+	if (toType->getIntegerNumBits() > fromType->getIntegerNumBits()) {
+	    return toType->getIntegerKind() == Type::UNSIGNED
+		? llvmBuilder->CreateZExtOrBitCast(reg, ty)
+		: llvmBuilder->CreateSExtOrBitCast(reg, ty); 
+	}
+	return llvmBuilder->CreateTruncOrBitCast(reg, ty); 
+    }
+    assert(0);
+    return nullptr;
+}
+
+Reg
+loadConst(const char *val, const Type *type, std::uint8_t radix)
 {
     if (currFn.bbClosed) {
 	llvm::errs() << "Warning: not reachable load constant\n";
@@ -408,7 +429,7 @@ loadConst(const char *val, const Type *type)
     }
 
     if (type->isInteger()) {
-	auto apint = llvm::APInt(type->getIntegerNumBits(), val, 10);
+	auto apint = llvm::APInt(type->getIntegerNumBits(), val, radix);
 	return llvm::ConstantInt::get(*llvmContext, apint);
     }
     return nullptr;

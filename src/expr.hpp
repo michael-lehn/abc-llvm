@@ -1,10 +1,12 @@
 #ifndef EXPR_HPP
 #define EXPR_HPP
 
-#include <string>
+#include <cstdint>
 #include <memory>
+#include <string>
 
 #include "gen.hpp"
+#include "type.hpp"
 
 class Expr;
 struct ExprDeleter
@@ -20,15 +22,39 @@ using ExprVectorPtr = std::unique_ptr<ExprVector>;
 struct Literal
 {
     const char *val;
+    const Type *type;
+    std::uint8_t radix;
 
-    Literal(const char *val) : val{val} {}
+    Literal(const char *val, const Type *type, std::uint8_t radix)
+	: val{val}, type{type}, radix{radix} {}
 };
 
 struct Identifier
 {
     const char *val;
+    const Type *type;
 
-    Identifier(const char *val) : val{val} {}
+    Identifier(const char *val, const Type *type) : val{val}, type{type} {}
+};
+
+struct Unary
+{
+    enum Kind
+    {
+	ADDRESS,
+	DEREF,
+	CAST,
+    };
+
+    Kind kind;
+    ExprPtr child;
+    const Type *type;
+
+    Unary(Kind kind, ExprPtr &&child, const Type *type)
+	: kind{kind}, child{std::move(child)}, type{type}
+    {}
+
+    const Type * getType(void);
 };
 
 struct Binary
@@ -54,37 +80,44 @@ struct Binary
 
     Kind kind;
     ExprPtr left, right;
+    const Type *type;
 
     Binary(Kind kind, ExprPtr &&left, ExprPtr &&right)
-	: kind{kind}, left{std::move(left)}, right{std::move(right)}
-    {}
+	: kind{kind}, left{std::move(left)}, right{std::move(right)},
+	  type{nullptr}
+    {
+	setTypeAndCastOperands();
+    }
+
+    void setTypeAndCastOperands(void);
 };
 
 class Expr
 {
     public:
-	std::variant<Literal, Identifier, Binary, ExprVector> variant;
+	std::variant<Literal, Identifier, Unary, Binary, ExprVector> variant;
 
     private:
-
 	Expr(Literal &&val) : variant{std::move(val)} {}
 	Expr(Identifier &&ident) : variant{std::move(ident)} {}
+	Expr(Unary &&unary) : variant{std::move(unary)} {}
 	Expr(Binary &&binary) : variant{std::move(binary)} {}
 	Expr(ExprVector &&vec) : variant{std::move(vec)} {}
 
     public:
 	static ExprPtr createLiteral(const char *val, std::uint8_t radix,
-				     const Type *ty);
-	static ExprPtr createIdentifier(const char *ident, const Type *ty);
+				     const Type *type = nullptr);
+	static ExprPtr createIdentifier(const char *ident, const Type *type);
 	static ExprPtr createUnaryMinus(ExprPtr &&expr);
+	static ExprPtr createCast(ExprPtr &&child, const Type *toType);
 	static ExprPtr createBinary(Binary::Kind kind,
 				    ExprPtr &&left, ExprPtr &&right);
 	static ExprPtr createCall(ExprPtr &&fn, ExprVector &&param);
 	static ExprPtr createExprVector(ExprVector &&expr);
 
 	void print(int indent = 0) const;
-	const Type *getType();
-	bool isLValue() const;
+	const Type *getType(void) const;
+	bool isLValue(void) const;
 	bool isConst(void) const;
 
 	// code generation

@@ -1,3 +1,5 @@
+#include <cstring>
+#include <charconv>
 #include <iostream>
 #include <type_traits>
 #include <variant>
@@ -12,40 +14,142 @@ ExprDeleter::operator()(const Expr *expr) const
     delete expr;
 }
 
+//-- class Binary --------------------------------------------------------------
+
+static const Type *
+getTypeConversion(const Type *from, const Type *to)
+{
+    if (from->isInteger() && to->isInteger()) {
+	// TODO: generate warning if sizeof(to) < sizeof(from)
+	return to;
+    }
+    std::cerr << "can not convert type '"
+	<< from << "' to type '" << to << "'" << std::endl;
+    assert(0);
+    return nullptr;
+}
+
+void
+Binary::setTypeAndCastOperands(void)
+{
+    const Type *l = left->getType();
+    const Type *r = right->getType();
+    switch (kind) {
+	case Binary::Kind::CALL:
+	    assert(l->isFunction());
+	    type = l->getRetType();
+	    return;
+
+	case Binary::Kind::ASSIGN:
+	    type = getTypeConversion(r, l);
+	    if (type && r != type) {
+		right = Expr::createCast(std::move(right), type);
+	    }
+	    return;
+
+	case Binary::Kind::ADD:
+	case Binary::Kind::SUB:
+	case Binary::Kind::MUL:
+	case Binary::Kind::DIV:
+	case Binary::Kind::MOD:
+	    if (l->isInteger() && r->isInteger()) {
+		auto size = std::max(l->getIntegerNumBits(),
+				     r->getIntegerNumBits());
+		// when mixing signed and unsigned: unsigned wins 
+		type = l->getIntegerKind() == Type::UNSIGNED
+		    || r->getIntegerKind() == Type::UNSIGNED
+		    ? Type::getUnsignedInteger(size)
+		    : Type::getSignedInteger(size);
+		if (l != type) {
+		    left = Expr::createCast(std::move(left), type);
+		}
+		if (r != type) {
+		    right = Expr::createCast(std::move(right), type);
+		}
+	    }
+	    return;
+
+	case Binary::Kind::EQUAL:
+	case Binary::Kind::NOT_EQUAL:
+	case Binary::Kind::GREATER:
+	case Binary::Kind::GREATER_EQUAL:
+	case Binary::Kind::LESS:
+	case Binary::Kind::LESS_EQUAL:
+	case Binary::Kind::LOGICAL_AND:
+	case Binary::Kind::LOGICAL_OR:
+	    type = Type::getUnsignedInteger(8); // TODO: Use bool type
+	    if (l != type) {
+		left = Expr::createCast(std::move(left), type);
+	    }
+	    if (r != type) {
+		right = Expr::createCast(std::move(right), type);
+	    }
+	    return;
+
+	default:
+	    type = nullptr;
+	    return;
+    }
+}
 //-- class Expr: static member functions ---------------------------------------
 
-ExprPtr
-Expr::createLiteral(const char *val, std::uint8_t radix, const Type *ty)
+static const Type *
+getIntType(const char *s, const char *end, std::uint8_t radix)
 {
-    return ExprPtr(new Expr{Literal{val}});
+    {
+	std::uint8_t result;
+	auto [ptr, ec] = std::from_chars(s, end, result, radix);
+	if (ec == std::errc()) {
+	    return Type::getUnsignedInteger(8);
+	}
+    }
+    return Type::getUnsignedInteger(64);
 }
 
 ExprPtr
-Expr::createIdentifier(const char *ident, const Type *ty)
+Expr::createLiteral(const char *val, std::uint8_t radix, const Type *type)
 {
-    return ExprPtr(new Expr{Identifier{ident}});
+    if (!type)  {
+	type = getIntType(val, val + strlen(val), radix);
+    }
+    return ExprPtr{new Expr{Literal{val, type, radix}}};
+}
+
+ExprPtr
+Expr::createIdentifier(const char *ident, const Type *type)
+{
+    return ExprPtr{new Expr{Identifier{ident, type}}};
 }
 
 ExprPtr
 Expr::createUnaryMinus(ExprPtr &&expr)
 {
-    auto zero = createLiteral("0", 10, Type::getUnsignedInteger(64));
+    auto zero = createLiteral("0", 10);
     return createBinary(Binary::Kind::SUB, std::move(zero), std::move(expr));
+}
+
+ExprPtr
+Expr::createCast(ExprPtr &&child, const Type *toType)
+{
+    auto expr = new Expr{Unary{Unary::Kind::CAST, std::move(child), toType}};
+    return ExprPtr{expr};
 }
 
 ExprPtr
 Expr::createBinary(Binary::Kind kind, ExprPtr &&left, ExprPtr &&right)
 {
     auto expr = new Expr{Binary{kind, std::move(left), std::move(right)}};
-    return ExprPtr(expr);
+    return ExprPtr{expr};
 }
 
 ExprPtr
 Expr::createCall(ExprPtr &&fn, ExprVector &&param)
 {
+    assert(fn->getType()->isFunction());
+
     auto p = createExprVector(std::move(param));
     auto expr = createBinary(Binary::Kind::CALL, std::move(fn), std::move(p));
-    return ExprPtr(std::move(expr));
+    return ExprPtr{std::move(expr)};
 }
 
 ExprPtr
@@ -57,9 +161,26 @@ Expr::createExprVector(ExprVector &&expr)
 //-- methods -------------------------------------------------------------------
 
 static const char *
+exprKindCStr(Unary::Kind kind)
+{
+    switch (kind) {
+	case Unary::Kind::ADDRESS:
+	    return "address";
+	case Unary::Kind::DEREF:
+	    return "address";
+	case Unary::Kind::CAST:
+	    return "cast";
+	default:
+	    return "?";
+    }
+}
+
+static const char *
 exprKindCStr(Binary::Kind kind)
 {
     switch (kind) {
+	case Binary::Kind::CALL:
+	    return "call";
 	case Binary::Kind::ADD:
 	    return "+";
 	case Binary::Kind::ASSIGN:
@@ -104,12 +225,35 @@ Expr::print(int indent) const
     } else if (std::holds_alternative<Identifier>(variant)) {
 	const auto &ident = std::get<Identifier>(variant);
 	std::printf("Identifier: %s\n", ident.val);
+    } else if (std::holds_alternative<Unary>(variant)) {
+	const auto &unary = std::get<Unary>(variant);
+	std::printf("[%s]\n", exprKindCStr(unary.kind));
+	unary.child->print(indent + 4);
     } else if (std::holds_alternative<Binary>(variant)) {
 	const auto &binary = std::get<Binary>(variant);
 	std::printf("[%s]\n", exprKindCStr(binary.kind));
 	binary.left->print(indent + 4);
 	binary.right->print(indent + 4);
     }
+}
+
+const Type *
+Expr::getType(void) const
+{
+    if (std::holds_alternative<Literal>(variant)) {
+	return std::get<Literal>(variant).type;
+    } else if (std::holds_alternative<Identifier>(variant)) {
+	return std::get<Identifier>(variant).type;
+    } else if (std::holds_alternative<Unary>(variant)) {
+	return std::get<Unary>(variant).type;
+    } else if (std::holds_alternative<Binary>(variant)) {
+	return std::get<Binary>(variant).type;
+    } else if (std::holds_alternative<ExprVector>(variant)) {
+	const auto &vec = std::get<ExprVector>(variant);
+	return vec.empty() ? nullptr : vec.back()->getType();
+    }
+    assert(0);
+    return nullptr; // never reached
 }
 
 bool
@@ -190,15 +334,28 @@ getGenCondOp(Binary::Kind kind)
 static gen::Reg
 loadValue(const Literal &l)
 {
-    return gen::loadConst(l.val, Type::getUnsignedInteger(64));
+    return gen::loadConst(l.val, l.type, l.radix);
 }
 
 static gen::Reg
 loadValue(const Identifier &ident)
 {
-    return gen::fetch(ident.val, Type::getUnsignedInteger(64));
+    return gen::fetch(ident.val, ident.type);
 }
 
+static gen::Reg
+loadValue(const Unary &unary)
+{
+    switch (unary.kind) {
+	case Unary::Kind::CAST:
+	    return gen::cast(unary.child->loadValue(), unary.child->getType(),
+			     unary.type);
+	default:
+	    assert(0);
+	    return nullptr;
+    }
+}
+	
 static void condJmp(const Binary &, gen::Label, gen::Label);
 
 static gen::Reg
@@ -220,7 +377,7 @@ loadValue(const Binary &binary)
 	    {
 		auto l = std::get<Identifier>(binary.left->variant);
 		auto r = binary.right->loadValue();
-		gen::store(r, l.val, Type::getUnsignedInteger(64));
+		gen::store(r, l.val, binary.type);
 		return r;
 	    }
 	case Binary::Kind::ADD:
@@ -241,21 +398,19 @@ loadValue(const Binary &binary)
 	case Binary::Kind::NOT_EQUAL:
 	case Binary::Kind::EQUAL:
 	    {
-		auto ty =  Type::getUnsignedInteger(64);
-
 		auto thenLabel = gen::getLabel("then");
 		auto elseLabel = gen::getLabel("else");
 		auto endLabel = gen::getLabel("end");
 
 		condJmp(binary, thenLabel, elseLabel);
 		gen::labelDef(thenLabel);
-		auto r1 = gen::loadConst("1", ty);
+		auto one = Expr::createLiteral("1", 10)->loadValue();
 		gen::jmp(endLabel);
 		gen::labelDef(elseLabel);
-		auto r2 = gen::loadConst("0", ty);
+		auto zero = Expr::createLiteral("0", 10)->loadValue();
 		gen::jmp(endLabel);
 		gen::labelDef(endLabel);
-		return gen::phi(r1, thenLabel, r2, elseLabel, ty);
+		return gen::phi(one, thenLabel, zero, elseLabel, binary.type);
 	    }
 	default:
 	    std::cerr << "binary.kind = " << int(binary.kind) << std::endl;
@@ -271,6 +426,8 @@ Expr::loadValue(void) const
 	return ::loadValue(std::get<Literal>(variant));
     } else if (std::holds_alternative<Identifier>(variant)) {
 	return ::loadValue(std::get<Identifier>(variant));
+    } else if (std::holds_alternative<Unary>(variant)) {
+	return ::loadValue(std::get<Unary>(variant));
     } else if (std::holds_alternative<Binary>(variant)) {
 	return ::loadValue(std::get<Binary>(variant));
     } else if (std::holds_alternative<ExprVector>(variant)) {
@@ -301,8 +458,8 @@ condJmp(const Binary &binary, gen::Label trueLabel, gen::Label falseLabel)
 	    }
 	default:
 	    {
-		auto ty =  Type::getUnsignedInteger(64);
-		auto zero = gen::loadConst("0", ty);
+		auto ty = binary.type;
+		auto zero = Expr::createLiteral("0", 10, ty)->loadValue();
 		auto cond = gen::cond(gen::NE, loadValue(binary), zero);
 		gen::jmp(cond, trueLabel, falseLabel);
 	    }
@@ -315,9 +472,10 @@ Expr::condJmp(gen::Label trueLabel, gen::Label falseLabel) const
     if (std::holds_alternative<Binary>(variant)) {
 	::condJmp(std::get<Binary>(variant), trueLabel, falseLabel);
     } else {
-	auto ty =  Type::getUnsignedInteger(64);
-	auto zero = gen::loadConst("0", ty);
+	auto zero = createLiteral("0", 10, getType())->loadValue();
 	auto cond = gen::cond(gen::NE, loadValue(), zero);
 	gen::jmp(cond, trueLabel, falseLabel);
     }
 }
+
+

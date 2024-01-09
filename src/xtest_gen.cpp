@@ -25,7 +25,7 @@ main(void)
     auto endLabel = gen::getLabel("end");
 
     auto a = gen::fetch("a", Type::getUnsignedInteger(64));
-    auto zero = gen::loadConst("0", Type::getUnsignedInteger(64));
+    auto zero = gen::loadConst("0", Type::getUnsignedInteger(64), 10);
     auto cond = gen::cond(gen::EQ, a, zero);
     gen::jmp(cond, thenLabel, elseLabel);
 

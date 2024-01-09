@@ -92,6 +92,8 @@ class Type
 	static const Type *getFunction(const Type *retType,
 				       std::vector<const Type *> argType);
 
+	// TODO: provide bool type
+	// TODO: provide void type? (currently nullptr represents void)
 };
 
 std::ostream &operator<<(std::ostream &out, const Type *type);

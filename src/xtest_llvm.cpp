@@ -1,3 +1,4 @@
+#include <iostream>
 #include <system_error>
 #include <memory>
 #include <vector>
@@ -75,7 +76,15 @@ main(void)
     auto tmp3 = Builder->CreateAdd(arg0, tmp2);
     auto tmp4 = Builder->CreateAdd(tmp3, tmp3);
     auto tmp5 = Builder->CreateAdd(tmp3, tmp3);
-    Builder->CreateRet(Builder->CreateAdd(tmp4, tmp5));
+
+    // integer cast test
+    auto u64_v = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, "42", 10));
+    auto u8_t = llvm::Type::getInt8Ty(*TheContext);
+    auto cast = Builder->CreateZExtOrBitCast(u64_v, u8_t);
+
+    auto tmp6 = Builder->CreateAdd(cast, cast);
+
+    Builder->CreateRet(Builder->CreateAdd(tmp4, tmp6));
 
     llvm::GlobalVariable* gvar_ptr_abc = new llvm::GlobalVariable(
 	 *TheModule,
@@ -84,6 +93,8 @@ main(void)
         /*Linkage=*/llvm::GlobalValue::ExternalLinkage,
         /*Initializer=*/llvm::dyn_cast<llvm::ConstantInt>(tmp2),
         /*Name=*/"abc");
+
+
 
     TheModule->print(llvm::errs(), nullptr);
 
