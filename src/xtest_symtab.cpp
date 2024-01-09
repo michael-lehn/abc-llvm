@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "symtab.hpp"
-#include "types.hpp"
+#include "type.hpp"
 #include "ustr.hpp"
 
 void

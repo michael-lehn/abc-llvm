@@ -4,7 +4,7 @@
 #include <ostream>
 
 #include "lexer.hpp"
-#include "types.hpp"
+#include "type.hpp"
 #include "ustr.hpp"
 
 namespace symtab {

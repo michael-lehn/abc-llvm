@@ -4,7 +4,7 @@
 
 #include "gen.hpp"
 #include "expr.hpp"
-#include "types.hpp"
+#include "type.hpp"
 
 int
 main(void)
@@ -51,9 +51,9 @@ main(void)
     gen::ret(r);
     gen::fnDefEnd();
 
-    auto someConst = Expr::createLiteral("42");
+    auto someConst = Expr::createLiteral("42", 10, nullptr);
     gen::defGlobal("globalFoo", Type::getUnsignedInteger(64),
-		   someConst->getConst()); 
+		   someConst->loadConst()); 
 
     std::cerr << "writing to 'ex_gen.bc'" << std::endl;
     gen::dump_bc("ex_gen");

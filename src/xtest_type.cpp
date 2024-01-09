@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <iostream>
 
-#include "types.hpp"
+#include "type.hpp"
 
 int
 main(void)

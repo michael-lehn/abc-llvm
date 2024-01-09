@@ -1,6 +1,6 @@
 #include "expr.hpp"
 #include "gen.hpp"
-#include "types.hpp"
+#include "type.hpp"
 
 int
 main(void)
@@ -14,9 +14,9 @@ main(void)
 			std::move(unary),
 			std::move(lit));
 			*/
-    auto lit42 = Expr::createLiteral("42");
-    auto a = Expr::createIdentifier("a");
-    auto b = Expr::createIdentifier("b");
+    auto lit42 = Expr::createLiteral("42", 10, nullptr);
+    auto a = Expr::createIdentifier("a", Type::getUnsignedInteger(64));
+    auto b = Expr::createIdentifier("b", Type::getUnsignedInteger(64));
     auto binary = Expr::createBinary(
 			Binary::Kind::ADD,
 			Expr::createBinary(
@@ -42,7 +42,7 @@ main(void)
     auto fn = Type::getFunction(ret, arg);
     gen::fnDef("foo", fn, param);
 
-    auto r = binary->load();
+    auto r = binary->loadValue();
     gen::ret(r);
     gen::fnDefEnd();
 
@@ -52,5 +52,4 @@ main(void)
     gen::dump_asm("expr1", 1);
     gen::dump_asm("expr2", 2);
     gen::dump_asm("expr3", 3);
-    
 }

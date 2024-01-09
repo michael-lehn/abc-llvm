@@ -1,5 +1,5 @@
-#ifndef TYPES_HPP
-#define TYPES_HPP
+#ifndef TYPE_HPP
+#define TYPE_HPP
 
 #include <cstddef>
 #include <variant>
@@ -90,10 +90,10 @@ class Type
 	static const Type *getSignedInteger(std::size_t numBits);
 	static const Type *getPointer(const Type *refType);
 	static const Type *getFunction(const Type *retType,
-				std::vector<const Type *> argType);
+				       std::vector<const Type *> argType);
 
 };
 
 std::ostream &operator<<(std::ostream &out, const Type *type);
 
-#endif // TYPES_HPP
+#endif // TYPE_HPP

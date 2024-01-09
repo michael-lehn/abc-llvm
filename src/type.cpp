@@ -1,7 +1,7 @@
 #include <iostream>
 #include <set>
 
-#include "types.hpp"
+#include "type.hpp"
 
 //------------------------------------------------------------------------------
 

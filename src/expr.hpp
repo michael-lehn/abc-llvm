@@ -73,8 +73,9 @@ class Expr
 	Expr(ExprVector &&vec) : variant{std::move(vec)} {}
 
     public:
-	static ExprPtr createLiteral(const char *val);
-	static ExprPtr createIdentifier(const char *ident);
+	static ExprPtr createLiteral(const char *val, std::uint8_t radix,
+				     const Type *ty);
+	static ExprPtr createIdentifier(const char *ident, const Type *ty);
 	static ExprPtr createUnaryMinus(ExprPtr &&expr);
 	static ExprPtr createBinary(Binary::Kind kind,
 				    ExprPtr &&left, ExprPtr &&right);
@@ -82,9 +83,13 @@ class Expr
 	static ExprPtr createExprVector(ExprVector &&expr);
 
 	void print(int indent = 0) const;
+	const Type *getType();
+	bool isLValue() const;
 	bool isConst(void) const;
-	gen::ConstVal getConst(void) const;
-	gen::Reg load(void) const;
+
+	// code generation
+	gen::ConstVal loadConst(void) const;
+	gen::Reg loadValue(void) const;
 	void condJmp(gen::Label trueLabel, gen::Label falseLabel) const;
 };
 

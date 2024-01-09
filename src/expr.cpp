@@ -15,13 +15,13 @@ ExprDeleter::operator()(const Expr *expr) const
 //-- class Expr: static member functions ---------------------------------------
 
 ExprPtr
-Expr::createLiteral(const char *val)
+Expr::createLiteral(const char *val, std::uint8_t radix, const Type *ty)
 {
     return ExprPtr(new Expr{Literal{val}});
 }
 
 ExprPtr
-Expr::createIdentifier(const char *ident)
+Expr::createIdentifier(const char *ident, const Type *ty)
 {
     return ExprPtr(new Expr{Identifier{ident}});
 }
@@ -29,7 +29,7 @@ Expr::createIdentifier(const char *ident)
 ExprPtr
 Expr::createUnaryMinus(ExprPtr &&expr)
 {
-    auto zero = createLiteral("0");
+    auto zero = createLiteral("0", 10, Type::getUnsignedInteger(64));
     return createBinary(Binary::Kind::SUB, std::move(zero), std::move(expr));
 }
 
@@ -135,12 +135,12 @@ Expr::isConst(void) const
 }
 
 gen::ConstVal
-Expr::getConst(void) const
+Expr::loadConst(void) const
 {
     assert(isConst());
 
     using T = std::remove_pointer_t<gen::ConstVal>;
-    return llvm::dyn_cast<T>(load());
+    return llvm::dyn_cast<T>(loadValue());
 }
 
 // TODO: for div/mod the type is needed
@@ -188,13 +188,13 @@ getGenCondOp(Binary::Kind kind)
 }
 
 static gen::Reg
-load(const Literal &l)
+loadValue(const Literal &l)
 {
     return gen::loadConst(l.val, Type::getUnsignedInteger(64));
 }
 
 static gen::Reg
-load(const Identifier &ident)
+loadValue(const Identifier &ident)
 {
     return gen::fetch(ident.val, Type::getUnsignedInteger(64));
 }
@@ -202,7 +202,7 @@ load(const Identifier &ident)
 static void condJmp(const Binary &, gen::Label, gen::Label);
 
 static gen::Reg
-load(const Binary &binary)
+loadValue(const Binary &binary)
 {
     switch (binary.kind) {
 	case Binary::Kind::CALL:
@@ -211,7 +211,7 @@ load(const Binary &binary)
 		auto &r = std::get<ExprVector>(binary.right->variant);
 		std::vector<gen::Reg> param{r.size()};
 		for (std::size_t i = 0; i < r.size(); ++i) {
-		    param[i] = r[i]->load();
+		    param[i] = r[i]->loadValue();
 		}
 		return gen::call(l.val, param);
 	    }
@@ -219,7 +219,7 @@ load(const Binary &binary)
 	case Binary::Kind::ASSIGN:
 	    {
 		auto l = std::get<Identifier>(binary.left->variant);
-		auto r = binary.right->load();
+		auto r = binary.right->loadValue();
 		gen::store(r, l.val, Type::getUnsignedInteger(64));
 		return r;
 	    }
@@ -229,8 +229,8 @@ load(const Binary &binary)
 	case Binary::Kind::DIV:
 	case Binary::Kind::MOD:
 	    {
-		auto l = binary.left->load();
-		auto r = binary.right->load();
+		auto l = binary.left->loadValue();
+		auto r = binary.right->loadValue();
 		auto op = getGenAluOp(binary.kind);
 		return gen::aluInstr(op, l, r);
 	    }
@@ -265,14 +265,14 @@ load(const Binary &binary)
 }
 
 gen::Reg
-Expr::load(void) const
+Expr::loadValue(void) const
 {
     if (std::holds_alternative<Literal>(variant)) {
-	return ::load(std::get<Literal>(variant));
+	return ::loadValue(std::get<Literal>(variant));
     } else if (std::holds_alternative<Identifier>(variant)) {
-	return ::load(std::get<Identifier>(variant));
+	return ::loadValue(std::get<Identifier>(variant));
     } else if (std::holds_alternative<Binary>(variant)) {
-	return ::load(std::get<Binary>(variant));
+	return ::loadValue(std::get<Binary>(variant));
     } else if (std::holds_alternative<ExprVector>(variant)) {
 	assert(0);
 	return nullptr;
@@ -293,8 +293,8 @@ condJmp(const Binary &binary, gen::Label trueLabel, gen::Label falseLabel)
 	case Binary::Kind::EQUAL:
 	    {
 		auto condOp = getGenCondOp(binary.kind);
-		auto l = binary.left->load();
-		auto r = binary.right->load();
+		auto l = binary.left->loadValue();
+		auto r = binary.right->loadValue();
 		auto cond = gen::cond(condOp, l, r);
 		gen::jmp(cond, trueLabel, falseLabel);
 		return;
@@ -303,7 +303,7 @@ condJmp(const Binary &binary, gen::Label trueLabel, gen::Label falseLabel)
 	    {
 		auto ty =  Type::getUnsignedInteger(64);
 		auto zero = gen::loadConst("0", ty);
-		auto cond = gen::cond(gen::NE, load(binary), zero);
+		auto cond = gen::cond(gen::NE, loadValue(binary), zero);
 		gen::jmp(cond, trueLabel, falseLabel);
 	    }
     }
@@ -317,7 +317,7 @@ Expr::condJmp(gen::Label trueLabel, gen::Label falseLabel) const
     } else {
 	auto ty =  Type::getUnsignedInteger(64);
 	auto zero = gen::loadConst("0", ty);
-	auto cond = gen::cond(gen::NE, load(), zero);
+	auto cond = gen::cond(gen::NE, loadValue(), zero);
 	gen::jmp(cond, trueLabel, falseLabel);
     }
 }

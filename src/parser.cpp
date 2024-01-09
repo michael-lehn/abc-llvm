@@ -101,7 +101,7 @@ parseGlobalDef(void)
 		expectedError("non-empty constant expression");
 	    }
 	}
-	auto initValue = init ? init->getConst() : nullptr;
+	auto initValue = init ? init->loadConst() : nullptr;
 	gen::defGlobal(s->internalIdent.c_str(), s->type, initValue);
 	if (token.kind != TokenKind::COMMA) {
 	    break;
@@ -264,12 +264,9 @@ parseFnType(void)
 
 //------------------------------------------------------------------------------
 
-static const Type *
-parseType(void)
+const Type *
+parseIntType(void)
 {
-    if (auto fnType = parseFnType()) {
-	return fnType;
-    }
     switch (token.kind) {
 	case TokenKind::U8:
 	    getToken();
@@ -298,6 +295,15 @@ parseType(void)
 	default:
 	    return nullptr;		
     }
+}
+
+static const Type *
+parseType(void)
+{
+    if (auto fnType = parseFnType()) {
+	return fnType;
+    }
+    return parseIntType();
 }
 
 //------------------------------------------------------------------------------
@@ -339,11 +345,11 @@ parseLocalDef(void)
 	    if (!init) {
 		expectedError("non-empty expression");
 	    }
-	    auto var = Expr::createIdentifier(s->internalIdent.c_str());
+	    auto var = Expr::createIdentifier(s->internalIdent.c_str(), type);
 	    init = Expr::createBinary(Binary::Kind::ASSIGN,
 				      std::move(var),
 				      std::move(init));
-	    init->load();
+	    init->loadValue();
 	}
 	if (token.kind != TokenKind::COMMA) {
 	    return true;
@@ -493,7 +499,7 @@ parseForStmt(void)
     if (!parseLocalDef()) {
 	auto init = parseExpr();
 	if (init) {
-	    init->load();
+	    init->loadValue();
 	}
     }
     expected(TokenKind::SEMICOLON);
@@ -501,7 +507,7 @@ parseForStmt(void)
     // parse 'cond' expr
     auto cond = parseExpr();
     if (!cond) {
-	cond = Expr::createLiteral("1");
+	cond = Expr::createLiteral("1", 10, nullptr);
     }
     expected(TokenKind::SEMICOLON);
     getToken();
@@ -527,7 +533,7 @@ parseForStmt(void)
 	expectedError("compound statement block");
     }
     if (update) {
-	update->load();
+	update->loadValue();
     }
     gen::jmp(condLabel);
 
@@ -547,7 +553,7 @@ parseReturnStmt(void)
     auto expr = parseExpr();
     expected(TokenKind::SEMICOLON);
     getToken();
-    gen::ret(expr->load());
+    gen::ret(expr->loadValue());
     return true;
 }
 
@@ -560,7 +566,7 @@ parseExprStmt(void)
     }
     expected(TokenKind::SEMICOLON);
     getToken();
-    expr->load();
+    expr->loadValue();
     return true;
 }
 

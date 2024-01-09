@@ -5,7 +5,7 @@
 
 #include "llvm/IR/Value.h"
 
-#include "types.hpp"
+#include "type.hpp"
 
 namespace gen {
 

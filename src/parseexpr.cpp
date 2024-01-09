@@ -154,7 +154,8 @@ parsePrimary(void)
 	    semanticError(msg.c_str());
 	}
         getToken();
-	auto expr = Expr::createIdentifier(symEntry->internalIdent.c_str());
+	auto expr = Expr::createIdentifier(symEntry->internalIdent.c_str(),
+					   symEntry->type);
 	if (token.kind == TokenKind::LPAREN) {
 	    // function call
 	    if (!symEntry->type->isFunction()) {
@@ -190,18 +191,22 @@ parsePrimary(void)
 	}
         return expr;
     } else if (token.kind == TokenKind::DECIMAL_LITERAL) {
-	auto expr = Expr::createLiteral(token.val.c_str());
+	auto val = token.val.c_str();
         getToken();
+	auto ty = parseIntType();
+	auto expr = Expr::createLiteral(val, 10, ty);
         return expr;
     } else if (token.kind == TokenKind::HEXADECIMAL_LITERAL) {
-	// TODO: hex!
-	auto expr = Expr::createLiteral(token.val.c_str());
+	auto val = token.val.c_str();
         getToken();
+	auto ty = parseIntType();
+	auto expr = Expr::createLiteral(val, 16, ty);
         return expr;
     } else if (token.kind == TokenKind::OCTAL_LITERAL) {
-	// TODO: oct!
-	auto expr = Expr::createLiteral(token.val.c_str());
+	auto val = token.val.c_str();
         getToken();
+	auto ty = parseIntType();
+	auto expr = Expr::createLiteral(val, 8, ty);
         return expr;
     } else if (token.kind == TokenKind::LPAREN) {
         getToken();
