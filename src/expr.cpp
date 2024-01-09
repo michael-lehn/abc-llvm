@@ -20,7 +20,7 @@ static const Type *
 getTypeConversion(const Type *from, const Type *to)
 {
     if (from->isInteger() && to->isInteger()) {
-	// TODO: generate warning if sizeof(to) < sizeof(from)
+	// TODO: -Wconversion generate warning if sizeof(to) < sizeof(from)
 	return to;
     }
     std::cerr << "can not convert type '"
@@ -78,11 +78,21 @@ Binary::setTypeAndCastOperands(void)
 	case Binary::Kind::LOGICAL_AND:
 	case Binary::Kind::LOGICAL_OR:
 	    type = Type::getUnsignedInteger(8); // TODO: Use bool type
-	    if (l != type) {
-		left = Expr::createCast(std::move(left), type);
-	    }
-	    if (r != type) {
-		right = Expr::createCast(std::move(right), type);
+	    // cast operand to same type
+	    if (l->isInteger() && r->isInteger()) {
+		auto size = std::max(l->getIntegerNumBits(),
+				     r->getIntegerNumBits());
+		// when mixing signed and unsigned: unsigned wins 
+		auto ty = l->getIntegerKind() == Type::UNSIGNED
+		       || r->getIntegerKind() == Type::UNSIGNED
+		       ? Type::getUnsignedInteger(size)
+		       : Type::getSignedInteger(size);
+		if (l != ty) {
+		    left = Expr::createCast(std::move(left), ty);
+		}
+		if (r != ty) {
+		    right = Expr::createCast(std::move(right), ty);
+		}
 	    }
 	    return;
 
@@ -93,17 +103,34 @@ Binary::setTypeAndCastOperands(void)
 }
 //-- class Expr: static member functions ---------------------------------------
 
+template <typename IntType, std::uint8_t numBits>
+static bool
+getIntType(const char *s, const char *end, std::uint8_t radix, const Type *&ty)
+{
+    IntType result;
+    auto [ptr, ec] = std::from_chars(s, end, result, radix);
+    if (ec == std::errc()) {
+	ty = Type::getSignedInteger(numBits);
+	return true;
+    }
+    ty = nullptr; 
+    return false;
+}
+
 static const Type *
 getIntType(const char *s, const char *end, std::uint8_t radix)
 {
+    const Type *ty;
+    if (getIntType<std::int8_t, 8>(s, end, radix, ty)
+     || getIntType<std::int16_t, 16>(s, end, radix, ty)
+     || getIntType<std::int32_t, 32>(s, end, radix, ty)
+     || getIntType<std::int64_t, 64>(s, end, radix, ty))
     {
-	std::uint8_t result;
-	auto [ptr, ec] = std::from_chars(s, end, result, radix);
-	if (ec == std::errc()) {
-	    return Type::getUnsignedInteger(8);
-	}
+	return ty;
     }
-    return Type::getUnsignedInteger(64);
+    std::cerr << "signed integer '" << s << "' does not fit into 64 bits"
+	<< std::endl;
+    return Type::getSignedInteger(64);
 }
 
 ExprPtr
@@ -221,17 +248,21 @@ Expr::print(int indent) const
 
     if (std::holds_alternative<Literal>(variant)) {
 	const auto &lit = std::get<Literal>(variant);
-	std::printf("Literal: %s\n", lit.val);
+	std::printf("Literal: %s ", lit.val);
+	std::cout << getType() << std::endl;
     } else if (std::holds_alternative<Identifier>(variant)) {
 	const auto &ident = std::get<Identifier>(variant);
-	std::printf("Identifier: %s\n", ident.val);
+	std::printf("Identifier: %s ", ident.val);
+	std::cout << getType() << std::endl;
     } else if (std::holds_alternative<Unary>(variant)) {
 	const auto &unary = std::get<Unary>(variant);
-	std::printf("[%s]\n", exprKindCStr(unary.kind));
+	std::printf("[%s] ", exprKindCStr(unary.kind));
+	std::cout << getType() << std::endl;
 	unary.child->print(indent + 4);
     } else if (std::holds_alternative<Binary>(variant)) {
 	const auto &binary = std::get<Binary>(variant);
-	std::printf("[%s]\n", exprKindCStr(binary.kind));
+	std::printf("[%s] ", exprKindCStr(binary.kind));
+	std::cout << getType() << std::endl;
 	binary.left->print(indent + 4);
 	binary.right->print(indent + 4);
     }
@@ -287,10 +318,11 @@ Expr::loadConst(void) const
     return llvm::dyn_cast<T>(loadValue());
 }
 
-// TODO: for div/mod the type is needed
 static gen::AluOp
-getGenAluOp(Binary::Kind kind)
+getGenAluOp(Binary::Kind kind, const Type *type)
 {
+    bool isSignedInt = type->isInteger()
+		    && type->getIntegerKind() == Type::SIGNED;
     switch (kind) {
 	case Binary::Kind::ADD:
 	    return gen::ADD;
@@ -299,32 +331,33 @@ getGenAluOp(Binary::Kind kind)
 	case Binary::Kind::MUL:
 	    return gen::SMUL;
 	case Binary::Kind::DIV:
-	    return gen::UDIV;
+	    return isSignedInt ? gen::SDIV : gen::UDIV;
 	case Binary::Kind::MOD:
-	    return gen::UMOD;
+	    return isSignedInt ? gen::SMOD : gen::UMOD;
 	default:
 	    assert(0);
 	    return gen::ADD;
     }
 }
 
-// TODO: for >,<,>=,<= the type is needed
 static gen::CondOp
-getGenCondOp(Binary::Kind kind)
+getGenCondOp(Binary::Kind kind, const Type *type)
 {
+    bool isSignedInt = type->isInteger()
+		    && type->getIntegerKind() == Type::SIGNED;
     switch (kind) {
 	case Binary::Kind::EQUAL:
 	    return gen::EQ;
 	case Binary::Kind::NOT_EQUAL:
 	    return gen::NE;
 	case Binary::Kind::LESS:
-	    return gen::ULT;
+	    return isSignedInt ? gen::SLT : gen::ULT;
 	case Binary::Kind::LESS_EQUAL:
-	    return gen::ULE;
+	    return isSignedInt ? gen::SLE : gen::ULE;
 	case Binary::Kind::GREATER:
-	    return gen::UGT;
+	    return isSignedInt ? gen::SGT : gen::UGT;
 	case Binary::Kind::GREATER_EQUAL:
-	    return gen::UGE;
+	    return isSignedInt ? gen::SGE : gen::UGE;
 	default:
 	    assert(0);
 	    return gen::EQ;
@@ -388,7 +421,7 @@ loadValue(const Binary &binary)
 	    {
 		auto l = binary.left->loadValue();
 		auto r = binary.right->loadValue();
-		auto op = getGenAluOp(binary.kind);
+		auto op = getGenAluOp(binary.kind, binary.type);
 		return gen::aluInstr(op, l, r);
 	    }
 	case Binary::Kind::LESS:
@@ -449,7 +482,10 @@ condJmp(const Binary &binary, gen::Label trueLabel, gen::Label falseLabel)
 	case Binary::Kind::NOT_EQUAL:
 	case Binary::Kind::EQUAL:
 	    {
-		auto condOp = getGenCondOp(binary.kind);
+		assert(binary.left->getType() == binary.right->getType());
+		auto ty = binary.left->getType();
+
+		auto condOp = getGenCondOp(binary.kind, ty);
 		auto l = binary.left->loadValue();
 		auto r = binary.right->loadValue();
 		auto cond = gen::cond(condOp, l, r);

@@ -1,0 +1,17 @@
+fn main(): u64
+{
+    local a: i8 = 12;
+    local b: i8 = 21;
+
+    if (a < b) {    // signed 'LT'
+	return 1;
+    }
+    if (a < 1u8) {  // unsigned 'LT'
+	return 2;
+    }
+    if (a < 1i8) {  // signed 'LT'
+	return 3;
+    }
+
+    return 0;
+}

@@ -15,7 +15,10 @@ static ExprPtr parsePrimary(void);
 ExprPtr
 parseExpr(void)
 {
-    return parseAssignment();
+    auto expr = parseAssignment();
+    if (expr) expr->print();
+    return expr;
+    //return parseAssignment();
 }
 
 ExprPtr

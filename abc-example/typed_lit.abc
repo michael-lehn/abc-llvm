@@ -6,6 +6,5 @@ fn main(): u64
     n = 256;	// 256 has type u16	-> extended to u32
     n = 256u64;	// 256u64 has type u64	-> truncated to u32
 
-
     return n;	// return value extended to u64
 }
