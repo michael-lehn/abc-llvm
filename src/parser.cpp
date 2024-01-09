@@ -345,6 +345,7 @@ parseLocalDef(void)
 	    if (!init) {
 		expectedError("non-empty expression");
 	    }
+
 	    auto var = Expr::createIdentifier(s->internalIdent.c_str(), type);
 	    init = Expr::createBinary(Binary::Kind::ASSIGN,
 				      std::move(var),

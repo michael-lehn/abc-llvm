@@ -15,10 +15,7 @@ static ExprPtr parsePrimary(void);
 ExprPtr
 parseExpr(void)
 {
-    auto expr = parseAssignment();
-    if (expr) expr->print();
-    return expr;
-    //return parseAssignment();
+    return parseAssignment();
 }
 
 ExprPtr
@@ -133,14 +130,17 @@ static ExprPtr
 parseUnary(void)
 {
     if (token.kind == TokenKind::PLUS || token.kind == TokenKind::MINUS) {
+	auto op = token.kind;
         getToken();
 	auto expr = parseUnary();
+	expr->print();
         if (!expr) {
             expectedError("non-empty expression");
         }
-	if (token.kind == TokenKind::MINUS) {
+	if (op == TokenKind::MINUS) {
 	    expr = Expr::createUnaryMinus(std::move(expr));
 	}
+	return expr;
     }
     return parsePrimary();
 } 

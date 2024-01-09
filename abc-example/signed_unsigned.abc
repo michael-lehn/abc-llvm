@@ -1,5 +1,6 @@
 fn main(): u64
 {
+    /*
     local a: i8 = 12;
     local b: i8 = 21;
 
@@ -12,6 +13,9 @@ fn main(): u64
     if (a < 1i8) {  // signed 'LT'
 	return 3;
     }
+    */
+
+    local c: u8 = -1;
 
     return 0;
 }
