@@ -145,7 +145,6 @@ parseUnary(void)
 	auto op = token.kind;
         getToken();
 	auto expr = parseUnary();
-	expr->print();
         if (!expr) {
             expectedError("non-empty expression");
         }

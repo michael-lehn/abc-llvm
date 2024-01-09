@@ -13,7 +13,8 @@ obj.o := $(src.c:%.c=%.o)
 lib := $(obj.o)
 
 src.abc := $(wildcard *.abc)
-asm.abc := $(src.abc:%.abc=%s)
+asm.abc := $(src.abc:%.abc=%.s)
+bc.abc := $(src.abc:%.abc=%.bc)
 target := $(src.abc:%.abc=%)
 
 
@@ -25,11 +26,14 @@ all: $(target)
 %.s : %.abc
 	$(ABC) -S $<
 
+%.bc : %.abc
+	$(ABC) -B $<
+
 % : %.o
 % : %.o $(lib)
 	$(LINK.o) $^ -o $@
 
 .PHONY: clean
 clean:
-	$(RM) $(target) $(asm)
+	$(RM) $(target) $(asm.abc) $(bc.abc) $(lib)
 
