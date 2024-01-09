@@ -43,8 +43,8 @@ parseAssignment(void)
 	if (!right) {
 	    expectedError("assignment expression");
 	}
-	expr = Expr::getBinary(Binary::Kind::ASSIGN, std::move(expr),
-			       std::move(right));
+	expr = Expr::createBinary(Binary::Kind::ASSIGN, std::move(expr),
+				  std::move(right));
     }
     return expr;
 }
@@ -120,7 +120,7 @@ parseBinary(int prec)
             if (!expr) {
                 expectedError("non-empty expression");
             }
-	    expr = Expr::getBinary(op, std::move(expr), std::move(right));
+	    expr = Expr::createBinary(op, std::move(expr), std::move(right));
         }
     }
     return expr;
@@ -136,7 +136,7 @@ parseUnary(void)
             expectedError("non-empty expression");
         }
 	if (token.kind == TokenKind::MINUS) {
-	    expr = Expr::getUnaryMinus(std::move(expr));
+	    expr = Expr::createUnaryMinus(std::move(expr));
 	}
     }
     return parsePrimary();
@@ -154,7 +154,7 @@ parsePrimary(void)
 	    semanticError(msg.c_str());
 	}
         getToken();
-	auto expr = Expr::getIdentifier(symEntry->internalIdent.c_str());
+	auto expr = Expr::createIdentifier(symEntry->internalIdent.c_str());
 	if (token.kind == TokenKind::LPAREN) {
 	    // function call
 	    if (!symEntry->type->isFunction()) {
@@ -186,21 +186,21 @@ parsePrimary(void)
 		semanticError(msg.str().c_str());
 	    }
 
-	    expr = Expr::getCall(std::move(expr), std::move(param));
+	    expr = Expr::createCall(std::move(expr), std::move(param));
 	}
         return expr;
     } else if (token.kind == TokenKind::DECIMAL_LITERAL) {
-	auto expr = Expr::getLiteral(token.val.c_str());
+	auto expr = Expr::createLiteral(token.val.c_str());
         getToken();
         return expr;
     } else if (token.kind == TokenKind::HEXADECIMAL_LITERAL) {
 	// TODO: hex!
-	auto expr = Expr::getLiteral(token.val.c_str());
+	auto expr = Expr::createLiteral(token.val.c_str());
         getToken();
         return expr;
     } else if (token.kind == TokenKind::OCTAL_LITERAL) {
 	// TODO: oct!
-	auto expr = Expr::getLiteral(token.val.c_str());
+	auto expr = Expr::createLiteral(token.val.c_str());
         getToken();
         return expr;
     } else if (token.kind == TokenKind::LPAREN) {

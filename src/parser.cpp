@@ -339,9 +339,10 @@ parseLocalDef(void)
 	    if (!init) {
 		expectedError("non-empty expression");
 	    }
-	    init = Expr::getBinary(Binary::Kind::ASSIGN,
-				   Expr::getIdentifier(s->internalIdent.c_str()),
-				   std::move(init));
+	    auto var = Expr::createIdentifier(s->internalIdent.c_str());
+	    init = Expr::createBinary(Binary::Kind::ASSIGN,
+				      std::move(var),
+				      std::move(init));
 	    init->load();
 	}
 	if (token.kind != TokenKind::COMMA) {
@@ -500,7 +501,7 @@ parseForStmt(void)
     // parse 'cond' expr
     auto cond = parseExpr();
     if (!cond) {
-	cond = Expr::getLiteral("1");
+	cond = Expr::createLiteral("1");
     }
     expected(TokenKind::SEMICOLON);
     getToken();

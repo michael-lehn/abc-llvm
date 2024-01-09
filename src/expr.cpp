@@ -15,41 +15,41 @@ ExprDeleter::operator()(const Expr *expr) const
 //-- class Expr: static member functions ---------------------------------------
 
 ExprPtr
-Expr::getLiteral(const char *val)
+Expr::createLiteral(const char *val)
 {
     return ExprPtr(new Expr{Literal{val}});
 }
 
 ExprPtr
-Expr::getIdentifier(const char *ident)
+Expr::createIdentifier(const char *ident)
 {
     return ExprPtr(new Expr{Identifier{ident}});
 }
 
 ExprPtr
-Expr::getUnaryMinus(ExprPtr &&expr)
+Expr::createUnaryMinus(ExprPtr &&expr)
 {
-    auto zero = getLiteral("0");
-    return getBinary(Binary::Kind::SUB, std::move(zero), std::move(expr));
+    auto zero = createLiteral("0");
+    return createBinary(Binary::Kind::SUB, std::move(zero), std::move(expr));
 }
 
 ExprPtr
-Expr::getBinary(Binary::Kind kind, ExprPtr &&left, ExprPtr &&right)
+Expr::createBinary(Binary::Kind kind, ExprPtr &&left, ExprPtr &&right)
 {
     auto expr = new Expr{Binary{kind, std::move(left), std::move(right)}};
     return ExprPtr(expr);
 }
 
 ExprPtr
-Expr::getCall(ExprPtr &&fn, ExprVector &&param)
+Expr::createCall(ExprPtr &&fn, ExprVector &&param)
 {
-    auto p = getExprVector(std::move(param));
-    auto expr = getBinary(Binary::Kind::CALL, std::move(fn), std::move(p));
+    auto p = createExprVector(std::move(param));
+    auto expr = createBinary(Binary::Kind::CALL, std::move(fn), std::move(p));
     return ExprPtr(std::move(expr));
 }
 
 ExprPtr
-Expr::getExprVector(ExprVector &&expr)
+Expr::createExprVector(ExprVector &&expr)
 {
     return ExprPtr{new Expr{std::move(expr)}};
 }

@@ -51,7 +51,7 @@ main(void)
     gen::ret(r);
     gen::fnDefEnd();
 
-    auto someConst = Expr::getLiteral("42");
+    auto someConst = Expr::createLiteral("42");
     gen::defGlobal("globalFoo", Type::getUnsignedInteger(64),
 		   someConst->getConst()); 
 

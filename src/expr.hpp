@@ -73,13 +73,13 @@ class Expr
 	Expr(ExprVector &&vec) : variant{std::move(vec)} {}
 
     public:
-	static ExprPtr getLiteral(const char *val);
-	static ExprPtr getIdentifier(const char *ident);
-	static ExprPtr getUnaryMinus(ExprPtr &&expr);
-	static ExprPtr getBinary(Binary::Kind kind,
-				 ExprPtr &&left, ExprPtr &&right);
-	static ExprPtr getCall(ExprPtr &&fn, ExprVector &&param);
-	static ExprPtr getExprVector(ExprVector &&expr);
+	static ExprPtr createLiteral(const char *val);
+	static ExprPtr createIdentifier(const char *ident);
+	static ExprPtr createUnaryMinus(ExprPtr &&expr);
+	static ExprPtr createBinary(Binary::Kind kind,
+				    ExprPtr &&left, ExprPtr &&right);
+	static ExprPtr createCall(ExprPtr &&fn, ExprVector &&param);
+	static ExprPtr createExprVector(ExprVector &&expr);
 
 	void print(int indent = 0) const;
 	bool isConst(void) const;

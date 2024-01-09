@@ -9,21 +9,21 @@ main(void)
     auto ident = makeIdentifierExpr("foo");
     auto lit = makeLiteralExpr("42");
     auto unary = makeUnaryExpr(BinaryExprKind::UNARY_MINUS, std::move(ident));
-    auto binary = getBinaryExpr(
+    auto binary = createBinaryExpr(
 			BinaryExprKind::ADD,
 			std::move(unary),
 			std::move(lit));
 			*/
-    auto lit42 = Expr::getLiteral("42");
-    auto a = Expr::getIdentifier("a");
-    auto b = Expr::getIdentifier("b");
-    auto binary = Expr::getBinary(
+    auto lit42 = Expr::createLiteral("42");
+    auto a = Expr::createIdentifier("a");
+    auto b = Expr::createIdentifier("b");
+    auto binary = Expr::createBinary(
 			Binary::Kind::ADD,
-			Expr::getBinary(
+			Expr::createBinary(
 			    Binary::Kind::SUB,
 			    std::move(lit42),
 			    std::move(a)),
-			Expr::getUnaryMinus(
+			Expr::createUnaryMinus(
 			    std::move(b)));
 
     binary->print();
