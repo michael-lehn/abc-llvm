@@ -29,6 +29,7 @@ all: $(target)
 %.bc : %.abc
 	$(ABC) -B $<
 
+% : %.s
 % : %.o
 % : %.o $(lib)
 	$(LINK.o) $^ -o $@

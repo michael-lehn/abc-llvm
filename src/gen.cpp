@@ -279,7 +279,7 @@ call(const char *ident, const std::vector<Reg> &param)
     auto fn = llvmModule->getFunction(ident);
     assert(fn && "function not declared");
 
-    return llvmBuilder->CreateCall(fn, param, ident);
+    return llvmBuilder->CreateCall(fn, param);
 }
 
 //------------------------------------------------------------------------------
@@ -331,13 +331,15 @@ labelDef(Label label)
     currFn.bbClosed = false;
 }
 
-void
-jmp(Label label)
+Label
+jmp(Label &label)
 {
+    auto ib = llvmBuilder->GetInsertBlock();
     if (!currFn.bbClosed) {
 	llvmBuilder->CreateBr(label);
     }
     currFn.bbClosed = true;
+    return ib;
 }
 
 void

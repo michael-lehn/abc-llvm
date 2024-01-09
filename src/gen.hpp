@@ -50,7 +50,7 @@ enum CondOp {
 Cond cond(CondOp op, Reg a, Reg b);
 Label getLabel(const char *name = "");
 void labelDef(Label label);
-void jmp(Label label);
+Label jmp(Label &label); // needed for phi: returns label of current block
 void jmp(Cond cond, Label trueLabel, Label falseLabel);
 Reg phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type);
 

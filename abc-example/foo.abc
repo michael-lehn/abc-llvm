@@ -18,25 +18,29 @@ fn printNl();
 
 global foo: u64;  // initial value is zero
 
-fn bar()
-{
-    foo = foo + 1;
-}
-
 fn main(): u64
 {
     local a: u64 = getU64(), aErr: u64 = getErr(),
-	  b: u64 = getU64(), bErr: u64 = getErr();
+	  b: u64 = getU64(), bErr: u64 = getErr(),
+	  r: u64;
 
-    bar();
-    bar();
-
-    if (aErr) {
+    if (aErr || bErr) {
 	return 1;
-    } else if (bErr) {
-	return 2;
     } else {
-	printU64(a + b + foo);
+	if (a > 5) {
+	    if (b > 5) {
+		r = 1;
+	    } else {
+		r = 2;
+	    }
+	} else {
+	    if (b > 5) {
+		r = 3;
+	    } else {
+		r = 4;
+	    }
+	}
+	printU64(r);
 	printNl();
     }
 

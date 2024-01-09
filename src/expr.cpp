@@ -305,6 +305,23 @@ Expr::print(int indent) const
 	std::cout << getType() << std::endl;
 	binary.left->print(indent + 4);
 	binary.right->print(indent + 4);
+    } else if (std::holds_alternative<Conditional>(variant)) {
+	const auto &conditional = std::get<Conditional>(variant);
+	std::printf("[cond ? left : right]");
+	std::cout << getType() << std::endl;
+	conditional.cond->print(indent + 4);
+	conditional.left->print(indent + 4);
+	conditional.right->print(indent + 4);
+    } else if (std::holds_alternative<ExprVector>(variant)) {
+	const auto &vec = std::get<ExprVector>(variant);
+	std::printf("[vec]");
+	for (const auto &e: vec) {
+	    e->print(indent + 4);
+	}
+    } else {
+	std::cerr << "not handled variant. Index = " << variant.index()
+	    << std::endl;
+	assert(0);
     }
 }
 
@@ -519,17 +536,17 @@ loadValue(const Binary &binary)
 static gen::Reg
 loadValue(const Conditional &expr)
 {
-    auto thenLabel = gen::getLabel("then");
-    auto elseLabel = gen::getLabel("else");
+    auto thenLabel = gen::getLabel("condTrue");
+    auto elseLabel = gen::getLabel("condFalse");
     auto endLabel = gen::getLabel("end");
 
     expr.cond->condJmp(thenLabel, elseLabel);
     gen::labelDef(thenLabel);
     auto condTrue = expr.left->loadValue();
-    gen::jmp(endLabel);
+    thenLabel = gen::jmp(endLabel); // update needed for phi
     gen::labelDef(elseLabel);
     auto condFalse = expr.right->loadValue();
-    gen::jmp(endLabel);
+    elseLabel = gen::jmp(endLabel); // update needed for phi
     gen::labelDef(endLabel);
     return gen::phi(condTrue, thenLabel, condFalse, elseLabel, expr.type);
 }
