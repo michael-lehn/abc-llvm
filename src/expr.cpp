@@ -14,7 +14,7 @@ ExprDeleter::operator()(const Expr *expr) const
     delete expr;
 }
 
-//-- class Binary --------------------------------------------------------------
+//-- handling type conversions and casts ---------------------------------------
 
 static const Type *
 getTypeConversion(const Type *from, const Type *to)
@@ -28,6 +28,25 @@ getTypeConversion(const Type *from, const Type *to)
     assert(0);
     return nullptr;
 }
+
+static const Type *
+getCommonType(const Type *left, const Type *right)
+{
+    if (left == right) {
+	return left;
+    } else if (left->isInteger() && right->isInteger()) {
+	auto size = std::max(left->getIntegerNumBits(),
+			     right->getIntegerNumBits());
+	// when mixing signed and unsigned: unsigned wins 
+	return left->getIntegerKind() == Type::UNSIGNED
+	    || right->getIntegerKind() == Type::UNSIGNED
+	    ? Type::getUnsignedInteger(size)
+	    : Type::getSignedInteger(size);
+    }
+    return nullptr;
+}
+
+//-- class Binary --------------------------------------------------------------
 
 void
 Binary::setTypeAndCastOperands(void)
@@ -52,14 +71,8 @@ Binary::setTypeAndCastOperands(void)
 	case Binary::Kind::MUL:
 	case Binary::Kind::DIV:
 	case Binary::Kind::MOD:
-	    if (l->isInteger() && r->isInteger()) {
-		auto size = std::max(l->getIntegerNumBits(),
-				     r->getIntegerNumBits());
-		// when mixing signed and unsigned: unsigned wins 
-		type = l->getIntegerKind() == Type::UNSIGNED
-		    || r->getIntegerKind() == Type::UNSIGNED
-		    ? Type::getUnsignedInteger(size)
-		    : Type::getSignedInteger(size);
+	    type = getCommonType(l, r);
+	    if (type) {
 		if (l != type) {
 		    left = Expr::createCast(std::move(left), type);
 		}
@@ -78,15 +91,7 @@ Binary::setTypeAndCastOperands(void)
 	case Binary::Kind::LOGICAL_AND:
 	case Binary::Kind::LOGICAL_OR:
 	    type = Type::getUnsignedInteger(8); // TODO: Use bool type
-	    // cast operand to same type
-	    if (l->isInteger() && r->isInteger()) {
-		auto size = std::max(l->getIntegerNumBits(),
-				     r->getIntegerNumBits());
-		// when mixing signed and unsigned: unsigned wins 
-		auto ty = l->getIntegerKind() == Type::UNSIGNED
-		       || r->getIntegerKind() == Type::UNSIGNED
-		       ? Type::getUnsignedInteger(size)
-		       : Type::getSignedInteger(size);
+	    if (auto ty = getCommonType(l, r)) {
 		if (l != ty) {
 		    left = Expr::createCast(std::move(left), ty);
 		}
@@ -101,6 +106,25 @@ Binary::setTypeAndCastOperands(void)
 	    return;
     }
 }
+
+//-- class Conditional ---------------------------------------------------------
+
+void
+Conditional::setTypeAndCastOperands(void)
+{
+    const Type *l = left->getType();
+    const Type *r = right->getType();
+
+    type = getCommonType(l, r);
+    if (l != type) {
+	left = Expr::createCast(std::move(left), type);
+    }
+    if (r != type) {
+	right = Expr::createCast(std::move(right), type);
+    }
+}
+
+
 //-- class Expr: static member functions ---------------------------------------
 
 template <typename IntType, std::uint8_t numBits>
@@ -184,6 +208,14 @@ Expr::createCall(ExprPtr &&fn, ExprVector &&param)
 
     auto p = createExprVector(std::move(param));
     auto expr = createBinary(Binary::Kind::CALL, std::move(fn), std::move(p));
+    return ExprPtr{std::move(expr)};
+}
+
+ExprPtr
+Expr::createConditional(ExprPtr &&cond, ExprPtr &&left, ExprPtr &&right)
+{
+    auto expr = new Expr{Conditional{std::move(cond), std::move(left),
+				     std::move(right)}};
     return ExprPtr{std::move(expr)};
 }
 
@@ -287,6 +319,8 @@ Expr::getType(void) const
 	return std::get<Unary>(variant).type;
     } else if (std::holds_alternative<Binary>(variant)) {
 	return std::get<Binary>(variant).type;
+    } else if (std::holds_alternative<Conditional>(variant)) {
+	return std::get<Conditional>(variant).type;
     } else if (std::holds_alternative<ExprVector>(variant)) {
 	const auto &vec = std::get<ExprVector>(variant);
 	return vec.empty() ? nullptr : vec.back()->getType();
@@ -482,6 +516,24 @@ loadValue(const Binary &binary)
     }
 }
 
+static gen::Reg
+loadValue(const Conditional &expr)
+{
+    auto thenLabel = gen::getLabel("then");
+    auto elseLabel = gen::getLabel("else");
+    auto endLabel = gen::getLabel("end");
+
+    expr.cond->condJmp(thenLabel, elseLabel);
+    gen::labelDef(thenLabel);
+    auto condTrue = expr.left->loadValue();
+    gen::jmp(endLabel);
+    gen::labelDef(elseLabel);
+    auto condFalse = expr.right->loadValue();
+    gen::jmp(endLabel);
+    gen::labelDef(endLabel);
+    return gen::phi(condTrue, thenLabel, condFalse, elseLabel, expr.type);
+}
+
 gen::Reg
 Expr::loadValue(void) const
 {
@@ -493,6 +545,8 @@ Expr::loadValue(void) const
 	return ::loadValue(std::get<Unary>(variant));
     } else if (std::holds_alternative<Binary>(variant)) {
 	return ::loadValue(std::get<Binary>(variant));
+    } else if (std::holds_alternative<Conditional>(variant)) {
+	return ::loadValue(std::get<Conditional>(variant));
     } else if (std::holds_alternative<ExprVector>(variant)) {
 	assert(0);
 	return nullptr;

@@ -93,16 +93,32 @@ struct Binary
     void setTypeAndCastOperands(void);
 };
 
+struct Conditional
+{
+    ExprPtr cond, left, right;
+    const Type *type;
+
+    Conditional(ExprPtr &&cond, ExprPtr &&left, ExprPtr &&right)
+	: cond{std::move(cond)}, left{std::move(left)}, right{std::move(right)}
+    {
+	setTypeAndCastOperands();
+    }
+
+    void setTypeAndCastOperands(void);
+};
+
 class Expr
 {
     public:
-	std::variant<Literal, Identifier, Unary, Binary, ExprVector> variant;
+	std::variant<Literal, Identifier, Unary, Binary, Conditional,
+		     ExprVector> variant;
 
     private:
 	Expr(Literal &&val) : variant{std::move(val)} {}
 	Expr(Identifier &&ident) : variant{std::move(ident)} {}
 	Expr(Unary &&unary) : variant{std::move(unary)} {}
 	Expr(Binary &&binary) : variant{std::move(binary)} {}
+	Expr(Conditional &&con) : variant{std::move(con)} {}
 	Expr(ExprVector &&vec) : variant{std::move(vec)} {}
 
     public:
@@ -115,6 +131,8 @@ class Expr
 	static ExprPtr createBinary(Binary::Kind kind,
 				    ExprPtr &&left, ExprPtr &&right);
 	static ExprPtr createCall(ExprPtr &&fn, ExprVector &&param);
+	static ExprPtr createConditional(ExprPtr &&cond,
+					 ExprPtr &&left, ExprPtr &&right);
 	static ExprPtr createExprVector(ExprVector &&expr);
 
 	void print(int indent = 0) const;

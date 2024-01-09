@@ -8,6 +8,7 @@
 #include "symtab.hpp"
 
 static ExprPtr parseAssignment(void);
+static ExprPtr parseConditional(void);
 static ExprPtr parseBinary(int prec);
 static ExprPtr parseUnary(void);
 static ExprPtr parsePrimary(void);
@@ -33,7 +34,7 @@ parseConstExpr(void)
 static ExprPtr
 parseAssignment(void)
 {
-    auto expr = parseBinary(1);
+    auto expr = parseConditional();
     if (!expr) {
 	return nullptr;
     }
@@ -45,6 +46,33 @@ parseAssignment(void)
 	}
 	expr = Expr::createBinary(Binary::Kind::ASSIGN, std::move(expr),
 				  std::move(right));
+    }
+    return expr;
+}
+
+static ExprPtr
+parseConditional(void)
+{
+    auto expr = parseBinary(1);
+    if (!expr) {
+	return nullptr;
+    }
+
+    if (token.kind == TokenKind::QUERY) {
+	getToken();
+	
+	auto left = parseAssignment();
+	if (!left) {
+	    expectedError("non-empty expression");
+	}
+	expected(TokenKind::COLON);
+	getToken();
+	auto right = parseConditional();
+	if (!right) {
+	    expectedError("non-empty expression");
+	}
+	expr = Expr::createConditional(std::move(expr), std::move(left),
+				       std::move(right));
     }
     return expr;
 }
