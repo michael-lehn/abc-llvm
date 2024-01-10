@@ -571,7 +571,7 @@ loadValue(const Unary &unary)
 	case Unary::Kind::DEREF:
 	    {
 		auto addr = unary.child->loadValue();
-		auto ty = unary.child->getType();
+		auto ty = unary.child->getType()->getRefType();
 		return gen::fetch(addr, ty);
 	    }
 	case Unary::Kind::ADDRESS:

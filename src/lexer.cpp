@@ -216,6 +216,18 @@ static std::unordered_map<UStr, TokenKind> kw = {
     { "else", TokenKind::ELSE },
 };
 
+// TODO: proper implementation and support of escape sequences
+static std::string
+processString(const char *s)
+{
+    std::string str = "";
+    ++s;
+    for (; *s && *s != '"'; ++s) {
+	str += *s;
+    }
+    return str;
+}
+
 static std::string token_str;
 
 static void
@@ -240,6 +252,7 @@ tokenSet(TokenKind kind)
 {
     token.kind = kind;
     token.val = UStr{token_str};
+    token.valProcessed = processString(token.val.c_str());
     if (kind == TokenKind::IDENTIFIER && kw.contains(token.val)) {
 	token.kind = kw[token.val];
     }
@@ -295,6 +308,10 @@ getToken(void)
     } else if (ch == '"') {
 	do {
 	    tokenUpdate();
+	    if (ch == '\\') {
+		nextCh();
+		tokenUpdate();
+	    }
 	    nextCh();
 	} while (ch != '"');
 	tokenUpdate();

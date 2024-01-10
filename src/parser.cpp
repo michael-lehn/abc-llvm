@@ -223,7 +223,7 @@ parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
 	getToken();
 	retType = parseType();
     }
-    
+
     auto fnType = Type::getFunction(retType, argType);
     
     if (fnDecl) {

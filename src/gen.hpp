@@ -29,6 +29,7 @@ void ret(Reg reg = nullptr);
 void defLocal(const char *ident, const Type *type);
 void defGlobal(const char *ident, const Type *type, ConstVal constVal);
 void defStatic(const char *ident, const Type *type, ConstVal constVal);
+void defStringLiteral(const char *ident, const char *val, bool isConst);
 
 // functions call
 Reg call(const char *ident, const std::vector<Reg> &param);

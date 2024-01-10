@@ -84,6 +84,7 @@ extern struct Token {
 	} from, to;
     } loc;
     UStr val;
+    UStr valProcessed; // string literal with escaped characters processed
 } token;
 
 bool setLexerInputfile(const char *path);

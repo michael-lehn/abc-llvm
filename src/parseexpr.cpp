@@ -269,6 +269,18 @@ parsePrimary(void)
 	auto ty = parseIntType();
 	auto expr = Expr::createLiteral(val, 8, ty);
         return expr;
+    } else if (token.kind == TokenKind::STRING_LITERAL) {
+	auto val = token.valProcessed.c_str();
+        getToken();
+	static std::size_t id;
+	std::stringstream ss;
+	ss << ".str" << id;
+	UStr ident(ss.str());
+
+	gen::defStringLiteral(ident.c_str(), val, true);
+	auto ty = Type::getUnsignedInteger(8);
+	auto expr = Expr::createAddr(Expr::createIdentifier(ident.c_str(), ty));
+	return expr;	
     } else if (token.kind == TokenKind::LPAREN) {
         getToken();
 	auto expr = parseExpr();

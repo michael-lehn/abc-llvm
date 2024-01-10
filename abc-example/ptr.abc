@@ -1,22 +1,25 @@
 fn printU64(:u64);
 fn printNl();
+fn putChar(: u16);
+
+fn printStr(s: -> u8)
+{
+    while (*s) {
+	putChar(*s);
+	s = s + 1;
+    }
+}
+
+fn printStrNl(s: -> u8)
+{
+    printStr(s);
+    printNl();
+}
 
 fn main(): u8
 {
-    local a: u64 = 1,
-	  b: u64 = 2,
-	  c: u64 = 3;
+    local s: -> u8 = "hello world";
 
-    printU64(a); printNl();
-    printU64(b); printNl();
-    printU64(c); printNl();
-
-    local ptr: -> u64 = &b;
-
-    *(ptr + -1) = 42;
-
-    printU64(a); printNl();
-    printU64(b); printNl();
-    printU64(c); printNl();
-
+    printStrNl(s);
+    return 0;
 }

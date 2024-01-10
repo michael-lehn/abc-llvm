@@ -196,7 +196,8 @@ fnDef(const char *ident, const Type *fnType,
     // set current function
     currFn.llvmFn = fn;
     currFn.leave = getLabel("leave");
-    if ((currFn.retType = fnType->getRetType())) {
+    currFn.retType = fnType->getRetType();
+    if (!currFn.retType->isVoid()) {
 	// reserve space for return value on stack
 	defLocal(".retVal", currFn.retType);
     }
@@ -220,11 +221,11 @@ fnDefEnd(void)
     ret(nullptr);
     labelDef(currFn.leave);
 
-    if (currFn.retType) {
+    if (currFn.retType->isVoid()) {
+	llvmBuilder->CreateRetVoid();
+    } else {
 	auto ret = fetch(".retVal", currFn.retType);
 	llvmBuilder->CreateRet(ret);
-    } else {
-	llvmBuilder->CreateRetVoid();
     }
 
     // optimize function code
@@ -268,6 +269,18 @@ defGlobal(const char *ident, const Type *type, ConstVal constVal)
     global[ident] = new llvm::GlobalVariable(*llvmModule, ty,
 			/*isConstant=*/false,
 			/*Linkage=*/llvm::GlobalValue::ExternalLinkage,
+			/*Initializer=*/constVal,
+			/*Name=*/ident);
+}
+
+void
+defStringLiteral(const char *ident, const char *val, bool isConst)
+{
+    auto constVal = llvm::ConstantDataArray::getString(*llvmContext, val);
+    global[ident] = new llvm::GlobalVariable(*llvmModule,
+			constVal->getType(),
+			/*isConstant=*/isConst,
+			/*Linkage=*/llvm::GlobalValue::InternalLinkage,
 			/*Initializer=*/constVal,
 			/*Name=*/ident);
 }
