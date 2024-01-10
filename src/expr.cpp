@@ -475,8 +475,13 @@ loadValue(const Binary &binary)
     switch (binary.kind) {
 	case Binary::Kind::CALL:
 	    {
-		auto l = std::get<Identifier>(binary.left->variant);
-		auto &r = std::get<ExprVector>(binary.right->variant);
+		auto const &left = binary.left;
+		auto const &right = binary.right;
+		assert(std::holds_alternative<Identifier>(left->variant));
+		assert(std::holds_alternative<ExprVector>(right->variant));
+
+		auto l = std::get<Identifier>(left->variant);
+		auto &r = std::get<ExprVector>(right->variant);
 		std::vector<gen::Reg> param{r.size()};
 		for (std::size_t i = 0; i < r.size(); ++i) {
 		    param[i] = r[i]->loadValue();
@@ -486,8 +491,12 @@ loadValue(const Binary &binary)
 
 	case Binary::Kind::ASSIGN:
 	    {
-		auto l = std::get<Identifier>(binary.left->variant);
-		auto r = binary.right->loadValue();
+		auto const &left = binary.left;
+		auto const &right = binary.right;
+		assert(std::holds_alternative<Identifier>(left->variant));
+
+		auto l = std::get<Identifier>(left->variant);
+		auto r = right->loadValue();
 		gen::store(r, l.val, binary.type);
 		return r;
 	    }

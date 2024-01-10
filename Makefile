@@ -16,7 +16,10 @@ obj.dir := obj
 # support generation of dep files
 CXXFLAGS += -MT $@ -MMD -MP -MF $(dep.dir)/$(<F).d
 
-xsrc := $(wildcard $(src.dir)/xtest_*.cpp)
+compiler.src := src/abc_compiler.cpp
+
+xsrc := $(wildcard $(src.dir)/xtest_*.cpp) \
+	$(compiler.src)
 src := $(filter-out $(xsrc),$(wildcard $(src.dir)/*.cpp))
 obj := $(src:$(src.dir)/%.cpp=$(obj.dir)/%.o)
 dep := $(src:$(src.dir)/%=$(dep.dir)/%.d) $(xsrc:$(src.dir)/%.cpp=$(dep.dir)/%.d)
@@ -36,8 +39,8 @@ $(obj.dir)/%.o :$(src.dir)/%.cpp
 $(obj.dir)/%.o : $(src.dir)/%.cpp | $(dep.dir) $(obj.dir)
 	$(COMPILE.cc) $(OUTPUT_OPTION) $<
 
-$(bin.dir)/xtest_%: $(src.dir)/xtest_%.cpp
-$(bin.dir)/xtest_%: $(src.dir)/xtest_%.cpp $(obj) | $(bin.dir)
+$(bin.dir)/%: $(src.dir)/%.cpp
+$(bin.dir)/%: $(src.dir)/%.cpp $(obj) | $(bin.dir)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $< $(obj) $(llvm.link) -o $@
 
 $(obj.dir): ; mkdir -p $@

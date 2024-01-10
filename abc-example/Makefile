@@ -1,4 +1,4 @@
-ABC := ../bin/xtest_parser
+ABC := ../bin/abc_compiler
 
 LDFLAGS := -L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib \
 	   -lSystem
