@@ -158,7 +158,7 @@ nextCh(void)
     ++curr.col;
     if (ch == '\n') {
 	++curr.line;
-	curr.col = 1;
+	curr.col = 0;
     }
     return ch;
 }

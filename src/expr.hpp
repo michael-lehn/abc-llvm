@@ -127,6 +127,8 @@ class Expr
 	static ExprPtr createIdentifier(const char *ident, const Type *type);
 	static ExprPtr createUnaryMinus(ExprPtr &&expr);
 	static ExprPtr createLogicalNot(ExprPtr &&expr);
+	static ExprPtr createAddr(ExprPtr &&expr);
+	static ExprPtr createDeref(ExprPtr &&expr);
 	static ExprPtr createCast(ExprPtr &&child, const Type *toType);
 	static ExprPtr createBinary(Binary::Kind kind,
 				    ExprPtr &&left, ExprPtr &&right);
@@ -143,6 +145,7 @@ class Expr
 	// code generation
 	gen::ConstVal loadConst(void) const;
 	gen::Reg loadValue(void) const;
+	gen::Reg loadAddr(void) const;
 	void condJmp(gen::Label trueLabel, gen::Label falseLabel) const;
 };
 

@@ -25,7 +25,7 @@ parseConstExpr(void)
     auto loc = token.loc;
     auto expr = parseExpr();
     if (!expr->isConst()) {
-	semanticError(loc, "constant expression");
+	semanticError(loc, "constant expression required");
 	return nullptr;
     }
     return expr;
@@ -39,13 +39,18 @@ parseAssignment(void)
 	return nullptr;
     }
     while (token.kind == TokenKind::EQUAL) {
+	auto loc = token.loc;
 	getToken();
 	auto right = parseAssignment();
 	if (!right) {
 	    expectedError("assignment expression");
 	}
+	if (!expr->isLValue()) {
+	    semanticError(loc, "lvalue required as left operand of assignment");
+	}
 	expr = Expr::createBinary(Binary::Kind::ASSIGN, std::move(expr),
 				  std::move(right));
+	loc = token.loc;
     }
     return expr;
 }
@@ -168,9 +173,11 @@ static ExprPtr
 parseUnary(void)
 {
     if (token.kind == TokenKind::PLUS || token.kind == TokenKind::MINUS
-     || token.kind == TokenKind::NOT)
+     || token.kind == TokenKind::NOT || token.kind == TokenKind::AND
+     || token.kind == TokenKind::ASTERISK)
     {
 	auto op = token.kind;
+	auto opLoc = token.loc;
         getToken();
 	auto expr = parseUnary();
         if (!expr) {
@@ -180,6 +187,16 @@ parseUnary(void)
 	    expr = Expr::createUnaryMinus(std::move(expr));
 	} else if (op == TokenKind::NOT) {
 	    expr = Expr::createLogicalNot(std::move(expr));
+	} else if (op == TokenKind::ASTERISK) {
+	    if (!expr->getType()->isPointer()) {
+		semanticError(opLoc, "'*' can only be applied to a pointer");
+	    }
+	    expr = Expr::createDeref(std::move(expr));
+	} else if (op == TokenKind::AND) {
+	    if (!expr->isLValue()) {
+		semanticError(opLoc, "'&' can only be applied to an l-value");
+	    }
+	    expr = Expr::createAddr(std::move(expr));
 	}
 	return expr;
     }

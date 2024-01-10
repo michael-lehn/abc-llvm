@@ -1,0 +1,16 @@
+fn printU64(:u64);
+fn printNl();
+
+fn main(): u8
+{
+    local val: u64 = 42;
+
+    printU64(val);
+    printNl();
+
+    local ptr: -> u64 = &val;
+
+    *&*ptr = 13;
+    printU64(val);
+    printNl();
+}

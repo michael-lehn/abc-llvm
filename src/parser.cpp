@@ -297,11 +297,27 @@ parseIntType(void)
     }
 }
 
+const Type *
+parsePtrType(void)
+{
+    if (token.kind != TokenKind::ARROW) {
+	return nullptr;
+    }
+    getToken();
+    auto baseTy = parseType();
+    if (!baseTy) {
+	expectedError("base type for pointer");
+    }
+    return Type::getPointer(baseTy);
+}
+
 static const Type *
 parseType(void)
 {
     if (auto fnType = parseFnType()) {
 	return fnType;
+    } else if (auto ptrType = parsePtrType()) {
+	return ptrType;
     }
     return parseIntType();
 }

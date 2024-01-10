@@ -54,9 +54,12 @@ Label jmp(Label &label); // needed for phi: returns label of current block
 void jmp(Cond cond, Label trueLabel, Label falseLabel);
 Reg phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type);
 
-// memory 
+// memory
+Reg loadAddr(const char *ident);
 Reg fetch(const char *ident, const Type *type);
-void store(Reg reg, const char *ident, const Type *type);
+Reg fetch(Reg addr, const Type *type);
+void store(Reg val, const char *ident, const Type *type);
+void store(Reg val, Reg addr, const Type *type);
 
 // ALU
 enum AluOp {

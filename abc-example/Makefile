@@ -23,6 +23,13 @@ target := $(src.abc:%.abc=%)
 .PHONY: all
 all: $(target)
 
+
+.PHONY: all
+bc: $(bc.abc)
+
+.PHONY: all
+asm: $(asm.abc)
+
 %.s : %.abc
 	$(ABC) -S $<
 

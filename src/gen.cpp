@@ -371,6 +371,20 @@ phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type)
 //------------------------------------------------------------------------------
 
 Reg
+loadAddr(const char *ident)
+{
+    if (currFn.bbClosed) {
+	llvm::errs() << "Warning: not reachable fetch\n";
+	return nullptr;
+    }
+
+    auto addr = local.contains(ident)
+	? llvm::dyn_cast<llvm::Value>(local[ident])
+	: llvm::dyn_cast<llvm::Value>(global[ident]);
+    return addr;
+}
+
+Reg
 fetch(const char *ident, const Type *type)
 {
     if (currFn.bbClosed) {
@@ -379,24 +393,39 @@ fetch(const char *ident, const Type *type)
     }
 
     auto ty = TypeMap::get(type);
-    auto var = local.contains(ident)
+    auto addr = local.contains(ident)
 	? llvm::dyn_cast<llvm::Value>(local[ident])
 	: llvm::dyn_cast<llvm::Value>(global[ident]);
-    return llvmBuilder->CreateLoad(ty, var, ident);
+    return llvmBuilder->CreateLoad(ty, addr, ident);
+}
+
+Reg
+fetch(Reg addr, const Type *type)
+{
+    auto ty = TypeMap::get(type);
+    return llvmBuilder->CreateLoad(ty, addr);
 }
 
 void
-store(Reg reg, const char *ident, const Type *type)
+store(Reg val, const char *ident, const Type *type)
 {
+    // TODO: assertion check: typeof(val) == type
     if (currFn.bbClosed) {
 	llvm::errs() << "Warning: not reachable store\n";
 	return;
     }
 
-    auto var = local.contains(ident)
+    auto addr = local.contains(ident)
 	? llvm::dyn_cast<llvm::Value>(local[ident])
 	: llvm::dyn_cast<llvm::Value>(global[ident]);
-    llvmBuilder->CreateStore(reg, var);
+    llvmBuilder->CreateStore(val, addr);
+}
+
+void
+store(Reg val, Reg addr, const Type *type)
+{
+    // TODO: assertion check: typeof(val) == type
+    llvmBuilder->CreateStore(val, addr);
 }
 
 //------------------------------------------------------------------------------

@@ -19,7 +19,9 @@ ExprDeleter::operator()(const Expr *expr) const
 static const Type *
 getTypeConversion(const Type *from, const Type *to)
 {
-    if (from->isInteger() && to->isInteger()) {
+    if (from == to) {
+	return to;
+    } else if (from->isInteger() && to->isInteger()) {
 	// TODO: -Wconversion generate warning if sizeof(to) < sizeof(from)
 	return to;
     }
@@ -188,6 +190,24 @@ Expr::createLogicalNot(ExprPtr &&expr)
 }
 
 ExprPtr
+Expr::createAddr(ExprPtr &&expr)
+{
+    auto ty = Type::getPointer(expr->getType());
+    auto addr = new Expr{Unary{Unary::Kind::ADDRESS, std::move(expr), ty}};
+    return ExprPtr{addr};
+}
+
+ExprPtr
+Expr::createDeref(ExprPtr &&expr)
+{
+    assert(expr->getType()->isPointer());
+    auto ty = expr->getType()->getRefType();
+    auto dref = new Expr{Unary{Unary::Kind::DEREF, std::move(expr), ty}};
+    return ExprPtr{dref};
+}
+
+
+ExprPtr
 Expr::createCast(ExprPtr &&child, const Type *toType)
 {
     auto expr = new Expr{Unary{Unary::Kind::CAST, std::move(child), toType}};
@@ -347,6 +367,18 @@ Expr::getType(void) const
 }
 
 bool
+Expr::isLValue(void) const
+{
+    if (std::holds_alternative<Identifier>(variant)) {
+	return true;
+    } else if (std::holds_alternative<Unary>(variant)) {
+	const auto &unary = std::get<Unary>(variant);
+	return unary.kind == Unary::Kind::DEREF;
+    }
+    return false;
+}
+
+bool
 Expr::isConst(void) const
 {
     if (std::holds_alternative<Literal>(variant)) {
@@ -460,6 +492,31 @@ loadValue(const Unary &unary)
 		gen::labelDef(endLabel);
 		return gen::phi(one, thenLabel, zero, elseLabel, unary.type);
 	    }
+	case Unary::Kind::DEREF:
+	    {
+		auto addr = unary.child->loadValue();
+		auto ty = unary.child->getType();
+		return gen::fetch(addr, ty);
+	    }
+	case Unary::Kind::ADDRESS:
+	    {
+		auto lValue = unary.child.get();
+		assert(lValue->isLValue());
+		if (std::holds_alternative<Identifier>(lValue->variant)) {
+		    auto ident = std::get<Identifier>(lValue->variant);
+		    return gen::loadAddr(ident.val);
+		} else if (std::holds_alternative<Unary>(lValue->variant)) {
+		    const auto &unary = std::get<Unary>(lValue->variant);
+		    if (unary.kind == Unary::Kind::DEREF) {
+			return unary.child->loadValue();
+		    }
+		    assert(0);
+		    return nullptr;
+		} else {
+		    assert(0); // not implemented
+		    return nullptr;
+		}
+	    }
 
 	default:
 	    assert(0);
@@ -491,14 +548,10 @@ loadValue(const Binary &binary)
 
 	case Binary::Kind::ASSIGN:
 	    {
-		auto const &left = binary.left;
-		auto const &right = binary.right;
-		assert(std::holds_alternative<Identifier>(left->variant));
-
-		auto l = std::get<Identifier>(left->variant);
-		auto r = right->loadValue();
-		gen::store(r, l.val, binary.type);
-		return r;
+		auto addr = binary.left->loadAddr();
+		auto val = binary.right->loadValue();
+		gen::store(val, addr, binary.type);
+		return val;
 	    }
 	case Binary::Kind::ADD:
 	case Binary::Kind::SUB:
@@ -579,6 +632,24 @@ Expr::loadValue(void) const
     }
     assert(0);
     return nullptr; // never reached
+}
+
+gen::Reg
+Expr::loadAddr(void) const
+{
+    assert(isLValue());
+
+    if (std::holds_alternative<Identifier>(variant)) {
+	const auto &ident = std::get<Identifier>(variant);
+	return gen::loadAddr(ident.val);
+    } else if (std::holds_alternative<Unary>(variant)) {
+	const auto &unary = std::get<Unary>(variant);
+	if (unary.kind == Unary::Kind::DEREF) {
+	    return unary.child->loadValue();
+	}
+    }
+    assert(0);
+    return nullptr;
 }
 
 static void

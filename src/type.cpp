@@ -119,7 +119,7 @@ operator<<(std::ostream &out, const Type *type)
 	out << (type->getIntegerKind() == Type::SIGNED ? "i" : "u")
 	    << type->getIntegerNumBits();
     } else if (type->isPointer()) {
-	out << "pointer to" << type->getRefType();
+	out << "pointer to " << type->getRefType();
     } else if (type->isFunction()) {
 	out << "fn(";
 	auto arg = type->getArgType();
