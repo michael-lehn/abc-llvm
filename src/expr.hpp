@@ -87,10 +87,14 @@ struct Binary
 	: kind{kind}, left{std::move(left)}, right{std::move(right)},
 	  type{nullptr}
     {
-	setTypeAndCastOperands();
+	setType();
+	//assert(type && "illegal expression"); // TODO: better error handling
+	castOperands();
     }
 
-    void setTypeAndCastOperands(void);
+    void setType(void);
+    void castOperands(void);
+    
 };
 
 struct Conditional

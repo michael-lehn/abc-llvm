@@ -218,7 +218,7 @@ parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
     getToken();
 
     // parse function return type
-    retType = nullptr;
+    retType = Type::getVoid();
     if (token.kind == TokenKind::COLON) {
 	getToken();
 	retType = parseType();
@@ -293,7 +293,7 @@ parseIntType(void)
 	    getToken();
 	    return Type::getSignedInteger(64);
 	default:
-	    return nullptr;		
+	    return nullptr;
     }
 }
 

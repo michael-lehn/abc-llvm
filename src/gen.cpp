@@ -95,7 +95,8 @@ struct TypeMap
     static llvm::Type *
     get_(const Type *t)
     {
-	if (!t) {
+	assert(t);
+	if (t->isVoid()) {
 	    return llvm::Type::getVoidTy(*llvmContext);
 	} else if (t->isInteger()) {
 	    switch (t->getIntegerNumBits()) {
@@ -495,6 +496,17 @@ aluInstr(AluOp op, Reg l, Reg r)
 	    assert(0);
 	    return nullptr;
     }
+}
+
+Reg
+ptrInc(const Type *type, Reg addr, Reg offset)
+{
+    auto ty = TypeMap::get(type);
+
+    std::vector<Reg> idxList{1};
+    idxList[0] = offset;
+
+    return llvmBuilder->CreateGEP(ty, addr, idxList);
 }
 
 //------------------------------------------------------------------------------

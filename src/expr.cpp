@@ -51,39 +51,47 @@ getCommonType(const Type *left, const Type *right)
 //-- class Binary --------------------------------------------------------------
 
 void
-Binary::setTypeAndCastOperands(void)
+Binary::setType(void)
 {
-    const Type *l = left->getType();
-    const Type *r = right->getType();
+    auto l = left->getType(),
+	 r = right->getType();
+
     switch (kind) {
 	case Binary::Kind::CALL:
-	    assert(l->isFunction());
 	    type = l->getRetType();
 	    return;
-
 	case Binary::Kind::ASSIGN:
 	    type = getTypeConversion(r, l);
-	    if (type && r != type) {
-		right = Expr::createCast(std::move(right), type);
+	    return;
+	case Binary::Kind::ADD:
+	    if (l->isPointer() || r->isPointer()) {
+		if (l->isPointer() && r->isInteger()) {
+		    type = l;
+		} else if (r->isPointer() && l->isInteger()) {
+		    type = r;
+		} else {
+		    type = nullptr;
+		}
+	    } else {
+		type = getCommonType(l, r);
 	    }
 	    return;
-
-	case Binary::Kind::ADD:
 	case Binary::Kind::SUB:
+	    if (l->isPointer() && r->isPointer()) {
+		type = Type::getSignedInteger(64); // TODO: some ptrdiff_t
+	    } else if (l->isPointer() && r->isInteger()) {
+		type = l;
+	    } else {
+		type = getCommonType(l, r);
+	    }
+	    return;
 	case Binary::Kind::MUL:
 	case Binary::Kind::DIV:
 	case Binary::Kind::MOD:
-	    type = getCommonType(l, r);
-	    if (type) {
-		if (l != type) {
-		    left = Expr::createCast(std::move(left), type);
-		}
-		if (r != type) {
-		    right = Expr::createCast(std::move(right), type);
-		}
+	    if (l->isInteger() && r->isInteger()) {
+		type = getCommonType(l, r);
 	    }
 	    return;
-
 	case Binary::Kind::EQUAL:
 	case Binary::Kind::NOT_EQUAL:
 	case Binary::Kind::GREATER:
@@ -92,8 +100,79 @@ Binary::setTypeAndCastOperands(void)
 	case Binary::Kind::LESS_EQUAL:
 	case Binary::Kind::LOGICAL_AND:
 	case Binary::Kind::LOGICAL_OR:
-	    type = Type::getUnsignedInteger(8); // TODO: Use bool type
-	    if (auto ty = getCommonType(l, r)) {
+	    type = Type::getUnsignedInteger(8); // TODO: bool type
+	    return;
+	default:
+	    type = nullptr;
+	    return;
+    }
+}
+
+void
+Binary::castOperands(void)
+{
+    if (!type) {
+	left->print();
+	right->print();
+    }
+    assert(type && "setTypes() not called?");
+
+    auto l = left->getType(),
+	 r = right->getType();
+
+    switch (kind) {
+	case Binary::Kind::ASSIGN:
+	    if (r != type) {
+		right = Expr::createCast(std::move(right), type);
+	    }
+	    return;
+	case Binary::Kind::ADD:
+	    if (l->isPointer() || r->isPointer()) {
+		if (r->isPointer() && l->isInteger()) {
+		    // for pointer arithmeitc let right always be the index
+		    left.swap(right);
+		    std::swap(l, r);
+		}
+	    } else if (l->isInteger() && r->isInteger()) {
+		if (l != type) {
+		    left = Expr::createCast(std::move(left), type);
+		}
+		if (r != type) {
+		    right = Expr::createCast(std::move(right), type);
+		}
+	    }
+	case Binary::Kind::SUB:
+	    if (l->isInteger() && r->isInteger()) {
+		if (l != type) {
+		    left = Expr::createCast(std::move(left), type);
+		}
+		if (r != type) {
+		    right = Expr::createCast(std::move(right), type);
+		}
+	    }
+	    return;
+	case Binary::Kind::MUL:
+	case Binary::Kind::DIV:
+	case Binary::Kind::MOD:
+	    if (l->isInteger() && r->isInteger()) {
+		if (l != type) {
+		    left = Expr::createCast(std::move(left), type);
+		}
+		if (r != type) {
+		    right = Expr::createCast(std::move(right), type);
+		}
+	    }
+	    return;
+	case Binary::Kind::EQUAL:
+	case Binary::Kind::NOT_EQUAL:
+	case Binary::Kind::GREATER:
+	case Binary::Kind::GREATER_EQUAL:
+	case Binary::Kind::LESS:
+	case Binary::Kind::LESS_EQUAL:
+	case Binary::Kind::LOGICAL_AND:
+	case Binary::Kind::LOGICAL_OR:
+	    {
+		auto ty = getCommonType(l, r);
 		if (l != ty) {
 		    left = Expr::createCast(std::move(left), ty);
 		}
@@ -101,10 +180,7 @@ Binary::setTypeAndCastOperands(void)
 		    right = Expr::createCast(std::move(right), ty);
 		}
 	    }
-	    return;
-
 	default:
-	    type = nullptr;
 	    return;
     }
 }
@@ -558,7 +634,15 @@ loadValue(const Binary &binary)
 	case Binary::Kind::MUL:
 	case Binary::Kind::DIV:
 	case Binary::Kind::MOD:
-	    {
+	    if (binary.kind == Binary::Kind::ADD && binary.type->isPointer()) {
+		assert(binary.left->getType()->isPointer());
+		assert(binary.right->getType()->isInteger());
+
+		auto ty = binary.left->getType()->getRefType();
+		auto l = binary.left->loadValue();
+		auto r = binary.right->loadValue();
+		return gen::ptrInc(ty, l, r);
+	    } else {
 		auto l = binary.left->loadValue();
 		auto r = binary.right->loadValue();
 		auto op = getGenAluOp(binary.kind, binary.type);

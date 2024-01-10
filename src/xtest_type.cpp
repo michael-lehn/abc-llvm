@@ -6,6 +6,9 @@
 int
 main(void)
 {
+    auto v = Type::getVoid();
+    std::cout << "v = " << v << std::endl;
+
     auto t1 = Type::getUnsignedInteger(16);
     auto t2 = Type::getUnsignedInteger(16);
     auto t3 = Type::getUnsignedInteger(32);

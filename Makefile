@@ -22,9 +22,10 @@ xsrc := $(wildcard $(src.dir)/xtest_*.cpp) \
 	$(compiler.src)
 src := $(filter-out $(xsrc),$(wildcard $(src.dir)/*.cpp))
 obj := $(src:$(src.dir)/%.cpp=$(obj.dir)/%.o)
+xobj := $(xsrc:$(src.dir)/%.cpp=$(obj.dir)/%.o)
 dep := $(src:$(src.dir)/%=$(dep.dir)/%.d) $(xsrc:$(src.dir)/%.cpp=$(dep.dir)/%.d)
 
-target := $(patsubst $(src.dir)/%.cpp,$(bin.dir)/%,$(xsrc))
+target := $(patsubst $(src.dir)/%.cpp,$(bin.dir)/%,$(xsrc)) $(xobj)
 
 .DEFAULT_GOAL := all
 
@@ -33,14 +34,15 @@ all: $(target)
 
 .PHONY: clean
 clean:
-	$(RM) $(obj) $(dep) $(target)
+	$(RM) $(obj) $(xobj) $(dep) $(target)
 
 $(obj.dir)/%.o :$(src.dir)/%.cpp
 $(obj.dir)/%.o : $(src.dir)/%.cpp | $(dep.dir) $(obj.dir)
 	$(COMPILE.cc) $(OUTPUT_OPTION) $<
 
-$(bin.dir)/%: $(src.dir)/%.cpp
-$(bin.dir)/%: $(src.dir)/%.cpp $(obj) | $(bin.dir)
+$(bin.dir)/%: $(obj.dir)/%.cpp
+$(bin.dir)/%: $(obj.dir)/%.o
+$(bin.dir)/%: $(obj.dir)/%.o $(obj) | $(bin.dir)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $< $(obj) $(llvm.link) -o $@
 
 $(obj.dir): ; mkdir -p $@

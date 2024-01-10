@@ -10,10 +10,16 @@ class Type
 {
     public:
 	enum Id {
+	    VOID,
 	    INTEGER,
 	    POINTER,
 	    FUNCTION,
 	} id;
+
+	bool isVoid() const
+	{
+	    return id == VOID;
+	}
 
 	// for integer (sub-)types 
 
@@ -86,6 +92,7 @@ class Type
 	Type(Id id, Data &&data) : id{id}, data{data} {}
 
     public:
+	static const Type *getVoid(void);
 	static const Type *getUnsignedInteger(std::size_t numBits);
 	static const Type *getSignedInteger(std::size_t numBits);
 	static const Type *getPointer(const Type *refType);

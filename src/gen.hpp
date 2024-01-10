@@ -76,6 +76,8 @@ Reg cast(Reg reg, const Type *fromType, const Type *toType);
 Reg loadConst(const char *val, const Type *type, std::uint8_t radix);
 Reg aluInstr(AluOp op, Reg l, Reg r);
 
+Reg ptrInc(const Type *type, Reg addr, Reg offset);
+
 void dump_bc(const char *filename = "out");
 void dump_asm(const char *filename = "out", int codeGenOptLevel = 0);
 

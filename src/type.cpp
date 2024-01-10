@@ -3,11 +3,14 @@
 
 #include "type.hpp"
 
-//------------------------------------------------------------------------------
-
+//--  Integer class (also misused to represent 'void') -------------------------
 
 struct Integer : public Type
 {
+    Integer()
+	: Type{Type::VOID, IntegerData{0, Type::IntegerKind::UNSIGNED}}
+    {}
+
     Integer(std::size_t numBits, IntegerKind kind)
 	: Type{Type::INTEGER, IntegerData{numBits, kind}}
     {}
@@ -23,30 +26,7 @@ operator<(const Integer &x, const Integer &y)
 	    && x.getIntegerNumBits() < y.getIntegerNumBits();
 }
 
-static std::set<Integer> *intTypeSet;
-
-static const Type *
-getInteger(std::size_t numBits, Type::IntegerKind kind)
-{
-    if (!intTypeSet) {
-	intTypeSet = new std::set<Integer>;
-    }
-    return &*intTypeSet->insert(Integer{numBits, kind}).first;
-}
-
-const Type *
-Type::getUnsignedInteger(std::size_t numBits)
-{
-    return getInteger(numBits, Type::IntegerKind::UNSIGNED);
-}
-
-const Type *
-Type::getSignedInteger(std::size_t numBits)
-{
-    return getInteger(numBits, Type::IntegerKind::SIGNED);
-}
-
-//------------------------------------------------------------------------------
+//-- Pointer class -------------------------------------------------------------
 
 struct Pointer : public Type
 {
@@ -59,19 +39,7 @@ operator<(const Pointer &x, const Pointer &y)
     return x.getRefType() < y.getRefType();
 }
 
-
-static std::set<Pointer> *ptrTypeSet;
-
-const Type *
-Type::getPointer(const Type *refType)
-{
-    if (!ptrTypeSet) {
-	ptrTypeSet = new std::set<Pointer>;
-    }
-    return &*ptrTypeSet->insert(Pointer{refType}).first;
-}
-
-//------------------------------------------------------------------------------
+//-- Function class ------------------------------------------------------------
 
 struct Function : public Type
 {
@@ -97,7 +65,58 @@ operator<(const Function &x, const Function &y)
     return false;
 }
 
+//-- Sets for theses types for uniqueness --------------------------------------
+
+static std::set<Integer> *intTypeSet;
+static std::set<Pointer> *ptrTypeSet;
 static std::set<Function> *fnTypeSet;
+
+//-- Static functions ----------------------------------------------------------
+
+// Create integer/void type or return existing type
+
+const Type *
+Type::getVoid(void)
+{
+    if (!intTypeSet) {
+	intTypeSet = new std::set<Integer>;
+    }
+    return &*intTypeSet->insert(Integer{}).first;
+}
+
+static const Type *
+getInteger(std::size_t numBits, Type::IntegerKind kind)
+{
+    if (!intTypeSet) {
+	intTypeSet = new std::set<Integer>;
+    }
+    return &*intTypeSet->insert(Integer{numBits, kind}).first;
+}
+
+const Type *
+Type::getUnsignedInteger(std::size_t numBits)
+{
+    return getInteger(numBits, Type::IntegerKind::UNSIGNED);
+}
+
+const Type *
+Type::getSignedInteger(std::size_t numBits)
+{
+    return getInteger(numBits, Type::IntegerKind::SIGNED);
+}
+
+// Create pointer type or return existing type
+
+const Type *
+Type::getPointer(const Type *refType)
+{
+    if (!ptrTypeSet) {
+	ptrTypeSet = new std::set<Pointer>;
+    }
+    return &*ptrTypeSet->insert(Pointer{refType}).first;
+}
+
+// Create function type or return existing type
 
 const Type *
 Type::getFunction(const Type *retType, std::vector<const Type *> argType)
@@ -108,12 +127,14 @@ Type::getFunction(const Type *retType, std::vector<const Type *> argType)
     return &*fnTypeSet->insert(Function{retType, argType}).first;
 }
 
-//------------------------------------------------------------------------------
+//-- Print type ----------------------------------------------------------------
 
 std::ostream &
 operator<<(std::ostream &out, const Type *type)
 {
     if (!type) {
+	out << "illegal";
+    } else if (type->isVoid()) {
 	out << "void";
     } else if (type->isInteger()) {
 	out << (type->getIntegerKind() == Type::SIGNED ? "i" : "u")

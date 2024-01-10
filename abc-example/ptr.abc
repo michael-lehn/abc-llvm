@@ -3,14 +3,20 @@ fn printNl();
 
 fn main(): u8
 {
-    local val: u64 = 42;
+    local a: u64 = 1,
+	  b: u64 = 2,
+	  c: u64 = 3;
 
-    printU64(val);
-    printNl();
+    printU64(a); printNl();
+    printU64(b); printNl();
+    printU64(c); printNl();
 
-    local ptr: -> u64 = &val;
+    local ptr: -> u64 = &b;
 
-    *&*ptr = 13;
-    printU64(val);
-    printNl();
+    *(ptr + -1) = 42;
+
+    printU64(a); printNl();
+    printU64(b); printNl();
+    printU64(c); printNl();
+
 }
