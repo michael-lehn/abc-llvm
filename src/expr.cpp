@@ -639,9 +639,7 @@ loadValue(const Binary &binary)
 		    auto l = std::get<Identifier>(left->variant);
 		    return gen::call(l.val, param);
 		}
-		std::cerr << "loadValue: ok" << std::endl;
 		auto fnPtr = left->loadValue();
-		std::cerr << "loadValue: ok1" << std::endl;
 		auto fnType = left->getType();
 		return gen::call(fnPtr, fnType, param);
 	    }

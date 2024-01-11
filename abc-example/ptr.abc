@@ -38,8 +38,11 @@ fn main(): u8
     printStrNl("First 15 bytes from s1:");
     printBytes(s1, 15);
 
-    printStrNl("First 5 bytes of function 'printBytes':");
-    s1 = printBytes;
+    printStrNl("First 5 bytes of function 'printStr':");
+    s1 = printStr;
     printBytes(s1, 5);
+
+    printStrNl("First 5 bytes of function 'printBytes':");
+    printBytes(printBytes, 5);
     return 0;
 }

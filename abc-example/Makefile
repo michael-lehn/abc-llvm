@@ -1,5 +1,5 @@
 ABC := ../bin/abc_compiler
-
+ABCFLAGS := -O3
 
 # Uncomment to directly link with ld on MacOS
 
@@ -31,7 +31,7 @@ bc: $(bc.abc)
 asm: $(asm.abc)
 
 %.s : %.abc
-	$(ABC) -S $<
+	$(ABC) -S $(ABCFLAGS) $<
 
 %.bc : %.abc
 	$(ABC) -B $<

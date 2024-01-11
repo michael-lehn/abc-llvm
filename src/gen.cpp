@@ -303,9 +303,7 @@ Reg
 call(Reg fnPtr, const Type *fnType, const std::vector<Reg> &param)
 {
     assert(fnType->isFunction());
-    std::cerr << "call: ok" << std::endl;
     auto fnTy =  llvm::dyn_cast<llvm::FunctionType>(TypeMap::get(fnType));
-    std::cerr << "call: ok1" << std::endl;
     return llvmBuilder->CreateCall(fnTy, fnPtr, param);
 
 }
