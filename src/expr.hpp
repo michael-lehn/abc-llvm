@@ -77,6 +77,8 @@ struct Binary
 	MUL,
 	DIV,
 	MOD,
+	PREFIX_INC,
+	PREFIX_DEC,
     };
 
     Kind kind;
@@ -84,8 +86,8 @@ struct Binary
     const Type *type;
 
     Binary(Kind kind, ExprPtr &&left, ExprPtr &&right)
-	: kind{kind}, left{std::move(left)}, right{std::move(right)},
-	  type{nullptr}
+	: kind{kind}, left{std::move(left)}, right{std::move(right)}
+	, type{nullptr}
     {
 	setType();
 	//assert(type && "illegal expression"); // TODO: better error handling

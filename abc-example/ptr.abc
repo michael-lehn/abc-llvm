@@ -5,9 +5,8 @@ fn putCharHex(: u16);
 
 fn printStr(s: -> u8)
 {
-    while (*s) {
+    for (; *s; ++s) {
 	putChar(*s);
-	s = s + 1;
     }
 }
 
@@ -19,7 +18,12 @@ fn printStrNl(s: -> u8)
 
 fn printBytes(s: -> u8, n: u64)
 {
-    for (local i: u64 = 0; i < n; i = i + 1) {
+    for (local i: u64 = 0; i < n; ++i) {
+	putCharHex(i[s]);
+	printNl();
+    }
+    printStrNl("now in reverse order:");
+    for (local i: i64 = n - 1; i >= 0; --i) {
 	putCharHex(i[s]);
 	printNl();
     }
@@ -44,5 +48,10 @@ fn main(): u8
 
     printStrNl("First 5 bytes of function 'printBytes':");
     printBytes(printBytes, 5);
+
+    local i: u8 = 5,
+	  j: u8 = --i;
+    printU64(i); printNl();
+    printU64(j); printNl();
     return 0;
 }

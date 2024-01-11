@@ -175,7 +175,8 @@ parsePrefix(void)
 {
     if (token.kind == TokenKind::PLUS || token.kind == TokenKind::MINUS
      || token.kind == TokenKind::NOT || token.kind == TokenKind::AND
-     || token.kind == TokenKind::ASTERISK)
+     || token.kind == TokenKind::ASTERISK || token.kind == TokenKind::PLUS2
+     || token.kind == TokenKind::MINUS2)
     {
 	auto opTok = token;
         getToken();
@@ -199,6 +200,22 @@ parsePrefix(void)
 			      "'&' can only be applied to an l-value");
 	    }
 	    expr = Expr::createAddr(std::move(expr));
+	} else if (opTok.kind == TokenKind::PLUS2) {
+	    if (!expr->isLValue()) {
+		semanticError(opTok.loc,
+			      "'&' can only be applied to an l-value");
+	    }
+	    auto one = Expr::createLiteral("1", 10);
+	    expr = Expr::createBinary(Binary::PREFIX_INC, std::move(expr),
+				      std::move(one));
+	} else if (opTok.kind == TokenKind::MINUS2) {
+	    if (!expr->isLValue()) {
+		semanticError(opTok.loc,
+			      "'&' can only be applied to an l-value");
+	    }
+	    auto one = Expr::createLiteral("1", 10);
+	    expr = Expr::createBinary(Binary::PREFIX_DEC, std::move(expr),
+				      std::move(one));
 	}
 	return expr;
     }
@@ -253,7 +270,7 @@ parsePostfix(ExprPtr &&expr)
 	if (!expr->getType()->isPointer()){
 	    // TODO: Store loc in expr
 	    semanticError(opLoc,
-		    "subscripted value is neither array nor pointer");
+			  "subscripted value is neither array nor pointer");
 	}
 	expr = Expr::createDeref(std::move(expr));
 	return parsePostfix(std::move(expr));

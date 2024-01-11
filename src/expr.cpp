@@ -74,6 +74,7 @@ Binary::setType(void)
 	    type = getTypeConversion(r, l);
 	    return;
 	case Binary::Kind::ADD:
+	case Binary::Kind::PREFIX_INC:
 	    if (l->isPointer() || r->isPointer()) {
 		if (l->isPointer() && r->isInteger()) {
 		    type = l;
@@ -87,6 +88,7 @@ Binary::setType(void)
 	    }
 	    return;
 	case Binary::Kind::SUB:
+	case Binary::Kind::PREFIX_DEC:
 	    if (l->isPointer() && r->isPointer()) {
 		type = Type::getSignedInteger(64); // TODO: some ptrdiff_t
 	    } else if (l->isPointer() && r->isInteger()) {
@@ -136,6 +138,7 @@ Binary::castOperands(void)
 		right = Expr::createCast(std::move(right), type);
 	    }
 	    return;
+	case Binary::Kind::PREFIX_INC:
 	case Binary::Kind::ADD:
 	    if (l->isPointer() || r->isPointer()) {
 		if (r->isPointer() && l->isInteger()) {
@@ -151,6 +154,7 @@ Binary::castOperands(void)
 		    right = Expr::createCast(std::move(right), type);
 		}
 	    }
+	case Binary::Kind::PREFIX_DEC:
 	case Binary::Kind::SUB:
 	    if (l->isInteger() && r->isInteger()) {
 		if (l != type) {
@@ -501,8 +505,10 @@ getGenAluOp(Binary::Kind kind, const Type *type)
     bool isSignedInt = type->isInteger()
 		    && type->getIntegerKind() == Type::SIGNED;
     switch (kind) {
+	case Binary::Kind::PREFIX_INC:
 	case Binary::Kind::ADD:
 	    return gen::ADD;
+	case Binary::Kind::PREFIX_DEC:
 	case Binary::Kind::SUB:
 	    return gen::SUB;
 	case Binary::Kind::MUL:
@@ -651,6 +657,31 @@ loadValue(const Binary &binary)
 		gen::store(val, addr, binary.type);
 		return val;
 	    }
+	case Binary::Kind::PREFIX_INC:
+	case Binary::Kind::PREFIX_DEC:
+	    {
+		gen::Reg val;
+		if (binary.kind == Binary::Kind::PREFIX_INC
+		 && binary.type->isPointer())
+		{
+		    assert(binary.left->getType()->isPointer());
+		    assert(binary.right->getType()->isInteger());
+
+		    auto ty = binary.left->getType()->getRefType();
+		    auto l = binary.left->loadValue();
+		    auto r = binary.right->loadValue();
+		    val = gen::ptrInc(ty, l, r);
+		} else {
+		    auto l = binary.left->loadValue();
+		    auto r = binary.right->loadValue();
+		    auto op = getGenAluOp(binary.kind, binary.type);
+		    val = gen::aluInstr(op, l, r);
+		}
+		auto addr = binary.left->loadAddr();
+		gen::store(val, addr, binary.type);
+		return val;
+	    }
+
 	case Binary::Kind::ADD:
 	case Binary::Kind::SUB:
 	case Binary::Kind::MUL:
