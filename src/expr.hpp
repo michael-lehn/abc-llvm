@@ -79,6 +79,8 @@ struct Binary
 	MOD,
 	PREFIX_INC,
 	PREFIX_DEC,
+	POSTFIX_INC,
+	POSTFIX_DEC,
     };
 
     Kind kind;

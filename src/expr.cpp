@@ -73,8 +73,13 @@ Binary::setType(void)
 	case Binary::Kind::ASSIGN:
 	    type = getTypeConversion(r, l);
 	    return;
-	case Binary::Kind::ADD:
 	case Binary::Kind::PREFIX_INC:
+	case Binary::Kind::POSTFIX_INC:
+	case Binary::Kind::PREFIX_DEC:
+	case Binary::Kind::POSTFIX_DEC:
+	    type = l;
+	    return;
+	case Binary::Kind::ADD:
 	    if (l->isPointer() || r->isPointer()) {
 		if (l->isPointer() && r->isInteger()) {
 		    type = l;
@@ -88,7 +93,6 @@ Binary::setType(void)
 	    }
 	    return;
 	case Binary::Kind::SUB:
-	case Binary::Kind::PREFIX_DEC:
 	    if (l->isPointer() && r->isPointer()) {
 		type = Type::getSignedInteger(64); // TODO: some ptrdiff_t
 	    } else if (l->isPointer() && r->isInteger()) {
@@ -138,7 +142,6 @@ Binary::castOperands(void)
 		right = Expr::createCast(std::move(right), type);
 	    }
 	    return;
-	case Binary::Kind::PREFIX_INC:
 	case Binary::Kind::ADD:
 	    if (l->isPointer() || r->isPointer()) {
 		if (r->isPointer() && l->isInteger()) {
@@ -154,7 +157,6 @@ Binary::castOperands(void)
 		    right = Expr::createCast(std::move(right), type);
 		}
 	    }
-	case Binary::Kind::PREFIX_DEC:
 	case Binary::Kind::SUB:
 	    if (l->isInteger() && r->isInteger()) {
 		if (l != type) {
