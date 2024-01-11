@@ -31,6 +31,12 @@ printNl(void)
     printf("\n");
 }
 
+void
+print(char *s)
+{
+    printf("%s", s);
+}
+
 uint16_t
 getChar()
 {
@@ -41,4 +47,11 @@ void
 putChar(uint16_t ch)
 {
     putchar(ch);
+}
+
+void
+putCharHex(uint16_t ch)
+{
+    int c = ch;
+    printf("0x%02X", c);
 }

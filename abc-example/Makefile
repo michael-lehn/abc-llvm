@@ -1,10 +1,10 @@
 ABC := ../bin/abc_compiler
 
-LDFLAGS := -L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib \
-	   -lSystem
 
 # Uncomment to directly link with ld on MacOS
 
+## LDFLAGS := -L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib \
+## 	   -lSystem
 ## LD := ld
 ## LINK.o = $(LD) $(ASFLAGS) $(LDFLAGS) $(TARGET_MACH)
 

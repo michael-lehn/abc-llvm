@@ -33,6 +33,7 @@ void defStringLiteral(const char *ident, const char *val, bool isConst);
 
 // functions call
 Reg call(const char *ident, const std::vector<Reg> &param);
+Reg call(Reg fnPtr, const Type *fnType, const std::vector<Reg> &param);
 
 // labels and jumps
 enum CondOp {

@@ -1,6 +1,7 @@
 fn printU64(:u64);
 fn printNl();
 fn putChar(: u16);
+fn putCharHex(: u16);
 
 fn printStr(s: -> u8)
 {
@@ -16,14 +17,29 @@ fn printStrNl(s: -> u8)
     printNl();
 }
 
+fn printBytes(s: -> u8, n: u64)
+{
+    for (local i: u64 = 0; i < n; i = i + 1) {
+	putCharHex(*(s+i));
+	printNl();
+    }
+}
+
 fn main(): u8
 {
     local s1: -> u8 = "hello world",
-	  s2: -> u8 = "Hallo Welt",
+	  s2: -> u8 = "ABC",
 	  sel: -> -> u8 = &s1;
 
     printStrNl(*sel);
     sel = &s2;
     printStrNl(*sel);
+
+    printStrNl("First 15 bytes from s1:");
+    printBytes(s1, 15);
+
+    printStrNl("First 5 bytes of function 'printBytes':");
+    s1 = printBytes;
+    printBytes(s1, 5);
     return 0;
 }

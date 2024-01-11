@@ -24,6 +24,16 @@ getTypeConversion(const Type *from, const Type *to)
     } else if (from->isInteger() && to->isInteger()) {
 	// TODO: -Wconversion generate warning if sizeof(to) < sizeof(from)
 	return to;
+    } else if (from->isPointer() && to->isPointer()) {
+	// TODO: require explicit cast if types are different
+	return from;
+    } else if (from->isFunction() && to->isPointer()) {
+	// TODO: require explicit cast if types are different
+	if (from != to) {
+	    std::cerr << "warning: casting '" << from << "' to '" << to << "'"
+		<< std::endl;
+	}
+	return from;
     }
     std::cerr << "can not convert type '"
 	<< from << "' to type '" << to << "'" << std::endl;
@@ -540,6 +550,10 @@ loadValue(const Literal &l)
 static gen::Reg
 loadValue(const Identifier &ident)
 {
+    if (ident.type->isFunction()) {
+	return gen::loadAddr(ident.val);
+    }
+
     return gen::fetch(ident.val, ident.type);
 }
 
@@ -571,6 +585,9 @@ loadValue(const Unary &unary)
 	case Unary::Kind::DEREF:
 	    {
 		auto addr = unary.child->loadValue();
+		if (unary.type->isFunction()) {
+		    return addr;
+		}
 		auto ty = unary.child->getType()->getRefType();
 		return gen::fetch(addr, ty);
 	    }
@@ -610,16 +627,23 @@ loadValue(const Binary &binary)
 	    {
 		auto const &left = binary.left;
 		auto const &right = binary.right;
-		assert(std::holds_alternative<Identifier>(left->variant));
 		assert(std::holds_alternative<ExprVector>(right->variant));
 
-		auto l = std::get<Identifier>(left->variant);
 		auto &r = std::get<ExprVector>(right->variant);
 		std::vector<gen::Reg> param{r.size()};
 		for (std::size_t i = 0; i < r.size(); ++i) {
 		    param[i] = r[i]->loadValue();
 		}
-		return gen::call(l.val, param);
+
+		if (std::holds_alternative<Identifier>(left->variant)) {
+		    auto l = std::get<Identifier>(left->variant);
+		    return gen::call(l.val, param);
+		}
+		std::cerr << "loadValue: ok" << std::endl;
+		auto fnPtr = left->loadValue();
+		std::cerr << "loadValue: ok1" << std::endl;
+		auto fnType = left->getType();
+		return gen::call(fnPtr, fnType, param);
 	    }
 
 	case Binary::Kind::ASSIGN:

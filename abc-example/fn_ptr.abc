@@ -1,0 +1,33 @@
+fn printU64(:u64);
+fn printNl();
+fn print(: -> u8);
+
+fn foo(a: u8)
+{
+    print("I am 'foo' and a = ");
+    printU64(a);
+    printNl();
+}
+
+fn bar(a: u8)
+{
+    print("I am 'bar' and a = ");
+    printU64(a);
+    printNl();
+}
+
+fn main(): u8
+{
+    local p: -> fn(:u8),    // pointer to function (aka "function pointer")
+	  q: ->-> fn(:u8);  // pointer to pointer to function
+
+    p = foo;
+    (*p)(42);		    // one way to use a function pointer
+
+    p = bar;
+    p->(13);		    // another way to use a function pointer
+
+    q = &p;		    // using a pointer to a function pointer
+    q->->(123);
+    (**q)(21);
+}

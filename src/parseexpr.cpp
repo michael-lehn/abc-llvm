@@ -10,7 +10,8 @@
 static ExprPtr parseAssignment(void);
 static ExprPtr parseConditional(void);
 static ExprPtr parseBinary(int prec);
-static ExprPtr parseUnary(void);
+static ExprPtr parsePrefix(void);
+static ExprPtr parsePostfix(ExprPtr &&expr);
 static ExprPtr parsePrimary(void);
 
 ExprPtr
@@ -151,7 +152,7 @@ getBinaryExprKind(TokenKind kind)
 static ExprPtr
 parseBinary(int prec)
 {
-    auto expr = parseUnary();
+    auto expr = parsePrefix();
     if (!expr) {
 	return nullptr;
     }
@@ -170,43 +171,86 @@ parseBinary(int prec)
 }
 
 static ExprPtr
-parseUnary(void)
+parsePrefix(void)
 {
     if (token.kind == TokenKind::PLUS || token.kind == TokenKind::MINUS
      || token.kind == TokenKind::NOT || token.kind == TokenKind::AND
      || token.kind == TokenKind::ASTERISK)
     {
-	auto op = token.kind;
-	auto opLoc = token.loc;
+	auto opTok = token;
         getToken();
-	auto expr = parseUnary();
+	auto expr = parsePrefix();
         if (!expr) {
-            expectedError("non-empty expression");
+            semanticError(opTok.loc, "non-empty expression expected");
         }
-	if (op == TokenKind::MINUS) {
+	if (opTok.kind == TokenKind::MINUS) {
 	    expr = Expr::createUnaryMinus(std::move(expr));
-	} else if (op == TokenKind::NOT) {
+	} else if (opTok.kind == TokenKind::NOT) {
 	    expr = Expr::createLogicalNot(std::move(expr));
-	} else if (op == TokenKind::ASTERISK) {
+	} else if (opTok.kind == TokenKind::ASTERISK) {
 	    if (!expr->getType()->isPointer()) {
-		semanticError(opLoc, "'*' can only be applied to a pointer");
+		semanticError(opTok.loc,
+			      "'*' can only be applied to a pointer");
 	    }
 	    expr = Expr::createDeref(std::move(expr));
-	} else if (op == TokenKind::AND) {
+	} else if (opTok.kind == TokenKind::AND) {
 	    if (!expr->isLValue()) {
-		semanticError(opLoc, "'&' can only be applied to an l-value");
+		semanticError(opTok.loc,
+			      "'&' can only be applied to an l-value");
 	    }
 	    expr = Expr::createAddr(std::move(expr));
 	}
 	return expr;
     }
-    return parsePrimary();
+    return parsePostfix(parsePrimary());
 } 
+
+static ExprPtr
+parsePostfix(ExprPtr &&expr)
+{
+    if (token.kind == TokenKind::LPAREN) {
+	// function call
+	if (!expr->getType()->isFunction()) {
+	    // TODO: Store loc in expr
+	    semanticError("not a function");
+	}
+	getToken();
+
+	// parse parameter list
+	ExprVector param;
+	while (auto p = parseExpr()) {
+	    param.push_back(std::move(p));
+	    if (token.kind != TokenKind::COMMA) {
+		break;
+	    }
+	    getToken();
+	}
+	expected(TokenKind::RPAREN);
+	getToken();
+
+	// check parameters
+	auto numArgs = expr->getType()->getArgType().size();
+	if (numArgs != param.size()) {
+	    std::stringstream msg;
+	    msg << "function expects " << numArgs << " paramaters, not "
+		<< param.size();
+	    semanticError(msg.str().c_str());
+	}
+
+	expr = Expr::createCall(std::move(expr), std::move(param));
+	return parsePostfix(std::move(expr));
+    } else if (token.kind == TokenKind::ARROW) {
+	getToken();
+	return parsePostfix(Expr::createDeref(std::move(expr)));
+    }
+    return expr;
+}
 
 static ExprPtr
 parsePrimary(void)
 {
     if (token.kind == TokenKind::IDENTIFIER) {
+	auto identTok = token;
 	auto symEntry = symtab::get(token.val.c_str());
 	if (!symEntry) {
 	    std::string msg = "undeclared identifier '";
@@ -217,39 +261,6 @@ parsePrimary(void)
         getToken();
 	auto expr = Expr::createIdentifier(symEntry->internalIdent.c_str(),
 					   symEntry->type);
-	if (token.kind == TokenKind::LPAREN) {
-	    // function call
-	    if (!symEntry->type->isFunction()) {
-		std::string msg = "'";
-		msg += token.val.c_str();
-		msg += "' is not a function";
-		semanticError(msg.c_str());
-	    }
-	    getToken();
-
-	    // parse parameter list
-	    ExprVector param;
-	    while (auto p = parseExpr()) {
-		param.push_back(std::move(p));
-		if (token.kind != TokenKind::COMMA) {
-		    break;
-		}
-		getToken();
-	    }
-	    expected(TokenKind::RPAREN);
-	    getToken();
-
-	    // check parameters
-	    auto numArgs = symEntry->type->getArgType().size();
-	    if (numArgs != param.size()) {
-		std::stringstream msg;
-		msg << "function '" << symEntry->ident.c_str() << "' expects "
-		    << numArgs << " paramaters, not " << param.size();
-		semanticError(msg.str().c_str());
-	    }
-
-	    expr = Expr::createCall(std::move(expr), std::move(param));
-	}
         return expr;
     } else if (token.kind == TokenKind::DECIMAL_LITERAL) {
 	auto val = token.val.c_str();

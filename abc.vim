@@ -26,6 +26,8 @@ syntax match keyword /else/ skipwhite
 syntax match keyword /local/ skipwhite
 syntax match keyword /global/ skipwhite
 syntax match keyword /return/ skipwhite
+syntax match keyword /array/ skipwhite
+syntax match keyword /of/ skipwhite
 
 syntax match type /u8/ skipwhite
 syntax match type /u16/ skipwhite

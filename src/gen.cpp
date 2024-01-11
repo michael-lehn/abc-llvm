@@ -155,7 +155,7 @@ setOpt(bool enableOpt)
 static std::unordered_map<std::string, llvm::AllocaInst *> local;
 
 // global variables
-static std::unordered_map<std::string, llvm::GlobalVariable *> global;
+static std::unordered_map<std::string, llvm::GlobalValue *> global;
 
 static llvm::Function *
 makeFnDecl(const char *ident, const Type *fnType)
@@ -210,6 +210,9 @@ fnDef(const char *ident, const Type *fnType,
 	defLocal(param[i], argType[i]);
 	store(fn->getArg(i), param[i], argType[i]);
     }
+
+    // add function to global variables
+    global[ident] = fn;
 }
 
 void
@@ -294,6 +297,17 @@ call(const char *ident, const std::vector<Reg> &param)
     assert(fn && "function not declared");
 
     return llvmBuilder->CreateCall(fn, param);
+}
+
+Reg
+call(Reg fnPtr, const Type *fnType, const std::vector<Reg> &param)
+{
+    assert(fnType->isFunction());
+    std::cerr << "call: ok" << std::endl;
+    auto fnTy =  llvm::dyn_cast<llvm::FunctionType>(TypeMap::get(fnType));
+    std::cerr << "call: ok1" << std::endl;
+    return llvmBuilder->CreateCall(fnTy, fnPtr, param);
+
 }
 
 //------------------------------------------------------------------------------
