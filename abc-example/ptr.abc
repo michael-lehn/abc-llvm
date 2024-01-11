@@ -23,7 +23,7 @@ fn printBytes(s: -> u8, n: u64)
 	printNl();
     }
     printStrNl("now in reverse order:");
-    for (local i: i64 = n; --i;) {
+    for (local i: u64 = n; i--; ) {
 	putCharHex(i[s]);
 	printNl();
     }
@@ -47,10 +47,10 @@ fn main(): u8
     printBytes(s1, 5);
 
     printStrNl("First 5 bytes of function 'printBytes':");
-    printBytes(printBytes, 5);
+    printBytes(printBytes, 5u64);
 
     local i: u8 = 5,
-	  j: u8 = --i;
+	  j: u8 = i--;
     printU64(i); printNl();
     printU64(j); printNl();
     return 0;

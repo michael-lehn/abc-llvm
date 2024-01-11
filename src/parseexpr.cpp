@@ -191,7 +191,7 @@ parsePrefix(void)
 	} else if (opTok.kind == TokenKind::ASTERISK) {
 	    if (!expr->getType()->isPointer()) {
 		semanticError(opTok.loc,
-			      "'*' can only be applied to a pointer");
+			      "'*' can only be applied to a pointer or array");
 	    }
 	    expr = Expr::createDeref(std::move(expr));
 	} else if (opTok.kind == TokenKind::AND) {
@@ -203,7 +203,7 @@ parsePrefix(void)
 	} else if (opTok.kind == TokenKind::PLUS2) {
 	    if (!expr->isLValue()) {
 		semanticError(opTok.loc,
-			      "'&' can only be applied to an l-value");
+			      "'++' can only be applied to an l-value");
 	    }
 	    auto one = Expr::createLiteral("1", 10);
 	    expr = Expr::createBinary(Binary::PREFIX_INC, std::move(expr),
@@ -211,7 +211,7 @@ parsePrefix(void)
 	} else if (opTok.kind == TokenKind::MINUS2) {
 	    if (!expr->isLValue()) {
 		semanticError(opTok.loc,
-			      "'&' can only be applied to an l-value");
+			      "'--' can only be applied to an l-value");
 	    }
 	    auto one = Expr::createLiteral("1", 10);
 	    expr = Expr::createBinary(Binary::PREFIX_DEC, std::move(expr),
@@ -225,58 +225,82 @@ parsePrefix(void)
 static ExprPtr
 parsePostfix(ExprPtr &&expr)
 {
-    if (token.kind == TokenKind::LPAREN) {
-	// function call
-	if (!expr->getType()->isFunction()) {
-	    // TODO: Store loc in expr
-	    semanticError("not a function");
-	}
+    if (token.kind == TokenKind::LPAREN || token.kind == TokenKind::LBRACKET
+     || token.kind == TokenKind::ARROW || token.kind == TokenKind::PLUS2
+     || token.kind == TokenKind::MINUS2)
+    {
+	auto opTok = token;
 	getToken();
 
-	// parse parameter list
-	ExprVector param;
-	while (auto p = parseExpr()) {
-	    param.push_back(std::move(p));
-	    if (token.kind != TokenKind::COMMA) {
-		break;
+	if (opTok.kind == TokenKind::LPAREN) {
+	    // function call
+	    if (!expr->getType()->isFunction()) {
+		// TODO: Store loc in expr
+		semanticError(opTok.loc, "not a function");
 	    }
+
+	    // parse parameter list
+	    ExprVector param;
+	    while (auto p = parseExpr()) {
+		param.push_back(std::move(p));
+		if (token.kind != TokenKind::COMMA) {
+		    break;
+		}
+		getToken();
+	    }
+	    expected(TokenKind::RPAREN);
 	    getToken();
-	}
-	expected(TokenKind::RPAREN);
-	getToken();
 
-	// check parameters
-	auto numArgs = expr->getType()->getArgType().size();
-	if (numArgs != param.size()) {
-	    std::stringstream msg;
-	    msg << "function expects " << numArgs << " paramaters, not "
-		<< param.size();
-	    semanticError(msg.str().c_str());
-	}
+	    // check parameters
+	    auto numArgs = expr->getType()->getArgType().size();
+	    if (numArgs != param.size()) {
+		std::stringstream msg;
+		msg << "function expects " << numArgs << " paramaters, not "
+		    << param.size();
+		semanticError(msg.str().c_str());
+	    }
 
-	expr = Expr::createCall(std::move(expr), std::move(param));
-	return parsePostfix(std::move(expr));
-    } else if (token.kind == TokenKind::LBRACKET) {
-	auto opLoc = token.loc;
-	getToken();
-	auto index = parseExpr();
-	if (!index) {
-            semanticError("non-empty expression expected");
+	    expr = Expr::createCall(std::move(expr), std::move(param));
+	    return parsePostfix(std::move(expr));
+	} else if (opTok.kind == TokenKind::LBRACKET) {
+	    auto index = parseExpr();
+	    if (!index) {
+		semanticError(opTok.loc, "non-empty expression expected");
+	    }
+	    expected(TokenKind::RBRACKET);
+	    getToken();
+	    expr = Expr::createBinary(Binary::ADD, std::move(expr),
+				      std::move(index));
+	    if (!expr->getType()->isPointer()){
+		// TODO: Store loc in expr
+		semanticError(opTok.loc,
+			      "subscripted value is neither array nor pointer");
+	    }
+	    expr = Expr::createDeref(std::move(expr));
+	    return parsePostfix(std::move(expr));
+	} else if (opTok.kind == TokenKind::ARROW) {
+	    if (!expr->getType()->isPointer()) {
+		semanticError(opTok.loc,
+			      "'->' can only be applied to a pointer or array");
+	    }
+	    return parsePostfix(Expr::createDeref(std::move(expr)));
+	} else if (opTok.kind == TokenKind::PLUS2) {
+	    if (!expr->isLValue()) {
+		semanticError(opTok.loc,
+			      "'&' can only be applied to an l-value");
+	    }
+	    auto one = Expr::createLiteral("1", 10);
+	    expr = Expr::createBinary(Binary::POSTFIX_INC, std::move(expr),
+				      std::move(one));
+	} else if (opTok.kind == TokenKind::MINUS2) {
+	    if (!expr->isLValue()) {
+		semanticError(opTok.loc,
+			      "'&' can only be applied to an l-value");
+	    }
+	    auto one = Expr::createLiteral("1", 10);
+	    expr = Expr::createBinary(Binary::POSTFIX_DEC, std::move(expr),
+				      std::move(one));
 	}
-	expected(TokenKind::RBRACKET);
-	getToken();
-	expr = Expr::createBinary(Binary::ADD, std::move(expr),
-				  std::move(index));
-	if (!expr->getType()->isPointer()){
-	    // TODO: Store loc in expr
-	    semanticError(opLoc,
-			  "subscripted value is neither array nor pointer");
-	}
-	expr = Expr::createDeref(std::move(expr));
-	return parsePostfix(std::move(expr));
-    } else if (token.kind == TokenKind::ARROW) {
-	getToken();
-	return parsePostfix(Expr::createDeref(std::move(expr)));
     }
     return expr;
 }
