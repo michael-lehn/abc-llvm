@@ -246,15 +246,15 @@ parsePostfix(ExprPtr &&expr)
 	if (!index) {
             semanticError("non-empty expression expected");
 	}
-	if (!expr->getType()->isPointer() && !index->getType()->isPointer()) {
-	    // TODO: Store loc in expr
-	    semanticError(opLoc,
-		    "subscripted value is neither array nor pointer");
-	}
 	expected(TokenKind::RBRACKET);
 	getToken();
 	expr = Expr::createBinary(Binary::ADD, std::move(expr),
 				  std::move(index));
+	if (!expr->getType()->isPointer()){
+	    // TODO: Store loc in expr
+	    semanticError(opLoc,
+		    "subscripted value is neither array nor pointer");
+	}
 	expr = Expr::createDeref(std::move(expr));
 	return parsePostfix(std::move(expr));
     } else if (token.kind == TokenKind::ARROW) {
