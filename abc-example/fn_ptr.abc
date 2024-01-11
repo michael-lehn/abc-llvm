@@ -34,6 +34,7 @@ fn main(): u8
 
     p = bar;
     p->(13);		    // another way to use a function pointer
+    p[0](24);		    // another way to use a function pointer
 
     // p(12);		    // error: in ABC function pointers need to be
 			    //	      dereferenced

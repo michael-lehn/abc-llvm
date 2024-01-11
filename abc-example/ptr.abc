@@ -20,7 +20,7 @@ fn printStrNl(s: -> u8)
 fn printBytes(s: -> u8, n: u64)
 {
     for (local i: u64 = 0; i < n; i = i + 1) {
-	putCharHex(*(s+i));
+	putCharHex(i[s]);
 	printNl();
     }
 }
