@@ -18,8 +18,12 @@ fn printStrNl(s: -> u8)
 
 fn main(): u8
 {
-    local s: -> u8 = "hello world";
+    local s1: -> u8 = "hello world",
+	  s2: -> u8 = "Hallo Welt",
+	  sel: -> -> u8 = &s1;
 
-    printStrNl(s);
+    printStrNl(*sel);
+    sel = &s2;
+    printStrNl(*sel);
     return 0;
 }
