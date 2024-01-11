@@ -16,6 +16,14 @@ fn bar(a: u8)
     printNl();
 }
 
+fn sel(s: u8): -> fn(:u8)
+{
+    if (s == 1) {
+	return foo;
+    }
+    return bar;
+}
+
 fn main(): u8
 {
     local p: -> fn(:u8),    // pointer to function (aka "function pointer")
@@ -27,7 +35,12 @@ fn main(): u8
     p = bar;
     p->(13);		    // another way to use a function pointer
 
+    // p(12);		    // error: in ABC function pointers need to be
+			    //	      dereferenced
     q = &p;		    // using a pointer to a function pointer
     q->->(123);
     (**q)(21);
+
+    sel(1)->(111);
+    sel(2)->(222);
 }
