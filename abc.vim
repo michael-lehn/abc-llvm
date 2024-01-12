@@ -33,7 +33,7 @@ syntax match type /u8/ skipwhite
 syntax match type /u16/ skipwhite
 syntax match type /u32/ skipwhite
 syntax match type /u64/ skipwhite
-syntax match type /[x\-]/ skipwhite
+syntax match type /[\-]/ skipwhite
  
 syntax match type /i8/ skipwhite
 syntax match type /i16/ skipwhite

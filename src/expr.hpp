@@ -37,6 +37,13 @@ struct Identifier
     Identifier(const char *val, const Type *type) : val{val}, type{type} {}
 };
 
+struct Proxy
+{
+    const Expr *expr;
+
+    Proxy(const Expr *expr) : expr{expr} {}
+};
+
 struct Unary
 {
     enum Kind
@@ -77,8 +84,6 @@ struct Binary
 	MUL,
 	DIV,
 	MOD,
-	PREFIX_INC,
-	PREFIX_DEC,
 	POSTFIX_INC,
 	POSTFIX_DEC,
     };
@@ -118,12 +123,13 @@ struct Conditional
 class Expr
 {
     public:
-	std::variant<Literal, Identifier, Unary, Binary, Conditional,
+	std::variant<Literal, Identifier, Proxy,  Unary, Binary, Conditional,
 		     ExprVector> variant;
 
     private:
 	Expr(Literal &&val) : variant{std::move(val)} {}
 	Expr(Identifier &&ident) : variant{std::move(ident)} {}
+	Expr(Proxy &&proxy) : variant{std::move(proxy)} {}
 	Expr(Unary &&unary) : variant{std::move(unary)} {}
 	Expr(Binary &&binary) : variant{std::move(binary)} {}
 	Expr(Conditional &&con) : variant{std::move(con)} {}
@@ -133,6 +139,7 @@ class Expr
 	static ExprPtr createLiteral(const char *val, std::uint8_t radix,
 				     const Type *type = nullptr);
 	static ExprPtr createIdentifier(const char *ident, const Type *type);
+	static ExprPtr createProxy(const Expr *expr);
 	static ExprPtr createUnaryMinus(ExprPtr &&expr);
 	static ExprPtr createLogicalNot(ExprPtr &&expr);
 	static ExprPtr createAddr(ExprPtr &&expr);

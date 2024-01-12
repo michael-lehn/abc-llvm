@@ -73,8 +73,6 @@ Binary::setType(void)
 	case Binary::Kind::ASSIGN:
 	    type = getTypeConversion(r, l);
 	    return;
-	case Binary::Kind::PREFIX_INC:
-	case Binary::Kind::PREFIX_DEC:
 	case Binary::Kind::POSTFIX_INC:
 	case Binary::Kind::POSTFIX_DEC:
 	    type = l;
@@ -142,7 +140,6 @@ Binary::castOperands(void)
 		right = Expr::createCast(std::move(right), type);
 	    }
 	    return;
-	case Binary::Kind::PREFIX_INC:
 	case Binary::Kind::POSTFIX_INC:
 	case Binary::Kind::ADD:
 	    if (l->isPointer() || r->isPointer()) {
@@ -159,7 +156,6 @@ Binary::castOperands(void)
 		    right = Expr::createCast(std::move(right), type);
 		}
 	    }
-	case Binary::Kind::PREFIX_DEC:
 	case Binary::Kind::POSTFIX_DEC:
 	case Binary::Kind::SUB:
 	    if (l->isInteger() && r->isInteger()) {
@@ -269,6 +265,13 @@ Expr::createIdentifier(const char *ident, const Type *type)
 {
     return ExprPtr{new Expr{Identifier{ident, type}}};
 }
+
+ExprPtr
+Expr::createProxy(const Expr *expr)
+{
+    return ExprPtr{new Expr{Proxy{expr}}};
+}
+
 
 ExprPtr
 Expr::createUnaryMinus(ExprPtr &&expr)
@@ -402,7 +405,9 @@ Expr::print(int indent) const
 {
     std::printf("%*s", indent, "");
 
-    if (std::holds_alternative<Literal>(variant)) {
+    if (std::holds_alternative<Proxy>(variant)) {
+	std::get<Proxy>(variant).expr->print(indent);
+    } else if (std::holds_alternative<Literal>(variant)) {
 	const auto &lit = std::get<Literal>(variant);
 	std::printf("Literal: %s ", lit.val);
 	std::cout << getType() << std::endl;
@@ -444,7 +449,9 @@ Expr::print(int indent) const
 const Type *
 Expr::getType(void) const
 {
-    if (std::holds_alternative<Literal>(variant)) {
+    if (std::holds_alternative<Proxy>(variant)) {
+	return std::get<Proxy>(variant).expr->getType();
+    } else if (std::holds_alternative<Literal>(variant)) {
 	return std::get<Literal>(variant).type;
     } else if (std::holds_alternative<Identifier>(variant)) {
 	return std::get<Identifier>(variant).type;
@@ -465,7 +472,9 @@ Expr::getType(void) const
 bool
 Expr::isLValue(void) const
 {
-    if (std::holds_alternative<Identifier>(variant)) {
+    if (std::holds_alternative<Proxy>(variant)) {
+	return std::get<Proxy>(variant).expr->isLValue();
+    } else if (std::holds_alternative<Identifier>(variant)) {
 	return true;
     } else if (std::holds_alternative<Unary>(variant)) {
 	const auto &unary = std::get<Unary>(variant);
@@ -477,7 +486,9 @@ Expr::isLValue(void) const
 bool
 Expr::isConst(void) const
 {
-    if (std::holds_alternative<Literal>(variant)) {
+    if (std::holds_alternative<Proxy>(variant)) {
+	return std::get<Proxy>(variant).expr->isConst();
+    } else if (std::holds_alternative<Literal>(variant)) {
 	return true;
     } else if (std::holds_alternative<Identifier>(variant)) {
 	return false;
@@ -512,11 +523,9 @@ getGenAluOp(Binary::Kind kind, const Type *type)
 		    && type->getIntegerKind() == Type::SIGNED;
     switch (kind) {
 	case Binary::Kind::POSTFIX_INC:
-	case Binary::Kind::PREFIX_INC:
 	case Binary::Kind::ADD:
 	    return gen::ADD;
 	case Binary::Kind::POSTFIX_DEC:
-	case Binary::Kind::PREFIX_DEC:
 	case Binary::Kind::SUB:
 	    return gen::SUB;
 	case Binary::Kind::MUL:
@@ -665,37 +674,12 @@ loadValue(const Binary &binary)
 		gen::store(val, addr, binary.type);
 		return val;
 	    }
-	case Binary::Kind::PREFIX_INC:
-	case Binary::Kind::PREFIX_DEC:
-	    {
-		gen::Reg val;
-		
-		if (binary.kind == Binary::Kind::PREFIX_INC
-		 && binary.type->isPointer())
-		{
-		    assert(binary.left->getType()->isPointer());
-		    assert(binary.right->getType()->isInteger());
-
-		    auto ty = binary.left->getType()->getRefType();
-		    auto l = binary.left->loadValue();
-		    auto r = binary.right->loadValue();
-		    val = gen::ptrInc(ty, l, r);
-		} else {
-		    auto l = binary.left->loadValue();
-		    auto r = binary.right->loadValue();
-		    auto op = getGenAluOp(binary.kind, binary.type);
-		    val = gen::aluInstr(op, l, r);
-		}
-		auto addr = binary.left->loadAddr();
-		gen::store(val, addr, binary.type);
-		return val;
-	    }
 	case Binary::Kind::POSTFIX_INC:
 	case Binary::Kind::POSTFIX_DEC:
 	    {
 		gen::Reg val, retVal = nullptr;
 
-		if (binary.kind == Binary::Kind::PREFIX_INC
+		if (binary.kind == Binary::Kind::POSTFIX_INC
 		 && binary.type->isPointer())
 		{
 		    assert(binary.left->getType()->isPointer());
@@ -786,7 +770,9 @@ loadValue(const Conditional &expr)
 gen::Reg
 Expr::loadValue(void) const
 {
-    if (std::holds_alternative<Literal>(variant)) {
+    if (std::holds_alternative<Proxy>(variant)) {
+	return std::get<Proxy>(variant).expr->loadValue();
+    } else if (std::holds_alternative<Literal>(variant)) {
 	return ::loadValue(std::get<Literal>(variant));
     } else if (std::holds_alternative<Identifier>(variant)) {
 	return ::loadValue(std::get<Identifier>(variant));
@@ -809,7 +795,9 @@ Expr::loadAddr(void) const
 {
     assert(isLValue());
 
-    if (std::holds_alternative<Identifier>(variant)) {
+    if (std::holds_alternative<Proxy>(variant)) {
+	return std::get<Proxy>(variant).expr->loadAddr();
+    } else if (std::holds_alternative<Identifier>(variant)) {
 	const auto &ident = std::get<Identifier>(variant);
 	return gen::loadAddr(ident.val);
     } else if (std::holds_alternative<Unary>(variant)) {
@@ -899,6 +887,8 @@ Expr::condJmp(gen::Label trueLabel, gen::Label falseLabel) const
 	::condJmp(std::get<Binary>(variant), trueLabel, falseLabel);
     } else if (std::holds_alternative<Unary>(variant)) {
 	::condJmp(std::get<Unary>(variant), trueLabel, falseLabel);
+    } else if (std::holds_alternative<Proxy>(variant)) {
+	std::get<Proxy>(variant).expr->condJmp(trueLabel, falseLabel);
     } else {
 	auto zero = createLiteral("0", 10, getType())->loadValue();
 	auto cond = gen::cond(gen::NE, loadValue(), zero);

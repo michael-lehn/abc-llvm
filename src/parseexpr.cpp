@@ -7,12 +7,59 @@
 #include "parseexpr.hpp"
 #include "symtab.hpp"
 
+
+static Binary::Kind
+getBinaryExprKind(TokenKind kind)
+{
+    switch (kind) {
+	case TokenKind::ASTERISK:
+	case TokenKind::ASTERISK_EQUAL:
+	    return Binary::Kind::MUL;
+	case TokenKind::SLASH:
+	case TokenKind::SLASH_EQUAL:
+	    return Binary::Kind::DIV;
+	case TokenKind::PERCENT:
+	case TokenKind::PERCENT_EQUAL:
+	    return Binary::Kind::MOD;
+	case TokenKind::PLUS:
+	case TokenKind::PLUS2:
+	case TokenKind::PLUS_EQUAL:
+	    return Binary::Kind::ADD;
+	case TokenKind::MINUS:
+	case TokenKind::MINUS2:
+	case TokenKind::MINUS_EQUAL:
+	    return Binary::Kind::SUB;
+	case TokenKind::EQUAL2:
+	    return Binary::Kind::EQUAL;
+	case TokenKind::NOT_EQUAL:
+	    return Binary::Kind::NOT_EQUAL;
+	case TokenKind::LESS:
+	    return Binary::Kind::LESS;
+	case TokenKind::LESS_EQUAL:
+	    return Binary::Kind::LESS_EQUAL;
+	case TokenKind::GREATER:
+	    return Binary::Kind::GREATER;
+	case TokenKind::GREATER_EQUAL:
+	    return Binary::Kind::GREATER_EQUAL;
+	case TokenKind::AND2:
+	    return Binary::Kind::LOGICAL_AND;
+	case TokenKind::OR2:
+	    return Binary::Kind::LOGICAL_OR;
+	default:
+	    assert(0);
+	    return Binary::Kind::ADD; // never reached
+    }
+}
+
+//------------------------------------------------------------------------------
+
 static ExprPtr parseAssignment(void);
 static ExprPtr parseConditional(void);
 static ExprPtr parseBinary(int prec);
 static ExprPtr parsePrefix(void);
 static ExprPtr parsePostfix(ExprPtr &&expr);
 static ExprPtr parsePrimary(void);
+
 
 ExprPtr
 parseExpr(void)
@@ -39,19 +86,47 @@ parseAssignment(void)
     if (!expr) {
 	return nullptr;
     }
-    while (token.kind == TokenKind::EQUAL) {
-	auto loc = token.loc;
-	getToken();
+    while (token.kind == TokenKind::EQUAL
+        || token.kind == TokenKind::PLUS_EQUAL
+        || token.kind == TokenKind::MINUS_EQUAL
+        || token.kind == TokenKind::ASTERISK_EQUAL
+        || token.kind == TokenKind::SLASH_EQUAL
+        || token.kind == TokenKind::PERCENT_EQUAL)
+    {
+	auto opTok = token;
+        getToken();
+	
 	auto right = parseAssignment();
 	if (!right) {
 	    expectedError("assignment expression");
 	}
 	if (!expr->isLValue()) {
-	    semanticError(loc, "lvalue required as left operand of assignment");
+	    semanticError(opTok.loc,
+			  "lvalue required as left operand of assignment");
 	}
-	expr = Expr::createBinary(Binary::Kind::ASSIGN, std::move(expr),
-				  std::move(right));
-	loc = token.loc;
+	switch (opTok.kind) {
+	    case TokenKind::EQUAL:
+		expr = Expr::createBinary(Binary::Kind::ASSIGN, std::move(expr),
+					  std::move(right));
+		break;
+	    case TokenKind::PLUS_EQUAL:
+	    case TokenKind::MINUS_EQUAL:
+	    case TokenKind::ASTERISK_EQUAL:
+	    case TokenKind::SLASH_EQUAL:
+	    case TokenKind::PERCENT_EQUAL:
+		// <expr> += <right> becomes <expr> = <expr> + <right>,
+		// <expr> -= <right> becomes <expr> = <expr> - <right>, etc.
+		expr = Expr::createBinary(
+			    Binary::ASSIGN,
+			    std::move(expr),
+			    Expr::createBinary(
+				getBinaryExprKind(opTok.kind),
+				Expr::createProxy(expr.get()),
+				std::move(right)));
+		break;
+	    default:
+		assert(0);
+	}
     }
     return expr;
 }
@@ -113,42 +188,6 @@ tokenKindPrec(TokenKind kind)
     return binaryOpPrec.contains(kind) ? binaryOpPrec[kind] : 0;
 }
 
-static Binary::Kind
-getBinaryExprKind(TokenKind kind)
-{
-    switch (kind) {
-	case TokenKind::ASTERISK:
-	    return Binary::Kind::MUL;
-	case TokenKind::SLASH:
-	    return Binary::Kind::DIV;
-	case TokenKind::PERCENT:
-	    return Binary::Kind::MOD;
-	case TokenKind::PLUS:
-	    return Binary::Kind::ADD;
-	case TokenKind::MINUS:
-	    return Binary::Kind::SUB;
-	case TokenKind::EQUAL2:
-	    return Binary::Kind::EQUAL;
-	case TokenKind::NOT_EQUAL:
-	    return Binary::Kind::NOT_EQUAL;
-	case TokenKind::LESS:
-	    return Binary::Kind::LESS;
-	case TokenKind::LESS_EQUAL:
-	    return Binary::Kind::LESS_EQUAL;
-	case TokenKind::GREATER:
-	    return Binary::Kind::GREATER;
-	case TokenKind::GREATER_EQUAL:
-	    return Binary::Kind::GREATER_EQUAL;
-	case TokenKind::AND2:
-	    return Binary::Kind::LOGICAL_AND;
-	case TokenKind::OR2:
-	    return Binary::Kind::LOGICAL_OR;
-	default:
-	    assert(0);
-	    return Binary::Kind::ADD; // never reached
-    }
-}
-
 static ExprPtr
 parseBinary(int prec)
 {
@@ -173,136 +212,147 @@ parseBinary(int prec)
 static ExprPtr
 parsePrefix(void)
 {
-    if (token.kind == TokenKind::PLUS || token.kind == TokenKind::MINUS
-     || token.kind == TokenKind::NOT || token.kind == TokenKind::AND
-     || token.kind == TokenKind::ASTERISK || token.kind == TokenKind::PLUS2
-     || token.kind == TokenKind::MINUS2)
+    if (token.kind != TokenKind::PLUS && token.kind != TokenKind::MINUS
+     && token.kind != TokenKind::NOT && token.kind != TokenKind::AND
+     && token.kind != TokenKind::ASTERISK && token.kind != TokenKind::PLUS2
+     && token.kind != TokenKind::MINUS2)
     {
-	auto opTok = token;
-        getToken();
-	auto expr = parsePrefix();
-        if (!expr) {
-            semanticError(opTok.loc, "non-empty expression expected");
-        }
-	if (opTok.kind == TokenKind::MINUS) {
+	return parsePostfix(parsePrimary());
+    }
+
+    auto opTok = token;
+    getToken();
+    auto expr = parsePrefix();
+    if (!expr) {
+	semanticError(opTok.loc, "non-empty expression expected");
+    }
+    switch (opTok.kind) {
+	case TokenKind::MINUS:
 	    expr = Expr::createUnaryMinus(std::move(expr));
-	} else if (opTok.kind == TokenKind::NOT) {
+	    break;
+	case TokenKind::NOT:
 	    expr = Expr::createLogicalNot(std::move(expr));
-	} else if (opTok.kind == TokenKind::ASTERISK) {
+	    break;
+	case TokenKind::ASTERISK:
 	    if (!expr->getType()->isPointer()) {
 		semanticError(opTok.loc,
 			      "'*' can only be applied to a pointer or array");
 	    }
 	    expr = Expr::createDeref(std::move(expr));
-	} else if (opTok.kind == TokenKind::AND) {
+	    break;
+	case TokenKind::AND:
 	    if (!expr->isLValue()) {
 		semanticError(opTok.loc,
 			      "'&' can only be applied to an l-value");
 	    }
 	    expr = Expr::createAddr(std::move(expr));
-	} else if (opTok.kind == TokenKind::PLUS2) {
+	    break;
+	case TokenKind::PLUS2:
+	case TokenKind::MINUS2:
 	    if (!expr->isLValue()) {
 		semanticError(opTok.loc,
 			      "'++' can only be applied to an l-value");
 	    }
-	    auto one = Expr::createLiteral("1", 10);
-	    expr = Expr::createBinary(Binary::PREFIX_INC, std::move(expr),
-				      std::move(one));
-	} else if (opTok.kind == TokenKind::MINUS2) {
-	    if (!expr->isLValue()) {
-		semanticError(opTok.loc,
-			      "'--' can only be applied to an l-value");
-	    }
-	    auto one = Expr::createLiteral("1", 10);
-	    expr = Expr::createBinary(Binary::PREFIX_DEC, std::move(expr),
-				      std::move(one));
-	}
-	return expr;
+	    // ++<expr> becomes <expr> = <expr> + 1
+	    // --<expr> becomes <expr> = <expr> - 1
+	    expr = Expr::createBinary(
+			Binary::ASSIGN,
+			std::move(expr),
+			Expr::createBinary(
+			    getBinaryExprKind(opTok.kind),
+			    Expr::createProxy(expr.get()),
+			    Expr::createLiteral("1", 10)));
+	    break;
+	default:
+	    assert(0);
     }
-    return parsePostfix(parsePrimary());
+    return expr;
 } 
 
 static ExprPtr
 parsePostfix(ExprPtr &&expr)
 {
-    if (token.kind == TokenKind::LPAREN || token.kind == TokenKind::LBRACKET
-     || token.kind == TokenKind::ARROW || token.kind == TokenKind::PLUS2
-     || token.kind == TokenKind::MINUS2)
+    if (token.kind != TokenKind::LPAREN && token.kind != TokenKind::LBRACKET
+     && token.kind != TokenKind::ARROW && token.kind != TokenKind::PLUS2
+     && token.kind != TokenKind::MINUS2)
     {
-	auto opTok = token;
-	getToken();
+	return expr;
+    }
 
-	if (opTok.kind == TokenKind::LPAREN) {
+    auto opTok = token;
+    getToken();
+
+    switch (opTok.kind) {
+	case TokenKind::LPAREN:
 	    // function call
 	    if (!expr->getType()->isFunction()) {
 		// TODO: Store loc in expr
 		semanticError(opTok.loc, "not a function");
-	    }
-
-	    // parse parameter list
-	    ExprVector param;
-	    while (auto p = parseExpr()) {
-		param.push_back(std::move(p));
-		if (token.kind != TokenKind::COMMA) {
-		    break;
+	    } else {
+		// parse parameter list
+		ExprVector param;
+		while (auto p = parseExpr()) {
+		    param.push_back(std::move(p));
+		    if (token.kind != TokenKind::COMMA) {
+			break;
+		    }
+		    getToken();
 		}
+		expected(TokenKind::RPAREN);
 		getToken();
-	    }
-	    expected(TokenKind::RPAREN);
-	    getToken();
 
-	    // check parameters
-	    auto numArgs = expr->getType()->getArgType().size();
-	    if (numArgs != param.size()) {
-		std::stringstream msg;
-		msg << "function expects " << numArgs << " paramaters, not "
-		    << param.size();
-		semanticError(msg.str().c_str());
-	    }
+		// check parameters
+		auto numArgs = expr->getType()->getArgType().size();
+		if (numArgs != param.size()) {
+		    std::stringstream msg;
+		    msg << "function expects " << numArgs << " paramaters, not "
+			<< param.size();
+		    semanticError(msg.str().c_str());
+		}
 
-	    expr = Expr::createCall(std::move(expr), std::move(param));
-	    return parsePostfix(std::move(expr));
-	} else if (opTok.kind == TokenKind::LBRACKET) {
-	    auto index = parseExpr();
-	    if (!index) {
+		expr = Expr::createCall(std::move(expr), std::move(param));
+		return parsePostfix(std::move(expr));
+	    }
+	case TokenKind::LBRACKET:
+	    if (auto index = parseExpr()) {
+		expected(TokenKind::RBRACKET);
+		getToken();
+		expr = Expr::createBinary(Binary::ADD, std::move(expr),
+					  std::move(index));
+		if (!expr->getType()->isPointer()){
+		    // TODO: Store loc in expr
+		    semanticError(opTok.loc,
+			      "subscripted value is neither array nor pointer");
+		}
+		expr = Expr::createDeref(std::move(expr));
+		return parsePostfix(std::move(expr));
+	    } else {
 		semanticError(opTok.loc, "non-empty expression expected");
 	    }
-	    expected(TokenKind::RBRACKET);
-	    getToken();
-	    expr = Expr::createBinary(Binary::ADD, std::move(expr),
-				      std::move(index));
-	    if (!expr->getType()->isPointer()){
-		// TODO: Store loc in expr
-		semanticError(opTok.loc,
-			      "subscripted value is neither array nor pointer");
-	    }
-	    expr = Expr::createDeref(std::move(expr));
-	    return parsePostfix(std::move(expr));
-	} else if (opTok.kind == TokenKind::ARROW) {
+	case TokenKind::ARROW:
 	    if (!expr->getType()->isPointer()) {
 		semanticError(opTok.loc,
 			      "'->' can only be applied to a pointer or array");
 	    }
 	    return parsePostfix(Expr::createDeref(std::move(expr)));
-	} else if (opTok.kind == TokenKind::PLUS2) {
+	case TokenKind::PLUS2:
+	case TokenKind::MINUS2:
 	    if (!expr->isLValue()) {
 		semanticError(opTok.loc,
 			      "'&' can only be applied to an l-value");
+	    } else {
+		auto binaryOp = opTok.kind == TokenKind::PLUS2
+		    ? Binary::POSTFIX_INC
+		    : Binary::POSTFIX_DEC;
+		auto one = Expr::createLiteral("1", 10);
+		return Expr::createBinary(binaryOp, std::move(expr),
+					  std::move(one));
 	    }
-	    auto one = Expr::createLiteral("1", 10);
-	    expr = Expr::createBinary(Binary::POSTFIX_INC, std::move(expr),
-				      std::move(one));
-	} else if (opTok.kind == TokenKind::MINUS2) {
-	    if (!expr->isLValue()) {
-		semanticError(opTok.loc,
-			      "'&' can only be applied to an l-value");
-	    }
-	    auto one = Expr::createLiteral("1", 10);
-	    expr = Expr::createBinary(Binary::POSTFIX_DEC, std::move(expr),
-				      std::move(one));
-	}
+	default:
+	    ;
     }
-    return expr;
+    assert(0);
+    return nullptr;
 }
 
 static ExprPtr
