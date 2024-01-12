@@ -37,6 +37,7 @@ openScope(void)
     s->up = std::move(curr);
     s->id = ++id;
     curr = std::move(s);
+
 }
 
 void

@@ -453,9 +453,7 @@ parseCompoundStmt(bool openScope)
 
     expected(TokenKind::RBRACE);
     getToken();
-    if (openScope) {
-	symtab::closeScope();
-    }
+    symtab::closeScope();
     return true;
 }
 
@@ -658,6 +656,7 @@ parseFn(void)
     if (token.kind == TokenKind::SEMICOLON) {
 	getToken();
 	gen::fnDecl(fnDecl->ident.c_str(), fnDecl->type);
+	symtab::closeScope();
     } else {
 	expected(TokenKind::LBRACE);
 	gen::fnDef(fnDecl->ident.c_str(), fnDecl->type, fnParamIdent);
@@ -665,7 +664,6 @@ parseFn(void)
 	gen::fnDefEnd();
     }
 
-    symtab::closeScope();
     return true;
 }
 

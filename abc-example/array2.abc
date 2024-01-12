@@ -1,0 +1,30 @@
+fn printU64(:u64);
+fn printLn(:->u8);
+fn print(:->u8);
+fn printNl();
+
+fn initArray(p: -> u64, dim: u64)
+{
+    for (local i: u64 = 0; i < dim; ++i) {
+	p[i] = i;
+    }
+}
+
+fn printArray(p: -> u64, dim: u64)
+{
+    for (local i: u64 = 0; i < dim; ++i) {
+	printU64(p[i]);
+	print(" ");
+    }
+    printNl();
+}
+
+fn main(): u8
+{
+    local a: array[3] of u64;
+
+    initArray(a, 3);
+    printArray(a, 3);
+
+    return 0;
+}

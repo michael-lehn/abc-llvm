@@ -1,19 +1,38 @@
 fn printU64(:u64);
+fn printLn(:u8);
 fn printNl();
 
 global a: array[3] of u64,
-       b: array[23] of -> u64;
+       b: array[3] of -> u64;
+
 	 
 fn main()
 {
+    printLn("Init a: array of u64");
     for (local i: u64 = 0; i < 3; ++i) {
 	a[i] = i;
     }
+    printLn("Init b: array of pointer to u64");
     for (local i: u64 = 0; i < 3; ++i) {
 	b[i] = &a[i];
     }
+    printLn("Print dereference integers in b:");
     for (local i: u64 = 0; i < 3; ++i) {
-	printU64(*b[i]);
+	printU64(b[i]->);
+	printNl();
+    }
+
+    printLn("Define a pointer to a (and print elements of a)");
+    local c: -> array[3] of u64 = &a;
+    for (local i: u64 = 0; i < 3; ++i) {
+	printU64(c->[i]);
+	printNl();
+    }
+
+    printLn("Define a pointer to b (and print elements of a)");
+    local d: -> array[3] of -> u64 = &b;
+    for (local i: u64 = 0; i < 3; ++i) {
+	printU64(d->[i]->);
 	printNl();
     }
 }

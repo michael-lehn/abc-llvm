@@ -32,6 +32,13 @@ printNl(void)
 }
 
 void
+printLn(const char *s)
+{
+    printf("%s\n", s);
+}
+
+
+void
 print(char *s)
 {
     printf("%s", s);
