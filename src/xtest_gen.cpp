@@ -55,6 +55,10 @@ main(void)
     gen::defGlobal("globalFoo", Type::getUnsignedInteger(64),
 		   someConst->loadConst()); 
 
+    auto arrayTy = Type::getArray(Type::getUnsignedInteger(64), 42);
+    std::cerr << "arrayTy = " << arrayTy << std::endl;
+    gen::defGlobal("globalArrayFoo", arrayTy);
+
     std::cerr << "writing to 'ex_gen.bc'" << std::endl;
     gen::dump_bc("ex_gen");
 }

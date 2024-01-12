@@ -36,6 +36,8 @@ enum class TokenKind {
     WHILE,
     IF,
     ELSE,
+    ARRAY,
+    OF,
 
     // punctuators
     SEMICOLON,

@@ -1,6 +1,7 @@
 #ifndef EXPR_HPP
 #define EXPR_HPP
 
+#include <charconv>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -152,10 +153,14 @@ class Expr
 					 ExprPtr &&left, ExprPtr &&right);
 	static ExprPtr createExprVector(ExprVector &&expr);
 
-	void print(int indent = 0) const;
 	const Type *getType(void) const;
 	bool isLValue(void) const;
 	bool isConst(void) const;
+
+	void print(int indent = 0) const;
+
+	template <typename T>
+	T constValue(void) const;
 
 	// code generation
 	gen::ConstVal loadConst(void) const;
@@ -164,5 +169,40 @@ class Expr
 	void condJmp(gen::Label trueLabel, gen::Label falseLabel) const;
 };
 
+template <typename T>
+T
+Expr::constValue(void) const
+{
+    assert(isConst());
+
+    if (std::holds_alternative<Proxy>(variant)) {
+	return std::get<Proxy>(variant).expr->constValue<T>();
+    } else if (std::holds_alternative<Literal>(variant)) {
+	const auto &lit = std::get<Literal>(variant);
+	T result;
+	auto [ptr, ec] = std::from_chars(
+			    lit.val, lit.val + strlen(lit.val),
+			    result, lit.radix);
+	assert(ec == std::errc{});
+	return result;
+    } else if (std::holds_alternative<Unary>(variant)) {
+	assert(0 && "sorry, currently not implemented");
+	return 0;
+    } else if (std::holds_alternative<Binary>(variant)) {
+	assert(0 && "sorry, currently not implemented");
+	return 0;
+    } else if (std::holds_alternative<Conditional>(variant)) {
+	assert(0 && "sorry, currently not implemented");
+	return 0;
+    } else if (std::holds_alternative<ExprVector>(variant)) {
+	assert(0 && "sorry, currently not implemented");
+	return 0;
+    } else {
+	std::cerr << "not handled variant. Index = " << variant.index()
+	    << std::endl;
+	assert(0);
+	return 0;
+    }
+}
 
 #endif // EXPR_HPP

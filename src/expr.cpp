@@ -66,6 +66,15 @@ Binary::setType(void)
     auto l = left->getType(),
 	 r = right->getType();
 
+    if (kind == Binary::Kind::ADD || kind == Binary::Kind::SUB) {
+	if (l->isArray()) {
+	    l = Type::getPointer(l->getRefType());
+	}
+	if (r->isArray()) {
+	    r = Type::getPointer(r->getRefType());
+	}
+    }
+
     switch (kind) {
 	case Binary::Kind::CALL:
 	    type = l->getRetType();
@@ -126,10 +135,15 @@ void
 Binary::castOperands(void)
 {
     if (!type) {
+	std::cerr << "ERROR: binary operation not allowed" << std::endl;
+	std::cerr << "binary kind = " << int(kind) << std::endl;
+	std::cerr << "left operand:" << std::endl;
 	left->print();
+	std::cerr << "right operand:" << std::endl;
 	right->print();
+	assert("illegal type");
+	return;
     }
-    assert(type && "setTypes() not called?");
 
     auto l = left->getType(),
 	 r = right->getType();
@@ -218,7 +232,6 @@ Conditional::setTypeAndCastOperands(void)
     }
 }
 
-
 //-- class Expr: static member functions ---------------------------------------
 
 template <typename IntType, std::uint8_t numBits>
@@ -227,7 +240,7 @@ getIntType(const char *s, const char *end, std::uint8_t radix, const Type *&ty)
 {
     IntType result;
     auto [ptr, ec] = std::from_chars(s, end, result, radix);
-    if (ec == std::errc()) {
+    if (ec == std::errc{}) {
 	ty = Type::getSignedInteger(numBits);
 	return true;
     }
@@ -299,7 +312,8 @@ Expr::createAddr(ExprPtr &&expr)
 ExprPtr
 Expr::createDeref(ExprPtr &&expr)
 {
-    assert(expr->getType()->isPointer());
+    assert(expr->getType()->isPointer() || expr->getType()->isArray());
+
     auto ty = expr->getType()->getRefType();
     auto dref = new Expr{Unary{Unary::Kind::DEREF, std::move(expr), ty}};
     return ExprPtr{dref};
@@ -400,52 +414,6 @@ exprKindCStr(Binary::Kind kind)
     }
 }
 
-void
-Expr::print(int indent) const
-{
-    std::printf("%*s", indent, "");
-
-    if (std::holds_alternative<Proxy>(variant)) {
-	std::get<Proxy>(variant).expr->print(indent);
-    } else if (std::holds_alternative<Literal>(variant)) {
-	const auto &lit = std::get<Literal>(variant);
-	std::printf("Literal: %s ", lit.val);
-	std::cout << getType() << std::endl;
-    } else if (std::holds_alternative<Identifier>(variant)) {
-	const auto &ident = std::get<Identifier>(variant);
-	std::printf("Identifier: %s ", ident.val);
-	std::cout << getType() << std::endl;
-    } else if (std::holds_alternative<Unary>(variant)) {
-	const auto &unary = std::get<Unary>(variant);
-	std::printf("[%s] ", exprKindCStr(unary.kind));
-	std::cout << getType() << std::endl;
-	unary.child->print(indent + 4);
-    } else if (std::holds_alternative<Binary>(variant)) {
-	const auto &binary = std::get<Binary>(variant);
-	std::printf("[%s] ", exprKindCStr(binary.kind));
-	std::cout << getType() << std::endl;
-	binary.left->print(indent + 4);
-	binary.right->print(indent + 4);
-    } else if (std::holds_alternative<Conditional>(variant)) {
-	const auto &conditional = std::get<Conditional>(variant);
-	std::printf("[cond ? left : right]");
-	std::cout << getType() << std::endl;
-	conditional.cond->print(indent + 4);
-	conditional.left->print(indent + 4);
-	conditional.right->print(indent + 4);
-    } else if (std::holds_alternative<ExprVector>(variant)) {
-	const auto &vec = std::get<ExprVector>(variant);
-	std::printf("[vec]");
-	for (const auto &e: vec) {
-	    e->print(indent + 4);
-	}
-    } else {
-	std::cerr << "not handled variant. Index = " << variant.index()
-	    << std::endl;
-	assert(0);
-    }
-}
-
 const Type *
 Expr::getType(void) const
 {
@@ -491,6 +459,13 @@ Expr::isConst(void) const
     } else if (std::holds_alternative<Literal>(variant)) {
 	return true;
     } else if (std::holds_alternative<Identifier>(variant)) {
+	return false;
+    } else if (std::holds_alternative<Unary>(variant)) {
+	// TODO: For example: address of global variable is const
+	//		      or cast of a constant expression
+	//		      or logical-not of a constnat expression
+	std::cerr << "warning: Expr::isConst for unary expressions is "
+	    " currently always returns 'false'" << std::endl;
 	return false;
     } else if (std::holds_alternative<Binary>(variant)) {
 	const auto &binary = std::get<Binary>(variant);
@@ -564,6 +539,54 @@ getGenCondOp(Binary::Kind kind, const Type *type)
     }
 }
 
+void
+Expr::print(int indent) const
+{
+    std::printf("%*s", indent, "");
+
+    if (std::holds_alternative<Proxy>(variant)) {
+	std::get<Proxy>(variant).expr->print(indent);
+    } else if (std::holds_alternative<Literal>(variant)) {
+	const auto &lit = std::get<Literal>(variant);
+	std::printf("Literal: %s ", lit.val);
+	std::cout << getType() << std::endl;
+    } else if (std::holds_alternative<Identifier>(variant)) {
+	const auto &ident = std::get<Identifier>(variant);
+	std::printf("Identifier: %s ", ident.val);
+	std::cout << getType() << std::endl;
+    } else if (std::holds_alternative<Unary>(variant)) {
+	const auto &unary = std::get<Unary>(variant);
+	std::printf("[%s] ", exprKindCStr(unary.kind));
+	std::cout << getType() << std::endl;
+	unary.child->print(indent + 4);
+    } else if (std::holds_alternative<Binary>(variant)) {
+	const auto &binary = std::get<Binary>(variant);
+	std::printf("[%s] ", exprKindCStr(binary.kind));
+	std::cout << getType() << std::endl;
+	binary.left->print(indent + 4);
+	binary.right->print(indent + 4);
+    } else if (std::holds_alternative<Conditional>(variant)) {
+	const auto &conditional = std::get<Conditional>(variant);
+	std::printf("[cond ? left : right]");
+	std::cout << getType() << std::endl;
+	conditional.cond->print(indent + 4);
+	conditional.left->print(indent + 4);
+	conditional.right->print(indent + 4);
+    } else if (std::holds_alternative<ExprVector>(variant)) {
+	const auto &vec = std::get<ExprVector>(variant);
+	std::printf("[vec]");
+	for (const auto &e: vec) {
+	    e->print(indent + 4);
+	}
+    } else {
+	std::cerr << "not handled variant. Index = " << variant.index()
+	    << std::endl;
+	assert(0);
+    }
+}
+
+//-- code generation -----------------------------------------------------------
+
 static gen::Reg
 loadValue(const Literal &l)
 {
@@ -573,7 +596,7 @@ loadValue(const Literal &l)
 static gen::Reg
 loadValue(const Identifier &ident)
 {
-    if (ident.type->isFunction()) {
+    if (ident.type->isFunction() || ident.type->isArray()) {
 	return gen::loadAddr(ident.val);
     }
 
@@ -608,7 +631,7 @@ loadValue(const Unary &unary)
 	case Unary::Kind::DEREF:
 	    {
 		auto addr = unary.child->loadValue();
-		if (unary.type->isFunction()) {
+		if (unary.type->isFunction() || unary.type->isArray()) {
 		    return addr;
 		}
 		auto ty = unary.child->getType()->getRefType();
@@ -705,7 +728,8 @@ loadValue(const Binary &binary)
 	case Binary::Kind::DIV:
 	case Binary::Kind::MOD:
 	    if (binary.kind == Binary::Kind::ADD && binary.type->isPointer()) {
-		assert(binary.left->getType()->isPointer());
+		assert(binary.left->getType()->isPointer()
+			|| binary.left->getType()->isArray());
 		assert(binary.right->getType()->isInteger());
 
 		auto ty = binary.left->getType()->getRefType();

@@ -234,7 +234,7 @@ parsePrefix(void)
 	    expr = Expr::createLogicalNot(std::move(expr));
 	    break;
 	case TokenKind::ASTERISK:
-	    if (!expr->getType()->isPointer()) {
+	    if (!expr->getType()->isPointer() && !expr->getType()->isArray()) {
 		semanticError(opTok.loc,
 			      "'*' can only be applied to a pointer or array");
 	    }

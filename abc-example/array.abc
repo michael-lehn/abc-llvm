@@ -1,0 +1,19 @@
+fn printU64(:u64);
+fn printNl();
+
+global a: array[3] of u64,
+       b: array[23] of -> u64;
+	 
+fn main()
+{
+    for (local i: u64 = 0; i < 3; ++i) {
+	a[i] = i;
+    }
+    for (local i: u64 = 0; i < 3; ++i) {
+	b[i] = &a[i];
+    }
+    for (local i: u64 = 0; i < 3; ++i) {
+	printU64(*b[i]);
+	printNl();
+    }
+}

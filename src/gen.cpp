@@ -93,6 +93,12 @@ struct TypeMap
     }
 
     static llvm::Type *
+    get_(const Type *t, std::size_t dim)
+    {
+	return llvm::ArrayType::get(get_(t), dim);
+    }
+
+    static llvm::Type *
     get_(const Type *t)
     {
 	assert(t);
@@ -114,6 +120,8 @@ struct TypeMap
 	    }
 	} else if (t->isPointer()) {
 	    return get_(t->getRefType())->getPointerTo();
+	} else if (t->isArray()) {
+	    return get_(t->getRefType(), t->getDim());
 	} else if (t->isFunction()) {
 	    return llvm::FunctionType::get(get_(t->getRetType()),
 		    get_(t->getArgType()), false);
@@ -263,16 +271,16 @@ defLocal(const char *ident, const Type *type)
 }
 
 void
-defGlobal(const char *ident, const Type *type, ConstVal constVal)
+defGlobal(const char *ident, const Type *type, ConstVal val)
 {
     auto ty = TypeMap::get(type);
-    if (!constVal) {
-	constVal = llvm::ConstantInt::getNullValue(ty);
+    if (!val) {
+	val = llvm::ConstantInt::getNullValue(ty);
     }
     global[ident] = new llvm::GlobalVariable(*llvmModule, ty,
 			/*isConstant=*/false,
 			/*Linkage=*/llvm::GlobalValue::ExternalLinkage,
-			/*Initializer=*/constVal,
+			/*Initializer=*/val,
 			/*Name=*/ident);
 }
 
@@ -486,9 +494,10 @@ loadConst(const char *val, const Type *type, std::uint8_t radix)
     }
 
     if (type->isInteger()) {
-	auto apint = llvm::APInt(type->getIntegerNumBits(), val, radix);
-	return llvm::ConstantInt::get(*llvmContext, apint);
+	auto ty = llvm::APInt(type->getIntegerNumBits(), val, radix);
+	return llvm::ConstantInt::get(*llvmContext, ty);
     }
+    assert(0 && "not implemented");
     return nullptr;
 }
 

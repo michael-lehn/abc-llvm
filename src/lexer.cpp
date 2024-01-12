@@ -69,6 +69,10 @@ tokenCStr(TokenKind kind)
 	    return "IF";
 	case TokenKind::ELSE:
 	    return "ELSE";
+	case TokenKind::ARRAY:
+	    return "ARRAY";
+	case TokenKind::OF:
+	    return "OF";
 	case TokenKind::SEMICOLON:
 	    return "SEMICOLON";
 	case TokenKind::COLON:
@@ -214,6 +218,8 @@ static std::unordered_map<UStr, TokenKind> kw = {
     { "for", TokenKind::FOR },
     { "if", TokenKind::IF },
     { "else", TokenKind::ELSE },
+    { "array", TokenKind::ARRAY },
+    { "of", TokenKind::OF },
 };
 
 // TODO: proper implementation and support of escape sequences

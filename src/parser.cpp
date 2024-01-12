@@ -297,7 +297,7 @@ parseIntType(void)
     }
 }
 
-const Type *
+static const Type *
 parsePtrType(void)
 {
     if (token.kind != TokenKind::ARROW) {
@@ -312,12 +312,57 @@ parsePtrType(void)
 }
 
 static const Type *
+parseArrayDimAndType(void)
+{
+    if (token.kind != TokenKind::LBRACKET) {
+	return nullptr;
+    }
+    getToken();
+    auto dim = parseExpr();
+    if (!dim || !dim->isConst() || !dim->getType()->isInteger()) {
+	semanticError("dimension has to be a constant integer expression");
+    }
+    if (dim->getType()->getIntegerKind() == Type::SIGNED) {
+	if (dim->constValue<std::ptrdiff_t>() < 0) {
+	    semanticError("dimension can not be negative");
+	}
+    }
+
+    expected(TokenKind::RBRACKET);
+    getToken();
+
+    const Type *ty = nullptr;
+    if (token.kind == TokenKind::OF) {
+	getToken();
+	ty = parseType();
+    } else {
+	ty = parseArrayDimAndType();
+    }
+    if (!ty) {
+	semanticError("element type");
+    }
+    return Type::getArray(ty, dim->constValue<std::size_t>());
+}
+
+static const Type *
+parseArrayType(void)
+{
+    if (token.kind != TokenKind::ARRAY) {
+	return nullptr;
+    }
+    getToken();
+    return parseArrayDimAndType();
+}
+
+static const Type *
 parseType(void)
 {
     if (auto fnType = parseFnType()) {
 	return fnType;
     } else if (auto ptrType = parsePtrType()) {
 	return ptrType;
+    } else if (auto arrayType = parseArrayType()) {
+	return arrayType;
     }
     return parseIntType();
 }

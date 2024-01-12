@@ -22,8 +22,8 @@ bool
 operator<(const Integer &x, const Integer &y)
 {
     return x.getIntegerKind() < y.getIntegerKind()
-	|| x.getIntegerKind() == y.getIntegerKind()
-	    && x.getIntegerNumBits() < y.getIntegerNumBits();
+	|| (x.getIntegerKind() == y.getIntegerKind()
+	    && x.getIntegerNumBits() < y.getIntegerNumBits());
 }
 
 //-- Pointer class -------------------------------------------------------------
@@ -37,6 +37,22 @@ bool
 operator<(const Pointer &x, const Pointer &y)
 {
     return x.getRefType() < y.getRefType();
+}
+
+//-- Array class ---------------------------------------------------------------
+
+struct Array : public Type
+{
+    Array(const Type *refType, std::size_t dim)
+	: Type{Type::ARRAY, ArrayData{refType, dim}}
+    {}
+};
+
+bool
+operator<(const Array &x, const Array &y)
+{
+    return x.getRefType() < y.getRefType()
+	|| (x.getRefType() == y.getRefType() && x.getDim() < y.getDim());
 }
 
 //-- Function class ------------------------------------------------------------
@@ -69,6 +85,7 @@ operator<(const Function &x, const Function &y)
 
 static std::set<Integer> *intTypeSet;
 static std::set<Pointer> *ptrTypeSet;
+static std::set<Array> *arrayTypeSet;
 static std::set<Function> *fnTypeSet;
 
 //-- Static functions ----------------------------------------------------------
@@ -116,6 +133,17 @@ Type::getPointer(const Type *refType)
     return &*ptrTypeSet->insert(Pointer{refType}).first;
 }
 
+// Create array type or return existing type
+
+const Type *
+Type::getArray(const Type *refType, std::size_t dim)
+{
+    if (!arrayTypeSet) {
+	arrayTypeSet = new std::set<Array>;
+    }
+    return &*arrayTypeSet->insert(Array{refType, dim}).first;
+}
+
 // Create function type or return existing type
 
 const Type *
@@ -141,6 +169,8 @@ operator<<(std::ostream &out, const Type *type)
 	    << type->getIntegerNumBits();
     } else if (type->isPointer()) {
 	out << "pointer to " << type->getRefType();
+    } else if (type->isArray()) {
+	out << "array[" << type->getDim() << "] of " << type->getRefType();
     } else if (type->isFunction()) {
 	out << "fn(";
 	auto arg = type->getArgType();
