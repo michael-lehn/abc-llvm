@@ -13,6 +13,7 @@
 #include "lexer.hpp"
 #include "symtab.hpp"
 #include "type.hpp"
+#include "ustr.hpp"
 
 class Expr;
 struct ExprDeleter
@@ -44,7 +45,7 @@ struct Identifier
     const Type *type;
     Token::Loc loc;
 
-    Identifier(const char *ident, Token::Loc loc)
+    Identifier(UStr ident, Token::Loc loc)
 	: loc{loc}
     {
 	auto symEntry = symtab::get(ident);
@@ -54,7 +55,7 @@ struct Identifier
 	    return;
 	}
 	error::out() << loc << " undeclared identifier '"
-	    << ident << "'" << std::endl;
+	    << ident.c_str() << "'" << std::endl;
 	error::fatal(); // TODO: use error::raise()
     }
 };
@@ -167,7 +168,7 @@ class Expr
 	static ExprPtr createLiteral(const char *val, std::uint8_t radix,
 				     const Type *type = nullptr,
 				     Token::Loc loc = Token::Loc{});
-	static ExprPtr createIdentifier(const char *ident,
+	static ExprPtr createIdentifier(UStr ident,
 					Token::Loc loc = Token::Loc{});
 	static ExprPtr createProxy(const Expr *expr);
 	static ExprPtr createUnaryMinus(ExprPtr &&expr,

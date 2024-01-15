@@ -277,7 +277,7 @@ Expr::createLiteral(const char *val, std::uint8_t radix, const Type *type,
 }
 
 ExprPtr
-Expr::createIdentifier(const char *ident, Token::Loc loc)
+Expr::createIdentifier(UStr ident, Token::Loc loc)
 {
     return ExprPtr{new Expr{Identifier{ident, loc}}};
 }
