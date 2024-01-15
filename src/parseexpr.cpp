@@ -369,6 +369,39 @@ parsePrimary(void)
         getToken();
 	auto expr = Expr::createIdentifier(opTok.val.c_str(), opTok.loc);
         return expr;
+    } else if (token.kind == TokenKind::SIZEOF) {
+	getToken();
+	error::expected(TokenKind::LPAREN);
+	getToken();
+	std::size_t size;
+	if (token.kind == TokenKind::COLON) {
+	    getToken();
+	    auto loc = token.loc;
+	    auto ty = parseType();
+	    if (!ty) {
+		error::out() << loc << " type expected" << std::endl;
+		error::fatal();
+	    }
+	    size = Type::getSizeOf(ty);
+	} else {
+	    auto expr = parseExpr();
+	    if (!expr) {
+		error::out() << token.loc << " expected non-empty expression"
+		    << std::endl;
+		error::fatal();
+	    }
+	    size = Type::getSizeOf(expr->getType());
+	}
+	error::expected(TokenKind::RPAREN);
+	getToken();
+
+	std::stringstream ss;
+	ss << size;
+	// TODO: Type 'ty' should be 'size_t'
+	auto ty = Type::getUnsignedInteger(64);
+	auto val = UStr{ss.str()}.c_str();
+	auto expr = Expr::createLiteral(val, 10, ty, opTok.loc);
+        return expr;
     } else if (token.kind == TokenKind::DECIMAL_LITERAL) {
 	auto val = token.val.c_str();
         getToken();
@@ -391,8 +424,7 @@ parsePrimary(void)
 	auto val = token.valProcessed.c_str();
         getToken();
 	auto sym = symtab::addStringLiteral(val).c_str();
-	auto strIdent = Expr::createIdentifier(sym, opTok.loc);	
-	auto expr = Expr::createAddr(std::move(strIdent));
+	auto expr = Expr::createIdentifier(sym, opTok.loc);	
 	return expr;	
     } else if (token.kind == TokenKind::LPAREN) {
         getToken();

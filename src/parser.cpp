@@ -11,7 +11,6 @@
 #include "symtab.hpp"
 #include "ustr.hpp"
 
-static const Type *parseType(void);
 static bool parseFn(void);
 static bool parseGlobalDef(void);
 
@@ -318,7 +317,7 @@ parseArrayType(void)
     return parseArrayDimAndType();
 }
 
-static const Type *
+const Type *
 parseType(void)
 {
     if (auto fnType = parseFnType()) {

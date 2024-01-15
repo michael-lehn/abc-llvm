@@ -1,0 +1,14 @@
+fn print(: -> u8);
+fn printLn(: -> u8);
+fn printNl();
+fn printU64(: -> u8);
+
+fn main(): u8
+{
+    print("Size of string 'Hallo!' is ");
+    printU64(sizeof("Hallo!")); printNl();
+
+    print("Size of type u64 is ");
+    printU64(sizeof(:u64)); printNl();
+    return 0;
+}

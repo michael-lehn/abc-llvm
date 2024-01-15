@@ -1,6 +1,7 @@
 #include <iostream>
 #include <set>
 
+#include "error.hpp"
 #include "type.hpp"
 
 //--  Integer class (also misused to represent 'void') -------------------------
@@ -153,6 +154,22 @@ Type::getFunction(const Type *retType, std::vector<const Type *> argType)
 	fnTypeSet = new std::set<Function>;
     }
     return &*fnTypeSet->insert(Function{retType, argType}).first;
+}
+
+std::size_t
+Type::getSizeOf(const Type *type)
+{
+    if (type->isInteger()) {
+	return type->getIntegerNumBits() / 8;
+    } else if (type->isPointer() || type->isFunction()) {
+	error::out() << "Warning: Currently pointers and addresses are"
+	    " assumed to be 64 bits" << std::endl;
+	return 8;
+    } else if (type->isArray()) {
+	return type->getDim() * getSizeOf(type->getRefType());
+    }
+    assert(0 && "getSizeOf not implemented for this type");
+    return 0;
 }
 
 //-- Print type ----------------------------------------------------------------

@@ -38,6 +38,7 @@ enum class TokenKind {
     ELSE,
     ARRAY,
     OF,
+    SIZEOF,
 
     // punctuators
     SEMICOLON,

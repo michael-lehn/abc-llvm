@@ -129,6 +129,7 @@ class Type
 	static const Type *getArray(const Type *refType, std::size_t dim);
 	static const Type *getFunction(const Type *retType,
 				       std::vector<const Type *> argType);
+	static std::size_t getSizeOf(const Type *type);
 
 	// TODO: provide bool type
 	// TODO: provide void type? (currently nullptr represents void)

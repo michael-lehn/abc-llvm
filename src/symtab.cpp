@@ -125,7 +125,7 @@ addStringLiteral(UStr str)
 
     if (added) {
 	auto ty = Type::getArray(Type::getUnsignedInteger(8),
-				 ss.str().length());
+				 strlen(str.c_str()) + 1);
 	addToRootScope(Token::Loc{}, ident, ty);
 	gen::defStringLiteral(ident.c_str(), str.c_str(), true);
     }
