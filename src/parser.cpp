@@ -3,47 +3,13 @@
 #include <cstdlib>
 #include <iostream>
 
+#include "error.hpp"
 #include "gen.hpp"
 #include "lexer.hpp"
 #include "parseexpr.hpp"
 #include "parser.hpp"
 #include "symtab.hpp"
 #include "ustr.hpp"
-
-void
-expectedError(const char *s)
-{
-    std::fprintf(stderr, "%zu.%zu-%zu.%zu: expected '%s' got '%s' (%s)\n",
-	    token.loc.from.line, token.loc.from.col,
-	    token.loc.to.line, token.loc.to.col,
-	    s, token.val.c_str(), tokenCStr(token.kind));
-    exit(1);
-}
-
-void
-semanticError(const char *s)
-{
-    semanticError(token.loc, s);
-}
-
-void
-semanticError(Token::Loc loc, const char *s)
-{
-    std::fprintf(stderr, "%zu.%zu-%zu.%zu: %s\n",
-	    loc.from.line, loc.from.col,
-	    loc.to.line, loc.to.col,
-	    s);
-    exit(1);
-}
-
-
-void
-expected(TokenKind kind)
-{
-    if (token.kind != kind) {
-	expectedError(tokenCStr(kind));
-    }
-}
 
 static const Type *parseType(void);
 static bool parseFn(void);
@@ -55,8 +21,10 @@ parser(void)
     getToken();
     while (token.kind != TokenKind::EOI) {
 	if (!parseGlobalDef() && !parseFn()) {
-	    expectedError("function declaration, global variable definition"
-			  " or EOF");
+	    error::out() << token.loc
+		<< "function declaration, global variable definition or EOF"
+		<< std::endl;
+	    error::fatal();
 	}
     }
 }
@@ -72,25 +40,21 @@ parseGlobalDef(void)
     getToken();
 
     do {
-	expected(TokenKind::IDENTIFIER);
+	error::expected(TokenKind::IDENTIFIER);
 	auto loc = token.loc;
 	auto ident = token.val;
 	getToken();
 
-	expected(TokenKind::COLON);
+	error::expected(TokenKind::COLON);
 	getToken();
 
 	auto type = parseType();
 	if (!type) {
-	    expectedError("type");
+	    error::out() << token.loc << " type expected" << std::endl;
+	    error::fatal();
 	}
 
 	auto s = symtab::add(loc, ident.c_str(), type);
-	if (!s) {
-	    std::string msg = ident.c_str();
-	    msg += " already defined";
-	    semanticError(msg.c_str());
-	}
 
 	// parse initalizer
 	ExprPtr init = nullptr;
@@ -98,7 +62,9 @@ parseGlobalDef(void)
 	    getToken();
 	    init = parseConstExpr();
 	    if (!init) {
-		expectedError("non-empty constant expression");
+		error::out() << token.loc
+		    << " expected non-empty constant expression" << std::endl;
+		error::fatal();
 	    }
 	}
 	auto initValue = init ? init->loadConst() : nullptr;
@@ -106,11 +72,11 @@ parseGlobalDef(void)
 	if (token.kind != TokenKind::COMMA) {
 	    break;
 	}
-	expected(TokenKind::COMMA);
+	error::expected(TokenKind::COMMA);
 	getToken();
     } while (true);
 
-    expected(TokenKind::SEMICOLON);
+    error::expected(TokenKind::SEMICOLON);
     getToken();
     
     return true;
@@ -138,24 +104,21 @@ parseFnParamDeclOrType(std::vector<const Type *> &argType,
 	    getToken();
 	}
 
-	expected(TokenKind::COLON);
+	error::expected(TokenKind::COLON);
 	getToken();
 
 	// parse param type
 	auto type = parseType();
 	if (!type) {
-	    expectedError("type");
+	    error::out() << token.loc << " type expected"
+		<< std::endl;
+	    error::fatal();
 	}
 	argType.push_back(type);
 
 	// add param to symtab if this is a declaration
 	if (paramIdent) {
 	    auto s = symtab::add(loc, ident.c_str(), type);
-	    if (!s) {
-		std::string msg = ident.c_str();
-		msg += " already defined";
-		semanticError(msg.c_str());
-	    }
 	    paramIdent->push_back(s->internalIdent.c_str());
 	}
 
@@ -197,7 +160,7 @@ parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
 
     // parse function identifier
     if (fnDecl) {
-	expected(TokenKind::IDENTIFIER);
+	error::expected(TokenKind::IDENTIFIER);
     }
     if (token.kind == TokenKind::IDENTIFIER) {
 	fnLoc = token.loc;
@@ -206,7 +169,7 @@ parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
     }
 
     // parse function parameters
-    expected(TokenKind::LPAREN);
+    error::expected(TokenKind::LPAREN);
     getToken();
     if (fnDecl) {
 	symtab::openScope();
@@ -214,7 +177,7 @@ parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
     } else {
 	parseFnParamType(argType);
     }
-    expected(TokenKind::RPAREN);
+    error::expected(TokenKind::RPAREN);
     getToken();
 
     // parse function return type
@@ -227,16 +190,7 @@ parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
     auto fnType = Type::getFunction(retType, argType);
     
     if (fnDecl) {
-	*fnDecl = symtab::get(fnIdent.c_str(), symtab::RootScope);
-	if (!*fnDecl) {
-	    // TODO: in this case *fnDecl must not be a definition but a decl
-	    *fnDecl = symtab::addToRootScope(fnLoc, fnIdent.c_str(), fnType);
-	}
-	if (!*fnDecl) {
-	    std::string msg = fnIdent.c_str();
-	    msg += " already defined";
-	    semanticError(msg.c_str());
-	}
+	*fnDecl = symtab::addToRootScope(fnLoc, fnIdent.c_str(), fnType);
     }
 
     return fnType;
@@ -306,7 +260,9 @@ parsePtrType(void)
     getToken();
     auto baseTy = parseType();
     if (!baseTy) {
-	expectedError("base type for pointer");
+	error::out() << token.loc << " expected base type for pointer"
+	    << std::endl;
+	error::fatal();
     }
     return Type::getPointer(baseTy);
 }
@@ -320,15 +276,21 @@ parseArrayDimAndType(void)
     getToken();
     auto dim = parseExpr();
     if (!dim || !dim->isConst() || !dim->getType()->isInteger()) {
-	semanticError("dimension has to be a constant integer expression");
+	error::out() << token.loc
+	    << " dimension has to be a constant integer expression"
+	    << std::endl;
+	error::fatal();
     }
     if (dim->getType()->getIntegerKind() == Type::SIGNED) {
 	if (dim->constValue<std::ptrdiff_t>() < 0) {
-	    semanticError("dimension can not be negative");
+	    error::out() << token.loc
+		<< " dimension can not be negative"
+		<< std::endl;
+	    error::fatal();
 	}
     }
 
-    expected(TokenKind::RBRACKET);
+    error::expected(TokenKind::RBRACKET);
     getToken();
 
     const Type *ty = nullptr;
@@ -339,7 +301,9 @@ parseArrayDimAndType(void)
 	ty = parseArrayDimAndType();
     }
     if (!ty) {
-	semanticError("element type");
+	error::out() << token.loc << " expected element type"
+	    << std::endl;
+	error::fatal();
     }
     return Type::getArray(ty, dim->constValue<std::size_t>());
 }
@@ -378,45 +342,46 @@ parseLocalDef(void)
     getToken();
 
     do {
-	expected(TokenKind::IDENTIFIER);
+	error::expected(TokenKind::IDENTIFIER);
 	auto loc = token.loc;
 	auto ident = token.val;
 	getToken();
 
-	expected(TokenKind::COLON);
+	error::expected(TokenKind::COLON);
 	getToken();
 
 	auto type = parseType();
 	if (!type) {
-	    expectedError("type");
+	    error::out() << token.loc << " type expected"
+		<< std::endl;
+	    error::fatal();
 	}
 
 	auto s = symtab::add(loc, ident.c_str(), type);
-	if (!s) {
-	    std::string msg = ident.c_str();
-	    msg += " already defined";
-	    semanticError(msg.c_str());
-	}
 	gen::defLocal(s->internalIdent.c_str(), s->type);
 
 	// parse initalizer
 	if (token.kind == TokenKind::EQUAL) {
+	    auto opLoc = token.loc;
 	    getToken();
 	    auto init = parseExpr();
 	    if (!init) {
-		expectedError("non-empty expression");
+		error::out() << token.loc << " expected non-empty expression"
+		    << std::endl;
+		error::fatal();
 	    }
 
-	    auto var = Expr::createIdentifier(s->internalIdent.c_str(), type);
+	    auto var = Expr::createIdentifier(ident.c_str(), loc);
 	    init = Expr::createBinary(Binary::Kind::ASSIGN,
 				      std::move(var),
-				      std::move(init));
+				      std::move(init),
+				      opLoc);
 	    init->loadValue();
 	}
 	if (token.kind != TokenKind::COMMA) {
 	    return true;
 	}
-	expected(TokenKind::COMMA);
+	error::expected(TokenKind::COMMA);
 	getToken();
     } while (true);
 }
@@ -425,7 +390,7 @@ static bool
 parseLocalDefStmt(void)
 {
     if (parseLocalDef()) {
-	expected(TokenKind::SEMICOLON);
+	error::expected(TokenKind::SEMICOLON);
 	getToken();
 	return true;
     }
@@ -451,7 +416,7 @@ parseCompoundStmt(bool openScope)
     while (parseStmt()) {
     }
 
-    expected(TokenKind::RBRACE);
+    error::expected(TokenKind::RBRACE);
     getToken();
     symtab::closeScope();
     return true;
@@ -466,13 +431,15 @@ parseIfStmt(void)
     getToken();
 
     // parse expr
-    expected(TokenKind::LPAREN);
+    error::expected(TokenKind::LPAREN);
     getToken();
     auto expr = parseExpr();
     if (!expr) {
-	expectedError("non-empty expression");
+	error::out() << token.loc << " expected non-empty expression"
+	    << std::endl;
+	error::fatal();
     }
-    expected(TokenKind::RPAREN);
+    error::expected(TokenKind::RPAREN);
     getToken();
 
     auto thenLabel = gen::getLabel("then");
@@ -484,7 +451,9 @@ parseIfStmt(void)
     // parse 'then' block
     gen::labelDef(thenLabel);
     if (!parseCompoundStmt(true)) {
-	expectedError("compound statement block");
+	error::out() << token.loc << " expected compound statement block"
+	    << std::endl;
+	error::fatal();
     }
 
     gen::jmp(endLabel);
@@ -494,7 +463,9 @@ parseIfStmt(void)
     if (token.kind == TokenKind::ELSE) {
 	getToken();
 	if (!parseCompoundStmt(true) && !parseIfStmt()) {
-	    expectedError("compound statement block or if statement");
+	    error::out() << token.loc
+		<< " compound statement block or if statement" << std::endl;
+	    error::fatal();
 	}
     }
     gen::jmp(endLabel); // connect with 'end' (even if 'else' is empyt)
@@ -513,13 +484,15 @@ parseWhileStmt(void)
     getToken();
 
     // parse expr
-    expected(TokenKind::LPAREN);
+    error::expected(TokenKind::LPAREN);
     getToken();
     auto expr = parseExpr();
     if (!expr) {
-	expectedError("non-empty expression");
+	error::out() << token.loc << " expected non-empty expression"
+	    << std::endl;
+	error::fatal();
     }
-    expected(TokenKind::RPAREN);
+    error::expected(TokenKind::RPAREN);
     getToken();
 
     auto condLabel = gen::getLabel("cond");
@@ -535,7 +508,9 @@ parseWhileStmt(void)
     // 'while-loop' block
     gen::labelDef(loopLabel);
     if (!parseCompoundStmt(true)) {
-	expectedError("compound statement block");
+	error::out() << token.loc << " expected compound statement block"
+	    << std::endl;
+	error::fatal();
     }
     gen::jmp(condLabel);
 
@@ -553,7 +528,7 @@ parseForStmt(void)
     getToken();
 
     symtab::openScope();
-    expected(TokenKind::LPAREN);
+    error::expected(TokenKind::LPAREN);
     getToken();
     // parse 'init': local definition or  expr
     if (!parseLocalDef()) {
@@ -562,18 +537,18 @@ parseForStmt(void)
 	    init->loadValue();
 	}
     }
-    expected(TokenKind::SEMICOLON);
+    error::expected(TokenKind::SEMICOLON);
     getToken();
     // parse 'cond' expr
     auto cond = parseExpr();
     if (!cond) {
 	cond = Expr::createLiteral("1", 10, nullptr);
     }
-    expected(TokenKind::SEMICOLON);
+    error::expected(TokenKind::SEMICOLON);
     getToken();
     // parse 'update' expr
     auto update = parseExpr();
-    expected(TokenKind::RPAREN);
+    error::expected(TokenKind::RPAREN);
     getToken();
 
 
@@ -590,7 +565,9 @@ parseForStmt(void)
     // 'for-loop' block
     gen::labelDef(loopLabel);
     if (!parseCompoundStmt(false)) {
-	expectedError("compound statement block");
+	error::out() << token.loc << " expected compound statement block"
+	    << std::endl;
+	error::fatal();
     }
     if (update) {
 	update->loadValue();
@@ -611,7 +588,7 @@ parseReturnStmt(void)
     }
     getToken();
     auto expr = parseExpr();
-    expected(TokenKind::SEMICOLON);
+    error::expected(TokenKind::SEMICOLON);
     getToken();
     gen::ret(expr->loadValue());
     return true;
@@ -624,7 +601,7 @@ parseExprStmt(void)
     if (!expr) {
 	return false;
     }
-    expected(TokenKind::SEMICOLON);
+    error::expected(TokenKind::SEMICOLON);
     getToken();
     expr->loadValue();
     return true;
@@ -658,7 +635,7 @@ parseFn(void)
 	gen::fnDecl(fnDecl->ident.c_str(), fnDecl->type);
 	symtab::closeScope();
     } else {
-	expected(TokenKind::LBRACE);
+	error::expected(TokenKind::LBRACE);
 	gen::fnDef(fnDecl->ident.c_str(), fnDecl->type, fnParamIdent);
 	assert(parseCompoundStmt(false));
 	gen::fnDefEnd();

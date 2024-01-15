@@ -16,7 +16,7 @@ setLexerInputfile(const char *path)
 }
 
 const char *
-tokenCStr(TokenKind kind)
+tokenKindCStr(TokenKind kind)
 {
     switch (kind) {
 	case TokenKind::BAD:
@@ -151,6 +151,128 @@ tokenCStr(TokenKind kind)
 	    return 0;
     }
 }
+
+const char *
+tokenCStr(TokenKind kind)
+{
+    switch (kind) {
+	case TokenKind::I8:
+	    return "i8";
+	case TokenKind::I16:
+	    return "i16";
+	case TokenKind::I32:
+	    return "i32";
+	case TokenKind::I64:
+	    return "i64";
+	case TokenKind::U8:
+	    return "u8";
+	case TokenKind::U16:
+	    return "u16";
+	case TokenKind::U32:
+	    return "u32";
+	case TokenKind::U64:
+	    return "u64";
+	case TokenKind::FN:
+	    return "fn";
+	case TokenKind::RETURN:
+	    return "return";
+	case TokenKind::DECL:
+	    return "decl";
+	case TokenKind::GLOBAL:
+	    return "global";
+	case TokenKind::LOCAL:
+	    return "local";
+	case TokenKind::STATIC:
+	    return "static";
+	case TokenKind::FOR:
+	    return "for";
+	case TokenKind::WHILE:
+	    return "while";
+	case TokenKind::IF:
+	    return "if";
+	case TokenKind::ELSE:
+	    return "else";
+	case TokenKind::ARRAY:
+	    return "array";
+	case TokenKind::OF:
+	    return "of";
+	case TokenKind::SEMICOLON:
+	    return ";";
+	case TokenKind::COLON:
+	    return ":";
+	case TokenKind::COMMA:
+	    return ",";
+	case TokenKind::LBRACE:
+	    return "[";
+	case TokenKind::RBRACE:
+	    return "]";
+	case TokenKind::LPAREN:
+	    return "(";
+	case TokenKind::RPAREN:
+	    return ")";
+	case TokenKind::LBRACKET:
+	    return "[";
+	case TokenKind::RBRACKET:
+	    return "]";
+	case TokenKind::CARET:
+	    return "^";
+	case TokenKind::PLUS:
+	    return "+";
+	case TokenKind::PLUS2:
+	    return "++";
+	case TokenKind::PLUS_EQUAL:
+	    return "+=";
+	case TokenKind::MINUS:
+	    return "-";
+	case TokenKind::MINUS2:
+	    return "--";
+	case TokenKind::MINUS_EQUAL:
+	    return "-=";
+	case TokenKind::ARROW:
+	    return "->";
+	case TokenKind::ASTERISK:
+	    return "*";
+	case TokenKind::ASTERISK_EQUAL:
+	    return "*=";
+	case TokenKind::SLASH:
+	    return "/";
+	case TokenKind::SLASH_EQUAL:
+	    return "/=";
+	case TokenKind::PERCENT:
+	    return "%";
+	case TokenKind::PERCENT_EQUAL:
+	    return "%=";
+	case TokenKind::EQUAL:
+	    return "=";
+	case TokenKind::EQUAL2:
+	    return "==";
+	case TokenKind::NOT:
+	    return "!";
+	case TokenKind::NOT_EQUAL:
+	    return "!=";
+	case TokenKind::GREATER:
+	    return ">";
+	case TokenKind::GREATER_EQUAL:
+	    return ">=";
+	case TokenKind::LESS:
+	    return "<";
+	case TokenKind::LESS_EQUAL:
+	    return "<=";
+	case TokenKind::AND:
+	    return "&";
+	case TokenKind::AND2:
+	    return "&&";
+	case TokenKind::OR:
+	    return "|";
+	case TokenKind::OR2:
+	    return "||";
+	case TokenKind::QUERY:
+	    return "?";
+	default:
+	    return "<no general symbolic representation";
+    }
+}
+
 
 static Token::Loc::Pos curr = { 1, 0 };
 static char ch;
@@ -511,7 +633,11 @@ getToken(void)
 std::ostream &
 operator<<(std::ostream &out, const Token::Loc &loc)
 {
-    out << loc.from.line << '.' << loc.from.col << ':'
-	<< loc.to.line << '.' << loc.to.col;
+    if (loc.from.line) {
+	out << loc.from.line << '.' << loc.from.col << '-'
+	    << loc.to.line << '.' << loc.to.col;
+    } else {
+	out << "[internally created location]";
+    }
     return out;
 }

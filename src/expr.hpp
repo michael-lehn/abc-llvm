@@ -3,10 +3,15 @@
 
 #include <charconv>
 #include <cstdint>
+#include <iostream>
 #include <memory>
+#include <optional>
 #include <string>
 
+#include "error.hpp"
 #include "gen.hpp"
+#include "lexer.hpp"
+#include "symtab.hpp"
 #include "type.hpp"
 
 class Expr;
@@ -25,17 +30,33 @@ struct Literal
     const char *val;
     const Type *type;
     std::uint8_t radix;
+    Token::Loc loc;
 
-    Literal(const char *val, const Type *type, std::uint8_t radix)
-	: val{val}, type{type}, radix{radix} {}
+    Literal(const char *val, const Type *type, std::uint8_t radix,
+	    Token::Loc loc)
+	: val{val}, type{type}, radix{radix}, loc{loc}
+    {}
 };
 
 struct Identifier
 {
     const char *val;
     const Type *type;
+    Token::Loc loc;
 
-    Identifier(const char *val, const Type *type) : val{val}, type{type} {}
+    Identifier(const char *ident, Token::Loc loc)
+	: loc{loc}
+    {
+	auto symEntry = symtab::get(ident);
+	if (symEntry) {
+	    val = symEntry->internalIdent.c_str();
+	    type = symEntry->type;
+	    return;
+	}
+	error::out() << loc << " undeclared identifier '"
+	    << ident << "'" << std::endl;
+	error::fatal(); // TODO: use error::raise()
+    }
 };
 
 struct Proxy
@@ -58,9 +79,10 @@ struct Unary
     Kind kind;
     ExprPtr child;
     const Type *type;
+    Token::Loc opLoc; // location of operator
 
-    Unary(Kind kind, ExprPtr &&child, const Type *type)
-	: kind{kind}, child{std::move(child)}, type{type}
+    Unary(Kind kind, ExprPtr &&child, const Type *type, Token::Loc opLoc)
+	: kind{kind}, child{std::move(child)}, type{type}, opLoc{opLoc}
     {}
 
     const Type * getType(void);
@@ -92,10 +114,11 @@ struct Binary
     Kind kind;
     ExprPtr left, right;
     const Type *type;
+    Token::Loc opLoc;
 
-    Binary(Kind kind, ExprPtr &&left, ExprPtr &&right)
+    Binary(Kind kind, ExprPtr &&left, ExprPtr &&right, Token::Loc opLoc)
 	: kind{kind}, left{std::move(left)}, right{std::move(right)}
-	, type{nullptr}
+	, type{nullptr}, opLoc{opLoc}
     {
 	setType();
 	//assert(type && "illegal expression"); // TODO: better error handling
@@ -111,9 +134,13 @@ struct Conditional
 {
     ExprPtr cond, left, right;
     const Type *type;
+    Token::Loc opLeftLoc, opRightLoc;
 
-    Conditional(ExprPtr &&cond, ExprPtr &&left, ExprPtr &&right)
+    Conditional(ExprPtr &&cond, ExprPtr &&left, ExprPtr &&right,
+	        Token::Loc opLeftLoc, Token::Loc opRightLoc)
 	: cond{std::move(cond)}, left{std::move(left)}, right{std::move(right)}
+	, opLeftLoc{opLeftLoc}, opRightLoc{opRightLoc}
+
     {
 	setTypeAndCastOperands();
     }
@@ -138,19 +165,30 @@ class Expr
 
     public:
 	static ExprPtr createLiteral(const char *val, std::uint8_t radix,
-				     const Type *type = nullptr);
-	static ExprPtr createIdentifier(const char *ident, const Type *type);
+				     const Type *type = nullptr,
+				     Token::Loc loc = Token::Loc{});
+	static ExprPtr createIdentifier(const char *ident,
+					Token::Loc loc = Token::Loc{});
 	static ExprPtr createProxy(const Expr *expr);
-	static ExprPtr createUnaryMinus(ExprPtr &&expr);
-	static ExprPtr createLogicalNot(ExprPtr &&expr);
-	static ExprPtr createAddr(ExprPtr &&expr);
-	static ExprPtr createDeref(ExprPtr &&expr);
-	static ExprPtr createCast(ExprPtr &&child, const Type *toType);
+	static ExprPtr createUnaryMinus(ExprPtr &&expr,
+				        Token::Loc opLoc = Token::Loc{});
+	static ExprPtr createLogicalNot(ExprPtr &&expr,
+					Token::Loc opLoc = Token::Loc{});
+	static ExprPtr createAddr(ExprPtr &&expr,
+				  Token::Loc opLoc = Token::Loc{});
+	static ExprPtr createDeref(ExprPtr &&expr,
+				   Token::Loc opLoc = Token::Loc{});
+	static ExprPtr createCast(ExprPtr &&child, const Type *toType,
+				  Token::Loc opLoc = Token::Loc{});
 	static ExprPtr createBinary(Binary::Kind kind,
-				    ExprPtr &&left, ExprPtr &&right);
-	static ExprPtr createCall(ExprPtr &&fn, ExprVector &&param);
+				    ExprPtr &&left, ExprPtr &&right,
+				    Token::Loc opLoc = Token::Loc{});
+	static ExprPtr createCall(ExprPtr &&fn, ExprVector &&param,
+				  Token::Loc opLoc = Token::Loc{});
 	static ExprPtr createConditional(ExprPtr &&cond,
-					 ExprPtr &&left, ExprPtr &&right);
+					 ExprPtr &&left, ExprPtr &&right,
+					 Token::Loc opLeftLoc = Token::Loc{},
+					 Token::Loc opRightLoc = Token::Loc{});
 	static ExprPtr createExprVector(ExprVector &&expr);
 
 	const Type *getType(void) const;

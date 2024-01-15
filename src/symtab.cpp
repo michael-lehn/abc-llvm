@@ -5,6 +5,8 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "error.hpp"
+#include "gen.hpp"
 #include "symtab.hpp"
 
 namespace symtab {
@@ -13,7 +15,7 @@ namespace symtab {
 
 struct ScopeNode
 {
-    std::unordered_map<UStr, SymEntry> symtab;
+    std::unordered_map<const char *, SymEntry> symtab;
     std::unique_ptr<ScopeNode> up;
     std::size_t id = 0;
 
@@ -52,8 +54,8 @@ static SymEntry *
 get(UStr ident, ScopeNode *begin, ScopeNode *end)
 {
     for (ScopeNode *sn = begin; sn != end; sn = sn->up.get()) {
-	if (sn->symtab.contains(ident)) {
-	    return &sn->symtab[ident];
+	if (sn->symtab.contains(ident.c_str())) {
+	    return &sn->symtab[ident.c_str()];
 	}
     }
     return nullptr;
@@ -75,7 +77,11 @@ add(Token::Loc loc, UStr ident, const Type *type, ScopeNode *sn)
 
     if (found) {
 	// already in symtab
-	return nullptr;
+	error::out() << loc << ": identifier '" << ident.c_str()
+	    << "' already defined. Previous definition at " << found->loc
+	    << std::endl;
+	error::fatal();
+	return found;
     }
 
     UStr internalIdent = ident;
@@ -85,8 +91,8 @@ add(Token::Loc loc, UStr ident, const Type *type, ScopeNode *sn)
 	internalIdent = ss.str();
     }
 
-    sn->symtab[ident] = {loc, type, ident, internalIdent};
-    return &sn->symtab[ident];
+    sn->symtab[ident.c_str()] = {loc, type, ident, internalIdent};
+    return &sn->symtab[ident.c_str()];
 }
 
 
@@ -102,6 +108,31 @@ addToRootScope(Token::Loc loc, UStr ident, const Type *type)
     return add(loc, ident, type, root);
 }
 
+UStr
+addStringLiteral(UStr str)
+{
+    static std::size_t id;
+    static std::unordered_map<const char *, std::size_t> pool;
+
+    bool added = false;
+    if (!pool.contains(str.c_str())) {
+	pool[str.c_str()] = id++;
+	added = true;
+    }
+    std::stringstream ss;
+    ss << ".str" << pool[str.c_str()];
+    UStr ident{ss.str()};
+
+    if (added) {
+	auto ty = Type::getArray(Type::getUnsignedInteger(8),
+				 ss.str().length());
+	addToRootScope(Token::Loc{}, ident, ty);
+	gen::defStringLiteral(ident.c_str(), str.c_str(), true);
+    }
+    return ident;
+
+}
+
 static std::size_t
 print(std::ostream &out, ScopeNode *sn)
 {
@@ -114,7 +145,7 @@ print(std::ostream &out, ScopeNode *sn)
 	<< indent << std::endl;
     for (auto sym: sn->symtab) {
 	out << std::setfill(' ') << std::setw(indent * 4) << " "
-	    << sym.first.c_str() << ": "
+	    << sym.second.ident.c_str() << ": "
 	    << sym.second.loc << ", "
 	    << sym.second.type << ", "
 	    << sym.second.internalIdent.c_str()

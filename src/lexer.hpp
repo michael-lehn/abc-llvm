@@ -82,6 +82,8 @@ extern struct Token {
     TokenKind kind;
     struct Loc{
 	struct Pos {
+	    Pos() : line{0}, col{0} {}
+	    Pos(std::size_t line, std::size_t col) : line{line}, col{col} {}
 	    std::size_t line, col;
 	} from, to;
     } loc;
@@ -90,6 +92,7 @@ extern struct Token {
 } token;
 
 bool setLexerInputfile(const char *path);
+const char *tokenKindCStr(TokenKind kind);
 const char *tokenCStr(TokenKind kind);
 TokenKind getToken(void);
 

@@ -1,4 +1,5 @@
 #include "expr.hpp"
+#include "symtab.hpp"
 #include "gen.hpp"
 #include "type.hpp"
 
@@ -14,9 +15,13 @@ main(void)
 			std::move(unary),
 			std::move(lit));
 			*/
+
+    symtab::add(Token::Loc{}, "a", Type::getUnsignedInteger(64));
+    symtab::add(Token::Loc{}, "b", Type::getUnsignedInteger(64));
+
     auto lit42 = Expr::createLiteral("42", 10, nullptr);
-    auto a = Expr::createIdentifier("a", Type::getUnsignedInteger(64));
-    auto b = Expr::createIdentifier("b", Type::getUnsignedInteger(64));
+    auto a = Expr::createIdentifier("a");
+    auto b = Expr::createIdentifier("b");
     auto binary = Expr::createBinary(
 			Binary::Kind::ADD,
 			Expr::createBinary(

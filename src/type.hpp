@@ -58,6 +58,11 @@ class Type
 	    return id == ARRAY;
 	}
 
+	bool isArrayOrPointer() const
+	{
+	    return isArray() || isPointer();
+	}
+
 	const Type *getRefType() const
 	{
 	    if (std::holds_alternative<ArrayData>(data)) {

@@ -543,6 +543,13 @@ ptrInc(const Type *type, Reg addr, Reg offset)
     return llvmBuilder->CreateGEP(ty, addr, idxList);
 }
 
+Reg
+ptrDiff(const Type *type, Reg addrLeft, Reg addRight)
+{
+    auto ty = TypeMap::get(type);
+    return llvmBuilder->CreatePtrDiff(ty, addrLeft, addRight);
+}
+
 //------------------------------------------------------------------------------
 
 void

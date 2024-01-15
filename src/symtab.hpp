@@ -36,6 +36,9 @@ SymEntry *add(Token::Loc loc, UStr ident, const Type *type);
 // otherwise a pointer to the added entry.
 SymEntry *addToRootScope(Token::Loc loc, UStr ident, const Type *type);
 
+// returns an identifier for the string literal 'str'
+UStr addStringLiteral(UStr str);
+
 std::ostream &print(std::ostream &out);
 
 } // namespace symtab

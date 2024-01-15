@@ -35,9 +35,6 @@ getTypeConversion(const Type *from, const Type *to)
 	}
 	return from;
     }
-    std::cerr << "can not convert type '"
-	<< from << "' to type '" << to << "'" << std::endl;
-    assert(0);
     return nullptr;
 }
 
@@ -81,6 +78,11 @@ Binary::setType(void)
 	    return;
 	case Binary::Kind::ASSIGN:
 	    type = getTypeConversion(r, l);
+	    if (!type) {
+		error::out() << opLoc << " can not cast expression of type '"
+		    << r << "' to type '" << l << "'" <<std::endl;
+		error::fatal();
+	    }
 	    return;
 	case Binary::Kind::POSTFIX_INC:
 	case Binary::Kind::POSTFIX_DEC:
@@ -151,7 +153,7 @@ Binary::castOperands(void)
     switch (kind) {
 	case Binary::Kind::ASSIGN:
 	    if (r != type) {
-		right = Expr::createCast(std::move(right), type);
+		right = Expr::createCast(std::move(right), type, opLoc);
 	    }
 	    return;
 	case Binary::Kind::POSTFIX_INC:
@@ -265,18 +267,19 @@ getIntType(const char *s, const char *end, std::uint8_t radix)
 }
 
 ExprPtr
-Expr::createLiteral(const char *val, std::uint8_t radix, const Type *type)
+Expr::createLiteral(const char *val, std::uint8_t radix, const Type *type,
+		    Token::Loc loc)
 {
     if (!type)  {
 	type = getIntType(val, val + strlen(val), radix);
     }
-    return ExprPtr{new Expr{Literal{val, type, radix}}};
+    return ExprPtr{new Expr{Literal{val, type, radix, loc}}};
 }
 
 ExprPtr
-Expr::createIdentifier(const char *ident, const Type *type)
+Expr::createIdentifier(const char *ident, Token::Loc loc)
 {
-    return ExprPtr{new Expr{Identifier{ident, type}}};
+    return ExprPtr{new Expr{Identifier{ident, loc}}};
 }
 
 ExprPtr
@@ -287,68 +290,76 @@ Expr::createProxy(const Expr *expr)
 
 
 ExprPtr
-Expr::createUnaryMinus(ExprPtr &&expr)
+Expr::createUnaryMinus(ExprPtr &&expr, Token::Loc opLoc)
 {
     auto zero = createLiteral("0", 10);
-    return createBinary(Binary::Kind::SUB, std::move(zero), std::move(expr));
+    return createBinary(Binary::Kind::SUB, std::move(zero), std::move(expr),
+			opLoc);
 }
 
 ExprPtr
-Expr::createLogicalNot(ExprPtr &&expr)
+Expr::createLogicalNot(ExprPtr &&expr, Token::Loc opLoc)
 {
     auto ty = expr->getType();
-    auto lNot = new Expr{Unary{Unary::Kind::LOGICAL_NOT, std::move(expr), ty}};
+    auto lNot = new Expr{Unary{Unary::Kind::LOGICAL_NOT, std::move(expr), ty,
+			 opLoc}};
     return ExprPtr{lNot};
 }
 
 ExprPtr
-Expr::createAddr(ExprPtr &&expr)
+Expr::createAddr(ExprPtr &&expr, Token::Loc opLoc)
 {
     auto ty = Type::getPointer(expr->getType());
-    auto addr = new Expr{Unary{Unary::Kind::ADDRESS, std::move(expr), ty}};
+    auto addr = new Expr{Unary{Unary::Kind::ADDRESS, std::move(expr), ty,
+			 opLoc}};
     return ExprPtr{addr};
 }
 
 ExprPtr
-Expr::createDeref(ExprPtr &&expr)
+Expr::createDeref(ExprPtr &&expr, Token::Loc opLoc)
 {
     assert(expr->getType()->isPointer() || expr->getType()->isArray());
 
     auto ty = expr->getType()->getRefType();
-    auto dref = new Expr{Unary{Unary::Kind::DEREF, std::move(expr), ty}};
+    auto dref = new Expr{Unary{Unary::Kind::DEREF, std::move(expr), ty, opLoc}};
     return ExprPtr{dref};
 }
 
 
 ExprPtr
-Expr::createCast(ExprPtr &&child, const Type *toType)
+Expr::createCast(ExprPtr &&child, const Type *toType, Token::Loc opLoc)
 {
-    auto expr = new Expr{Unary{Unary::Kind::CAST, std::move(child), toType}};
+    auto expr = new Expr{Unary{Unary::Kind::CAST, std::move(child), toType,
+			       opLoc}};
     return ExprPtr{expr};
 }
 
 ExprPtr
-Expr::createBinary(Binary::Kind kind, ExprPtr &&left, ExprPtr &&right)
+Expr::createBinary(Binary::Kind kind, ExprPtr &&left, ExprPtr &&right,
+		   Token::Loc opLoc)
 {
-    auto expr = new Expr{Binary{kind, std::move(left), std::move(right)}};
+    auto expr = new Expr{Binary{kind, std::move(left), std::move(right),
+			        opLoc}};
     return ExprPtr{expr};
 }
 
 ExprPtr
-Expr::createCall(ExprPtr &&fn, ExprVector &&param)
+Expr::createCall(ExprPtr &&fn, ExprVector &&param, Token::Loc opLoc)
 {
     assert(fn->getType()->isFunction());
 
     auto p = createExprVector(std::move(param));
-    auto expr = createBinary(Binary::Kind::CALL, std::move(fn), std::move(p));
+    auto expr = createBinary(Binary::Kind::CALL, std::move(fn), std::move(p),
+			     opLoc);
     return ExprPtr{std::move(expr)};
 }
 
 ExprPtr
-Expr::createConditional(ExprPtr &&cond, ExprPtr &&left, ExprPtr &&right)
+Expr::createConditional(ExprPtr &&cond, ExprPtr &&left, ExprPtr &&right,
+			Token::Loc opLeftLoc, Token::Loc opRightLoc)
 {
     auto expr = new Expr{Conditional{std::move(cond), std::move(left),
-				     std::move(right)}};
+				     std::move(right), opLeftLoc, opRightLoc}};
     return ExprPtr{std::move(expr)};
 }
 
@@ -736,6 +747,13 @@ loadValue(const Binary &binary)
 		auto l = binary.left->loadValue();
 		auto r = binary.right->loadValue();
 		return gen::ptrInc(ty, l, r);
+	    } else if (binary.kind == Binary::Kind::SUB
+		    && binary.left->getType()->isArrayOrPointer()
+		    && binary.right->getType()->isArrayOrPointer()) {
+		auto ty = binary.left->getType()->getRefType();
+		auto l = binary.left->loadValue();
+		auto r = binary.right->loadValue();
+		return gen::ptrDiff(ty, l, r);
 	    } else {
 		auto l = binary.left->loadValue();
 		auto r = binary.right->loadValue();
