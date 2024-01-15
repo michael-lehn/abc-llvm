@@ -24,7 +24,7 @@ getTypeConversion(const Type *from, const Type *to)
     } else if (from->isInteger() && to->isInteger()) {
 	// TODO: -Wconversion generate warning if sizeof(to) < sizeof(from)
 	return to;
-    } else if (from->isPointer() && to->isPointer()) {
+    } else if (from->isArrayOrPointer() && to->isPointer()) {
 	// TODO: require explicit cast if types are different
 	return from;
     } else if (from->isFunction() && to->isPointer()) {
