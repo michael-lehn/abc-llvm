@@ -483,6 +483,8 @@ Expr::isConst(void) const
 	switch (binary.kind) {
 	    case Binary::Kind::CALL:
 	    case Binary::Kind::ASSIGN:
+	    case Binary::Kind::POSTFIX_INC:
+	    case Binary::Kind::POSTFIX_DEC:
 		return false;
 	    default:
 		return binary.left->isConst()

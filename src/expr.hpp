@@ -228,8 +228,54 @@ Expr::constValue(void) const
 	assert(0 && "sorry, currently not implemented");
 	return 0;
     } else if (std::holds_alternative<Binary>(variant)) {
-	assert(0 && "sorry, currently not implemented");
-	return 0;
+	const auto &binary = std::get<Binary>(variant);
+	switch (binary.kind) {
+	    case Binary::Kind::CALL:
+	    case Binary::Kind::ASSIGN:
+	    case Binary::Kind::POSTFIX_INC:
+	    case Binary::Kind::POSTFIX_DEC:
+		assert(0 && "internal error: expr is not constant");
+		return false;
+	    case Binary::Kind::ADD:
+		return binary.left->constValue<T>()
+		    + binary.right->constValue<T>();
+	    case Binary::Kind::EQUAL:
+		return binary.left->constValue<T>()
+		    ==  binary.right->constValue<T>();
+	    case Binary::Kind::NOT_EQUAL:
+		return binary.left->constValue<T>()
+		    !=  binary.right->constValue<T>();
+	    case Binary::Kind::GREATER:
+		return binary.left->constValue<T>()
+		    >  binary.right->constValue<T>();
+	    case Binary::Kind::GREATER_EQUAL:
+		return binary.left->constValue<T>()
+		    >=  binary.right->constValue<T>();
+	    case Binary::Kind::LESS:
+		return binary.left->constValue<T>()
+		    <  binary.right->constValue<T>();
+	    case Binary::Kind::LESS_EQUAL:
+		return binary.left->constValue<T>()
+		    <=  binary.right->constValue<T>();
+	    case Binary::Kind::LOGICAL_AND:
+		return binary.left->constValue<T>()
+		    &&  binary.right->constValue<T>();
+	    case Binary::Kind::LOGICAL_OR:
+		return binary.left->constValue<T>()
+		    ||  binary.right->constValue<T>();
+	    case Binary::Kind::SUB:
+		return binary.left->constValue<T>()
+		    - binary.right->constValue<T>();
+	    case Binary::Kind::MUL:
+		return binary.left->constValue<T>()
+		    * binary.right->constValue<T>();
+	    case Binary::Kind::DIV:
+		return binary.left->constValue<T>()
+		    / binary.right->constValue<T>();
+	    default:
+		assert(0 && "sorry, currently not implemented");
+		return 0;
+	}
     } else if (std::holds_alternative<Conditional>(variant)) {
 	assert(0 && "sorry, currently not implemented");
 	return 0;
