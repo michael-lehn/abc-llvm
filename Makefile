@@ -23,7 +23,8 @@ xsrc := $(wildcard $(src.dir)/xtest_*.cpp) \
 src := $(filter-out $(xsrc),$(wildcard $(src.dir)/*.cpp))
 obj := $(src:$(src.dir)/%.cpp=$(obj.dir)/%.o)
 xobj := $(xsrc:$(src.dir)/%.cpp=$(obj.dir)/%.o)
-dep := $(src:$(src.dir)/%=$(dep.dir)/%.d) $(xsrc:$(src.dir)/%.cpp=$(dep.dir)/%.d)
+dep := $(src:$(src.dir)/%=$(dep.dir)/%.d) \
+       $(xsrc:$(src.dir)/%=$(dep.dir)/%.d)
 
 target := $(patsubst $(src.dir)/%.cpp,$(bin.dir)/%,$(xsrc)) $(xobj)
 
