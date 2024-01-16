@@ -7,6 +7,8 @@
 #include <vector>
 #include <ostream>
 
+#include "lexer.hpp" // for Token::Loc
+
 class Type
 {
     public:
@@ -29,6 +31,11 @@ class Type
 	    SIGNED,
 	    UNSIGNED,
 	};
+
+	bool isBool() const
+	{
+	    return id == INTEGER && getIntegerNumBits() == 1;
+	}
 
 	bool isInteger() const
 	{
@@ -122,14 +129,21 @@ class Type
 	Type(Id id, Data &&data) : id{id}, data{data} {}
 
     public:
+	// for getting a type
 	static const Type *getVoid(void);
+	static const Type *getBool(void);
 	static const Type *getUnsignedInteger(std::size_t numBits);
 	static const Type *getSignedInteger(std::size_t numBits);
 	static const Type *getPointer(const Type *refType);
 	static const Type *getArray(const Type *refType, std::size_t dim);
 	static const Type *getFunction(const Type *retType,
 				       std::vector<const Type *> argType);
+
+
+	// type information and casts
 	static std::size_t getSizeOf(const Type *type);
+	static const Type *getTypeConversion(const Type *from, const Type *to,
+				      Token::Loc loc);
 
 	// TODO: provide bool type
 	// TODO: provide void type? (currently nullptr represents void)

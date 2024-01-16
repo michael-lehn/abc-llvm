@@ -73,7 +73,7 @@ parseConstExpr(void)
 {
     auto loc = token.loc;
     auto expr = parseExpr();
-    if (!expr->isConst()) {
+    if (!expr || !expr->isConst()) {
 	error::out() << token.loc
 	    << " constant expression required" << std::endl;
 	error::fatal();
@@ -402,22 +402,27 @@ parsePrimary(void)
 	auto val = UStr{ss.str()}.c_str();
 	auto expr = Expr::createLiteral(val, 10, ty, opTok.loc);
         return expr;
+    } else if (token.kind == TokenKind::NULLPTR) {
+        getToken();
+	auto ty = Type::getPointer(Type::getUnsignedInteger(8));
+	auto expr = Expr::createLiteral("0", 10, ty, opTok.loc);
+        return expr;
     } else if (token.kind == TokenKind::DECIMAL_LITERAL) {
 	auto val = token.val.c_str();
         getToken();
-	auto ty = parseIntType();
+	auto ty = parseIntType(); // parse suffix
 	auto expr = Expr::createLiteral(val, 10, ty, opTok.loc);
         return expr;
     } else if (token.kind == TokenKind::HEXADECIMAL_LITERAL) {
 	auto val = token.val.c_str();
         getToken();
-	auto ty = parseIntType();
+	auto ty = parseIntType(); // parse suffix
 	auto expr = Expr::createLiteral(val, 16, ty, opTok.loc);
         return expr;
     } else if (token.kind == TokenKind::OCTAL_LITERAL) {
 	auto val = token.val.c_str();
         getToken();
-	auto ty = parseIntType();
+	auto ty = parseIntType(); // parse suffix
 	auto expr = Expr::createLiteral(val, 8, ty, opTok.loc);
         return expr;
     } else if (token.kind == TokenKind::STRING_LITERAL) {

@@ -53,11 +53,14 @@ parseGlobalDef(void)
 	    error::fatal();
 	}
 
-	auto s = symtab::add(loc, ident.c_str(), type);
+	// TODO: Provide symtab::defGlobal(...) ?
+	auto s = symtab::addToRootScope(loc, ident.c_str(), type);
+	auto ty = s->type;
 
 	// parse initalizer
 	ExprPtr init = nullptr;
 	if (token.kind == TokenKind::EQUAL) {
+	    auto opLoc = token.loc;
 	    getToken();
 	    init = parseConstExpr();
 	    if (!init) {
@@ -65,9 +68,19 @@ parseGlobalDef(void)
 		    << " expected non-empty constant expression" << std::endl;
 		error::fatal();
 	    }
+	    auto toTy = Type::getTypeConversion(init->getType(), ty, opLoc);
+	    if (toTy != ty) {
+		init->print();
+		error::out() << opLoc << " can not cast expression of type '"
+		    << init->getType() << "' to type '" << ty
+		    << "'" <<std::endl;
+		error::fatal();
+	    } else if (toTy != init->getType()) {
+	    	init = Expr::createCast(std::move(init), toTy, loc);
+	    }
 	}
 	auto initValue = init ? init->loadConst() : nullptr;
-	gen::defGlobal(s->internalIdent.c_str(), s->type, initValue);
+	gen::defGlobal(s->internalIdent.c_str(), ty, initValue);
 	if (token.kind != TokenKind::COMMA) {
 	    break;
 	}
@@ -281,7 +294,7 @@ parseArrayDimAndType(void)
 	error::fatal();
     }
     if (dim->getType()->getIntegerKind() == Type::SIGNED) {
-	if (dim->constValue<std::ptrdiff_t>() < 0) {
+	if (dim->constIntValue<std::ptrdiff_t>() < 0) {
 	    error::out() << token.loc
 		<< " dimension can not be negative"
 		<< std::endl;
@@ -304,7 +317,7 @@ parseArrayDimAndType(void)
 	    << std::endl;
 	error::fatal();
     }
-    return Type::getArray(ty, dim->constValue<std::size_t>());
+    return Type::getArray(ty, dim->constIntValue<std::size_t>());
 }
 
 static const Type *

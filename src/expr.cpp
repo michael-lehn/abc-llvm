@@ -17,28 +17,6 @@ ExprDeleter::operator()(const Expr *expr) const
 //-- handling type conversions and casts ---------------------------------------
 
 static const Type *
-getTypeConversion(const Type *from, const Type *to)
-{
-    if (from == to) {
-	return to;
-    } else if (from->isInteger() && to->isInteger()) {
-	// TODO: -Wconversion generate warning if sizeof(to) < sizeof(from)
-	return to;
-    } else if (from->isArrayOrPointer() && to->isPointer()) {
-	// TODO: require explicit cast if types are different
-	return from;
-    } else if (from->isFunction() && to->isPointer()) {
-	// TODO: require explicit cast if types are different
-	if (from != to) {
-	    std::cerr << "warning: casting '" << from << "' to '" << to << "'"
-		<< std::endl;
-	}
-	return from;
-    }
-    return nullptr;
-}
-
-static const Type *
 getCommonType(const Type *left, const Type *right)
 {
     if (left == right) {
@@ -77,7 +55,7 @@ Binary::setType(void)
 	    type = l->getRetType();
 	    return;
 	case Binary::Kind::ASSIGN:
-	    type = getTypeConversion(r, l);
+	    type = Type::getTypeConversion(r, l, opLoc);
 	    if (!type) {
 		error::out() << opLoc << " can not cast expression of type '"
 		    << r << "' to type '" << l << "'" <<std::endl;
@@ -125,7 +103,7 @@ Binary::setType(void)
 	case Binary::Kind::LESS_EQUAL:
 	case Binary::Kind::LOGICAL_AND:
 	case Binary::Kind::LOGICAL_OR:
-	    type = Type::getUnsignedInteger(8); // TODO: bool type
+	    type = Type::getBool();
 	    return;
 	default:
 	    type = nullptr;
@@ -204,7 +182,7 @@ Binary::castOperands(void)
 	case Binary::Kind::LOGICAL_AND:
 	case Binary::Kind::LOGICAL_OR:
 	    {
-		auto ty = getCommonType(l, r);
+		auto ty = Type::getBool();
 		if (l != ty) {
 		    left = Expr::createCast(std::move(left), ty);
 		}
@@ -300,7 +278,7 @@ Expr::createUnaryMinus(ExprPtr &&expr, Token::Loc opLoc)
 ExprPtr
 Expr::createLogicalNot(ExprPtr &&expr, Token::Loc opLoc)
 {
-    auto ty = expr->getType();
+    auto ty = Type::getUnsignedInteger(8); // TODO: bool type
     auto lNot = new Expr{Unary{Unary::Kind::LOGICAL_NOT, std::move(expr), ty,
 			 opLoc}};
     return ExprPtr{lNot};
@@ -470,14 +448,29 @@ Expr::isConst(void) const
     } else if (std::holds_alternative<Literal>(variant)) {
 	return true;
     } else if (std::holds_alternative<Identifier>(variant)) {
+	const auto &ident = std::get<Identifier>(variant);
+	if (ident.type->isFunction() || ident.type->isArray()) {
+	    return true;
+	}
+
 	return false;
     } else if (std::holds_alternative<Unary>(variant)) {
-	// TODO: For example: address of global variable is const
-	//		      or cast of a constant expression
-	//		      or logical-not of a constnat expression
-	std::cerr << "warning: Expr::isConst for unary expressions is "
-	    " currently always returns 'false'" << std::endl;
-	return false;
+	const auto &unary = std::get<Unary>(variant);
+	switch (unary.kind) {
+	    case Unary::Kind::DEREF:
+		return false;
+	    case Unary::Kind::CAST:
+	    case Unary::Kind::LOGICAL_NOT:
+		return unary.child->isConst();
+	    case Unary::Kind::ADDRESS:
+		error::out() << "warning: currently no check whether address"
+		    " of global or local variable is taken. Assuming it's "
+		    " global. Good luck" << std::endl;
+		return true;
+	    default:
+		assert(0 && "internal error: case not handled");
+		return false;
+	}
     } else if (std::holds_alternative<Binary>(variant)) {
 	const auto &binary = std::get<Binary>(variant);
 	switch (binary.kind) {
@@ -489,6 +482,16 @@ Expr::isConst(void) const
 	    default:
 		return binary.left->isConst()
 		    && binary.right->isConst();
+	}
+    } else if (std::holds_alternative<Conditional>(variant)) {
+	const auto &expr = std::get<Conditional>(variant);
+	if (!expr.cond->isConst()) {
+	    return false;
+	}
+	if (expr.cond->constIntValue<std::size_t>()) {
+	    return expr.left->isConst();
+	} else {
+	    return expr.right->isConst();
 	}
     }
     assert(0);
@@ -546,7 +549,12 @@ getGenCondOp(Binary::Kind kind, const Type *type)
 	    return isSignedInt ? gen::SGT : gen::UGT;
 	case Binary::Kind::GREATER_EQUAL:
 	    return isSignedInt ? gen::SGE : gen::UGE;
+	case Binary::Kind::LOGICAL_AND:
+	    return gen::AND;
+	case Binary::Kind::LOGICAL_OR:
+	    return gen::OR;
 	default:
+	    std::cerr << "Not handled: " << int(kind) << std::endl;
 	    assert(0);
 	    return gen::EQ;
     }
@@ -623,23 +631,28 @@ loadValue(const Unary &unary)
 {
     switch (unary.kind) {
 	case Unary::Kind::CAST:
+	    if (unary.type->isBool()) {
+		auto ty = unary.child->getType();
+		if (ty->isArray()) {
+		    ty = Type::getPointer(ty->getRefType());
+		    error::out() << unary.opLoc
+			<< ": Warning: Address of array will "
+			<< "always evaluate to 'true'" << std::endl;
+		} else if (ty->isFunction()) {
+		    ty = Type::getPointer(ty);
+		    error::out() << unary.opLoc
+			<< ": Warning: Address of function will "
+			<< "always evaluate to 'true'" << std::endl;
+		}
+		auto zero = Expr::createLiteral("0", 10, ty)->loadValue();
+		return gen::cond(gen::NE, unary.child->loadValue(), zero);
+	    }
 	    return gen::cast(unary.child->loadValue(), unary.child->getType(),
 			     unary.type);
 	case Unary::Kind::LOGICAL_NOT:
 	    {
-		auto thenLabel = gen::getLabel("then");
-		auto elseLabel = gen::getLabel("else");
-		auto endLabel = gen::getLabel("end");
-
-		condJmp(unary, thenLabel, elseLabel);
-		gen::labelDef(thenLabel);
-		auto one = Expr::createLiteral("1", 10)->loadValue();
-		gen::jmp(endLabel);
-		gen::labelDef(elseLabel);
 		auto zero = Expr::createLiteral("0", 10)->loadValue();
-		gen::jmp(endLabel);
-		gen::labelDef(endLabel);
-		return gen::phi(one, thenLabel, zero, elseLabel, unary.type);
+		return gen::cond(gen::EQ, unary.child->loadValue(), zero);
 	    }
 	case Unary::Kind::DEREF:
 	    {
@@ -733,7 +746,7 @@ loadValue(const Binary &binary)
 		}
 		auto addr = binary.left->loadAddr();
 		gen::store(val, addr, binary.type);
-		return retVal; // return loaded lValue
+		return retVal; // -> return loaded lValue
 	    }
 	case Binary::Kind::ADD:
 	case Binary::Kind::SUB:
@@ -771,19 +784,13 @@ loadValue(const Binary &binary)
 	case Binary::Kind::LOGICAL_AND:
 	case Binary::Kind::LOGICAL_OR:
 	    {
-		auto thenLabel = gen::getLabel("then");
-		auto elseLabel = gen::getLabel("else");
-		auto endLabel = gen::getLabel("end");
-
-		condJmp(binary, thenLabel, elseLabel);
-		gen::labelDef(thenLabel);
-		auto one = Expr::createLiteral("1", 10)->loadValue();
-		gen::jmp(endLabel);
-		gen::labelDef(elseLabel);
-		auto zero = Expr::createLiteral("0", 10)->loadValue();
-		gen::jmp(endLabel);
-		gen::labelDef(endLabel);
-		return gen::phi(one, thenLabel, zero, elseLabel, binary.type);
+		assert(binary.left->getType() == binary.right->getType()
+			&& "operand types not casted?");
+		auto ty = binary.left->getType();
+		auto condOp = getGenCondOp(binary.kind, ty);
+		auto l = binary.left->loadValue();
+		auto r = binary.right->loadValue();
+		return gen::cond(condOp, l, r);
 	    }
 
 	default:
@@ -796,6 +803,19 @@ loadValue(const Binary &binary)
 static gen::Reg
 loadValue(const Conditional &expr)
 {
+    if (expr.cond->isConst()) {
+	std::cerr << "-> ok\n";
+	expr.cond->print();
+	if (expr.cond->constIntValue<std::size_t>()) {
+	    std::cerr << "load left\n";
+	    expr.left->print();
+	    return expr.left->loadValue();
+	} else {
+	    std::cerr << "load right\n";
+	    expr.right->print();
+	    return expr.right->loadValue();
+	}
+    }
     auto thenLabel = gen::getLabel("condTrue");
     auto elseLabel = gen::getLabel("condFalse");
     auto endLabel = gen::getLabel("end");

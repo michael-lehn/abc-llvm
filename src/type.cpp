@@ -12,7 +12,7 @@ struct Integer : public Type
 	: Type{Type::VOID, IntegerData{0, Type::IntegerKind::UNSIGNED}}
     {}
 
-    Integer(std::size_t numBits, IntegerKind kind)
+    Integer(std::size_t numBits, IntegerKind kind = IntegerKind::UNSIGNED)
 	: Type{Type::INTEGER, IntegerData{numBits, kind}}
     {}
 
@@ -102,6 +102,15 @@ Type::getVoid(void)
     return &*intTypeSet->insert(Integer{}).first;
 }
 
+const Type *
+Type::getBool(void)
+{
+    if (!intTypeSet) {
+	intTypeSet = new std::set<Integer>;
+    }
+    return &*intTypeSet->insert(Integer{1}).first;
+}
+
 static const Type *
 getInteger(std::size_t numBits, Type::IntegerKind kind)
 {
@@ -156,6 +165,10 @@ Type::getFunction(const Type *retType, std::vector<const Type *> argType)
     return &*fnTypeSet->insert(Function{retType, argType}).first;
 }
 
+/*
+ * Type information and casts
+ */
+
 std::size_t
 Type::getSizeOf(const Type *type)
 {
@@ -171,6 +184,29 @@ Type::getSizeOf(const Type *type)
     assert(0 && "getSizeOf not implemented for this type");
     return 0;
 }
+
+const Type *
+Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc)
+{
+    if (from == to) {
+	return to;
+    } else if (from->isInteger() && to->isInteger()) {
+	// TODO: -Wconversion generate warning if sizeof(to) < sizeof(from)
+	return to;
+    } else if (from->isArrayOrPointer() && to->isPointer()) {
+	// TODO: require explicit cast if types are different
+	return from;
+    } else if (from->isFunction() && to->isPointer()) {
+	// TODO: require explicit cast if types are different
+	if (from != to) {
+	    error::out() << loc << ": warning: casting '" << from
+		<< "' to '" << to << "'" << std::endl;
+	}
+	return from;
+    }
+    return nullptr;
+}
+
 
 //-- Print type ----------------------------------------------------------------
 

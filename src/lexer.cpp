@@ -75,6 +75,8 @@ tokenKindCStr(TokenKind kind)
 	    return "OF";
 	case TokenKind::SIZEOF:
 	    return "SIZEOF";
+	case TokenKind::NULLPTR:
+	    return "NULLPTR";
 	case TokenKind::SEMICOLON:
 	    return "SEMICOLON";
 	case TokenKind::COLON:
@@ -200,6 +202,8 @@ tokenCStr(TokenKind kind)
 	    return "of";
 	case TokenKind::SIZEOF:
 	    return "sizeof";
+	case TokenKind::NULLPTR:
+	    return "nullptr";
 	case TokenKind::SEMICOLON:
 	    return ";";
 	case TokenKind::COLON:
@@ -207,9 +211,9 @@ tokenCStr(TokenKind kind)
 	case TokenKind::COMMA:
 	    return ",";
 	case TokenKind::LBRACE:
-	    return "[";
+	    return "{";
 	case TokenKind::RBRACE:
-	    return "]";
+	    return "}";
 	case TokenKind::LPAREN:
 	    return "(";
 	case TokenKind::RPAREN:
@@ -347,6 +351,7 @@ static std::unordered_map<UStr, TokenKind> kw = {
     { "array", TokenKind::ARRAY },
     { "of", TokenKind::OF },
     { "sizeof", TokenKind::SIZEOF },
+    { "nullptr", TokenKind::NULLPTR },
 };
 
 // TODO: proper implementation and support of escape sequences

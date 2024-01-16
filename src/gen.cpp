@@ -39,10 +39,12 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <system_error>
 #include <unordered_map>
 
+#include "error.hpp"
 #include "gen.hpp"
 
 namespace gen {
@@ -106,6 +108,8 @@ struct TypeMap
 	    return llvm::Type::getVoidTy(*llvmContext);
 	} else if (t->isInteger()) {
 	    switch (t->getIntegerNumBits()) {
+		case 1:
+		    return llvm::Type::getInt1Ty(*llvmContext);
 		case 8:
 		    return llvm::Type::getInt8Ty(*llvmContext);
 		case 16:
@@ -342,6 +346,10 @@ cond(CondOp op, Reg a, Reg b)
 	    return llvmBuilder->CreateICmpULT(a, b);
     	case ULE:
 	    return llvmBuilder->CreateICmpULE(a, b);
+    	case AND:
+	    return llvmBuilder->CreateAnd(a, b);
+    	case OR:
+	    return llvmBuilder->CreateOr(a, b);
     }
     assert(0);
     return nullptr; // never reached
@@ -474,13 +482,18 @@ cast(Reg reg, const Type *fromType, const Type *toType)
 
     auto ty = TypeMap::get(toType);
     if (fromType->isInteger() && toType->isInteger()) {
-	if (toType->getIntegerNumBits() > fromType->getIntegerNumBits()) {
+	auto toNumBits = toType->getIntegerNumBits();
+	auto fromNumBits = fromType->getIntegerNumBits();
+
+	if (toNumBits > fromNumBits) {
 	    return toType->getIntegerKind() == Type::UNSIGNED
 		? llvmBuilder->CreateZExtOrBitCast(reg, ty)
 		: llvmBuilder->CreateSExtOrBitCast(reg, ty); 
 	}
 	return llvmBuilder->CreateTruncOrBitCast(reg, ty); 
     }
+    error::out() << "can not cast '" << fromType << "' to '" << toType
+	<< std::endl;
     assert(0);
     return nullptr;
 }
@@ -496,7 +509,12 @@ loadConst(const char *val, const Type *type, std::uint8_t radix)
     if (type->isInteger()) {
 	auto ty = llvm::APInt(type->getIntegerNumBits(), val, radix);
 	return llvm::ConstantInt::get(*llvmContext, ty);
+    } else if (type->isPointer() && !std::strcmp(val, "0")) {
+	auto ty = llvm::dyn_cast<llvm::PointerType>(TypeMap::get(type));
+	return llvm::ConstantPointerNull::get(ty);
     }
+    error::out() << "loadConst '" << val << "' of type '" << type << "'"
+	<< std::endl;
     assert(0 && "not implemented");
     return nullptr;
 }

@@ -47,6 +47,8 @@ enum CondOp {
     UGE,
     ULT,
     ULE,
+    AND,
+    OR,
 };
 
 Cond cond(CondOp op, Reg a, Reg b);

@@ -86,7 +86,6 @@ struct Unary
 	: kind{kind}, child{std::move(child)}, type{type}, opLoc{opLoc}
     {}
 
-    const Type * getType(void);
 };
 
 struct Binary
@@ -199,7 +198,7 @@ class Expr
 	void print(int indent = 0) const;
 
 	template <typename T>
-	T constValue(void) const;
+	T constIntValue(void) const;
 
 	// code generation
 	gen::ConstVal loadConst(void) const;
@@ -210,12 +209,13 @@ class Expr
 
 template <typename T>
 T
-Expr::constValue(void) const
+Expr::constIntValue(void) const
 {
     assert(isConst());
+    assert(getType()->isInteger());
 
     if (std::holds_alternative<Proxy>(variant)) {
-	return std::get<Proxy>(variant).expr->constValue<T>();
+	return std::get<Proxy>(variant).expr->constIntValue<T>();
     } else if (std::holds_alternative<Literal>(variant)) {
 	const auto &lit = std::get<Literal>(variant);
 	T result;
@@ -237,48 +237,52 @@ Expr::constValue(void) const
 		assert(0 && "internal error: expr is not constant");
 		return false;
 	    case Binary::Kind::ADD:
-		return binary.left->constValue<T>()
-		    + binary.right->constValue<T>();
+		return binary.left->constIntValue<T>()
+		    + binary.right->constIntValue<T>();
 	    case Binary::Kind::EQUAL:
-		return binary.left->constValue<T>()
-		    ==  binary.right->constValue<T>();
+		return binary.left->constIntValue<T>()
+		    ==  binary.right->constIntValue<T>();
 	    case Binary::Kind::NOT_EQUAL:
-		return binary.left->constValue<T>()
-		    !=  binary.right->constValue<T>();
+		return binary.left->constIntValue<T>()
+		    !=  binary.right->constIntValue<T>();
 	    case Binary::Kind::GREATER:
-		return binary.left->constValue<T>()
-		    >  binary.right->constValue<T>();
+		return binary.left->constIntValue<T>()
+		    >  binary.right->constIntValue<T>();
 	    case Binary::Kind::GREATER_EQUAL:
-		return binary.left->constValue<T>()
-		    >=  binary.right->constValue<T>();
+		return binary.left->constIntValue<T>()
+		    >=  binary.right->constIntValue<T>();
 	    case Binary::Kind::LESS:
-		return binary.left->constValue<T>()
-		    <  binary.right->constValue<T>();
+		return binary.left->constIntValue<T>()
+		    <  binary.right->constIntValue<T>();
 	    case Binary::Kind::LESS_EQUAL:
-		return binary.left->constValue<T>()
-		    <=  binary.right->constValue<T>();
+		return binary.left->constIntValue<T>()
+		    <=  binary.right->constIntValue<T>();
 	    case Binary::Kind::LOGICAL_AND:
-		return binary.left->constValue<T>()
-		    &&  binary.right->constValue<T>();
+		return binary.left->constIntValue<T>()
+		    &&  binary.right->constIntValue<T>();
 	    case Binary::Kind::LOGICAL_OR:
-		return binary.left->constValue<T>()
-		    ||  binary.right->constValue<T>();
+		return binary.left->constIntValue<T>()
+		    ||  binary.right->constIntValue<T>();
 	    case Binary::Kind::SUB:
-		return binary.left->constValue<T>()
-		    - binary.right->constValue<T>();
+		return binary.left->constIntValue<T>()
+		    - binary.right->constIntValue<T>();
 	    case Binary::Kind::MUL:
-		return binary.left->constValue<T>()
-		    * binary.right->constValue<T>();
+		return binary.left->constIntValue<T>()
+		    * binary.right->constIntValue<T>();
 	    case Binary::Kind::DIV:
-		return binary.left->constValue<T>()
-		    / binary.right->constValue<T>();
+		return binary.left->constIntValue<T>()
+		    / binary.right->constIntValue<T>();
 	    default:
 		assert(0 && "sorry, currently not implemented");
 		return 0;
 	}
     } else if (std::holds_alternative<Conditional>(variant)) {
-	assert(0 && "sorry, currently not implemented");
-	return 0;
+	const auto &expr = std::get<Conditional>(variant);
+	if (expr.cond->constIntValue<std::size_t>()) {
+	    return expr.left->constIntValue<T>();
+	} else {
+	    return expr.right->constIntValue<T>();
+	}
     } else if (std::holds_alternative<ExprVector>(variant)) {
 	assert(0 && "sorry, currently not implemented");
 	return 0;
