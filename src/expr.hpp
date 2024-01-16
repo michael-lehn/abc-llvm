@@ -197,105 +197,11 @@ class Expr
 
 	void print(int indent = 0) const;
 
-	/*
-	template <typename T>
-	T constIntValue(void) const;
-	*/
-
 	// code generation
 	gen::ConstVal loadConst(void) const;
 	gen::Reg loadValue(void) const;
 	gen::Reg loadAddr(void) const;
 	void condJmp(gen::Label trueLabel, gen::Label falseLabel) const;
 };
-
-/*
-template <typename T>
-T
-Expr::constIntValue(void) const
-{
-    assert(isConst());
-    assert(getType()->isInteger());
-
-    if (std::holds_alternative<Proxy>(variant)) {
-	return std::get<Proxy>(variant).expr->constIntValue<T>();
-    } else if (std::holds_alternative<Literal>(variant)) {
-	const auto &lit = std::get<Literal>(variant);
-	T result;
-	auto [ptr, ec] = std::from_chars(
-			    lit.val, lit.val + strlen(lit.val),
-			    result, lit.radix);
-	assert(ec == std::errc{});
-	return result;
-    } else if (std::holds_alternative<Unary>(variant)) {
-	assert(0 && "sorry, currently not implemented");
-	return 0;
-    } else if (std::holds_alternative<Binary>(variant)) {
-	const auto &binary = std::get<Binary>(variant);
-	switch (binary.kind) {
-	    case Binary::Kind::CALL:
-	    case Binary::Kind::ASSIGN:
-	    case Binary::Kind::POSTFIX_INC:
-	    case Binary::Kind::POSTFIX_DEC:
-		assert(0 && "internal error: expr is not constant");
-		return false;
-	    case Binary::Kind::ADD:
-		return binary.left->constIntValue<T>()
-		    + binary.right->constIntValue<T>();
-	    case Binary::Kind::EQUAL:
-		return binary.left->constIntValue<T>()
-		    ==  binary.right->constIntValue<T>();
-	    case Binary::Kind::NOT_EQUAL:
-		return binary.left->constIntValue<T>()
-		    !=  binary.right->constIntValue<T>();
-	    case Binary::Kind::GREATER:
-		return binary.left->constIntValue<T>()
-		    >  binary.right->constIntValue<T>();
-	    case Binary::Kind::GREATER_EQUAL:
-		return binary.left->constIntValue<T>()
-		    >=  binary.right->constIntValue<T>();
-	    case Binary::Kind::LESS:
-		return binary.left->constIntValue<T>()
-		    <  binary.right->constIntValue<T>();
-	    case Binary::Kind::LESS_EQUAL:
-		return binary.left->constIntValue<T>()
-		    <=  binary.right->constIntValue<T>();
-	    case Binary::Kind::LOGICAL_AND:
-		return binary.left->constIntValue<T>()
-		    &&  binary.right->constIntValue<T>();
-	    case Binary::Kind::LOGICAL_OR:
-		return binary.left->constIntValue<T>()
-		    ||  binary.right->constIntValue<T>();
-	    case Binary::Kind::SUB:
-		return binary.left->constIntValue<T>()
-		    - binary.right->constIntValue<T>();
-	    case Binary::Kind::MUL:
-		return binary.left->constIntValue<T>()
-		    * binary.right->constIntValue<T>();
-	    case Binary::Kind::DIV:
-		return binary.left->constIntValue<T>()
-		    / binary.right->constIntValue<T>();
-	    default:
-		assert(0 && "sorry, currently not implemented");
-		return 0;
-	}
-    } else if (std::holds_alternative<Conditional>(variant)) {
-	const auto &expr = std::get<Conditional>(variant);
-	if (expr.cond->constIntValue<std::size_t>()) {
-	    return expr.left->constIntValue<T>();
-	} else {
-	    return expr.right->constIntValue<T>();
-	}
-    } else if (std::holds_alternative<ExprVector>(variant)) {
-	assert(0 && "sorry, currently not implemented");
-	return 0;
-    } else {
-	std::cerr << "not handled variant. Index = " << variant.index()
-	    << std::endl;
-	assert(0);
-	return 0;
-    }
-}
-*/
 
 #endif // EXPR_HPP
