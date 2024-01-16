@@ -198,15 +198,30 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc)
 	return from;
     } else if (from->isFunction() && to->isPointer()) {
 	// TODO: require explicit cast if types are different
-	if (from != to) {
+	if (from != to->getRefType()) {
 	    error::out() << loc << ": warning: casting '" << from
 		<< "' to '" << to << "'" << std::endl;
 	}
-	return from;
+	return from; // no cast required
+    } else if (convertArrayOrFunctionToPointer(from)->isPointer()
+	    && to->isInteger()) {
+	error::out() << loc << ": warning: casting '" << from
+	    << "' to '" << to << "'" << std::endl;
+	return to;
     }
     return nullptr;
 }
 
+const Type *
+Type::convertArrayOrFunctionToPointer(const Type *ty)
+{
+    if (ty->isArray()) {
+	return getPointer(ty->getRefType());
+    } else if (ty->isFunction()) {
+	return getPointer(ty);
+    }
+    return ty;
+}
 
 //-- Print type ----------------------------------------------------------------
 

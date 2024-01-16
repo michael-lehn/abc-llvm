@@ -22,7 +22,7 @@ getU64(void)
 void
 printU64(uint64_t val)
 {
-    printf("%" PRId64, val);
+    printf("%" PRIu64, val);
 }
 
 void

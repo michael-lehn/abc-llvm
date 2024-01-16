@@ -143,10 +143,8 @@ class Type
 	// type information and casts
 	static std::size_t getSizeOf(const Type *type);
 	static const Type *getTypeConversion(const Type *from, const Type *to,
-				      Token::Loc loc);
-
-	// TODO: provide bool type
-	// TODO: provide void type? (currently nullptr represents void)
+					     Token::Loc loc);
+	static const Type *convertArrayOrFunctionToPointer(const Type *ty);
 };
 
 std::ostream &operator<<(std::ostream &out, const Type *type);

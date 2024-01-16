@@ -33,6 +33,43 @@ getCommonType(const Type *left, const Type *right)
     return nullptr;
 }
 
+//-- class Unary =--------------------------------------------------------------
+
+void
+Unary::setTypeAndCastOperands(void)
+{
+    switch (kind) {
+	case ADDRESS:
+	    type = Type::getPointer(child->getType());
+	    return;
+	case DEREF:
+	    type = child->getType()->getRefType();
+	    return;
+	case LOGICAL_NOT:
+	    type = Type::getBool();
+	    if (child->getType()->isArray()) {
+		/*
+		auto ty = Type::getPointer(child->getType()->getRefType());
+		child = Expr::createCast(std::move(child), ty, opLoc);
+		*/
+		error::out() << opLoc
+		    << ": Warning: Address of array will "
+		    << "always evaluate to 'true'" << std::endl;
+	    } else if (child->getType()->isFunction()) {
+		/*
+		auto ty = Type::getPointer(child->getType());
+		child = Expr::createCast(std::move(child), ty, opLoc);
+		*/
+		error::out() << opLoc
+		    << ": Warning: Address of function will "
+		    << "always evaluate to 'true'" << std::endl;
+	    }
+	    return;
+	default:
+	    assert(0 && "case not handled");
+    }
+}
+
 //-- class Binary --------------------------------------------------------------
 
 void
@@ -42,12 +79,8 @@ Binary::setType(void)
 	 r = right->getType();
 
     if (kind == Binary::Kind::ADD || kind == Binary::Kind::SUB) {
-	if (l->isArray()) {
-	    l = Type::getPointer(l->getRefType());
-	}
-	if (r->isArray()) {
-	    r = Type::getPointer(r->getRefType());
-	}
+	l = Type::convertArrayOrFunctionToPointer(l);
+	r = Type::convertArrayOrFunctionToPointer(r);
     }
 
     switch (kind) {
@@ -64,14 +97,15 @@ Binary::setType(void)
 	    return;
 	case Binary::Kind::POSTFIX_INC:
 	case Binary::Kind::POSTFIX_DEC:
-	    type = l;
-	    return;
 	case Binary::Kind::ADD:
 	    if (l->isPointer() || r->isPointer()) {
 		if (l->isPointer() && r->isInteger()) {
 		    type = l;
 		} else if (r->isPointer() && l->isInteger()) {
+		    // for pointer arithmeitc let right always be the index
 		    type = r;
+		    left.swap(right);
+		    std::swap(l, r);
 		} else {
 		    type = nullptr;
 		}
@@ -128,6 +162,11 @@ Binary::castOperands(void)
     auto l = left->getType(),
 	 r = right->getType();
 
+    if (kind == Binary::Kind::ADD || kind == Binary::Kind::SUB) {
+	l = Type::convertArrayOrFunctionToPointer(l);
+	r = Type::convertArrayOrFunctionToPointer(r);
+    }
+
     switch (kind) {
 	case Binary::Kind::ASSIGN:
 	    if (r != type) {
@@ -137,11 +176,8 @@ Binary::castOperands(void)
 	case Binary::Kind::POSTFIX_INC:
 	case Binary::Kind::ADD:
 	    if (l->isPointer() || r->isPointer()) {
-		if (r->isPointer() && l->isInteger()) {
-		    // for pointer arithmeitc let right always be the index
-		    left.swap(right);
-		    std::swap(l, r);
-		}
+		// for pointer arithmeitc let right always be the index
+		assert(l->isPointer() && r->isInteger());
 	    } else if (l->isInteger() && r->isInteger()) {
 		if (l != type) {
 		    left = Expr::createCast(std::move(left), type);
@@ -150,6 +186,7 @@ Binary::castOperands(void)
 		    right = Expr::createCast(std::move(right), type);
 		}
 	    }
+	    return;
 	case Binary::Kind::POSTFIX_DEC:
 	case Binary::Kind::SUB:
 	    if (l->isInteger() && r->isInteger()) {
@@ -281,7 +318,8 @@ Expr::createProxy(const Expr *expr)
 ExprPtr
 Expr::createUnaryMinus(ExprPtr &&expr, Token::Loc opLoc)
 {
-    auto zero = createLiteral("0", 10);
+    auto ty = expr->getType();
+    auto zero = createLiteral("0", 10, ty);
     return createBinary(Binary::Kind::SUB, std::move(zero), std::move(expr),
 			opLoc);
 }
@@ -289,28 +327,24 @@ Expr::createUnaryMinus(ExprPtr &&expr, Token::Loc opLoc)
 ExprPtr
 Expr::createLogicalNot(ExprPtr &&expr, Token::Loc opLoc)
 {
-    auto ty = Type::getUnsignedInteger(8); // TODO: bool type
-    auto lNot = new Expr{Unary{Unary::Kind::LOGICAL_NOT, std::move(expr), ty,
-			 opLoc}};
+    auto lNot = new Expr{Unary{Unary::Kind::LOGICAL_NOT, std::move(expr),
+			       opLoc}};
     return ExprPtr{lNot};
 }
 
 ExprPtr
 Expr::createAddr(ExprPtr &&expr, Token::Loc opLoc)
 {
-    auto ty = Type::getPointer(expr->getType());
-    auto addr = new Expr{Unary{Unary::Kind::ADDRESS, std::move(expr), ty,
-			 opLoc}};
+    auto addr = new Expr{Unary{Unary::Kind::ADDRESS, std::move(expr), opLoc}};
     return ExprPtr{addr};
 }
 
 ExprPtr
 Expr::createDeref(ExprPtr &&expr, Token::Loc opLoc)
 {
-    assert(expr->getType()->isPointer() || expr->getType()->isArray());
+    assert(expr->getType()->isArrayOrPointer());
 
-    auto ty = expr->getType()->getRefType();
-    auto dref = new Expr{Unary{Unary::Kind::DEREF, std::move(expr), ty, opLoc}};
+    auto dref = new Expr{Unary{Unary::Kind::DEREF, std::move(expr), opLoc}};
     return ExprPtr{dref};
 }
 
@@ -460,10 +494,12 @@ Expr::isConst(void) const
 	return true;
     } else if (std::holds_alternative<Identifier>(variant)) {
 	const auto &ident = std::get<Identifier>(variant);
-	if (ident.type->isFunction() || ident.type->isArray()) {
+	if (ident.type->isFunction()) {
 	    return true;
 	}
-
+	if (ident.type->isArray()) {
+	    return true; // TODO: check if ident is 'global' or 'static' 
+	}
 	return false;
     } else if (std::holds_alternative<Unary>(variant)) {
 	const auto &unary = std::get<Unary>(variant);
@@ -474,9 +510,7 @@ Expr::isConst(void) const
 	    case Unary::Kind::LOGICAL_NOT:
 		return unary.child->isConst();
 	    case Unary::Kind::ADDRESS:
-		error::out() << "warning: currently no check whether address"
-		    " of global or local variable is taken. Assuming it's "
-		    " global. Good luck" << std::endl;
+		// TODO: assert that address of global variable is taken
 		return true;
 	    default:
 		assert(0 && "internal error: case not handled");
@@ -653,17 +687,6 @@ loadValue(const Unary &unary)
 	case Unary::Kind::CAST:
 	    if (unary.type->isBool()) {
 		auto ty = unary.child->getType();
-		if (ty->isArray()) {
-		    ty = Type::getPointer(ty->getRefType());
-		    error::out() << unary.opLoc
-			<< ": Warning: Address of array will "
-			<< "always evaluate to 'true'" << std::endl;
-		} else if (ty->isFunction()) {
-		    ty = Type::getPointer(ty);
-		    error::out() << unary.opLoc
-			<< ": Warning: Address of function will "
-			<< "always evaluate to 'true'" << std::endl;
-		}
 		auto zero = Expr::createLiteral("0", 10, ty)->loadValue();
 		return gen::cond(gen::NE, unary.child->loadValue(), zero);
 	    }
@@ -671,7 +694,9 @@ loadValue(const Unary &unary)
 			     unary.type);
 	case Unary::Kind::LOGICAL_NOT:
 	    {
-		auto zero = Expr::createLiteral("0", 10)->loadValue();
+		auto ty = unary.child->getType();
+		ty = Type::convertArrayOrFunctionToPointer(ty);
+		auto zero = Expr::createLiteral("0", 10, ty)->loadValue();
 		return gen::cond(gen::EQ, unary.child->loadValue(), zero);
 	    }
 	case Unary::Kind::DEREF:
@@ -775,13 +800,23 @@ loadValue(const Binary &binary)
 	case Binary::Kind::MOD:
 	    if (binary.kind == Binary::Kind::ADD && binary.type->isPointer()) {
 		assert(binary.left->getType()->isPointer()
-			|| binary.left->getType()->isArray());
+			|| binary.left->getType()->isArray()
+			|| binary.left->getType()->isFunction());
 		assert(binary.right->getType()->isInteger());
 
-		auto ty = binary.left->getType()->getRefType();
+		auto ptrTy = binary.left->getType();
+		ptrTy = Type::convertArrayOrFunctionToPointer(ptrTy);
+		auto refTy = ptrTy->getRefType();
+		if (refTy->isFunction()) {
+		    error::out() << binary.opLoc
+			<< ": incompatible cast of '" << refTy
+			<< "' to integer" << std::endl;
+		    refTy = Type::getUnsignedInteger(8);
+		}
+
 		auto l = binary.left->loadValue();
 		auto r = binary.right->loadValue();
-		return gen::ptrInc(ty, l, r);
+		return gen::ptrInc(refTy, l, r);
 	    } else if (binary.kind == Binary::Kind::SUB
 		    && binary.left->getType()->isArrayOrPointer()
 		    && binary.right->getType()->isArrayOrPointer()) {

@@ -491,6 +491,17 @@ cast(Reg reg, const Type *fromType, const Type *toType)
 		: llvmBuilder->CreateSExtOrBitCast(reg, ty); 
 	}
 	return llvmBuilder->CreateTruncOrBitCast(reg, ty); 
+    } else if (fromType->isFunction() && toType->isPointer()) {
+	if (fromType != toType->getRefType()) {
+	    error::out() << " warning: casting '" << fromType
+		<< "' to '" << toType << std::endl;
+	}
+	return reg;
+    } else if (Type::convertArrayOrFunctionToPointer(fromType)->isPointer()
+	    && toType->isInteger()) {
+	error::out() << " [gen::cast] warning: casting '" << fromType
+	    << "' to '" << toType << std::endl;
+	return llvmBuilder->CreatePointerCast(reg, ty);
     }
     error::out() << "can not cast '" << fromType << "' to '" << toType
 	<< std::endl;

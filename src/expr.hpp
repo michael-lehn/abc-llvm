@@ -82,10 +82,20 @@ struct Unary
     const Type *type;
     Token::Loc opLoc; // location of operator
 
+    // Type explicitly given (e.g. cast)
     Unary(Kind kind, ExprPtr &&child, const Type *type, Token::Loc opLoc)
 	: kind{kind}, child{std::move(child)}, type{type}, opLoc{opLoc}
-    {}
+    {
+    }
 
+    // Type implicitly specified by operation (e.g. logical not)
+    Unary(Kind kind, ExprPtr &&child, Token::Loc opLoc)
+	: kind{kind}, child{std::move(child)}, type{nullptr}, opLoc{opLoc}
+    {
+	setTypeAndCastOperands();
+    }
+
+    void setTypeAndCastOperands(void);
 };
 
 struct Binary
@@ -121,7 +131,6 @@ struct Binary
 	, type{nullptr}, opLoc{opLoc}
     {
 	setType();
-	//assert(type && "illegal expression"); // TODO: better error handling
 	castOperands();
     }
 
