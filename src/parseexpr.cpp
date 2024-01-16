@@ -74,7 +74,7 @@ parseConstExpr(void)
     auto loc = token.loc;
     auto expr = parseExpr();
     if (!expr || !expr->isConst()) {
-	error::out() << token.loc
+	error::out() << loc
 	    << " constant expression required" << std::endl;
 	error::fatal();
 	return nullptr;

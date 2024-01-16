@@ -293,13 +293,13 @@ parseArrayDimAndType(void)
 	    << std::endl;
 	error::fatal();
     }
-    if (dim->getType()->getIntegerKind() == Type::SIGNED) {
-	if (dim->constIntValue<std::ptrdiff_t>() < 0) {
-	    error::out() << token.loc
-		<< " dimension can not be negative"
-		<< std::endl;
-	    error::fatal();
-	}
+    auto dimVal = llvm::dyn_cast<llvm::ConstantInt>(dim->loadConst());
+
+    if (dimVal->isNegative()) {
+	error::out() << token.loc
+	    << " dimension can not be negative"
+	    << std::endl;
+	error::fatal();
     }
 
     error::expected(TokenKind::RBRACKET);
@@ -317,7 +317,7 @@ parseArrayDimAndType(void)
 	    << std::endl;
 	error::fatal();
     }
-    return Type::getArray(ty, dim->constIntValue<std::size_t>());
+    return Type::getArray(ty, dimVal->getZExtValue());
 }
 
 static const Type *

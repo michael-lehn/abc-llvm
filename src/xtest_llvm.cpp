@@ -45,9 +45,9 @@ main(void)
 
     llvm::FunctionType *fnType = llvm::FunctionType::get(retType, argType,
 							 false);
-    llvm::Function *fnDecl = llvm::Function::Create(fnType,
-						llvm::Function::ExternalLinkage,
-						"bar", TheModule.get());
+    llvm::Function::Create(fnType,
+			   llvm::Function::ExternalLinkage,
+			   "bar", TheModule.get());
 
     llvm::Function *fn = llvm::Function::Create(fnType,
 						llvm::Function::ExternalLinkage,
@@ -72,7 +72,7 @@ main(void)
     auto arg1 = fn->getArg(1);
     auto c0 = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, "123", 10));
     auto tmp1 = Builder->CreateAdd(c0, arg1);
-    auto tmp2 = Builder->CreateAdd(c0, c0);
+    auto tmp2 = Builder->CreateAdd(tmp1, c0);
     auto tmp3 = Builder->CreateAdd(arg0, tmp2);
     auto tmp4 = Builder->CreateAdd(tmp3, tmp3);
     auto tmp5 = Builder->CreateAdd(tmp3, tmp3);
@@ -82,11 +82,11 @@ main(void)
     auto u8_t = llvm::Type::getInt8Ty(*TheContext);
     auto cast = Builder->CreateZExtOrBitCast(u64_v, u8_t);
 
-    auto tmp6 = Builder->CreateAdd(cast, cast);
+    auto tmp6 = Builder->CreateAdd(tmp5, cast);
 
     Builder->CreateRet(Builder->CreateAdd(tmp4, tmp6));
 
-    llvm::GlobalVariable* gvar_ptr_abc = new llvm::GlobalVariable(
+    /*llvm::GlobalVariable* gvar_ptr_abc = */new llvm::GlobalVariable(
 	 *TheModule,
         llvm::Type::getInt64Ty(*TheContext),
         /*isConstant=*/false,

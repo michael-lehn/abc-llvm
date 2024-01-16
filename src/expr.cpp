@@ -179,6 +179,16 @@ Binary::castOperands(void)
 	case Binary::Kind::GREATER_EQUAL:
 	case Binary::Kind::LESS:
 	case Binary::Kind::LESS_EQUAL:
+	    {
+		auto ty = getCommonType(l, r);
+		if (l != ty) {
+		    left = Expr::createCast(std::move(left), ty);
+		}
+		if (r != ty) {
+		    right = Expr::createCast(std::move(right), ty);
+		}
+		return;
+	    }
 	case Binary::Kind::LOGICAL_AND:
 	case Binary::Kind::LOGICAL_OR:
 	    {
@@ -189,6 +199,7 @@ Binary::castOperands(void)
 		if (r != ty) {
 		    right = Expr::createCast(std::move(right), ty);
 		}
+		return;
 	    }
 	default:
 	    return;
@@ -488,11 +499,20 @@ Expr::isConst(void) const
 	if (!expr.cond->isConst()) {
 	    return false;
 	}
+	auto condVal = expr.cond->loadConst();
+	if (condVal->isZeroValue()) {
+	    return expr.left->isConst();
+	} else {
+	    return expr.right->isConst();
+	}
+
+	/*
 	if (expr.cond->constIntValue<std::size_t>()) {
 	    return expr.left->isConst();
 	} else {
 	    return expr.right->isConst();
 	}
+	*/
     }
     assert(0);
     return false;
@@ -804,15 +824,10 @@ static gen::Reg
 loadValue(const Conditional &expr)
 {
     if (expr.cond->isConst()) {
-	std::cerr << "-> ok\n";
-	expr.cond->print();
-	if (expr.cond->constIntValue<std::size_t>()) {
-	    std::cerr << "load left\n";
-	    expr.left->print();
+	auto condVal = expr.cond->loadConst();
+	if (!condVal->isZeroValue()) {
 	    return expr.left->loadValue();
 	} else {
-	    std::cerr << "load right\n";
-	    expr.right->print();
 	    return expr.right->loadValue();
 	}
     }
@@ -917,7 +932,6 @@ condJmp(const Binary &binary, gen::Label trueLabel, gen::Label falseLabel)
 	case Binary::Kind::LOGICAL_AND:
             {
 		auto chkRightLabel = gen::getLabel("chkRight");
-		
 
 		binary.left->condJmp(chkRightLabel, falseLabel);
 		gen::labelDef(chkRightLabel);

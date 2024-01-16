@@ -1,5 +1,5 @@
 fn printU64(:u64);
-fn printLn(:u8);
+fn printLn(: -> u8);
 fn printNl();
 
 global a: array[5] of u64,
@@ -8,8 +8,9 @@ global a: array[5] of u64,
 fn main()
 {
     printLn("Init a: array of u64");
-    for (local i: u64 = 0; i < sizeof(a)/sizeof(a[0]); ++i) {
+    for (local i: u64 = 0; i < 5; ++i) {
 	a[i] = i;
+	printLn("Hallo");
     }
     printLn("Init b: array of pointer to u64");
     for (local i: u64 = 0; i < sizeof(a)/sizeof(a[0]); ++i) {
@@ -23,7 +24,7 @@ fn main()
 
     printLn("Define a pointer to a (and print elements of a)");
     local c: -> array[sizeof(a)/sizeof(a[0])] of u64 = &a;
-    for (local i: u64 = 0; i < 3; ++i) {
+    for (local i: u64 = 0; i < sizeof(a)/sizeof(a[0]); ++i) {
 	printU64(c->[i]);
 	printNl();
     }

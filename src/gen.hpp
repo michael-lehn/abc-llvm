@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "llvm/IR/Value.h"
+#include "llvm/IR/Constants.h"
 
 #include "type.hpp"
 

@@ -197,8 +197,10 @@ class Expr
 
 	void print(int indent = 0) const;
 
+	/*
 	template <typename T>
 	T constIntValue(void) const;
+	*/
 
 	// code generation
 	gen::ConstVal loadConst(void) const;
@@ -207,6 +209,7 @@ class Expr
 	void condJmp(gen::Label trueLabel, gen::Label falseLabel) const;
 };
 
+/*
 template <typename T>
 T
 Expr::constIntValue(void) const
@@ -293,5 +296,6 @@ Expr::constIntValue(void) const
 	return 0;
     }
 }
+*/
 
 #endif // EXPR_HPP
