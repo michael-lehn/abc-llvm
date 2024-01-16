@@ -143,7 +143,7 @@ class Type
 	// type information and casts
 	static std::size_t getSizeOf(const Type *type);
 	static const Type *getTypeConversion(const Type *from, const Type *to,
-					     Token::Loc loc);
+					     Token::Loc loc = Token::Loc{});
 	static const Type *convertArrayOrFunctionToPointer(const Type *ty);
 };
 

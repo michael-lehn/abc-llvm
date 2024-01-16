@@ -17,8 +17,11 @@ ExprDeleter::operator()(const Expr *expr) const
 //-- handling type conversions and casts ---------------------------------------
 
 static const Type *
-getCommonType(const Type *left, const Type *right)
+getCommonType(Token::Loc loc, const Type *left, const Type *right)
 {
+    left = Type::convertArrayOrFunctionToPointer(left);
+    right = Type::convertArrayOrFunctionToPointer(right);
+
     if (left == right) {
 	return left;
     } else if (left->isInteger() && right->isInteger()) {
@@ -29,7 +32,25 @@ getCommonType(const Type *left, const Type *right)
 	    || right->getIntegerKind() == Type::UNSIGNED
 	    ? Type::getUnsignedInteger(size)
 	    : Type::getSignedInteger(size);
+    } else if (left->isPointer() && right->isInteger()) {
+	auto ty = Type::getUnsignedInteger(64); // TODO: some size_t type?
+	error::out() << loc
+	    << ": Warning: Cast of '" << left
+	    << "' to '" << ty << "'" << std::endl;
+	return ty;
+    } else if (left->isInteger() && right->isPointer()) {
+	auto ty = Type::getUnsignedInteger(64); // TODO: some size_t type?
+	error::out() << loc
+	    << ": Warning: Cast of '" << right
+	    << "' to '" << ty << "'" << std::endl;
+	return ty;
     }
+
+
+    error::out() << loc
+	<< ": Error: No common type for '" << left
+	<< "' and '" << right << "'" << std::endl;
+    error::fatal();
     return nullptr;
 }
 
@@ -110,7 +131,7 @@ Binary::setType(void)
 		    type = nullptr;
 		}
 	    } else {
-		type = getCommonType(l, r);
+		type = getCommonType(opLoc, l, r);
 	    }
 	    return;
 	case Binary::Kind::SUB:
@@ -119,14 +140,14 @@ Binary::setType(void)
 	    } else if (l->isPointer() && r->isInteger()) {
 		type = l;
 	    } else {
-		type = getCommonType(l, r);
+		type = getCommonType(opLoc, l, r);
 	    }
 	    return;
 	case Binary::Kind::MUL:
 	case Binary::Kind::DIV:
 	case Binary::Kind::MOD:
 	    if (l->isInteger() && r->isInteger()) {
-		type = getCommonType(l, r);
+		type = getCommonType(opLoc, l, r);
 	    }
 	    return;
 	case Binary::Kind::EQUAL:
@@ -217,7 +238,7 @@ Binary::castOperands(void)
 	case Binary::Kind::LESS:
 	case Binary::Kind::LESS_EQUAL:
 	    {
-		auto ty = getCommonType(l, r);
+		auto ty = getCommonType(opLoc, l, r);
 		if (l != ty) {
 		    left = Expr::createCast(std::move(left), ty);
 		}
@@ -251,7 +272,7 @@ Conditional::setTypeAndCastOperands(void)
     const Type *l = left->getType();
     const Type *r = right->getType();
 
-    type = getCommonType(l, r);
+    type = getCommonType(opRightLoc, l, r);
     if (l != type) {
 	left = Expr::createCast(std::move(left), type);
     }

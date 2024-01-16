@@ -499,9 +499,10 @@ cast(Reg reg, const Type *fromType, const Type *toType)
 	return reg;
     } else if (Type::convertArrayOrFunctionToPointer(fromType)->isPointer()
 	    && toType->isInteger()) {
-	error::out() << " [gen::cast] warning: casting '" << fromType
-	    << "' to '" << toType << std::endl;
 	return llvmBuilder->CreatePointerCast(reg, ty);
+    } else if (fromType->isInteger()
+	    && Type::convertArrayOrFunctionToPointer(toType)->isPointer()) {
+	return llvmBuilder->CreateIntToPtr(reg, ty);
     }
     error::out() << "can not cast '" << fromType << "' to '" << toType
 	<< std::endl;

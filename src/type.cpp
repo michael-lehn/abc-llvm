@@ -195,6 +195,10 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc)
 	return to;
     } else if (from->isArrayOrPointer() && to->isPointer()) {
 	// TODO: require explicit cast if types are different
+	if (from->getRefType() != to->getRefType()) {
+	    error::out() << loc << ": warning: casting '" << from
+		<< "' to '" << to << "'" << std::endl;
+	}
 	return from;
     } else if (from->isFunction() && to->isPointer()) {
 	// TODO: require explicit cast if types are different
@@ -205,6 +209,11 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc)
 	return from; // no cast required
     } else if (convertArrayOrFunctionToPointer(from)->isPointer()
 	    && to->isInteger()) {
+	error::out() << loc << ": warning: casting '" << from
+	    << "' to '" << to << "'" << std::endl;
+	return to;
+    } else if (from->isInteger()
+	    && convertArrayOrFunctionToPointer(to)->isPointer()) {
 	error::out() << loc << ": warning: casting '" << from
 	    << "' to '" << to << "'" << std::endl;
 	return to;
@@ -236,19 +245,19 @@ operator<<(std::ostream &out, const Type *type)
 	out << (type->getIntegerKind() == Type::SIGNED ? "i" : "u")
 	    << type->getIntegerNumBits();
     } else if (type->isPointer()) {
-	out << "pointer to " << type->getRefType();
+	out << "-> " << type->getRefType();
     } else if (type->isArray()) {
 	out << "array[" << type->getDim() << "] of " << type->getRefType();
     } else if (type->isFunction()) {
 	out << "fn(";
 	auto arg = type->getArgType();
 	for (std::size_t i = 0; i < arg.size(); ++i) {
-	    out << " :" << arg[i];
+	    out << ": " << arg[i];
 	    if (i + 1 != arg.size()) {
 		out << ",";
 	    }
 	}
-	out << ") :" << type->getRetType();
+	out << "): " << type->getRetType();
     }
     return out;
 }

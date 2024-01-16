@@ -41,6 +41,7 @@ syntax match type /i32/ skipwhite
 syntax match type /i64/ skipwhite
 
 syntax match literal /[+-]*[1-9][0-9]*/ skipwhite
+syntax match literal /nullptr/ skipwhite
 syntax match literal /[0-7][0-7]*/ skipwhite
 syntax match literal /0x[0-9a-zA-Z][0-9a-zA-Z]*/ skipwhite
 syntax region literal start=/"/ skip=/\\"/ end=/"/ skipwhite
