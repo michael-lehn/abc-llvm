@@ -1,20 +1,19 @@
+/*
+    Currently no preprocessor is supported. Hence we manually have to declare
+    all functions defined in the library. So later these decalration can be
+    included with something like:
+
+    #include "abclib.h"
+*/
+
 fn printU64(:u64);
 fn printNl();
 fn print(: -> u8);
 
-/*
-type int = u16;
+//
+//   Here the real action begins ...
+//
 
-type Val = struct {
-    id: u8;
-    ident: -> u8;
-};
-
-type Node = struct {
-    next: -> Node;
-    val: Val;
-};
-*/
 
 fn foo(a: u8)
 {
@@ -49,6 +48,7 @@ fn main(): u8
     p = bar;
     p->(13);		    // another way to use a function pointer
     p[0](24);		    // another way to use a function pointer
+    p(24);		    // ... or just like that (C style)
 
     // p(12);		    // error: in ABC function pointers need to be
 			    //	      dereferenced
