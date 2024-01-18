@@ -301,7 +301,7 @@ parsePostfix(ExprPtr &&expr)
 		error::expected(TokenKind::IDENTIFIER);
 		expr = Expr::createMember(std::move(expr), token.val);
 		getToken();
-		return expr;
+		return parsePostfix(std::move(expr));
 	    }
 	case TokenKind::LPAREN:
 	    // function call

@@ -112,6 +112,11 @@ Binary::setType(void)
 	    type = l->getRetType();
 	    return;
 	case Binary::Kind::ASSIGN:
+	    if (l->isArray() || l->isFunction()) {
+		error::out() << opLoc << " type '"
+		    << l << "' is not is not assignable." << std::endl;
+		error::fatal();
+	    }
 	    type = Type::getTypeConversion(r, l, opLoc);
 	    if (!type) {
 		error::out() << opLoc << " can not cast expression of type '"
@@ -875,7 +880,9 @@ loadValue(const Binary &binary)
 		    refTy = Type::getUnsignedInteger(8);
 		}
 
-		auto l = binary.left->loadValue();
+		auto l = binary.left->getType()->isArray()
+			? binary.left->loadAddr()
+			: binary.left->loadValue();
 		auto r = binary.right->loadValue();
 		return gen::ptrInc(refTy, l, r);
 	    } else if (binary.kind == Binary::Kind::SUB

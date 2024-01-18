@@ -130,14 +130,13 @@ struct TypeMap
 	    return llvm::FunctionType::get(get_(t->getRetType()),
 		    get_(t->getArgType()), false);
 	} else if (t->isStruct()) {
-	    auto name = t->getName();
 	    auto type = t->getMemberType();
-
 	    std::vector<llvm::Type *> llvmType(type.size());
 	    for (std::size_t i = 0; i < type.size(); ++i) {
 		llvmType[i] = get(type[i]);
 	    }
-	    return llvm::StructType::create(llvmType, name);
+	    //return llvm::StructType::create(llvmType, name);
+	    return llvm::StructType::get(*llvmContext, llvmType);
 	}
 	assert(0);
 	return 0;
