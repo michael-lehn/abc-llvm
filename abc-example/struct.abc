@@ -4,7 +4,7 @@ fn printNl();
 fn printU64(:u64);
 
 
-type Foo = struct { a: u64; b: u32 };
+type Foo = struct { a: u64; b: u32; };
 
 fn getFoo(a: u64, b: u32): Foo
 {
@@ -26,9 +26,18 @@ global a: u8 = 123;
 fn main(): Foo
 {
     local foo: Foo = getFoo(1, 2);
+    local bar: struct {a :u64; b : u64; }; // anonymous struct type
 
     printFoo(foo);
+
     foo = getFoo(3, 4);
     printFoo(foo);
+
+    // copy 'foo' to 'bar'
+    bar.a = foo.a;
+    bar.b = foo.b;
+    // this is illegal ('bar' has different struct type)
+    // bar = foo;  // error
+    printFoo(bar);
 }
 

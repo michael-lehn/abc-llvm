@@ -388,9 +388,7 @@ parseStructType(const char *name = nullptr)
 	    error::fatal();
 	}
 	type.push_back(ty);
-	if (token.kind != TokenKind::SEMICOLON) {
-	    break;
-	}
+	error::expected(TokenKind::SEMICOLON);
 	getToken();
     }
 
