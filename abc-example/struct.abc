@@ -46,6 +46,6 @@ fn main(): Foo
     bar.b = foo.b;
     // this is illegal ('bar' has different struct type)
     // bar = foo;  // error
-    printFoo("bar", bar); // currently allowed: arg types are not checked!!!
+    // printFoo("bar", bar); // error: Type of 'bar' is not 'Foo'
 }
 

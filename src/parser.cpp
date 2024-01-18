@@ -134,6 +134,9 @@ static void
 parseFnParamDeclOrType(std::vector<const Type *> &argType,
 		       std::vector<const char *> *paramIdent = nullptr)
 {
+    static std::size_t paramId;
+    paramId = 0;
+
     argType.clear();
     if (paramIdent) {
 	paramIdent->clear();
@@ -143,11 +146,15 @@ parseFnParamDeclOrType(std::vector<const Type *> &argType,
         || token.kind == TokenKind::COLON)
     {
 	// if parameter has no identifier give it an interal identifier 
-	UStr ident = ".param";
+	UStr ident;
 	auto loc = token.loc;
 	if (token.kind == TokenKind::IDENTIFIER) {
 	    ident = token.val.c_str();
 	    getToken();
+	} else {
+	    std::stringstream ss;
+	    ss << ".param" << paramId++;
+	    ident = UStr{ss.str()};
 	}
 
 	error::expected(TokenKind::COLON);

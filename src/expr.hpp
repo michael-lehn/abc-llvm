@@ -209,6 +209,7 @@ class Expr
 	const Type *getType(void) const;
 	bool isLValue(void) const;
 	bool isConst(void) const;
+	Token::Loc getLoc() const;
 
 	void print(int indent = 0) const;
 

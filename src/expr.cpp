@@ -48,7 +48,7 @@ getCommonType(Token::Loc loc, const Type *left, const Type *right)
 
 
     error::out() << loc
-	<< ": Error: operation not defined for '" << left
+<< ": Error: operation not defined for '" << left
 	<< "' and '" << right << "'" << std::endl;
     error::fatal();
     return nullptr;
@@ -421,6 +421,24 @@ Expr::createCall(ExprPtr &&fn, ExprVector &&param, Token::Loc opLoc)
 	error::out() << opLoc << " : not a function" << std::endl;
 	error::fatal();
     }
+    auto const argType = fn->getType()->getArgType();
+    if (argType.size() != param.size()) {
+	error::out() << opLoc << ": too "
+	    << (argType.size() < param.size() ? "many" : "few")
+	    << " arguments to function call, expected "
+	    << argType.size() << ", have "
+	    << param.size() << std::endl;
+	error::fatal();
+    }
+    for (std::size_t i = 0; i < argType.size(); ++i) {
+	const auto & p = param[i];
+	if (!Type::getTypeConversion(p->getType(), argType[i], p->getLoc())) {
+	    error::out() << opLoc << ": incompatible conversion of type '"
+		<< param[i]->getType() << "' to type '" << argType[i]
+		<< std::endl;
+	    error::fatal();
+	}
+    }
 
     auto p = createExprVector(std::move(param));
     auto expr = createBinary(Binary::Kind::CALL, std::move(fn), std::move(p),
@@ -672,6 +690,32 @@ getGenCondOp(Binary::Kind kind, const Type *type)
 	    return gen::EQ;
     }
 }
+
+Token::Loc
+Expr::getLoc(void) const
+{
+    if (std::holds_alternative<Proxy>(variant)) {
+	return std::get<Proxy>(variant).expr->getLoc();
+    } else if (std::holds_alternative<Literal>(variant)) {
+	return std::get<Literal>(variant).loc;
+    } else if (std::holds_alternative<Identifier>(variant)) {
+	return std::get<Identifier>(variant).loc;
+    } else if (std::holds_alternative<Unary>(variant)) {
+	return std::get<Unary>(variant).opLoc;
+    } else if (std::holds_alternative<Binary>(variant)) {
+	return std::get<Binary>(variant).opLoc;
+    } else if (std::holds_alternative<Conditional>(variant)) {
+	return std::get<Conditional>(variant).cond->getLoc();
+    } else if (std::holds_alternative<ExprVector>(variant)) {
+	const auto &vec = std::get<ExprVector>(variant);
+	return vec.size() ? vec[0]->getLoc() : Token::Loc{};
+    } else {
+	std::cerr << "not handled variant. Index = " << variant.index()
+	    << std::endl;
+	assert(0);
+    }
+}
+
 
 void
 Expr::print(int indent) const
