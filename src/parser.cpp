@@ -306,9 +306,7 @@ parsePtrType(void)
     getToken();
     auto baseTy = parseType();
     if (!baseTy) {
-	error::out() << token.loc << " expected base type for pointer"
-	    << std::endl;
-	error::fatal();
+	baseTy = Type::getVoid();
     }
     return Type::getPointer(baseTy);
 }

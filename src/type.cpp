@@ -271,15 +271,15 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc)
 	// TODO: -Wconversion generate warning if sizeof(to) < sizeof(from)
 	return to;
     } else if (from->isArrayOrPointer() && to->isPointer()) {
-	// TODO: require explicit cast if types are different
-	if (from->getRefType() != to->getRefType()) {
+	if (from->getRefType() != to->getRefType()
+	    && !to->getRefType()->isVoid()
+	    && !from->getRefType()->isVoid()) {
 	    error::out() << loc << ": warning: casting '" << from
 		<< "' to '" << to << "'" << std::endl;
 	}
 	return from;
     } else if (from->isFunction() && to->isPointer()) {
-	// TODO: require explicit cast if types are different
-	if (from != to->getRefType()) {
+	if (from != to->getRefType() && !to->getRefType()->isVoid()) {
 	    error::out() << loc << ": warning: casting '" << from
 		<< "' to '" << to << "'" << std::endl;
 	}

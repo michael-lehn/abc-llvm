@@ -4,7 +4,9 @@ fn printNl();
 fn printU64(:u64);
 
 
-type Foo = struct { a: u64; b: u32; };
+type Foo = struct { a: u64; b: u32; },
+     int = u32,
+     voidPtr  = ->;
 
 fn getFoo(a: u64, b: u32): Foo
 {
@@ -15,10 +17,11 @@ fn getFoo(a: u64, b: u32): Foo
     return foo;
 }
 
-fn printFoo(f: Foo)
+fn printFoo(ident: -> u8, f: Foo)
 {
-    print("f.a = "); printU64(f.a); printNl();
-    print("f.b = "); printU64(f.b); printNl();
+    print(ident); print(".a = "); printU64(f.a); printNl();
+    print(ident); print(".b = "); printU64(f.b); printNl();
+    printNl();
 }
 
 global a: u8 = 123;
@@ -26,18 +29,20 @@ global a: u8 = 123;
 fn main(): Foo
 {
     local foo: Foo = getFoo(1, 2);
-    local bar: struct {a :u64; b : u64; }; // anonymous struct type
+    local bar: struct {a :int; b : int; }; // anonymous struct type
+    local p: voidPtr = &bar,
+	  q: -> Foo = p;
 
-    printFoo(foo);
+    printFoo("foo", foo);
 
     foo = getFoo(3, 4);
-    printFoo(foo);
+    printFoo("foo", foo);
 
     // copy 'foo' to 'bar'
     bar.a = foo.a;
     bar.b = foo.b;
     // this is illegal ('bar' has different struct type)
     // bar = foo;  // error
-    printFoo(bar);
+    printFoo("bar", bar);
 }
 
