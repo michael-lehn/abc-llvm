@@ -45,6 +45,10 @@ struct Identifier
     const Type *type;
     Token::Loc loc;
 
+    Identifier(UStr ident, const Type *type, Token::Loc loc)
+	: val{ident.c_str()}, type{type}, loc{loc}
+    {}
+
     Identifier(UStr ident, Token::Loc loc)
 	: loc{loc}
     {
@@ -119,6 +123,7 @@ struct Binary
 	MOD,
 	POSTFIX_INC,
 	POSTFIX_DEC,
+	MEMBER,
     };
 
     Kind kind;
@@ -136,7 +141,6 @@ struct Binary
 
     void setType(void);
     void castOperands(void);
-    
 };
 
 struct Conditional
@@ -191,6 +195,8 @@ class Expr
 				  Token::Loc opLoc = Token::Loc{});
 	static ExprPtr createBinary(Binary::Kind kind,
 				    ExprPtr &&left, ExprPtr &&right,
+				    Token::Loc opLoc = Token::Loc{});
+	static ExprPtr createMember(ExprPtr &&from, UStr memberIdent,
 				    Token::Loc opLoc = Token::Loc{});
 	static ExprPtr createCall(ExprPtr &&fn, ExprVector &&param,
 				  Token::Loc opLoc = Token::Loc{});

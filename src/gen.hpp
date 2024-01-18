@@ -78,11 +78,13 @@ enum AluOp {
 };
 
 Reg cast(Reg reg, const Type *fromType, const Type *toType);
-Reg loadConst(const char *val, const Type *type, std::uint8_t radix);
+Reg loadIntConst(const char *val, const Type *type, std::uint8_t radix);
+Reg loadIntConst(std::uint64_t val, const Type *type);
 Reg aluInstr(AluOp op, Reg l, Reg r);
 
 // compute addr + offset
 Reg ptrInc(const Type *type, Reg addr, Reg offset);
+Reg ptrMember(const Type *type, Reg addr, std::size_t index);
 // compute addrLeft - addrRight
 Reg ptrDiff(const Type *type, Reg addrLeft, Reg addRight);
 

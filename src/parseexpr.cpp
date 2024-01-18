@@ -283,7 +283,8 @@ parsePrefix(void)
 static ExprPtr
 parsePostfix(ExprPtr &&expr)
 {
-    if (token.kind != TokenKind::LPAREN && token.kind != TokenKind::LBRACKET
+    if (token.kind != TokenKind::DOT && token.kind != TokenKind::LPAREN
+     && token.kind != TokenKind::LBRACKET
      && token.kind != TokenKind::ARROW && token.kind != TokenKind::PLUS2
      && token.kind != TokenKind::MINUS2)
     {
@@ -294,6 +295,14 @@ parsePostfix(ExprPtr &&expr)
     getToken();
 
     switch (opTok.kind) {
+	case TokenKind::DOT:
+	    // member access
+	    {
+		error::expected(TokenKind::IDENTIFIER);
+		expr = Expr::createMember(std::move(expr), token.val);
+		getToken();
+		return expr;
+	    }
 	case TokenKind::LPAREN:
 	    // function call
 	    {
@@ -321,8 +330,15 @@ parsePostfix(ExprPtr &&expr)
 					  std::move(index), opTok.loc);
 		if (!expr->getType()->isPointer()){
 		    error::out() << opTok.loc <<
-			"subscripted value is neither array nor pointer"
+			": subscripted value is neither array nor pointer"
 			<< std::endl;
+		    error::fatal();
+		}
+		if (expr->getType()->getRefType()->isFunction()){
+		    error::out() << opTok.loc <<
+			": subscript of pointer to function. "
+			" Subscript can not be used for type '"
+			<< expr->getType() << "'" << std::endl;
 		    error::fatal();
 		}
 		expr = Expr::createDeref(std::move(expr));

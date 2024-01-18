@@ -129,6 +129,15 @@ struct TypeMap
 	} else if (t->isFunction()) {
 	    return llvm::FunctionType::get(get_(t->getRetType()),
 		    get_(t->getArgType()), false);
+	} else if (t->isStruct()) {
+	    auto name = t->getName();
+	    auto type = t->getMemberType();
+
+	    std::vector<llvm::Type *> llvmType(type.size());
+	    for (std::size_t i = 0; i < type.size(); ++i) {
+		llvmType[i] = get(type[i]);
+	    }
+	    return llvm::StructType::create(llvmType, name);
 	}
 	assert(0);
 	return 0;
@@ -267,6 +276,12 @@ defLocal(const char *ident, const Type *type)
 {
     assert(currFn.llvmFn);
 
+    if (type->isFunction()) {
+	error::out() << "Function can not be defined as local variable"
+	    << std::endl;
+	error::fatal();
+    }
+
     // always allocate memory at entry of function
     llvm::IRBuilder<> tmpBuilder(&currFn.llvmFn->getEntryBlock(),
 				 currFn.llvmFn->getEntryBlock().begin());
@@ -277,6 +292,11 @@ defLocal(const char *ident, const Type *type)
 void
 defGlobal(const char *ident, const Type *type, ConstVal val)
 {
+    if (type->isFunction()) {
+	fnDecl(ident, type);
+	return;
+    }
+
     auto ty = TypeMap::get(type);
     if (!val) {
 	val = llvm::ConstantInt::getNullValue(ty);
@@ -511,7 +531,7 @@ cast(Reg reg, const Type *fromType, const Type *toType)
 }
 
 Reg
-loadConst(const char *val, const Type *type, std::uint8_t radix)
+loadIntConst(const char *val, const Type *type, std::uint8_t radix)
 {
     if (currFn.bbClosed) {
 	llvm::errs() << "Warning: not reachable load constant\n";
@@ -524,6 +544,28 @@ loadConst(const char *val, const Type *type, std::uint8_t radix)
     } else if (type->isPointer() && !std::strcmp(val, "0")) {
 	auto ty = llvm::dyn_cast<llvm::PointerType>(TypeMap::get(type));
 	return llvm::ConstantPointerNull::get(ty);
+    }
+    error::out() << "loadConst '" << val << "' of type '" << type << "'"
+	<< std::endl;
+    assert(0 && "not implemented");
+    return nullptr;
+}
+
+Reg
+loadIntConst(std::uint64_t val, const Type *type)
+{
+    assert(type->isInteger() || (type->isPointer() && val == 0));
+    if (currFn.bbClosed) {
+	llvm::errs() << "Warning: not reachable load constant\n";
+	return nullptr;
+    }
+    if (type->isPointer() && val == 0) {
+	auto ty = llvm::dyn_cast<llvm::PointerType>(TypeMap::get(type));
+	return llvm::ConstantPointerNull::get(ty);
+    } else if (type->isInteger()) {
+	auto ty = llvm::dyn_cast<llvm::IntegerType>(TypeMap::get(type));
+	auto isSigned = type->getIntegerKind() ==  Type::SIGNED;
+	return llvm::ConstantInt::get(ty, val, isSigned);
     }
     error::out() << "loadConst '" << val << "' of type '" << type << "'"
 	<< std::endl;
@@ -569,6 +611,19 @@ ptrInc(const Type *type, Reg addr, Reg offset)
 
     std::vector<Reg> idxList{1};
     idxList[0] = offset;
+
+    return llvmBuilder->CreateGEP(ty, addr, idxList);
+}
+
+Reg
+ptrMember(const Type *type, Reg addr, std::size_t index)
+{
+    assert(type->isStruct());
+    auto ty = TypeMap::get(type);
+
+    std::vector<Reg> idxList{2};
+    idxList[0] = loadIntConst(0, Type::getUnsignedInteger(8));
+    idxList[1] = loadIntConst(index, Type::getUnsignedInteger(32));
 
     return llvmBuilder->CreateGEP(ty, addr, idxList);
 }

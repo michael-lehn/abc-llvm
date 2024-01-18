@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
 
 #include "error.hpp"
 #include "gen.hpp"
@@ -13,15 +14,19 @@
 
 static bool parseFn(void);
 static bool parseGlobalDef(void);
+static bool parseTypeDef(void);
 
 void
 parser(void)
 {
     getToken();
     while (token.kind != TokenKind::EOI) {
-	if (!parseGlobalDef() && !parseFn()) {
+	if (!parseGlobalDef() && !parseFn() && !parseTypeDef()) {
 	    error::out() << token.loc
-		<< "function declaration, global variable definition or EOF"
+		<< ": expected function declaration,"
+		<< " global variable definition,"
+		<< " type definition"
+		<< " or EOF"
 		<< std::endl;
 	    error::fatal();
 	}
@@ -29,6 +34,35 @@ parser(void)
 }
 
 //------------------------------------------------------------------------------
+
+static bool
+parseTypeDef(void)
+{
+    if (token.kind != TokenKind::TYPE) {
+	return false;
+    }
+    getToken();
+
+    while (token.kind == TokenKind::IDENTIFIER) {
+	const char *ident = token.val.c_str();
+	getToken();
+	error::expected(TokenKind::EQUAL);
+	getToken();
+	auto ty = parseType();
+	if (!ty) {
+	    error::out() << token.loc << ": type expected" << std::endl;
+	    error::fatal();
+	}
+	Type::createAlias(ident, ty);
+	if (token.kind != TokenKind::COMMA) {
+	    break;
+	}
+	getToken();
+    }
+    error::expected(TokenKind::SEMICOLON);
+    getToken();
+    return true;
+}
 
 static bool
 parseGlobalDef(void)
@@ -330,15 +364,65 @@ parseArrayType(void)
     return parseArrayDimAndType();
 }
 
+static const Type *
+parseStructType(const char *name = nullptr)
+{
+    if (token.kind != TokenKind::STRUCT) {
+	return nullptr;
+    }
+    getToken();
+
+    error::expected(TokenKind::LBRACE);
+    getToken();
+
+    std::vector<const char *> ident;
+    std::vector<const Type *> type;
+    while (token.kind == TokenKind::IDENTIFIER) {
+	ident.push_back(token.val.c_str());
+	getToken();
+	error::expected(TokenKind::COLON);
+	getToken();
+	auto ty = parseType();
+	if (!ty) {
+	    error::out() << token.loc << ": type expected" << std::endl;
+	    error::fatal();
+	}
+	type.push_back(ty);
+	if (token.kind != TokenKind::SEMICOLON) {
+	    break;
+	}
+	getToken();
+    }
+
+    error::expected(TokenKind::RBRACE);
+    getToken();
+    return Type::createStruct(name, ident, type);
+}
+
+static const Type *
+parseNamedType(const char *name = nullptr)
+{
+    if (token.kind != TokenKind::IDENTIFIER) {
+	return nullptr;
+    }
+    auto ty = Type::getNamed(token.val.c_str());
+    getToken();
+    return ty;
+}
+
 const Type *
 parseType(void)
 {
-    if (auto fnType = parseFnType()) {
-	return fnType;
-    } else if (auto ptrType = parsePtrType()) {
-	return ptrType;
-    } else if (auto arrayType = parseArrayType()) {
-	return arrayType;
+    if (auto ty = parseFnType()) {
+	return ty;
+    } else if (auto ty = parsePtrType()) {
+	return ty;
+    } else if (auto ty = parseArrayType()) {
+	return ty;
+    } else if (auto ty = parseStructType()) {
+	return ty;
+    } else if (auto ty = parseNamedType()) {
+	return ty;
     }
     return parseIntType();
 }
@@ -366,6 +450,15 @@ parseLocalDef(void)
 	if (!type) {
 	    error::out() << token.loc << " type expected"
 		<< std::endl;
+	    error::fatal();
+	} else if (type->isFunction()) {
+	    error::out() << loc
+		<< ": Function can not be defined as local variable. "
+		<< std::endl
+		<< "\tIf '" << ident.c_str()
+		<< "' is supposed to be a function pointer use type '"
+		<< Type::getPointer(type)
+		<< "'" << std::endl;
 	    error::fatal();
 	}
 
@@ -610,12 +703,13 @@ static bool
 parseExprStmt(void)
 {
     auto expr = parseExpr();
-    if (!expr) {
+    if (token.kind != TokenKind::SEMICOLON) {
 	return false;
     }
-    error::expected(TokenKind::SEMICOLON);
     getToken();
-    expr->loadValue();
+    if (expr) {
+	expr->loadValue();
+    }
     return true;
 }
 

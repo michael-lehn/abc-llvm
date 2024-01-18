@@ -40,8 +40,12 @@ enum class TokenKind {
     OF,
     SIZEOF,
     NULLPTR,
+    STRUCT,
+    UNION,
+    TYPE,
 
     // punctuators
+    DOT,
     SEMICOLON,
     COLON,
     COMMA,

@@ -1,0 +1,34 @@
+fn print(: -> u8);
+fn printLn(: -> u8);
+fn printNl();
+fn printU64(:u64);
+
+
+type Foo = struct { a: u64; b: u32 };
+
+fn getFoo(a: u64, b: u32): Foo
+{
+    local foo : Foo;
+
+    foo.a = 4;
+    foo.b = 14;
+    return foo;
+}
+
+fn printFoo(f: Foo)
+{
+    print("f.a = "); printU64(f.a); printNl();
+    print("f.b = "); printU64(f.b); printNl();
+}
+
+global a: u8 = 123;
+
+fn main(): Foo
+{
+    local foo: Foo = getFoo(1, 2);
+
+    printFoo(foo);
+    foo = getFoo(3, 4);
+    printFoo(foo);
+}
+

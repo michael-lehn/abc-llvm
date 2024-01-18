@@ -28,12 +28,17 @@ syntax match keyword /global/ skipwhite
 syntax match keyword /return/ skipwhite
 syntax match keyword /array/ skipwhite
 syntax match keyword /of/ skipwhite
+syntax match keyword /type/ skipwhite
+syntax match keyword /let/ skipwhite
 
+syntax match type /ro/ skipwhite
 syntax match type /u8/ skipwhite
 syntax match type /u16/ skipwhite
 syntax match type /u32/ skipwhite
 syntax match type /u64/ skipwhite
 syntax match type /[\-]/ skipwhite
+syntax match type /struct/ skipwhite
+syntax match type /union/ skipwhite
  
 syntax match type /i8/ skipwhite
 syntax match type /i16/ skipwhite
@@ -45,7 +50,6 @@ syntax match literal /nullptr/ skipwhite
 syntax match literal /[0-7][0-7]*/ skipwhite
 syntax match literal /0x[0-9a-zA-Z][0-9a-zA-Z]*/ skipwhite
 syntax region literal start=/"/ skip=/\\"/ end=/"/ skipwhite
-
 
 syntax region comment start="//" end="$" skipwhite
 syntax region comment start="/\*" end="\*/" skipwhite

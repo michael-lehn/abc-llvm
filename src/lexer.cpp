@@ -77,6 +77,14 @@ tokenKindCStr(TokenKind kind)
 	    return "SIZEOF";
 	case TokenKind::NULLPTR:
 	    return "NULLPTR";
+	case TokenKind::STRUCT:
+	    return "STRUCT";
+	case TokenKind::UNION:
+	    return "UNION";
+	case TokenKind::TYPE:
+	    return "TYPE";
+	case TokenKind::DOT:
+	    return "DOT";
 	case TokenKind::SEMICOLON:
 	    return "SEMICOLON";
 	case TokenKind::COLON:
@@ -204,6 +212,14 @@ tokenCStr(TokenKind kind)
 	    return "sizeof";
 	case TokenKind::NULLPTR:
 	    return "nullptr";
+	case TokenKind::STRUCT:
+	    return "struct";
+	case TokenKind::UNION:
+	    return "union";
+	case TokenKind::TYPE:
+	    return "type";
+	case TokenKind::DOT:
+	    return ".";
 	case TokenKind::SEMICOLON:
 	    return ";";
 	case TokenKind::COLON:
@@ -352,6 +368,9 @@ static std::unordered_map<UStr, TokenKind> kw = {
     { "of", TokenKind::OF },
     { "sizeof", TokenKind::SIZEOF },
     { "nullptr", TokenKind::NULLPTR },
+    { "struct", TokenKind::STRUCT },
+    { "union", TokenKind::UNION },
+    { "type", TokenKind::TYPE },
 };
 
 // TODO: proper implementation and support of escape sequences
@@ -455,6 +474,10 @@ getToken(void)
 	tokenUpdate();
 	nextCh();
 	return tokenSet(TokenKind::STRING_LITERAL);
+    } else if (ch == '.') {
+	tokenUpdate();
+	nextCh();
+	return tokenSet(TokenKind::DOT);
     } else if (ch == ';') {
 	tokenUpdate();
 	nextCh();

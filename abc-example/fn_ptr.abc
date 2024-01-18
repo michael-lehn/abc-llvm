@@ -14,7 +14,6 @@ fn print(: -> u8);
 //   Here the real action begins ...
 //
 
-
 fn foo(a: u8)
 {
     print("I am 'foo' and a = ");
@@ -47,7 +46,6 @@ fn main(): u8
 
     p = bar;
     p->(13);		    // another way to use a function pointer
-    p[0](24);		    // another way to use a function pointer
     p(24);		    // ... or just like that (C style)
 
     // p(12);		    // error: in ABC function pointers need to be

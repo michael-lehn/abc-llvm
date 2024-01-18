@@ -48,7 +48,7 @@ getCommonType(Token::Loc loc, const Type *left, const Type *right)
 
 
     error::out() << loc
-	<< ": Error: No common type for '" << left
+	<< ": Error: operation not defined for '" << left
 	<< "' and '" << right << "'" << std::endl;
     error::fatal();
     return nullptr;
@@ -105,6 +105,9 @@ Binary::setType(void)
     }
 
     switch (kind) {
+	case Binary::Kind::MEMBER:
+	    type = r;
+	    return;
 	case Binary::Kind::CALL:
 	    type = l->getRetType();
 	    return;
@@ -388,9 +391,31 @@ Expr::createBinary(Binary::Kind kind, ExprPtr &&left, ExprPtr &&right,
 }
 
 ExprPtr
+Expr::createMember(ExprPtr &&from, UStr memberIdent, Token::Loc opLoc)
+{
+    auto ty = from->getType();
+    if (!ty->hasMember(memberIdent)) {
+	error::out() << opLoc << ": struct of type '" << ty
+	    << "' has no member '"
+	    << memberIdent.c_str() << "'" << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    ty = ty->getMemberType(memberIdent); 
+    auto mem = ExprPtr{new Expr{Identifier{memberIdent, ty, opLoc}}};
+    return createBinary(Binary::Kind::MEMBER, std::move(from), std::move(mem));
+}
+
+ExprPtr
 Expr::createCall(ExprPtr &&fn, ExprVector &&param, Token::Loc opLoc)
 {
-    assert(fn->getType()->isFunction());
+    if (fn->getType()->isPointer()) {
+	fn = createDeref(std::move(fn));
+    }
+    if (!fn->getType()->isFunction()) {
+	error::out() << opLoc << " : not a function" << std::endl;
+	error::fatal();
+    }
 
     auto p = createExprVector(std::move(param));
     auto expr = createBinary(Binary::Kind::CALL, std::move(fn), std::move(p),
@@ -464,6 +489,8 @@ exprKindCStr(Binary::Kind kind)
 	    return "/";
 	case Binary::Kind::MOD:
 	    return "%";
+	case Binary::Kind::MEMBER:
+	    return ".member";
 	default:
 	    return "?";
     }
@@ -502,6 +529,12 @@ Expr::isLValue(void) const
     } else if (std::holds_alternative<Unary>(variant)) {
 	const auto &unary = std::get<Unary>(variant);
 	return unary.kind == Unary::Kind::DEREF;
+    } else if (std::holds_alternative<Binary>(variant)) {
+	const auto &binary = std::get<Binary>(variant);
+	if (binary.kind == Binary::MEMBER) {
+	    return binary.right->isLValue();
+	}
+	return false;
     }
     return false;
 }
@@ -686,7 +719,8 @@ Expr::print(int indent) const
 static gen::Reg
 loadValue(const Literal &l)
 {
-    return gen::loadConst(l.val, l.type, l.radix);
+    assert(l.type->isInteger());
+    return gen::loadIntConst(l.val, l.type, l.radix);
 }
 
 static gen::Reg
@@ -756,11 +790,17 @@ loadValue(const Unary &unary)
 }
 	
 static void condJmp(const Binary &, gen::Label, gen::Label);
+static gen::Reg loadAddr(const Binary &binary);
 
 static gen::Reg
 loadValue(const Binary &binary)
 {
     switch (binary.kind) {
+	case Binary::Kind::MEMBER:
+	    {
+		auto addr = loadAddr(binary);
+		return gen::fetch(addr, binary.type);
+	    }
 	case Binary::Kind::CALL:
 	    {
 		auto const &left = binary.left;
@@ -828,7 +868,7 @@ loadValue(const Binary &binary)
 		auto ptrTy = binary.left->getType();
 		ptrTy = Type::convertArrayOrFunctionToPointer(ptrTy);
 		auto refTy = ptrTy->getRefType();
-		if (refTy->isFunction()) {
+		if (refTy->isFunction() && !ptrTy->isPointer()) {
 		    error::out() << binary.opLoc
 			<< ": incompatible cast of '" << refTy
 			<< "' to integer" << std::endl;
@@ -925,6 +965,18 @@ Expr::loadValue(void) const
     return nullptr; // never reached
 }
 
+static gen::Reg
+loadAddr(const Binary &binary)
+{
+    assert(binary.kind == Binary::MEMBER);
+    auto baseAddr = binary.left->loadAddr();
+    auto baseType = binary.left->getType();
+
+    const auto &member = std::get<Identifier>(binary.right->variant);
+    auto index = baseType->getMemberIndex(member.val);
+    return gen::ptrMember(baseType, baseAddr, index);
+}
+
 gen::Reg
 Expr::loadAddr(void) const
 {
@@ -940,6 +992,9 @@ Expr::loadAddr(void) const
 	if (unary.kind == Unary::Kind::DEREF) {
 	    return unary.child->loadValue();
 	}
+    } else if (std::holds_alternative<Binary>(variant)) {
+	const auto &binary = std::get<Binary>(variant);
+	return ::loadAddr(binary);
     }
     assert(0);
     return nullptr;

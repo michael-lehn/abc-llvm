@@ -1,5 +1,6 @@
 #include <iostream>
 #include <set>
+#include <sstream>
 
 #include "error.hpp"
 #include "type.hpp"
@@ -82,12 +83,30 @@ operator<(const Function &x, const Function &y)
     return false;
 }
 
+//--  Struct class -------------------------------------------------------------
+
+struct Struct : public Type
+{
+    Struct(StructData &&structData)
+	: Type{Type::STRUCT, StructData{structData}}
+    {}
+
+};
+
+bool
+operator<(const Struct &x, const Struct &y)
+{
+    return x.getName() < y.getName();
+}
+
 //-- Sets for theses types for uniqueness --------------------------------------
 
 static std::set<Integer> *intTypeSet;
 static std::set<Pointer> *ptrTypeSet;
 static std::set<Array> *arrayTypeSet;
 static std::set<Function> *fnTypeSet;
+static std::unordered_map<const char *, const Type *> *aliasSet;
+static std::set<Struct> *structSet;
 
 //-- Static functions ----------------------------------------------------------
 
@@ -163,6 +182,64 @@ Type::getFunction(const Type *retType, std::vector<const Type *> argType)
 	fnTypeSet = new std::set<Function>;
     }
     return &*fnTypeSet->insert(Function{retType, argType}).first;
+}
+
+/*
+ * Named types
+ */
+
+void
+Type::createAlias(const char *name, const Type *type)
+{
+    if (!aliasSet) {
+	aliasSet = new std::unordered_map<const char *, const Type *>;
+    }
+    aliasSet->insert({name, type});
+}
+
+const Type *
+Type::getNamed(UStr name)
+{
+    if (!aliasSet) {
+	aliasSet = new std::unordered_map<const char *, const Type *>;
+    }
+    if (!aliasSet->contains(name.c_str())) {
+	return nullptr;
+    }
+    return aliasSet->find(name.c_str())->second;
+}
+
+const Type *
+Type::createStruct(const char *name, const std::vector<const char *> &ident,
+		   const std::vector<const Type *> &type)
+{
+    if (!structSet) {
+	structSet = new std::set<Struct>;
+    }
+    if (!name) {
+	static std::size_t id;
+	std::stringstream ss;
+	ss << "_.struct" << id++ << "._";
+	name = UStr{ss.str()}.c_str();
+    }
+    assert(!getNamed(name));
+
+    Type::StructData structData;
+    structData.name = name;
+    structData.type = type;
+    structData.ident = ident;
+    for (std::size_t i = 0; i < ident.size(); ++i) {
+	structData.index[ident[i]] = i;
+    }
+    auto ty = &*structSet->insert(StructData{std::move(structData)}).first;
+    if (!name) {
+	static std::size_t id;
+	std::stringstream ss;
+	ss << "_.struct" << id++ << "._";
+	name = UStr{ss.str()}.c_str();
+    }
+    createAlias(name, ty);
+    return ty;
 }
 
 /*
@@ -258,6 +335,22 @@ operator<<(std::ostream &out, const Type *type)
 	    }
 	}
 	out << "): " << type->getRetType();
+    } else if (type->isStruct()) {
+	auto memType = type->getMemberType();
+	auto memIdent = type->getMemberIdent();
+	out << "{";
+	for (std::size_t i = 0; i < memType.size(); ++i) {
+	    out << memIdent[i] << ":" << memType[i];
+	    if (i + 1 < memType.size()) {
+		out << ", ";
+	    }
+	}
+	out << "}";
+    } else {
+	out << "unknown type: id = " << type->id
+	    << ", address = " << (int *)type
+	    << std::endl;
+	error::fatal();
     }
     return out;
 }

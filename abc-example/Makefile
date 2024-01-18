@@ -14,6 +14,7 @@ lib := $(obj.o)
 
 src.abc := $(wildcard *.abc)
 asm.abc := $(src.abc:%.abc=%.s)
+obj.abc := $(src.abc:%.abc=%.o)
 bc.abc := $(src.abc:%.abc=%.bc)
 target := $(src.abc:%.abc=%)
 
@@ -22,6 +23,13 @@ target := $(src.abc:%.abc=%)
 
 .PHONY: all
 all: $(target)
+
+.PHONY: asm
+asm: $(asm.abc)
+
+.PHONY: obj
+obj: $(obj.abc)
+
 
 
 .PHONY: all
@@ -35,6 +43,9 @@ asm: $(asm.abc)
 
 %.bc : %.abc
 	$(ABC) -B $<
+
+%.o : %.s
+	$(AS) -o $@ $<
 
 % : %.s
 % : %.o

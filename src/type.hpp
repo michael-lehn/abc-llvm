@@ -1,13 +1,15 @@
 #ifndef TYPE_HPP
 #define TYPE_HPP
 
-#include <cstddef>
 #include <cassert>
+#include <cstddef>
+#include <ostream>
+#include <unordered_map>
 #include <variant>
 #include <vector>
-#include <ostream>
 
 #include "lexer.hpp" // for Token::Loc
+#include "ustr.hpp"
 
 class Type
 {
@@ -18,6 +20,7 @@ class Type
 	    POINTER,
 	    ARRAY,
 	    FUNCTION,
+	    STRUCT,
 	} id;
 
 	bool isVoid() const
@@ -103,6 +106,59 @@ class Type
 	    return std::get<FunctionData>(data).argType;
 	}
 
+	// for struct (sub-)types
+	bool isStruct() const
+	{
+	    return id == STRUCT;
+	}
+
+	const char *getName(void) const
+	{
+	    assert(std::holds_alternative<StructData>(data));
+	    const auto &structData = std::get<StructData>(data);
+	    return structData.name;
+	}
+
+	bool hasMember(UStr ident) const
+	{
+	    if (!std::holds_alternative<StructData>(data)) {
+		return true;
+	    }
+	    const auto &structData = std::get<StructData>(data);
+	    return structData.index.contains(ident.c_str());
+	}
+
+	std::size_t getMemberIndex(UStr ident) const
+	{
+	    assert(std::holds_alternative<StructData>(data));
+	    const auto &structData = std::get<StructData>(data);
+	    assert(hasMember(ident));
+	    return structData.index.at(ident.c_str());
+	}
+
+	const Type *getMemberType(UStr ident) const
+	{
+	    assert(std::holds_alternative<StructData>(data));
+	    const auto &structData = std::get<StructData>(data);
+	    assert(hasMember(ident));
+	    return structData.type[getMemberIndex(ident)];
+	}
+
+	const std::vector<const Type *> &getMemberType(void) const
+	{
+	    assert(std::holds_alternative<StructData>(data));
+	    const auto &structData = std::get<StructData>(data);
+	    return structData.type;
+	}
+
+	const std::vector<const char *> &getMemberIdent(void) const
+	{
+	    assert(std::holds_alternative<StructData>(data));
+	    const auto &structData = std::get<StructData>(data);
+	    return structData.ident;
+	}
+
+
     protected:
 	struct IntegerData {
 	    std::size_t numBits;
@@ -123,13 +179,21 @@ class Type
 	    std::vector<const Type *> argType;
 	};
 
-	std::variant<IntegerData, PointerData, ArrayData, FunctionData> data;
+	struct StructData {
+	    const char *name;
+	    std::unordered_map<const char *, std::size_t> index;
+	    std::vector<const Type *> type;
+	    std::vector<const char *> ident;
+	};
+
+	std::variant<IntegerData, PointerData, ArrayData, FunctionData,
+		     StructData> data;
 
 	template <typename Data>
 	Type(Id id, Data &&data) : id{id}, data{data} {}
 
     public:
-	// for getting a type
+	// for getting a unnamed type
 	static const Type *getVoid(void);
 	static const Type *getBool(void);
 	static const Type *getUnsignedInteger(std::size_t numBits);
@@ -139,12 +203,20 @@ class Type
 	static const Type *getFunction(const Type *retType,
 				       std::vector<const Type *> argType);
 
+	// for named type
+	static void createAlias(const char *name, const Type *type);
+	static const Type *getNamed(UStr name);
+
+	static const Type *createStruct(const char *name,
+					const std::vector<const char *> &ident,
+					const std::vector<const Type *> &type);
 
 	// type information and casts
 	static std::size_t getSizeOf(const Type *type);
 	static const Type *getTypeConversion(const Type *from, const Type *to,
 					     Token::Loc loc = Token::Loc{});
 	static const Type *convertArrayOrFunctionToPointer(const Type *ty);
+
 };
 
 std::ostream &operator<<(std::ostream &out, const Type *type);
