@@ -12,8 +12,8 @@ fn getFoo(a: u64, b: u32): Foo
 {
     local foo : Foo;
 
-    foo.a = 4;
-    foo.b = 14;
+    foo.a = a;
+    foo.b = b;
     return foo;
 }
 
@@ -24,19 +24,22 @@ fn printFoo(ident: -> u8, f: Foo)
     printNl();
 }
 
-global a: u8 = 123;
+global a: array[5] of Foo;
 
 fn main(): Foo
 {
     local foo: Foo = getFoo(1, 2);
     local bar: struct {a :int; b : int; }; // anonymous struct type
-    local p: voidPtr = &bar,
-	  q: -> Foo = p;
 
     printFoo("foo", foo);
 
-    foo = getFoo(3, 4);
-    printFoo("foo", foo);
+    for (local i: u64 = 0; i < 5; ++i) {
+	a[i] = getFoo(i, i + 1);
+    }
+    for (local i: u64 = 0; i < 5; ++i) {
+	print("i = "); printU64(i); printNl();
+	printFoo("a[i]", a[i]);
+    }
 
     // copy 'foo' to 'bar'
     bar.a = foo.a;
