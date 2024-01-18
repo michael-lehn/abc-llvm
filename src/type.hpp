@@ -112,13 +112,6 @@ class Type
 	    return id == STRUCT;
 	}
 
-	const char *getName(void) const
-	{
-	    assert(std::holds_alternative<StructData>(data));
-	    const auto &structData = std::get<StructData>(data);
-	    return structData.name;
-	}
-
 	bool hasMember(UStr ident) const
 	{
 	    if (!std::holds_alternative<StructData>(data)) {
@@ -180,7 +173,6 @@ class Type
 	};
 
 	struct StructData {
-	    const char *name;
 	    std::unordered_map<const char *, std::size_t> index;
 	    std::vector<const Type *> type;
 	    std::vector<const char *> ident;

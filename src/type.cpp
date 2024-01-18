@@ -91,12 +91,32 @@ struct Struct : public Type
 	: Type{Type::STRUCT, StructData{structData}}
     {}
 
+    const StructData &getData(void) const
+    {
+	return std::get<StructData>(data);
+    }
 };
 
 bool
 operator<(const Struct &x, const Struct &y)
 {
-    return x.getName() < y.getName();
+    const auto &xType = x.getData().type;
+    const auto &yType = y.getData().type;
+    const auto &xIdent = x.getData().ident;
+    const auto &yIdent = y.getData().ident;
+
+    if (xType.size() < yType.size()) {
+	return true;
+    }
+    for (std::size_t i = 0; i < xType.size(); ++i) {
+	if (xType[i] < yType[i]) {
+	    return true;
+	}
+	if (xIdent[i] < yIdent[i]) {
+	    return true;
+	}
+    }
+    return false;
 }
 
 //-- Sets for theses types for uniqueness --------------------------------------
@@ -216,29 +236,20 @@ Type::createStruct(const char *name, const std::vector<const char *> &ident,
     if (!structSet) {
 	structSet = new std::set<Struct>;
     }
-    if (!name) {
-	static std::size_t id;
-	std::stringstream ss;
-	ss << "_.struct" << id++ << "._";
-	name = UStr{ss.str()}.c_str();
-    }
-    assert(!getNamed(name));
+    assert(!name || !getNamed(name));
 
     Type::StructData structData;
-    structData.name = name;
     structData.type = type;
     structData.ident = ident;
+
     for (std::size_t i = 0; i < ident.size(); ++i) {
 	structData.index[ident[i]] = i;
     }
     auto ty = &*structSet->insert(StructData{std::move(structData)}).first;
-    if (!name) {
-	static std::size_t id;
-	std::stringstream ss;
-	ss << "_.struct" << id++ << "._";
-	name = UStr{ss.str()}.c_str();
+
+    if (name) {
+	createAlias(name, ty);
     }
-    createAlias(name, ty);
     return ty;
 }
 

@@ -135,7 +135,6 @@ struct TypeMap
 	    for (std::size_t i = 0; i < type.size(); ++i) {
 		llvmType[i] = get(type[i]);
 	    }
-	    //return llvm::StructType::create(llvmType, name);
 	    return llvm::StructType::get(*llvmContext, llvmType);
 	}
 	assert(0);

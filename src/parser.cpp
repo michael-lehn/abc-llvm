@@ -409,6 +409,12 @@ parseNamedType(const char *name = nullptr)
 	return nullptr;
     }
     auto ty = Type::getNamed(token.val.c_str());
+    if (!ty) {
+	error::out()
+	    << token.loc << ": type expected. '" << token.val.c_str()
+	    << "' is not a type." << std::endl;
+	error::fatal();
+    }
     getToken();
     return ty;
 }

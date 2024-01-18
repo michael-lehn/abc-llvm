@@ -5,6 +5,7 @@ fn printU64(:u64);
 
 
 type Foo = struct { a: u64; b: u32; },
+     long = u64,
      int = u32,
      voidPtr  = ->;
 
@@ -29,7 +30,7 @@ global a: array[5] of Foo;
 fn main(): Foo
 {
     local foo: Foo = getFoo(1, 2);
-    local bar: struct {a :int; b : int; }; // anonymous struct type
+    local bar: struct {a :long; b : int; }; // same type as Foo
 
     printFoo("foo", foo);
 
@@ -41,11 +42,12 @@ fn main(): Foo
 	printFoo("a[i]", a[i]);
     }
 
-    // copy 'foo' to 'bar'
+    // copy 'foo' to 'bar' member by member
     bar.a = foo.a;
     bar.b = foo.b;
-    // this is illegal ('bar' has different struct type)
-    // bar = foo;  // error
-    // printFoo("bar", bar); // error: Type of 'bar' is not 'Foo'
+
+    // copy 'foo' to 'bar' with assignment
+    bar = foo;
+    printFoo("bar", bar);
 }
 
