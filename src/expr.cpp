@@ -1033,7 +1033,11 @@ loadAddr(const Binary &binary)
 gen::Reg
 Expr::loadAddr(void) const
 {
-    assert(isLValue());
+    if (!isLValue()) {
+	error::out() << getLoc() << ": not a lvalue" << std::endl;
+	print();
+	error::fatal();
+    }
 
     if (std::holds_alternative<Proxy>(variant)) {
 	return std::get<Proxy>(variant).expr->loadAddr();

@@ -374,7 +374,8 @@ parsePostfix(ExprPtr &&expr)
 		auto binaryOp = opTok.kind == TokenKind::PLUS2
 		    ? Binary::POSTFIX_INC
 		    : Binary::POSTFIX_DEC;
-		auto one = Expr::createLiteral("1", 10);
+		auto oneTy = Type::getSignedInteger(8);
+		auto one = Expr::createLiteral("1", 10, oneTy);
 		return Expr::createBinary(binaryOp, std::move(expr),
 					  std::move(one), opTok.loc);
 	    }
