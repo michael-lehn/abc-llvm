@@ -30,6 +30,8 @@ syntax match keyword /array/ skipwhite
 syntax match keyword /of/ skipwhite
 syntax match keyword /type/ skipwhite
 syntax match keyword /let/ skipwhite
+syntax match keyword /sizeof/ skipwhite
+syntax match keyword /cast/ skipwhite
 
 syntax match type /ro/ skipwhite
 syntax match type /u8/ skipwhite

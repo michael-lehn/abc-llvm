@@ -311,6 +311,21 @@ parsePostfix(ExprPtr &&expr)
 		getToken();
 		return parsePostfix(std::move(expr));
 	    }
+	case TokenKind::ARROW:
+	    if (!expr->getType()->isPointer()) {
+		error::out() << token.loc
+		    << "'->' can only be applied to a pointer or array"
+		    << std::endl;
+		error::fatal();
+	    }
+	    expr = parsePostfix(Expr::createDeref(std::move(expr), opTok.loc));
+	    if (token.kind == TokenKind::IDENTIFIER) {
+		// member access
+		expr = Expr::createMember(std::move(expr), token.val);
+		getToken();
+		expr = parsePostfix(std::move(expr));
+	    }
+	    return expr;
 	case TokenKind::LPAREN:
 	    // function call
 	    {
@@ -356,14 +371,6 @@ parsePostfix(ExprPtr &&expr)
 		    << std::endl;
 		error::fatal();
 	    }
-	case TokenKind::ARROW:
-	    if (!expr->getType()->isPointer()) {
-		error::out() << token.loc
-		    << "'->' can only be applied to a pointer or array"
-		    << std::endl;
-		error::fatal();
-	    }
-	    return parsePostfix(Expr::createDeref(std::move(expr), opTok.loc));
 	case TokenKind::PLUS2:
 	case TokenKind::MINUS2:
 	    if (!expr->isLValue()) {
@@ -449,7 +456,7 @@ parsePrimary(void)
         return expr;
     } else if (token.kind == TokenKind::NULLPTR) {
         getToken();
-	auto ty = Type::getPointer(Type::getUnsignedInteger(8));
+	auto ty = Type::getUnsignedInteger(8);
 	auto expr = Expr::createLiteral("0", 10, ty, opTok.loc);
         return expr;
     } else if (token.kind == TokenKind::DECIMAL_LITERAL) {

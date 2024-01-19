@@ -610,6 +610,10 @@ cast(Reg reg, const Type *fromType, const Type *toType)
 	return llvmBuilder->CreateTruncOrBitCast(reg, ty); 
     } else if (fromType->isFunction() && toType->isPointer()) {
 	return reg;
+    } else if (fromType->isArray() && toType->isPointer()) {
+	return reg;
+    } else if (fromType->isPointer() && toType->isPointer()) {
+	return reg;
     } else if (Type::convertArrayOrFunctionToPointer(fromType)->isPointer()
 	    && toType->isInteger()) {
 	return llvmBuilder->CreatePointerCast(reg, ty);

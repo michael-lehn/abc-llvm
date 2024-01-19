@@ -770,7 +770,7 @@ Expr::print(int indent) const
 static gen::Reg
 loadValue(const Literal &l)
 {
-    assert(l.type->isInteger());
+    //assert(l.type->isInteger());
     return gen::loadIntConst(l.val, l.type, l.radix);
 }
 

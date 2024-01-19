@@ -1,0 +1,42 @@
+type size_t = u64;
+type void_ptr = ->;
+
+fn malloc(size: size_t): void_ptr;
+fn free(ptr: void_ptr);
+fn printU64(:u64);
+fn printNl();
+
+type Node = struct {
+    val: u16;
+    next: void_ptr;
+};
+
+fn insertInList(list: -> Node, val: u16): -> Node
+{
+    local n: -> Node = malloc(sizeof(*n));
+    n->val = val;
+    n->next = list;
+    return n;
+}
+
+fn printList(list: -> Node)
+{
+    while (list) {
+	printU64(list->val);
+	printNl();
+	list = cast(list->next: -> Node);
+    }
+}
+
+fn main(): u8
+{
+    local list: -> Node = cast(0: -> Node);
+
+    list = insertInList(list, 42);
+    list = insertInList(list, 24);
+    list = insertInList(list, 123);
+
+    printList(list);
+
+    return 0;
+}
