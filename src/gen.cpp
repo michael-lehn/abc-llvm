@@ -46,6 +46,7 @@
 
 #include "error.hpp"
 #include "gen.hpp"
+#include "symtab.hpp"
 
 namespace gen {
 
@@ -242,6 +243,13 @@ void
 fnDef(const char *ident, const Type *fnType,
       const std::vector<const char *> &param)
 {
+    if (auto s = Symtab::get(ident, Symtab::RootScope)) {
+	s->setDefinitionFlag();
+	ident = s->internalIdent().c_str();
+    } else {
+	assert(0 && "symbol for function not declared in root scope");
+    }
+
     local.clear();
 
     auto fn = makeFnDecl(ident, fnType);
@@ -311,6 +319,16 @@ defLocal(const char *ident, const Type *type)
 {
     assert(currFn.llvmFn);
 
+    if (auto s = Symtab::get(ident, Symtab::CurrentScope)) {
+	s->setDefinitionFlag();
+	ident = s->internalIdent().c_str();
+    } else {
+	error::out() << "internal error: Symbol '" << ident
+	    << "' not found in current scope" << std::endl;
+	Symtab::print(error::out());
+	assert(0 && "symbol for local variable not declared in current scope");
+    }
+
     if (type->isFunction()) {
 	error::out() << "Function can not be defined as local variable"
 	    << std::endl;
@@ -330,6 +348,13 @@ defGlobal(const char *ident, const Type *type, ConstVal val)
     if (type->isFunction()) {
 	fnDecl(ident, type);
 	return;
+    }
+
+    if (auto s = Symtab::get(ident, Symtab::RootScope)) {
+	s->setDefinitionFlag();
+	ident = s->internalIdent().c_str();
+    } else {
+	assert(0 && "symbol for local variable not declared in root scope");
     }
 
     auto ty = TypeMap::get(type);
@@ -370,6 +395,12 @@ getSizeOf(const Type *type)
 Reg
 call(const char *ident, const std::vector<Reg> &param)
 {
+    if (auto s = Symtab::get(ident, Symtab::RootScope)) {
+	ident = s->internalIdent().c_str();
+    } else {
+	assert(0 && "symbol for function not declared in root scope");
+    }
+
     auto fn = llvmModule->getFunction(ident);
     assert(fn && "function not declared");
 
@@ -480,6 +511,15 @@ phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type)
 Reg
 loadAddr(const char *ident)
 {
+    if (auto s = Symtab::get(ident)) {
+	ident = s->internalIdent().c_str();
+    } else {
+	error::out() << "internal error: symbol '" << ident
+	    << "' not found in symbol table" << std::endl;
+	Symtab::print(error::out());
+	assert(0 && "symbol for not declared in any scope");
+    }
+
     if (currFn.bbClosed) {
 	llvm::errs() << "Warning: not reachable fetch\n";
 	return nullptr;
@@ -494,6 +534,12 @@ loadAddr(const char *ident)
 Reg
 fetch(const char *ident, const Type *type)
 {
+    if (auto s = Symtab::get(ident)) {
+	ident = s->internalIdent().c_str();
+    } else {
+	assert(0 && "symbol for not declared in any scope");
+    }
+
     if (currFn.bbClosed) {
 	llvm::errs() << "Warning: not reachable fetch\n";
 	return nullptr;
@@ -516,6 +562,12 @@ fetch(Reg addr, const Type *type)
 void
 store(Reg val, const char *ident, const Type *type)
 {
+    if (auto s = Symtab::get(ident)) {
+	ident = s->internalIdent().c_str();
+    } else {
+	assert(0 && "symbol for not declared in any scope");
+    }
+
     // TODO: assertion check: typeof(val) == type
     if (currFn.bbClosed) {
 	llvm::errs() << "Warning: not reachable store\n";

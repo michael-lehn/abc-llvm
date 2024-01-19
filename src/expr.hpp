@@ -52,10 +52,10 @@ struct Identifier
     Identifier(UStr ident, Token::Loc loc)
 	: loc{loc}
     {
-	auto symEntry = symtab::get(ident);
+	auto symEntry = Symtab::get(ident);
 	if (symEntry) {
-	    val = symEntry->internalIdent.c_str();
-	    type = symEntry->type;
+	    val = symEntry->ident.c_str();
+	    type = symEntry->getType();
 	    return;
 	}
 	error::out() << loc << " undeclared identifier '"

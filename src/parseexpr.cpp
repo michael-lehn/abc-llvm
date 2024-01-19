@@ -473,7 +473,7 @@ parsePrimary(void)
     } else if (token.kind == TokenKind::STRING_LITERAL) {
 	auto val = token.valProcessed.c_str();
         getToken();
-	auto sym = symtab::addStringLiteral(val).c_str();
+	auto sym = Symtab::addStringLiteral(val).c_str();
 	auto expr = Expr::createIdentifier(sym, opTok.loc);	
 	return expr;	
     } else if (token.kind == TokenKind::LPAREN) {

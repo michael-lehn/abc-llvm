@@ -16,8 +16,11 @@ main(void)
 			std::move(lit));
 			*/
 
-    symtab::add(Token::Loc{}, "a", Type::getUnsignedInteger(64));
-    symtab::add(Token::Loc{}, "b", Type::getUnsignedInteger(64));
+    Symtab::addDecl(Token::Loc{}, "a", Type::getUnsignedInteger(64))
+	->setDefinitionFlag();
+    Symtab::addDecl(Token::Loc{}, "b", Type::getUnsignedInteger(64))
+	->setDefinitionFlag();
+
 
     auto lit42 = Expr::createLiteral("42", 10, nullptr);
     auto a = Expr::createIdentifier("a");

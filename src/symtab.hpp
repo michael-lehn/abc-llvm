@@ -7,40 +7,87 @@
 #include "type.hpp"
 #include "ustr.hpp"
 
-namespace symtab {
+struct ScopeNode;
 
-enum Scope {
-    AnyScope,
-    CurrentScope,
-    RootScope,
-};
-
-struct SymEntry
+class Symtab
 {
-    Token::Loc loc;
-    const Type *type;
-    UStr ident;
-    UStr internalIdent;
+    public:
+
+	enum Scope {
+	    AnyScope,
+	    CurrentScope,
+	    RootScope,
+	};
+	
+	struct Entry
+	{
+	    friend Symtab; // Entry can only be created through Symtab methods
+
+	    public:
+		const UStr ident;
+
+		Token::Loc getLoc(void) const
+		{
+		    return hasDefinitionFlag() ? loc : lastDeclLoc;
+		}
+
+		const Type *getType()
+		{
+		    return type;
+		}
+
+		bool hasDefinitionFlag() const
+		{
+		    return definition_;
+		}
+
+		// returns 'false' iff symbol was alreay defined.
+		bool setDefinitionFlag(void);
+
+		// returns an identifier that can be used for code generation
+		UStr internalIdent(void) const
+		{
+		    return internalIdent_;
+		}
+	
+	    private:
+		Entry(Token::Loc loc, const Type *type, UStr ident,
+		      UStr internalIdent)
+		    : ident{ident}, loc{loc}, type{type}
+		    , internalIdent_{internalIdent}, definition_{false}
+		{}
+
+		Token::Loc loc, lastDeclLoc;
+		const Type *type;
+		UStr internalIdent_;
+		bool definition_;
+	};
+
+	static void openScope(void);
+	static void closeScope(void);
+
+	static Entry *get(UStr ident, Scope scope = AnyScope);
+
+    private:
+	static Symtab::Entry *get(UStr ident, ScopeNode *begin, ScopeNode *end);
+	static Entry *add(Token::Loc loc, UStr ident, const Type *type,
+			  ScopeNode *sn);
+
+    public:
+	// Add a new symbol to current scope. Returns nullptr if symbol already
+	// exists, otherwise returns a pointer to the created entry.
+	static Entry *addDecl(Token::Loc loc, UStr ident, const Type *type);
+
+	// Add a new symbol to root scope. Returns nullptr if symbol already
+	// exists, otherwise a pointer to the created entry.
+	static Entry *addDeclToRootScope(Token::Loc loc, UStr ident,
+					 const Type *type);
+
+	// returns an identifier for the string literal 'str'
+	static UStr addStringLiteral(UStr str);
+
+	static std::ostream &print(std::ostream &out);
+
 };
-
-void openScope(void);
-void closeScope(void);
-
-SymEntry *get(UStr ident, Scope scope = AnyScope);
-
-// Add a new symbol to current scope. Returns nullptr if symbol already exists,
-// otherwise a pointer to the added entry.
-SymEntry *add(Token::Loc loc, UStr ident, const Type *type);
-
-// Add a new symbol to root scope. Returns nullptr if symbol already exists,
-// otherwise a pointer to the added entry.
-SymEntry *addToRootScope(Token::Loc loc, UStr ident, const Type *type);
-
-// returns an identifier for the string literal 'str'
-UStr addStringLiteral(UStr str);
-
-std::ostream &print(std::ostream &out);
-
-} // namespace symtab
 
 #endif // SYMTAB_HPP

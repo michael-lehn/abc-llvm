@@ -91,9 +91,8 @@ parseGlobalDef(void)
 	    error::fatal();
 	}
 
-	// TODO: Provide symtab::defGlobal(...) ?
-	auto s = symtab::addToRootScope(loc, ident.c_str(), type);
-	auto ty = s->type;
+	auto s = Symtab::addDeclToRootScope(loc, ident.c_str(), type);
+	auto ty = s->getType();
 
 	// parse initalizer
 	ExprPtr init = nullptr;
@@ -118,7 +117,7 @@ parseGlobalDef(void)
 	    }
 	}
 	auto initValue = init ? init->loadConst() : nullptr;
-	gen::defGlobal(s->internalIdent.c_str(), ty, initValue);
+	gen::defGlobal(s->ident.c_str(), ty, initValue);
 	if (token.kind != TokenKind::COMMA) {
 	    break;
 	}
@@ -175,8 +174,8 @@ parseFnParamDeclOrType(std::vector<const Type *> &argType,
 
 	// add param to symtab if this is a declaration
 	if (paramIdent) {
-	    auto s = symtab::add(loc, ident.c_str(), type);
-	    paramIdent->push_back(s->internalIdent.c_str());
+	    auto s = Symtab::addDecl(loc, ident.c_str(), type);
+	    paramIdent->push_back(s->ident.c_str());
 	}
 
 	// done if we don't get a COMMA
@@ -204,7 +203,7 @@ parseFnParamType(std::vector<const Type *> &argType)
 
 static const Type *
 parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
-	          symtab::SymEntry **fnDecl = nullptr,
+	          Symtab::Entry **fnDecl = nullptr,
 		  std::vector<const char *> *fnParamIdent = nullptr)
 {
     UStr fnIdent;
@@ -229,7 +228,6 @@ parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
     error::expected(TokenKind::LPAREN);
     getToken();
     if (fnDecl) {
-	symtab::openScope();
 	parseFnParamDecl(argType, *fnParamIdent);
     } else {
 	parseFnParamType(argType);
@@ -241,24 +239,30 @@ parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
     retType = Type::getVoid();
     if (token.kind == TokenKind::COLON) {
 	getToken();
+	auto retTypeLoc = token.loc;
 	retType = parseType();
+	if (!retType) {
+	    error::out() << retTypeLoc << ": return type expected" << std::endl;
+	    error::fatal();
+	}
+	Symtab::addDecl(retTypeLoc, ".retVal", retType);
     }
 
     auto fnType = Type::getFunction(retType, argType);
     
     if (fnDecl) {
-	*fnDecl = symtab::addToRootScope(fnLoc, fnIdent.c_str(), fnType);
+	*fnDecl = Symtab::addDeclToRootScope(fnLoc, fnIdent.c_str(), fnType);
     }
 
     return fnType;
 }
 
-static symtab::SymEntry *
+static Symtab::Entry *
 parseFnDecl(std::vector<const char *> &fnParamIdent)
 {
     std::vector<const Type *> argType;
     const Type *retType;
-    symtab::SymEntry *fnDecl;
+    Symtab::Entry *fnDecl;
 
     parseFnDeclOrType(argType, retType, &fnDecl, &fnParamIdent);
     return fnDecl;
@@ -475,8 +479,8 @@ parseLocalDef(void)
 	    error::fatal();
 	}
 
-	auto s = symtab::add(loc, ident.c_str(), type);
-	gen::defLocal(s->internalIdent.c_str(), s->type);
+	auto s = Symtab::addDecl(loc, ident.c_str(), type);
+	gen::defLocal(s->ident.c_str(), s->getType());
 
 	// parse initalizer
 	if (token.kind == TokenKind::EQUAL) {
@@ -528,7 +532,7 @@ parseCompoundStmt(bool openScope)
     getToken();
 
     if (openScope) {
-	symtab::openScope();
+	Symtab::openScope();
     }
 
     while (parseStmt()) {
@@ -536,7 +540,9 @@ parseCompoundStmt(bool openScope)
 
     error::expected(TokenKind::RBRACE);
     getToken();
-    symtab::closeScope();
+    if (openScope) {
+	Symtab::closeScope();
+    }
     return true;
 }
 
@@ -645,7 +651,7 @@ parseForStmt(void)
     }
     getToken();
 
-    symtab::openScope();
+    Symtab::openScope();
     error::expected(TokenKind::LPAREN);
     getToken();
     // parse 'init': local definition or  expr
@@ -693,6 +699,7 @@ parseForStmt(void)
     gen::jmp(condLabel);
 
     // end of loop
+    Symtab::closeScope();
     gen::labelDef(endLabel);
     return true;
 }
@@ -743,24 +750,25 @@ parseStmt(void)
 static bool
 parseFn(void)
 {
+    Symtab::openScope();
+
     std::vector<const char *> fnParamIdent;
     auto fnDecl = parseFnDecl(fnParamIdent);
     if (!fnDecl) {
+	Symtab::closeScope();
 	return false;
     }
 
     if (token.kind == TokenKind::SEMICOLON) {
 	getToken();
-	gen::fnDecl(fnDecl->ident.c_str(), fnDecl->type);
-	symtab::closeScope();
+	gen::fnDecl(fnDecl->ident.c_str(), fnDecl->getType());
     } else {
 	error::expected(TokenKind::LBRACE);
-	gen::fnDef(fnDecl->ident.c_str(), fnDecl->type, fnParamIdent);
+	gen::fnDef(fnDecl->ident.c_str(), fnDecl->getType(), fnParamIdent);
 	assert(parseCompoundStmt(false));
 	gen::fnDefEnd();
     }
 
+    Symtab::closeScope();
     return true;
 }
-
-

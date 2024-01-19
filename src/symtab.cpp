@@ -9,13 +9,9 @@
 #include "gen.hpp"
 #include "symtab.hpp"
 
-namespace symtab {
-
-//static std::unordered_map<UStr, SymEntry> symtab;
-
 struct ScopeNode
 {
-    std::unordered_map<const char *, SymEntry> symtab;
+    std::unordered_map<const char *, Symtab::Entry> symtab;
     std::unique_ptr<ScopeNode> up;
     std::size_t id = 0;
 
@@ -26,8 +22,27 @@ struct ScopeNode
 static std::unique_ptr<ScopeNode> curr = std::make_unique<ScopeNode>();
 static ScopeNode *root = curr.get();
 
+//------------------------------------------------------------------------------
+
+bool
+Symtab::Entry::setDefinitionFlag(void)
+{
+    if (definition_) {
+	error::out() << lastDeclLoc << ": '" << ident.c_str()
+	    << "' already defined. Previous definition at "
+	    << loc << std::endl;
+	error::fatal();
+	return false; // failed
+    }
+    definition_ = true;
+    loc = lastDeclLoc;
+    return true; // success
+}
+
+//------------------------------------------------------------------------------
+
 void
-openScope(void)
+Symtab::openScope(void)
 {
     static std::size_t id;
 
@@ -43,44 +58,40 @@ openScope(void)
 }
 
 void
-closeScope(void)
+Symtab::closeScope(void)
 {
     assert(curr->up);
 
     curr = std::move(curr->up);
 }
 
-static SymEntry *
+Symtab::Entry *
 get(UStr ident, ScopeNode *begin, ScopeNode *end)
 {
     for (ScopeNode *sn = begin; sn != end; sn = sn->up.get()) {
 	if (sn->symtab.contains(ident.c_str())) {
-	    return &sn->symtab[ident.c_str()];
+	    return &sn->symtab.at(ident.c_str());
 	}
     }
     return nullptr;
 }
 
-SymEntry *
-get(UStr ident, Scope scope)
+Symtab::Entry *
+Symtab::get(UStr ident, Scope scope)
 {
     ScopeNode *begin = scope == RootScope ? root : curr.get();
     ScopeNode *end = scope == AnyScope ? nullptr : begin->up.get();
-    return get(ident, begin, end);
+    return ::get(ident, begin, end);
 }
 
-static SymEntry *
-add(Token::Loc loc, UStr ident, const Type *type, ScopeNode *sn)
+Symtab::Entry *
+Symtab::add(Token::Loc loc, UStr ident, const Type *type, ScopeNode *sn)
 {
     assert(sn);
-    SymEntry *found = get(ident, sn, sn->up.get());
+    Symtab::Entry *found = ::get(ident, sn, sn->up.get());
 
     if (found) {
-	// already in symtab
-	error::out() << loc << ": identifier '" << ident.c_str()
-	    << "' already defined. Previous definition at " << found->loc
-	    << std::endl;
-	error::fatal();
+	found->lastDeclLoc = loc;
 	return found;
     }
 
@@ -91,25 +102,25 @@ add(Token::Loc loc, UStr ident, const Type *type, ScopeNode *sn)
 	internalIdent = ss.str();
     }
 
-    sn->symtab[ident.c_str()] = {loc, type, ident, internalIdent};
-    return &sn->symtab[ident.c_str()];
+    auto entry = Entry{loc, type, ident, internalIdent};
+    sn->symtab.emplace(ident.c_str(), std::move(entry));
+    return &sn->symtab.at(ident.c_str());
 }
 
-
-SymEntry *
-add(Token::Loc loc, UStr ident, const Type *type)
+Symtab::Entry *
+Symtab::addDecl(Token::Loc loc, UStr ident, const Type *type)
 {
     return add(loc, ident, type, curr.get());
 }
 
-SymEntry *
-addToRootScope(Token::Loc loc, UStr ident, const Type *type)
+Symtab::Entry *
+Symtab::addDeclToRootScope(Token::Loc loc, UStr ident, const Type *type)
 {
     return add(loc, ident, type, root);
 }
 
 UStr
-addStringLiteral(UStr str)
+Symtab::addStringLiteral(UStr str)
 {
     static std::size_t id;
     static std::unordered_map<const char *, std::size_t> pool;
@@ -126,7 +137,7 @@ addStringLiteral(UStr str)
     if (added) {
 	auto ty = Type::getArray(Type::getUnsignedInteger(8),
 				 strlen(str.c_str()) + 1);
-	addToRootScope(Token::Loc{}, ident, ty);
+	addDeclToRootScope(Token::Loc{}, ident, ty);
 	gen::defStringLiteral(ident.c_str(), str.c_str(), true);
     }
     return ident;
@@ -146,9 +157,9 @@ print(std::ostream &out, ScopeNode *sn)
     for (auto sym: sn->symtab) {
 	out << std::setfill(' ') << std::setw(indent * 4) << " "
 	    << sym.second.ident.c_str() << ": "
-	    << sym.second.loc << ", "
-	    << sym.second.type << ", "
-	    << sym.second.internalIdent.c_str()
+	    << sym.second.getLoc() << ", "
+	    << sym.second.getType() << ", "
+	    << sym.second.internalIdent().c_str()
 	    << std::endl;
     }
     out << std::setfill(' ') << std::setw(indent * 4) << " " << "end of scope"
@@ -158,12 +169,10 @@ print(std::ostream &out, ScopeNode *sn)
 }
 
 std::ostream &
-print(std::ostream &out)
+Symtab::print(std::ostream &out)
 {
     out << " --- symtab ----" << std::endl;
-    print(out, curr.get());
+    ::print(out, curr.get());
     out << " ---------------" << std::endl;
     return out;
 }
-
-} // namespace symtab
