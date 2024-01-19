@@ -53,7 +53,11 @@ parseTypeDef(void)
 	    error::out() << token.loc << ": type expected" << std::endl;
 	    error::fatal();
 	}
-	Type::createAlias(ident, ty);
+	if (!Type::createAlias(ident, ty)) {
+	    error::out() << token.loc << ": '" << ident << "' already defined "
+		<< std::endl;
+	    error::fatal();
+	}
 	if (token.kind != TokenKind::COMMA) {
 	    break;
 	}
@@ -370,7 +374,7 @@ parseArrayType(void)
 }
 
 static const Type *
-parseStructType(const char *name = nullptr)
+parseStructType(void)
 {
     if (token.kind != TokenKind::STRUCT) {
 	return nullptr;
@@ -399,7 +403,7 @@ parseStructType(const char *name = nullptr)
 
     error::expected(TokenKind::RBRACE);
     getToken();
-    return Type::createStruct(name, ident, type);
+    return Type::createStruct(ident, type);
 }
 
 static const Type *

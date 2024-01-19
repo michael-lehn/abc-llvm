@@ -43,6 +43,7 @@ enum class TokenKind {
     STRUCT,
     UNION,
     TYPE,
+    CAST,
 
     // punctuators
     DOT,

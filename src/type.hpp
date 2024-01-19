@@ -196,11 +196,10 @@ class Type
 				       std::vector<const Type *> argType);
 
 	// for named type
-	static void createAlias(const char *name, const Type *type);
+	static const Type *createAlias(const char *name, const Type *type);
 	static const Type *getNamed(UStr name);
 
-	static const Type *createStruct(const char *name,
-					const std::vector<const char *> &ident,
+	static const Type *createStruct(const std::vector<const char *> &ident,
 					const std::vector<const Type *> &type);
 
 	// type information and casts

@@ -208,13 +208,17 @@ Type::getFunction(const Type *retType, std::vector<const Type *> argType)
  * Named types
  */
 
-void
+const Type *
 Type::createAlias(const char *name, const Type *type)
 {
     if (!aliasSet) {
 	aliasSet = new std::unordered_map<const char *, const Type *>;
     }
+    if (aliasSet->contains(name)) {
+	return nullptr;
+    }
     aliasSet->insert({name, type});
+    return type;
 }
 
 const Type *
@@ -230,13 +234,12 @@ Type::getNamed(UStr name)
 }
 
 const Type *
-Type::createStruct(const char *name, const std::vector<const char *> &ident,
+Type::createStruct(const std::vector<const char *> &ident,
 		   const std::vector<const Type *> &type)
 {
     if (!structSet) {
 	structSet = new std::set<Struct>;
     }
-    assert(!name || !getNamed(name));
 
     Type::StructData structData;
     structData.type = type;
@@ -245,12 +248,7 @@ Type::createStruct(const char *name, const std::vector<const char *> &ident,
     for (std::size_t i = 0; i < ident.size(); ++i) {
 	structData.index[ident[i]] = i;
     }
-    auto ty = &*structSet->insert(StructData{std::move(structData)}).first;
-
-    if (name) {
-	createAlias(name, ty);
-    }
-    return ty;
+    return &*structSet->insert(StructData{std::move(structData)}).first;
 }
 
 /*

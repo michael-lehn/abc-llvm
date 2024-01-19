@@ -244,16 +244,16 @@ parsePrefix(void)
     }
     switch (opTok.kind) {
 	case TokenKind::MINUS:
-	    expr = Expr::createUnaryMinus(std::move(expr),opTok.loc);
+	    expr = Expr::createUnaryMinus(std::move(expr), opTok.loc);
 	    break;
 	case TokenKind::NOT:
-	    expr = Expr::createLogicalNot(std::move(expr),opTok.loc);
+	    expr = Expr::createLogicalNot(std::move(expr), opTok.loc);
 	    break;
 	case TokenKind::ASTERISK:
-	    expr = Expr::createDeref(std::move(expr),opTok.loc);
+	    expr = Expr::createDeref(std::move(expr), opTok.loc);
 	    break;
 	case TokenKind::AND:
-	    expr = Expr::createAddr(std::move(expr),opTok.loc);
+	    expr = Expr::createAddr(std::move(expr), opTok.loc);
 	    break;
 	case TokenKind::PLUS2:
 	case TokenKind::MINUS2:
@@ -293,6 +293,14 @@ parsePostfix(ExprPtr &&expr)
 
     auto opTok = token;
     getToken();
+
+    if (!expr) {
+	error::out() << opTok.loc
+	    << ": postfix operator '" << tokenCStr(opTok.kind) << "' requires"
+	    << " non-empty expression" << std::endl;
+	error::fatal();
+
+    }
 
     switch (opTok.kind) {
 	case TokenKind::DOT:
@@ -385,6 +393,26 @@ parsePrimary(void)
         getToken();
 	auto expr = Expr::createIdentifier(opTok.val.c_str(), opTok.loc);
         return expr;
+    } else if (token.kind == TokenKind::CAST) {
+	getToken();
+	error::expected(TokenKind::LPAREN);
+	getToken();
+	auto expr = parseExpr();
+	if (!expr) {
+	    error::out() << token.loc << " expected non-empty expression"
+		<< std::endl;
+	    error::fatal();
+	}
+	error::expected(TokenKind::COLON);
+	getToken();
+	auto ty = parseType();
+	if (!ty) {
+	    error::out() << token.loc << " type expected" << std::endl;
+	    error::fatal();
+	}
+	error::expected(TokenKind::RPAREN);
+	getToken();
+	return Expr::createCast(std::move(expr), ty, opTok.loc);
     } else if (token.kind == TokenKind::SIZEOF) {
 	getToken();
 	error::expected(TokenKind::LPAREN);

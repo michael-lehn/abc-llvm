@@ -7,7 +7,7 @@ fn printU64(:u64);
 type Foo = struct { a: u64; b: u32; },
      long = u64,
      int = u32,
-     voidPtr  = ->;
+     addr_ptr  = ->;
 
 fn getFoo(a: u64, b: u32): Foo
 {
@@ -27,7 +27,7 @@ fn printFoo(ident: -> u8, f: Foo)
 
 global a: array[5] of Foo;
 
-fn main(): Foo
+fn main()
 {
     local foo: Foo = getFoo(1, 2);
     local bar: struct {a :long; b : int; }; // same type as Foo

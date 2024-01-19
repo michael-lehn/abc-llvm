@@ -83,6 +83,8 @@ tokenKindCStr(TokenKind kind)
 	    return "UNION";
 	case TokenKind::TYPE:
 	    return "TYPE";
+	case TokenKind::CAST:
+	    return "CAST";
 	case TokenKind::DOT:
 	    return "DOT";
 	case TokenKind::SEMICOLON:
@@ -218,6 +220,8 @@ tokenCStr(TokenKind kind)
 	    return "union";
 	case TokenKind::TYPE:
 	    return "type";
+	case TokenKind::CAST:
+	    return "cast";
 	case TokenKind::DOT:
 	    return ".";
 	case TokenKind::SEMICOLON:
@@ -371,6 +375,7 @@ static std::unordered_map<UStr, TokenKind> kw = {
     { "struct", TokenKind::STRUCT },
     { "union", TokenKind::UNION },
     { "type", TokenKind::TYPE },
+    { "cast", TokenKind::CAST },
 };
 
 // TODO: proper implementation and support of escape sequences
