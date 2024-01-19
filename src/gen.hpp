@@ -18,6 +18,7 @@ using ConstVal = llvm::Constant *;
 
 // enable/disable optimization
 void setOpt(bool);
+void setTarget(int codeGenOptLevel);
 
 // functions definition
 void fnDecl(const char *ident, const Type *fn);
@@ -31,6 +32,9 @@ void defLocal(const char *ident, const Type *type);
 void defGlobal(const char *ident, const Type *type, ConstVal val = nullptr);
 void defStatic(const char *ident, const Type *type, ConstVal constVal);
 void defStringLiteral(const char *ident, const char *val, bool isConst);
+
+// size of type
+std::size_t getSizeOf(const Type *type);
 
 // functions call
 Reg call(const char *ident, const std::vector<Reg> &param);

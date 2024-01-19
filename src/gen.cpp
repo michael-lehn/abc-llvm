@@ -160,13 +160,50 @@ std::unordered_map<const Type *, llvm::Type *> TypeMap::typeMap;
 
 //------------------------------------------------------------------------------
 
+static bool setTargetInit = false;
 static bool opt;
+static llvm::TargetMachine *targetMachine;
 
 void
 setOpt(bool enableOpt)
 {
     opt = enableOpt;
 }
+
+void
+setTarget(int codeGenOptLevel)
+{
+    assert(codeGenOptLevel >= 0 && codeGenOptLevel <= 3);
+    setOpt(codeGenOptLevel);
+
+    llvm::InitializeAllTargetInfos();
+    llvm::InitializeAllTargets();
+    llvm::InitializeAllTargetMCs();
+    llvm::InitializeAllAsmParsers();
+    llvm::InitializeAllAsmPrinters();
+
+    auto targetTriple = llvm::sys::getDefaultTargetTriple();
+    llvmModule->setTargetTriple(targetTriple);
+
+    std::string error;
+    auto target = llvm::TargetRegistry::lookupTarget(targetTriple, error);
+    if (!target) {
+	llvm::errs() << error;
+	std::exit(1);
+    }
+
+    targetMachine = target->createTargetMachine(
+	    targetTriple,
+	    "generic",
+	    "",
+	    llvm::TargetOptions{},
+	    llvm::Reloc::PIC_,
+	    std::nullopt,
+	    llvm::CodeGenOpt::Level{codeGenOptLevel});
+    llvmModule->setDataLayout(targetMachine->createDataLayout());
+    setTargetInit = true;
+}
+
 
 //------------------------------------------------------------------------------
 
@@ -316,6 +353,16 @@ defStringLiteral(const char *ident, const char *val, bool isConst)
 			/*Linkage=*/llvm::GlobalValue::InternalLinkage,
 			/*Initializer=*/constVal,
 			/*Name=*/ident);
+}
+
+//------------------------------------------------------------------------------
+
+// size of type
+std::size_t
+getSizeOf(const Type *type)
+{
+    auto ty = TypeMap::get(type);
+    return llvmModule->getDataLayout().getTypeAllocSize(ty);
 }
 
 //------------------------------------------------------------------------------
@@ -510,10 +557,6 @@ cast(Reg reg, const Type *fromType, const Type *toType)
 	}
 	return llvmBuilder->CreateTruncOrBitCast(reg, ty); 
     } else if (fromType->isFunction() && toType->isPointer()) {
-	if (fromType != toType->getRefType()) {
-	    error::out() << " warning: casting '" << fromType
-		<< "' to '" << toType << std::endl;
-	}
 	return reg;
     } else if (Type::convertArrayOrFunctionToPointer(fromType)->isPointer()
 	    && toType->isInteger()) {
@@ -652,33 +695,10 @@ dump_bc(const char *filename)
 void
 dump_asm(const char *filename, int codeGenOptLevel)
 {
-    assert(codeGenOptLevel >= 0 && codeGenOptLevel <= 3);
-
-    llvm::InitializeAllTargetInfos();
-    llvm::InitializeAllTargets();
-    llvm::InitializeAllTargetMCs();
-    llvm::InitializeAllAsmParsers();
-    llvm::InitializeAllAsmPrinters();
-
-    auto targetTriple = llvm::sys::getDefaultTargetTriple();
-    llvmModule->setTargetTriple(targetTriple);
-
-    std::string error;
-    auto target = llvm::TargetRegistry::lookupTarget(targetTriple, error);
-    if (!target) {
-	llvm::errs() << error;
-	std::exit(1);
+    if (!setTargetInit) {
+	setTarget(codeGenOptLevel);
     }
-
-    auto targetMachine = target->createTargetMachine(
-	    targetTriple,
-	    "generic",
-	    "",
-	    llvm::TargetOptions{},
-	    llvm::Reloc::PIC_,
-	    std::nullopt,
-	    llvm::CodeGenOpt::Level{codeGenOptLevel});
-    llvmModule->setDataLayout(targetMachine->createDataLayout());
+    assert(targetMachine);
 
     std::error_code ec;
     auto dest = llvm::raw_fd_ostream{

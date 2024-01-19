@@ -23,6 +23,8 @@ fn printFoo(ident: -> u8, f: Foo)
     print(ident); print(".a = "); printU64(f.a); printNl();
     print(ident); print(".b = "); printU64(f.b); printNl();
     printNl();
+    print("sizeof(f) = "); printU64(sizeof(f)); printNl();
+    print("sizeof(:Foo) = "); printU64(sizeof(:Foo)); printNl();
 }
 
 global a: array[5] of Foo;

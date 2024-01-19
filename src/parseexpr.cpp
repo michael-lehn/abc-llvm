@@ -426,7 +426,7 @@ parsePrimary(void)
 		error::out() << loc << " type expected" << std::endl;
 		error::fatal();
 	    }
-	    size = Type::getSizeOf(ty);
+	    size = gen::getSizeOf(ty);
 	} else {
 	    auto expr = parseExpr();
 	    if (!expr) {
@@ -434,7 +434,7 @@ parsePrimary(void)
 		    << std::endl;
 		error::fatal();
 	    }
-	    size = Type::getSizeOf(expr->getType());
+	    size = gen::getSizeOf(expr->getType());
 	}
 	error::expected(TokenKind::RPAREN);
 	getToken();

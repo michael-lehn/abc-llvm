@@ -308,10 +308,12 @@ getIntType(const char *s, const char *end, std::uint8_t radix, const Type *&ty)
 static const Type *
 getIntType(const char *s, const char *end, std::uint8_t radix)
 {
+    //TODO: Handle type of integer literals like in Rust. Currently handled
+    //	    like in C, i.e. it is at least of type 'int' (where i32 is choosen)
     const Type *ty;
-    if (getIntType<std::int8_t, 8>(s, end, radix, ty)
+    if (/*getIntType<std::int8_t, 8>(s, end, radix, ty)
      || getIntType<std::int16_t, 16>(s, end, radix, ty)
-     || getIntType<std::int32_t, 32>(s, end, radix, ty)
+     || */getIntType<std::int32_t, 32>(s, end, radix, ty)
      || getIntType<std::int64_t, 64>(s, end, radix, ty))
     {
 	return ty;

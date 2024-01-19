@@ -202,8 +202,7 @@ class Type
 	static const Type *createStruct(const std::vector<const char *> &ident,
 					const std::vector<const Type *> &type);
 
-	// type information and casts
-	static std::size_t getSizeOf(const Type *type);
+	// type casts
 	static const Type *getTypeConversion(const Type *from, const Type *to,
 					     Token::Loc loc = Token::Loc{});
 	static const Type *convertArrayOrFunctionToPointer(const Type *ty);

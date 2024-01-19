@@ -55,7 +55,7 @@ main(int argc, char *argv[])
 	std::cerr << "can not read '" << argv[1] << "'" << std::endl;
     }
 
-    gen::setOpt(optLevel);
+    gen::setTarget(optLevel);
     parser();
 
     if (output == ASM) {

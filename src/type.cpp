@@ -252,24 +252,8 @@ Type::createStruct(const std::vector<const char *> &ident,
 }
 
 /*
- * Type information and casts
+ * Type casts
  */
-
-std::size_t
-Type::getSizeOf(const Type *type)
-{
-    if (type->isInteger()) {
-	return type->getIntegerNumBits() / 8;
-    } else if (type->isPointer() || type->isFunction()) {
-	error::out() << "Warning: Currently pointers and addresses are"
-	    " assumed to be 64 bits" << std::endl;
-	return 8;
-    } else if (type->isArray()) {
-	return type->getDim() * getSizeOf(type->getRefType());
-    }
-    assert(0 && "getSizeOf not implemented for this type");
-    return 0;
-}
 
 const Type *
 Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc)
