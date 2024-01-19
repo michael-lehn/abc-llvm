@@ -204,34 +204,7 @@ Type::getFunction(const Type *retType, std::vector<const Type *> argType)
     return &*fnTypeSet->insert(Function{retType, argType}).first;
 }
 
-/*
- * Named types
- */
-
-const Type *
-Type::createAlias(const char *name, const Type *type)
-{
-    if (!aliasSet) {
-	aliasSet = new std::unordered_map<const char *, const Type *>;
-    }
-    if (aliasSet->contains(name)) {
-	return nullptr;
-    }
-    aliasSet->insert({name, type});
-    return type;
-}
-
-const Type *
-Type::getNamed(UStr name)
-{
-    if (!aliasSet) {
-	aliasSet = new std::unordered_map<const char *, const Type *>;
-    }
-    if (!aliasSet->contains(name.c_str())) {
-	return nullptr;
-    }
-    return aliasSet->find(name.c_str())->second;
-}
+// create strcutured types
 
 const Type *
 Type::createStruct(const std::vector<const char *> &ident,

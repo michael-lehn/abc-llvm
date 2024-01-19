@@ -53,7 +53,7 @@ parseTypeDef(void)
 	    error::out() << token.loc << ": type expected" << std::endl;
 	    error::fatal();
 	}
-	if (!Type::createAlias(ident, ty)) {
+	if (!Symtab::createTypeAlias(ident, ty)) {
 	    error::out() << token.loc << ": '" << ident << "' already defined "
 		<< std::endl;
 	    error::fatal();
@@ -416,7 +416,7 @@ parseNamedType(const char *name = nullptr)
     if (token.kind != TokenKind::IDENTIFIER) {
 	return nullptr;
     }
-    auto ty = Type::getNamed(token.val.c_str());
+    auto ty = Symtab::getNamedType(token.val);
     if (!ty) {
 	error::out()
 	    << token.loc << ": type expected. '" << token.val.c_str()
@@ -742,6 +742,7 @@ parseStmt(void)
 	|| parseForStmt()
 	|| parseReturnStmt()
 	|| parseExprStmt()
+	|| parseTypeDef()
 	|| parseLocalDefStmt();
 }
 

@@ -194,11 +194,6 @@ class Type
 	static const Type *getArray(const Type *refType, std::size_t dim);
 	static const Type *getFunction(const Type *retType,
 				       std::vector<const Type *> argType);
-
-	// for named type
-	static const Type *createAlias(const char *name, const Type *type);
-	static const Type *getNamed(UStr name);
-
 	static const Type *createStruct(const std::vector<const char *> &ident,
 					const std::vector<const Type *> &type);
 

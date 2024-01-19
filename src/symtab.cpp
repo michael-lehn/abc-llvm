@@ -12,6 +12,7 @@
 struct ScopeNode
 {
     std::unordered_map<const char *, Symtab::Entry> symtab;
+    std::unordered_map<const char *, const Type *> typetab;
     std::unique_ptr<ScopeNode> up;
     std::size_t id = 0;
 
@@ -66,7 +67,7 @@ Symtab::closeScope(void)
 }
 
 Symtab::Entry *
-get(UStr ident, ScopeNode *begin, ScopeNode *end)
+Symtab::get(UStr ident, ScopeNode *begin, ScopeNode *end)
 {
     for (ScopeNode *sn = begin; sn != end; sn = sn->up.get()) {
 	if (sn->symtab.contains(ident.c_str())) {
@@ -81,14 +82,14 @@ Symtab::get(UStr ident, Scope scope)
 {
     ScopeNode *begin = scope == RootScope ? root : curr.get();
     ScopeNode *end = scope == AnyScope ? nullptr : begin->up.get();
-    return ::get(ident, begin, end);
+    return get(ident, begin, end);
 }
 
 Symtab::Entry *
 Symtab::add(Token::Loc loc, UStr ident, const Type *type, ScopeNode *sn)
 {
     assert(sn);
-    Symtab::Entry *found = ::get(ident, sn, sn->up.get());
+    Symtab::Entry *found = get(ident, sn, sn->up.get());
 
     if (found) {
 	found->lastDeclLoc = loc;
@@ -142,6 +143,45 @@ Symtab::addStringLiteral(UStr str)
     }
     return ident;
 
+}
+
+const Type *
+Symtab::getNamedType(UStr ident, ScopeNode *begin, ScopeNode *end)
+{
+    for (ScopeNode *sn = begin; sn != end; sn = sn->up.get()) {
+	if (sn->typetab.contains(ident.c_str())) {
+	    return sn->typetab.at(ident.c_str());
+	}
+    }
+    return nullptr;
+}
+
+const Type *
+Symtab::getNamedType(UStr ident, Scope scope)
+{
+    ScopeNode *begin = scope == RootScope ? root : curr.get();
+    ScopeNode *end = scope == AnyScope ? nullptr : begin->up.get();
+    return Symtab::getNamedType(ident, begin, end);
+}
+
+const Type *
+Symtab::getNamedType(UStr ident)
+{
+    return getNamedType(ident, AnyScope);
+}
+
+const Type *
+Symtab::createTypeAlias(UStr ident, const Type *type)
+{
+    assert(curr.get());
+    auto *found = getNamedType(ident, CurrentScope);
+
+    if (found) {
+	return nullptr;
+    }
+
+    curr.get()->typetab.emplace(ident.c_str(), type);
+    return type;
 }
 
 static std::size_t
