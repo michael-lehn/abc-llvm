@@ -90,7 +90,9 @@ operator<(const Function &x, const Function &y)
 
 struct Struct : public Type
 {
-    Struct(void) : Type{Type::STRUCT, StructData{}} {}
+    Struct(std::size_t id, UStr name)
+	: Type{Type::STRUCT, StructData{id, name}}
+    {}
 
     bool isComplete(void)
     {
@@ -104,7 +106,7 @@ static std::set<Integer> *intTypeSet;
 static std::set<Pointer> *ptrTypeSet;
 static std::set<Array> *arrayTypeSet;
 static std::set<Function> *fnTypeSet;
-static std::unordered_map<UStr, Struct> *structMap;
+static std::unordered_map<std::size_t, Struct> *structMap;
 
 //-- Static functions ----------------------------------------------------------
 
@@ -194,26 +196,41 @@ Type::getFunction(const Type *retType, std::vector<const Type *> argType)
 // create strcutured types
 
 Type *
-Type::createIncompleteStruct(UStr ident)
+Type::createIncompleteStruct(UStr name)
 {
     if (!structMap) {
-	structMap = new std::unordered_map<UStr, Struct>;
+	structMap = new std::unordered_map<std::size_t, Struct>;
     }
-    bool add = !structMap->contains(ident);
-    auto ty = &structMap->insert({ident, Struct{}}).first->second;
-    if (add) {
-	Symtab::createTypeAlias(ident, ty);
+    if (auto ty = Symtab::getNamedType(name, Symtab::CurrentScope)) {
+	if (!ty->isStruct()) {
+	    return nullptr;
+	}
+	auto &structData = std::get<StructData>(ty->data);
+	// type already exists (not a problem if it's already complete)
+	return &structMap->at(structData.id);
     }
+
+    // new struct type is needed
+    static size_t id;
+    auto ty = &structMap->insert({id, Struct{id, name}}).first->second;
+    ++id;
+
+    // add type to current scope
+    auto tyAdded = Symtab::addNamedType(name, ty);
+    assert(ty == tyAdded);
     return ty;
 }
 
 void
-Type::deleteStruct(UStr ident)
+Type::deleteStruct(const Type *ty)
 {
     assert(structMap
 	    && "Type::deleteStruct() called before any struct was created");
-    assert(structMap->erase(ident) == 1
-	    && "Type::deleteStruct(): no struct deleted");
+    
+    assert(ty->isStruct());
+    const auto &structData = std::get<StructData>(ty->data);
+    auto numErased = structMap->erase(structData.id);
+    assert(numErased == 1 && "Type::deleteStruct(): no struct deleted");
 }
 
 /*
@@ -301,14 +318,17 @@ operator<<(std::ostream &out, const Type *type)
     } else if (type->isStruct()) {
 	auto memType = type->getMemberType();
 	auto memIdent = type->getMemberIdent();
-	out << "{";
-	for (std::size_t i = 0; i < memType.size(); ++i) {
-	    out << memIdent[i] << ":" << memType[i];
-	    if (i + 1 < memType.size()) {
-		out << ", ";
+	out << "struct " << type->getName().c_str();
+	if (type->hasSize()) {
+	    out << "{";
+	    for (std::size_t i = 0; i < memType.size(); ++i) {
+		out << memIdent[i] << ":" << memType[i];
+		if (i + 1 < memType.size()) {
+		    out << ", ";
+		}
 	    }
+	    out << "}";
 	}
-	out << "}";
     } else {
 	out << "unknown type: id = " << type->id
 	    << ", address = " << (int *)type

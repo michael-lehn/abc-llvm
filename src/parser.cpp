@@ -55,7 +55,7 @@ parseTypeDef(void)
 	    error::out() << token.loc << ": type expected" << std::endl;
 	    error::fatal();
 	}
-	if (!Symtab::createTypeAlias(ident, ty)) {
+	if (!Symtab::addTypeAlias(ident, ty)) {
 	    error::out() << token.loc << ": '" << ident << "' already defined "
 		<< std::endl;
 	    error::fatal();
@@ -70,7 +70,7 @@ parseTypeDef(void)
     return true;
 }
 
-static const Type *parseStructType(void);
+static const Type *parseStructDecl(void);
 
 static bool
 parseStructDef(void)
@@ -79,7 +79,7 @@ parseStructDef(void)
 	return false;
     }
     auto structTok = token;
-    auto ty = parseStructType();
+    auto ty = parseStructDecl();
     if (!ty) {
 	error::out() << structTok.loc
 	    << ": struct definition expected" << std::endl;
@@ -110,6 +110,11 @@ parseGlobalDef(void)
 	auto type = parseType();
 	if (!type) {
 	    error::out() << token.loc << " type expected" << std::endl;
+	    error::fatal();
+	} else if (!type->hasSize()) {
+	    error::out() << token.loc
+		<< ": variable '" << ident.c_str() << "' has incomplete type '"
+		<< type << "'" << std::endl;
 	    error::fatal();
 	}
 
@@ -400,7 +405,7 @@ parseArrayType(void)
 }
 
 static const Type *
-parseStructType(void)
+parseStructDecl(void)
 {
     if (token.kind != TokenKind::STRUCT) {
 	return nullptr;
@@ -411,10 +416,12 @@ parseStructType(void)
     auto structIdTok = token;
     getToken();
 
-    error::expected(TokenKind::LBRACE);
+    auto structTy = Type::createIncompleteStruct(structIdTok.val);
+    if (token.kind != TokenKind::LBRACE) {
+	return structTy;
+    }
     getToken();
 
-    auto structTy = Type::createIncompleteStruct(structIdTok.val);
     if (!structTy) {
 	error::out() << structIdTok.loc << ": struct '"
 	    << structIdTok.val.c_str() << "' already defined in this scope"
@@ -450,7 +457,7 @@ parseNamedType(const char *name = nullptr)
     if (token.kind != TokenKind::IDENTIFIER) {
 	return nullptr;
     }
-    auto ty = Symtab::getNamedType(token.val);
+    auto ty = Symtab::getNamedType(token.val, Symtab::AnyScope);
     if (!ty) {
 	error::out()
 	    << token.loc << ": type expected. '" << token.val.c_str()
@@ -499,6 +506,11 @@ parseLocalDef(void)
 	if (!type) {
 	    error::out() << token.loc << " type expected"
 		<< std::endl;
+	    error::fatal();
+	} else if (!type->hasSize()) {
+	    error::out() << token.loc
+		<< ": variable '" << ident.c_str() << "' has incomplete type '"
+		<< type << "'" << std::endl;
 	    error::fatal();
 	} else if (type->isFunction()) {
 	    error::out() << loc

@@ -13,11 +13,17 @@ struct ScopeNode
 {
     std::unordered_map<const char *, Symtab::Entry> symtab;
     std::unordered_map<const char *, const Type *> typetab;
+    std::vector<const Type *> nametab;
     std::unique_ptr<ScopeNode> up;
     std::size_t id = 0;
 
     ScopeNode() { }
-    ~ScopeNode() { }
+    ~ScopeNode()
+    {
+	for (const auto &ty: nametab) {
+	    Type::deleteStruct(ty);
+	}
+    }
 };
 
 static std::unique_ptr<ScopeNode> curr = std::make_unique<ScopeNode>();
@@ -165,13 +171,22 @@ Symtab::getNamedType(UStr ident, Scope scope)
 }
 
 const Type *
-Symtab::getNamedType(UStr ident)
+Symtab::addNamedType(UStr ident, const Type *type)
 {
-    return getNamedType(ident, AnyScope);
+    assert(curr.get());
+    if (!addTypeAlias(ident, type)) {
+	return nullptr;
+    }
+
+    if (curr->up) {
+	// only types added to a local scope need (and can) be deleted
+	curr->nametab.push_back(type);
+    }
+    return type;
 }
 
 const Type *
-Symtab::createTypeAlias(UStr ident, const Type *type)
+Symtab::addTypeAlias(UStr ident, const Type *type)
 {
     assert(curr.get());
     auto *found = getNamedType(ident, CurrentScope);

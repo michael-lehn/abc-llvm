@@ -1,12 +1,12 @@
 struct Foo {
     a: u16;
     b: -> Foo;
-}
+};
 
 struct Bar {
     a: u16;
     b: u64;
-}
+};
 
 global foo: Foo;
 //global bar: -> Bar;

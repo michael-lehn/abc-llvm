@@ -23,6 +23,18 @@ class Type
 	    STRUCT,
 	} id;
 
+	// only types with size can be used to define a variabel
+	bool hasSize() const
+	{
+	    if (isVoid()) {
+		return false;
+	    } else if (isStruct()) {
+		return std::get<StructData>(data).isComplete;
+	    } else {
+		return true;
+	    }
+	}
+
 	bool isVoid() const
 	{
 	    return id == VOID;
@@ -143,11 +155,17 @@ class Type
 	    return this;
 	}
 
+	UStr getName(void) const
+	{
+	    assert(std::holds_alternative<StructData>(data));
+	    const auto &structData = std::get<StructData>(data);
+	    return structData.name;
+	}
+
+
 	bool hasMember(UStr ident) const
 	{
-	    if (!std::holds_alternative<StructData>(data)) {
-		return true;
-	    }
+	    assert(std::holds_alternative<StructData>(data));
 	    const auto &structData = std::get<StructData>(data);
 	    return structData.index.contains(ident.c_str());
 	}
@@ -205,10 +223,18 @@ class Type
 	};
 
 	struct StructData {
+	    std::size_t id;
+	    UStr name; // only needed for error messages
 	    bool isComplete = false;
+	  
+	    // info about members:
 	    std::unordered_map<const char *, std::size_t> index;
 	    std::vector<const Type *> type;
 	    std::vector<const char *> ident;
+
+	    StructData(std::size_t id, UStr name)
+		: id{id}, name{name}
+	    {}
 	};
 
 	std::variant<IntegerData, PointerData, ArrayData, FunctionData,
@@ -228,8 +254,8 @@ class Type
 	static const Type *getArray(const Type *refType, std::size_t dim);
 	static const Type *getFunction(const Type *retType,
 				       std::vector<const Type *> argType);
-	static Type *createIncompleteStruct(UStr ident);
-	static void deleteStruct(UStr ident);
+	static Type *createIncompleteStruct(UStr name);
+	static void deleteStruct(const Type *ty);
 
 	// type casts
 	static const Type *getTypeConversion(const Type *from, const Type *to,

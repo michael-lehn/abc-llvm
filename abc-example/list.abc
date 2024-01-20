@@ -11,6 +11,7 @@ struct Node {
     next: -> Node;
 };
 
+
 fn insertInList(list: -> Node, val: u16): -> Node
 {
     local n: -> Node = malloc(sizeof(*n));
@@ -30,7 +31,7 @@ fn printList(list: -> Node)
 
 fn main(): u8
 {
-    local list: -> Node = cast(0: -> Node);
+    local list: -> Node = 0;
 
     list = insertInList(list, 42);
     list = insertInList(list, 24);
