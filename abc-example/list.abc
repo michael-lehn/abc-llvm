@@ -6,9 +6,9 @@ fn free(ptr: void_ptr);
 fn printU64(:u64);
 fn printNl();
 
-type Node = struct {
+struct Node {
     val: u16;
-    next: void_ptr;
+    next: -> Node;
 };
 
 fn insertInList(list: -> Node, val: u16): -> Node
@@ -24,7 +24,7 @@ fn printList(list: -> Node)
     while (list) {
 	printU64(list->val);
 	printNl();
-	list = cast(list->next: -> Node);
+	list = list->next;
     }
 }
 

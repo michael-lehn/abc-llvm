@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include "error.hpp"
+#include "symtab.hpp"
 #include "type.hpp"
 
 //--  Integer class (also misused to represent 'void') -------------------------
@@ -32,7 +33,9 @@ operator<(const Integer &x, const Integer &y)
 
 struct Pointer : public Type
 {
-    Pointer(const Type *refType) : Type{Type::POINTER, PointerData{refType}} {}
+    Pointer(const Type *refType, bool isNullptr)
+	: Type{Type::POINTER, PointerData{refType, isNullptr}}
+    {}
 };
 
 bool
@@ -87,37 +90,13 @@ operator<(const Function &x, const Function &y)
 
 struct Struct : public Type
 {
-    Struct(StructData &&structData)
-	: Type{Type::STRUCT, StructData{structData}}
-    {}
+    Struct(void) : Type{Type::STRUCT, StructData{}} {}
 
-    const StructData &getData(void) const
+    bool isComplete(void)
     {
-	return std::get<StructData>(data);
+	return std::get<StructData>(data).isComplete;
     }
 };
-
-bool
-operator<(const Struct &x, const Struct &y)
-{
-    const auto &xType = x.getData().type;
-    const auto &yType = y.getData().type;
-    const auto &xIdent = x.getData().ident;
-    const auto &yIdent = y.getData().ident;
-
-    if (xType.size() < yType.size()) {
-	return true;
-    }
-    for (std::size_t i = 0; i < xType.size(); ++i) {
-	if (xType[i] < yType[i]) {
-	    return true;
-	}
-	if (xIdent[i] < yIdent[i]) {
-	    return true;
-	}
-    }
-    return false;
-}
 
 //-- Sets for theses types for uniqueness --------------------------------------
 
@@ -125,8 +104,7 @@ static std::set<Integer> *intTypeSet;
 static std::set<Pointer> *ptrTypeSet;
 static std::set<Array> *arrayTypeSet;
 static std::set<Function> *fnTypeSet;
-static std::unordered_map<const char *, const Type *> *aliasSet;
-static std::set<Struct> *structSet;
+static std::unordered_map<UStr, Struct> *structMap;
 
 //-- Static functions ----------------------------------------------------------
 
@@ -179,7 +157,16 @@ Type::getPointer(const Type *refType)
     if (!ptrTypeSet) {
 	ptrTypeSet = new std::set<Pointer>;
     }
-    return &*ptrTypeSet->insert(Pointer{refType}).first;
+    return &*ptrTypeSet->insert(Pointer{refType, false}).first;
+}
+
+const Type *
+Type::getNullPointer(void)
+{
+    if (!ptrTypeSet) {
+	ptrTypeSet = new std::set<Pointer>;
+    }
+    return &*ptrTypeSet->insert(Pointer{nullptr, true}).first;
 }
 
 // Create array type or return existing type
@@ -206,22 +193,27 @@ Type::getFunction(const Type *retType, std::vector<const Type *> argType)
 
 // create strcutured types
 
-const Type *
-Type::createStruct(const std::vector<const char *> &ident,
-		   const std::vector<const Type *> &type)
+Type *
+Type::createIncompleteStruct(UStr ident)
 {
-    if (!structSet) {
-	structSet = new std::set<Struct>;
+    if (!structMap) {
+	structMap = new std::unordered_map<UStr, Struct>;
     }
-
-    Type::StructData structData;
-    structData.type = type;
-    structData.ident = ident;
-
-    for (std::size_t i = 0; i < ident.size(); ++i) {
-	structData.index[ident[i]] = i;
+    bool add = !structMap->contains(ident);
+    auto ty = &structMap->insert({ident, Struct{}}).first->second;
+    if (add) {
+	Symtab::createTypeAlias(ident, ty);
     }
-    return &*structSet->insert(StructData{std::move(structData)}).first;
+    return ty;
+}
+
+void
+Type::deleteStruct(UStr ident)
+{
+    assert(structMap
+	    && "Type::deleteStruct() called before any struct was created");
+    assert(structMap->erase(ident) == 1
+	    && "Type::deleteStruct(): no struct deleted");
 }
 
 /*
@@ -288,7 +280,12 @@ operator<<(std::ostream &out, const Type *type)
 	out << (type->getIntegerKind() == Type::SIGNED ? "i" : "u")
 	    << type->getIntegerNumBits();
     } else if (type->isPointer()) {
-	out << "-> " << type->getRefType();
+	auto refTy = type->getRefType();
+	if (refTy->isStruct()) {
+	    out << "-> struct{..}";
+	} else {
+	    out << "-> " << refTy;
+	}
     } else if (type->isArray()) {
 	out << "array[" << type->getDim() << "] of " << type->getRefType();
     } else if (type->isFunction()) {

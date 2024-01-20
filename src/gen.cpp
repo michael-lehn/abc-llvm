@@ -134,7 +134,9 @@ struct TypeMap
 	    auto type = t->getMemberType();
 	    std::vector<llvm::Type *> llvmType(type.size());
 	    for (std::size_t i = 0; i < type.size(); ++i) {
-		llvmType[i] = get(type[i]);
+		llvmType[i] = type[i]->isPointer()
+		    ? get(Type::getPointer(Type::getVoid()))
+		    : get(type[i]);
 	    }
 	    return llvm::StructType::get(*llvmContext, llvmType);
 	}

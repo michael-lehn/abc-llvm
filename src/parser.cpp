@@ -14,6 +14,7 @@
 
 static bool parseFn(void);
 static bool parseGlobalDef(void);
+static bool parseStructDef(void);
 static bool parseTypeDef(void);
 
 void
@@ -21,7 +22,8 @@ parser(void)
 {
     getToken();
     while (token.kind != TokenKind::EOI) {
-	if (!parseGlobalDef() && !parseFn() && !parseTypeDef()) {
+	if (!parseGlobalDef() && !parseFn() && !parseTypeDef()
+		&& !parseStructDef()) {
 	    error::out() << token.loc
 		<< ": expected function declaration,"
 		<< " global variable definition,"
@@ -62,6 +64,26 @@ parseTypeDef(void)
 	    break;
 	}
 	getToken();
+    }
+    error::expected(TokenKind::SEMICOLON);
+    getToken();
+    return true;
+}
+
+static const Type *parseStructType(void);
+
+static bool
+parseStructDef(void)
+{
+    if (token.kind != TokenKind::STRUCT) {
+	return false;
+    }
+    auto structTok = token;
+    auto ty = parseStructType();
+    if (!ty) {
+	error::out() << structTok.loc
+	    << ": struct definition expected" << std::endl;
+	error::fatal();
     }
     error::expected(TokenKind::SEMICOLON);
     getToken();
@@ -385,8 +407,20 @@ parseStructType(void)
     }
     getToken();
 
+    error::expected(TokenKind::IDENTIFIER);
+    auto structIdTok = token;
+    getToken();
+
     error::expected(TokenKind::LBRACE);
     getToken();
+
+    auto structTy = Type::createIncompleteStruct(structIdTok.val);
+    if (!structTy) {
+	error::out() << structIdTok.loc << ": struct '"
+	    << structIdTok.val.c_str() << "' already defined in this scope"
+	    << std::endl;
+	error::fatal();
+    }
 
     std::vector<const char *> ident;
     std::vector<const Type *> type;
@@ -407,7 +441,7 @@ parseStructType(void)
 
     error::expected(TokenKind::RBRACE);
     getToken();
-    return Type::createStruct(ident, type);
+    return structTy->complete(std::move(ident), std::move(type));
 }
 
 static const Type *
@@ -435,8 +469,6 @@ parseType(void)
     } else if (auto ty = parsePtrType()) {
 	return ty;
     } else if (auto ty = parseArrayType()) {
-	return ty;
-    } else if (auto ty = parseStructType()) {
 	return ty;
     } else if (auto ty = parseNamedType()) {
 	return ty;
@@ -743,6 +775,7 @@ parseStmt(void)
 	|| parseReturnStmt()
 	|| parseExprStmt()
 	|| parseTypeDef()
+	|| parseStructDef()
 	|| parseLocalDefStmt();
 }
 

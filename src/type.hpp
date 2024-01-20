@@ -63,6 +63,15 @@ class Type
 	    return id == POINTER;
 	}
 
+	bool isNullPointer() const
+	{
+	    if (!isPointer()) {
+		return false;
+	    }
+	    assert(std::holds_alternative<PointerData>(data));
+	    return std::get<PointerData>(data).isNullptr;
+	}
+
 	bool isArray() const
 	{
 	    return id == ARRAY;
@@ -75,6 +84,7 @@ class Type
 
 	const Type *getRefType() const
 	{
+	    assert(!isNullPointer());
 	    if (std::holds_alternative<ArrayData>(data)) {
 		return std::get<ArrayData>(data).refType;
 	    }
@@ -110,6 +120,27 @@ class Type
 	bool isStruct() const
 	{
 	    return id == STRUCT;
+	}
+
+	const Type *complete(std::vector<const char *> &&ident,
+			     std::vector<const Type *> &&type)
+	{
+	    assert(std::holds_alternative<StructData>(data));
+	    assert(ident.size() == type.size());
+	    auto &structData = std::get<StructData>(data);
+
+	    if (structData.isComplete) {
+		// struct members already defined
+		return nullptr;
+	    }
+
+	    structData.isComplete = true;	
+	    structData.ident = ident;	
+	    structData.type = type;
+	    for (std::size_t i = 0; i < ident.size(); ++i) {
+		structData.index[ident.at(i)] = i;
+	    }
+	    return this;
 	}
 
 	bool hasMember(UStr ident) const
@@ -160,6 +191,7 @@ class Type
 
 	struct PointerData {
 	    const Type *refType;
+	    bool isNullptr;
 	};
 
 	struct ArrayData {
@@ -173,6 +205,7 @@ class Type
 	};
 
 	struct StructData {
+	    bool isComplete = false;
 	    std::unordered_map<const char *, std::size_t> index;
 	    std::vector<const Type *> type;
 	    std::vector<const char *> ident;
@@ -191,17 +224,17 @@ class Type
 	static const Type *getUnsignedInteger(std::size_t numBits);
 	static const Type *getSignedInteger(std::size_t numBits);
 	static const Type *getPointer(const Type *refType);
+	static const Type *getNullPointer(void);
 	static const Type *getArray(const Type *refType, std::size_t dim);
 	static const Type *getFunction(const Type *retType,
 				       std::vector<const Type *> argType);
-	static const Type *createStruct(const std::vector<const char *> &ident,
-					const std::vector<const Type *> &type);
+	static Type *createIncompleteStruct(UStr ident);
+	static void deleteStruct(UStr ident);
 
 	// type casts
 	static const Type *getTypeConversion(const Type *from, const Type *to,
 					     Token::Loc loc = Token::Loc{});
 	static const Type *convertArrayOrFunctionToPointer(const Type *ty);
-
 };
 
 std::ostream &operator<<(std::ostream &out, const Type *type);

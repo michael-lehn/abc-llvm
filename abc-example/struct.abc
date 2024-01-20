@@ -1,55 +1,17 @@
-fn print(: -> u8);
-fn printLn(: -> u8);
-fn printNl();
-fn printU64(:u64);
-
-
-type Foo = struct { a: u64; b: u32; },
-     long = u64,
-     int = u32,
-     addr_ptr  = ->;
-
-fn getFoo(a: u64, b: u32): Foo
-{
-    local foo : Foo;
-
-    foo.a = a;
-    foo.b = b;
-    return foo;
+struct Foo {
+    a: u16;
+    b: -> Foo;
 }
 
-fn printFoo(ident: -> u8, f: Foo)
-{
-    print(ident); print(".a = "); printU64(f.a); printNl();
-    print(ident); print(".b = "); printU64(f.b); printNl();
-    printNl();
-    print("sizeof(f) = "); printU64(sizeof(f)); printNl();
-    print("sizeof(:Foo) = "); printU64(sizeof(:Foo)); printNl();
+struct Bar {
+    a: u16;
+    b: u64;
 }
 
-global a: array[5] of Foo;
+global foo: Foo;
+//global bar: -> Bar;
 
 fn main()
 {
-    local foo: Foo = getFoo(1, 2);
-    local bar: struct {a :long; b : int; }; // same type as Foo
-
-    printFoo("foo", foo);
-
-    for (local i: u64 = 0; i < 5; ++i) {
-	a[i] = getFoo(i, i + 1);
-    }
-    for (local i: u64 = 0; i < 5; ++i) {
-	print("i = "); printU64(i); printNl();
-	printFoo("a[i]", a[i]);
-    }
-
-    // copy 'foo' to 'bar' member by member
-    bar.a = foo.a;
-    bar.b = foo.b;
-
-    // copy 'foo' to 'bar' with assignment
-    bar = foo;
-    printFoo("bar", bar);
 }
 

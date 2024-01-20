@@ -18,7 +18,6 @@ class UStr
 	    return c_str_;
 	}
 
-
     private:
 	const char *c_str_;
 };
@@ -28,6 +27,13 @@ operator==(const UStr &a, const UStr &b)
 {
     return a.c_str() == b.c_str();
 }
+
+inline bool
+operator<(const UStr &a, const UStr &b)
+{
+    return a.c_str() < b.c_str();
+}
+
 
 template<>
 struct std::hash<UStr>
