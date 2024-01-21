@@ -601,12 +601,25 @@ parseCompoundStmt(bool openScope)
     return true;
 }
 
+static void
+reachableCheck(Token tok = token, const char *s = nullptr)
+{
+    if (!gen::openBuildingBlock()) {
+	error::out() << tok.loc << ": warning: "
+	    << (s ? "" : "'")
+	    << (s ? s : tok.val.c_str())
+	    << (s ? "" : "'")
+	    << " not reachable" << std::endl;
+    }
+}
+
 static bool
 parseIfStmt(void)
 {
     if (token.kind != TokenKind::IF) {
 	return false;
     }
+    reachableCheck();
     getToken();
 
     // parse expr
@@ -660,6 +673,7 @@ parseWhileStmt(void)
     if (token.kind != TokenKind::WHILE) {
 	return false;
     }
+    reachableCheck();
     getToken();
 
     // parse expr
@@ -709,6 +723,7 @@ parseForStmt(void)
     if (token.kind != TokenKind::FOR) {
 	return false;
     }
+    reachableCheck();
     getToken();
 
     Symtab::openScope();
@@ -776,6 +791,7 @@ parseReturnStmt(void)
     if (token.kind != TokenKind::RETURN) {
 	return false;
     }
+    reachableCheck();
     getToken();
     auto expr = parseExpr();
     error::expected(TokenKind::SEMICOLON);
@@ -790,6 +806,7 @@ parseBreakStmt(void)
     if (token.kind != TokenKind::BREAK) {
 	return false;
     }
+    reachableCheck();
     auto breakTok = token;
     getToken();
     error::expected(TokenKind::SEMICOLON);
@@ -810,6 +827,7 @@ parseContinueStmt(void)
     if (token.kind != TokenKind::CONTINUE) {
 	return false;
     }
+    reachableCheck();
     auto contTok = token;
     getToken();
     error::expected(TokenKind::SEMICOLON);
@@ -827,10 +845,12 @@ parseContinueStmt(void)
 static bool
 parseExprStmt(void)
 {
+    auto exprTok = token;
     auto expr = parseExpr();
     if (token.kind != TokenKind::SEMICOLON) {
 	return false;
     }
+    reachableCheck(exprTok, "expression");
     getToken();
     if (expr) {
 	expr->loadValue();
