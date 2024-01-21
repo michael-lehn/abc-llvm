@@ -14,21 +14,21 @@ fn print(: -> u8);
 //   Here the real action begins ...
 //
 
-fn foo(a: u8)
+fn foo(a: u16)
 {
     print("I am 'foo' and a = ");
     printU64(a);
     printNl();
 }
 
-fn bar(a: u8)
+fn bar(a: u16)
 {
     print("I am 'bar' and a = ");
     printU64(a);
     printNl();
 }
 
-fn sel(s: u8): -> fn(:u8)
+fn sel(s: u8): -> fn(:u16)
 {
     if (s == 1) {
 	return foo;
@@ -55,5 +55,5 @@ fn main(): u8
     (**q)(21);
 
     sel(1)->(111);
-    sel(2)->(222);
+    sel(2)->(422);
 }

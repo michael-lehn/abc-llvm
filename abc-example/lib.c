@@ -5,6 +5,12 @@
 
 static bool getErrCode;
 
+void
+clearIn(void)
+{
+    while (getchar() != '\n') {}
+} 
+
 uint64_t
 getErr(void)
 {
@@ -15,15 +21,55 @@ uint64_t
 getU64(void)
 {
     uint64_t val;
-    getErrCode = scanf("%" SCNd64, &val) != 1;
+    getErrCode = scanf("%" SCNu64, &val) != 1;
+    if (getErrCode) {
+	clearIn();
+    }
     return val;
 }
+
+uint64_t
+getUnsigned(void)
+{
+    uint64_t val;
+    getErrCode = scanf("%" SCNu64, &val) != 1;
+    if (getErrCode) {
+	clearIn();
+    }
+    return val;
+}
+
+int64_t
+getInt(void)
+{
+    uint64_t val;
+    getErrCode = scanf("%" SCNd64, &val) != 1;
+    if (getErrCode) {
+	clearIn();
+    }
+    return val;
+}
+
 
 void
 printU64(uint64_t val)
 {
     printf("%" PRIu64, val);
 }
+
+void
+printUnsigned(uint64_t val)
+{
+    printf("%" PRIu64, val);
+}
+
+
+void
+printInt(int64_t val)
+{
+    printf("%" PRId64, val);
+}
+
 
 void
 printNl(void)

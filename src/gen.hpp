@@ -40,6 +40,9 @@ std::size_t getSizeOf(const Type *type);
 Reg call(const char *ident, const std::vector<Reg> &param);
 Reg call(Reg fnPtr, const Type *fnType, const std::vector<Reg> &param);
 
+// check if generated instructions are reachabel
+bool openBuildingBlock();
+
 // labels and jumps
 enum CondOp {
     EQ,

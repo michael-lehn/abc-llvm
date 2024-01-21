@@ -6,43 +6,49 @@
     #include "abclib.h"
 */
 
-fn getU64(): u64;
+fn getInt(): i64;
+fn getUnsigned(): u64;
 fn getErr(): u64;
 
-fn printU64(val: u64);
+fn printUnsigned(val: u64);
+fn printInt(val: i64);
+fn print(: -> u8);
+fn printLn(: -> u8);
 fn printNl();
+
+type size_t = u64;
+type void_ptr = ->;
+
+fn malloc(size: size_t): void_ptr;
+fn free(ptr: void_ptr);
 
 //
 //   Here the real action begins ...
 //
 
-global foo: u64;  // initial value is zero
-
-fn main(): u64
+fn factorial(n: u64): u64
 {
-    local a: u64 = getU64(), aErr: u64 = getErr(),
-	  b: u64 = getU64(), bErr: u64 = getErr(),
-	  r: u64;
+    return n ? n * factorial(n - 1) : 1;
+}
 
-    if (aErr || bErr) {
-	return 1;
-    } else {
-	if (a > 5) {
-	    if (b > 5) {
-		r = 1;
-	    } else {
-		r = 2;
-	    }
+fn main()
+{
+    local n: u64;
+
+    while (1) {
+	print("Gib eine nicht-negative ganze Zahl ein: ");
+	local a: i64 = getInt();
+	if (getErr()) {
+	    printLn("Das hat gar nicht leider nicht geklappt");
+	} else if (a < 0) {
+	    printLn("Fast, aber das ist eine negative Zahl");
 	} else {
-	    if (b > 5) {
-		r = 3;
-	    } else {
-		r = 4;
-	    }
+	    n = a;
+	    break;
+	    n = a;
 	}
-	printU64(r);
-	printNl();
     }
 
-    return 1;
+    print("n = "); printUnsigned(n); printNl();
+    print("!n = "); printUnsigned(factorial(n)); printNl();
 }

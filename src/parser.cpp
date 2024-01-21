@@ -12,6 +12,17 @@
 #include "symtab.hpp"
 #include "ustr.hpp"
 
+struct ControlStruct
+{
+    static std::vector<gen::Label> continueLabel;
+    static std::vector<gen::Label> breakLabel;
+};
+
+std::vector<gen::Label> ControlStruct::continueLabel;
+std::vector<gen::Label> ControlStruct::breakLabel;
+
+//------------------------------------------------------------------------------
+
 static bool parseFn(void);
 static bool parseGlobalDef(void);
 static bool parseStructDef(void);
@@ -667,6 +678,9 @@ parseWhileStmt(void)
     auto loopLabel = gen::getLabel("loop");
     auto endLabel = gen::getLabel("end");
 
+    ControlStruct::continueLabel.push_back(condLabel);
+    ControlStruct::breakLabel.push_back(endLabel);
+
     gen::jmp(condLabel);
 
     // 'while-cond' block
@@ -684,6 +698,8 @@ parseWhileStmt(void)
 
     // end of loop
     gen::labelDef(endLabel);
+    ControlStruct::continueLabel.pop_back();
+    ControlStruct::breakLabel.pop_back();
     return true;
 }
 
@@ -724,6 +740,9 @@ parseForStmt(void)
     auto loopLabel = gen::getLabel("loop");
     auto endLabel = gen::getLabel("end");
 
+    ControlStruct::continueLabel.push_back(condLabel);
+    ControlStruct::breakLabel.push_back(endLabel);
+
     gen::jmp(condLabel);
 
     // 'for-cond' block
@@ -745,6 +764,8 @@ parseForStmt(void)
     // end of loop
     Symtab::closeScope();
     gen::labelDef(endLabel);
+    ControlStruct::continueLabel.pop_back();
+    ControlStruct::breakLabel.pop_back();
     return true;
 }
 
@@ -760,6 +781,46 @@ parseReturnStmt(void)
     error::expected(TokenKind::SEMICOLON);
     getToken();
     gen::ret(expr->loadValue());
+    return true;
+}
+
+static bool
+parseBreakStmt(void)
+{
+    if (token.kind != TokenKind::BREAK) {
+	return false;
+    }
+    auto breakTok = token;
+    getToken();
+    error::expected(TokenKind::SEMICOLON);
+    getToken();
+    if (ControlStruct::breakLabel.empty()) {
+	error::out() << breakTok.loc
+	    << ": 'break' statement not in loop or switch statement" <<
+	    std::endl;
+	error::fatal();
+    }
+    gen::jmp(ControlStruct::breakLabel.back());
+    return true;
+}
+
+static bool
+parseContinueStmt(void)
+{
+    if (token.kind != TokenKind::CONTINUE) {
+	return false;
+    }
+    auto contTok = token;
+    getToken();
+    error::expected(TokenKind::SEMICOLON);
+    getToken();
+    if (ControlStruct::continueLabel.empty()) {
+	error::out() << contTok.loc
+	    << ": 'break' statement not in loop or switch statement" <<
+	    std::endl;
+	error::fatal();
+    }
+    gen::jmp(ControlStruct::continueLabel.back());
     return true;
 }
 
@@ -785,6 +846,8 @@ parseStmt(void)
 	|| parseWhileStmt()
 	|| parseForStmt()
 	|| parseReturnStmt()
+	|| parseBreakStmt()
+	|| parseContinueStmt()
 	|| parseExprStmt()
 	|| parseTypeDef()
 	|| parseStructDef()

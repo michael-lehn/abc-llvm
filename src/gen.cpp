@@ -241,6 +241,24 @@ static struct {
     bool bbClosed;
 } currFn;
 
+//------------------------------------------------------------------------------
+
+bool
+openBuildingBlock()
+{
+    return !currFn.bbClosed;
+}
+
+static void
+assureOpenBuildingBlock()
+{
+    if (!openBuildingBlock()) {
+	labelDef(getLabel("notReached"));
+    }
+}
+
+//------------------------------------------------------------------------------
+
 void
 fnDef(const char *ident, const Type *fnType,
       const std::vector<const char *> &param)
@@ -320,6 +338,7 @@ void
 defLocal(const char *ident, const Type *type)
 {
     assert(currFn.llvmFn);
+    assureOpenBuildingBlock();
 
     if (auto s = Symtab::get(ident, Symtab::CurrentScope)) {
 	s->setDefinitionFlag();
@@ -394,9 +413,11 @@ getSizeOf(const Type *type)
 
 //------------------------------------------------------------------------------
 
+
 Reg
 call(const char *ident, const std::vector<Reg> &param)
 {
+    assureOpenBuildingBlock();
     if (auto s = Symtab::get(ident, Symtab::RootScope)) {
 	ident = s->internalIdent().c_str();
     } else {
@@ -423,6 +444,7 @@ call(Reg fnPtr, const Type *fnType, const std::vector<Reg> &param)
 Cond
 cond(CondOp op, Reg a, Reg b)
 {
+    assureOpenBuildingBlock();
     switch (op) {
 	case EQ:
 	    return llvmBuilder->CreateICmpEQ(a, b);
@@ -474,6 +496,7 @@ labelDef(Label label)
 Label
 jmp(Label &label)
 {
+    assureOpenBuildingBlock();
     auto ib = llvmBuilder->GetInsertBlock();
     if (!currFn.bbClosed) {
 	llvmBuilder->CreateBr(label);
@@ -485,10 +508,9 @@ jmp(Label &label)
 void
 jmp(Cond cond, Label trueLabel, Label falseLabel)
 {
+    assureOpenBuildingBlock();
     if (!currFn.bbClosed) {
 	llvmBuilder->CreateCondBr(cond, trueLabel, falseLabel);
-    } else {
-	llvm::errs() << "Warning: not reachable conditional jump\n";
     }
     currFn.bbClosed = true;
 }
@@ -496,10 +518,7 @@ jmp(Cond cond, Label trueLabel, Label falseLabel)
 Reg
 phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type)
 {
-    if (currFn.bbClosed) {
-	llvm::errs() << "Warning: not reachable phi\n";
-	return nullptr;
-    }
+    assureOpenBuildingBlock();
 
     auto ty = TypeMap::get(type);
     auto phi = llvmBuilder->CreatePHI(ty, 2);
@@ -513,6 +532,7 @@ phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type)
 Reg
 loadAddr(const char *ident)
 {
+    assureOpenBuildingBlock();
     if (auto s = Symtab::get(ident)) {
 	ident = s->internalIdent().c_str();
     } else {
@@ -520,11 +540,6 @@ loadAddr(const char *ident)
 	    << "' not found in symbol table" << std::endl;
 	Symtab::print(error::out());
 	assert(0 && "symbol for not declared in any scope");
-    }
-
-    if (currFn.bbClosed) {
-	llvm::errs() << "Warning: not reachable fetch\n";
-	return nullptr;
     }
 
     auto addr = local.contains(ident)
@@ -536,15 +551,11 @@ loadAddr(const char *ident)
 Reg
 fetch(const char *ident, const Type *type)
 {
+    assureOpenBuildingBlock();
     if (auto s = Symtab::get(ident)) {
 	ident = s->internalIdent().c_str();
     } else {
 	assert(0 && "symbol for not declared in any scope");
-    }
-
-    if (currFn.bbClosed) {
-	llvm::errs() << "Warning: not reachable fetch\n";
-	return nullptr;
     }
 
     auto ty = TypeMap::get(type);
@@ -557,6 +568,7 @@ fetch(const char *ident, const Type *type)
 Reg
 fetch(Reg addr, const Type *type)
 {
+    assureOpenBuildingBlock();
     auto ty = TypeMap::get(type);
     return llvmBuilder->CreateLoad(ty, addr);
 }
@@ -564,16 +576,11 @@ fetch(Reg addr, const Type *type)
 void
 store(Reg val, const char *ident, const Type *type)
 {
+    assureOpenBuildingBlock();
     if (auto s = Symtab::get(ident)) {
 	ident = s->internalIdent().c_str();
     } else {
 	assert(0 && "symbol for not declared in any scope");
-    }
-
-    // TODO: assertion check: typeof(val) == type
-    if (currFn.bbClosed) {
-	llvm::errs() << "Warning: not reachable store\n";
-	return;
     }
 
     auto addr = local.contains(ident)
@@ -585,7 +592,7 @@ store(Reg val, const char *ident, const Type *type)
 void
 store(Reg val, Reg addr, const Type *type)
 {
-    // TODO: assertion check: typeof(val) == type
+    assureOpenBuildingBlock();
     llvmBuilder->CreateStore(val, addr);
 }
 
@@ -594,9 +601,10 @@ store(Reg val, Reg addr, const Type *type)
 Reg
 cast(Reg reg, const Type *fromType, const Type *toType)
 {
-    if (currFn.bbClosed) {
-	llvm::errs() << "Warning: not reachable cast\n";
-	return nullptr;
+    assureOpenBuildingBlock();
+
+    if (fromType == toType) {
+	return reg;
     }
 
     auto ty = TypeMap::get(toType);
@@ -632,10 +640,7 @@ cast(Reg reg, const Type *fromType, const Type *toType)
 Reg
 loadIntConst(const char *val, const Type *type, std::uint8_t radix)
 {
-    if (currFn.bbClosed) {
-	llvm::errs() << "Warning: not reachable load constant\n";
-	return nullptr;
-    }
+    assureOpenBuildingBlock();
 
     if (type->isInteger()) {
 	auto ty = llvm::APInt(type->getIntegerNumBits(), val, radix);
@@ -655,8 +660,7 @@ loadIntConst(std::uint64_t val, const Type *type)
 {
     assert(type->isInteger() || (type->isPointer() && val == 0));
     if (currFn.bbClosed) {
-	llvm::errs() << "Warning: not reachable load constant\n";
-	return nullptr;
+	labelDef(getLabel("notReached"));
     }
     if (type->isPointer() && val == 0) {
 	auto ty = llvm::dyn_cast<llvm::PointerType>(TypeMap::get(type));
@@ -677,10 +681,7 @@ loadIntConst(std::uint64_t val, const Type *type)
 Reg
 aluInstr(AluOp op, Reg l, Reg r)
 {
-    if (currFn.bbClosed) {
-	llvm::errs() << "Warning: not reachable alu instr\n";
-	return nullptr;
-    }
+    assureOpenBuildingBlock();
 
     switch (op) {
 	case ADD:
@@ -706,6 +707,7 @@ aluInstr(AluOp op, Reg l, Reg r)
 Reg
 ptrInc(const Type *type, Reg addr, Reg offset)
 {
+    assureOpenBuildingBlock();
     auto ty = TypeMap::get(type);
 
     std::vector<Reg> idxList{1};
@@ -717,6 +719,7 @@ ptrInc(const Type *type, Reg addr, Reg offset)
 Reg
 ptrMember(const Type *type, Reg addr, std::size_t index)
 {
+    assureOpenBuildingBlock();
     assert(type->isStruct());
     auto ty = TypeMap::get(type);
 
@@ -730,6 +733,7 @@ ptrMember(const Type *type, Reg addr, std::size_t index)
 Reg
 ptrDiff(const Type *type, Reg addrLeft, Reg addRight)
 {
+    assureOpenBuildingBlock();
     auto ty = TypeMap::get(type);
     return llvmBuilder->CreatePtrDiff(ty, addrLeft, addRight);
 }

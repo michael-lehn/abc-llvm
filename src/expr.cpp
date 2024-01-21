@@ -858,10 +858,15 @@ loadValue(const Binary &binary)
 		auto const &right = binary.right;
 		assert(std::holds_alternative<ExprVector>(right->variant));
 
+		auto fnType = left->getType();
 		auto &r = std::get<ExprVector>(right->variant);
 		std::vector<gen::Reg> param{r.size()};
 		for (std::size_t i = 0; i < r.size(); ++i) {
 		    param[i] = r[i]->loadValue();
+		    // cast parameters
+		    auto fromType = r[i]->getType();
+		    auto toType = fnType->getArgType()[i];
+		    param[i] = gen::cast(param[i], fromType, toType);
 		}
 
 		if (std::holds_alternative<Identifier>(left->variant)) {
@@ -869,7 +874,6 @@ loadValue(const Binary &binary)
 		    return gen::call(l.val, param);
 		}
 		auto fnPtr = left->loadValue();
-		auto fnType = left->getType();
 		return gen::call(fnPtr, fnType, param);
 	    }
 
