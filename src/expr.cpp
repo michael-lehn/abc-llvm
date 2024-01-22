@@ -401,8 +401,10 @@ ExprPtr
 Expr::createMember(ExprPtr &&from, UStr memberIdent, Token::Loc opLoc)
 {
     auto ty = from->getType();
-    if (!ty->hasMember(memberIdent)) {
-	error::out() << opLoc << ": struct of type '" << ty
+    if (!ty->isStruct() || !ty->hasMember(memberIdent)) {
+	error::out() << opLoc << ": "
+	    << (ty->isStruct() ? "struct" : "")
+	    << " type '" << ty
 	    << "' has no member '"
 	    << memberIdent.c_str() << "'" << std::endl;
 	error::fatal();

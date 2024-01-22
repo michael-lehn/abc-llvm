@@ -307,7 +307,8 @@ parsePostfix(ExprPtr &&expr)
 	    // member access
 	    {
 		error::expected(TokenKind::IDENTIFIER);
-		expr = Expr::createMember(std::move(expr), token.val);
+		expr = Expr::createMember(std::move(expr), token.val,
+					  token.loc);
 		getToken();
 		return parsePostfix(std::move(expr));
 	    }
@@ -321,7 +322,8 @@ parsePostfix(ExprPtr &&expr)
 	    expr = parsePostfix(Expr::createDeref(std::move(expr), opTok.loc));
 	    if (token.kind == TokenKind::IDENTIFIER) {
 		// member access
-		expr = Expr::createMember(std::move(expr), token.val);
+		expr = Expr::createMember(std::move(expr), token.val,
+					  token.loc);
 		getToken();
 		expr = parsePostfix(std::move(expr));
 	    }
