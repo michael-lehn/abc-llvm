@@ -16,7 +16,7 @@ fn main()
     printf("n = ");
     scanf("%d", &n);
 
-    switch () {
+    switch (n%1) {
 	case 0:
 	    printf("gerade\n");
 	    break;

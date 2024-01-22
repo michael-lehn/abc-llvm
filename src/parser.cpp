@@ -888,9 +888,9 @@ parseSwitchStmt(void)
     getToken();
     auto condTok = token;
     auto cond = parseExpr();
-    if (!cond) {
+    if (!cond || !cond->getType()->isInteger()) {
 	error::out() << condTok.loc
-	    << ": non-empty expression expected" << std::endl;
+	    << ": integer expression expected" << std::endl;
 	error::fatal();
     }
     error::expected(TokenKind::RPAREN);
@@ -920,6 +920,7 @@ parseSwitchStmt(void)
 		    << ": constant integer expression required" << std::endl;
 		error::fatal();
 	    }
+	    val = Expr::createCast(std::move(val), cond->getType(), valTok.loc);
 	    error::expected(TokenKind::COLON);
 	    getToken();
 	    auto label = gen::getLabel("case");
