@@ -884,6 +884,7 @@ parseSwitchStmt(void)
 
     error::expected(TokenKind::LBRACE);
     getToken();
+    Symtab::openScope();
 
     auto switchLabel = gen::getLabel("switch");
     auto defaultLabel = gen::getLabel("default");
@@ -940,6 +941,7 @@ parseSwitchStmt(void)
     }
     error::expected(TokenKind::RBRACE);
     getToken();
+    Symtab::closeScope();
     if (!hasDefault) {
 	gen::labelDef(defaultLabel);
     }

@@ -20,6 +20,7 @@ fn main()
 {
     local n: u64 = getInt();
 
+    local i: u8 = 42;
     switch (n) {
 	case 0:
 	    printLn("case 0");
@@ -28,6 +29,7 @@ fn main()
 	    printLn("case 1");
 	    break;
 	case 2:
+	    local i: u8 = 42;
 	    printLn("case 2");
 	    break;
 	case 3:
