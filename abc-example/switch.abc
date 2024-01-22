@@ -22,11 +22,16 @@ fn main()
 
     switch (n) {
 	case 0:
-	    for (local i: u8 = 0; i < 12; ++i) {
-		printLn("case 0");
-	    }
+	    printLn("case 0");
+	    break;
 	case 1:
 	    printLn("case 1");
+	    break;
+	case 2:
+	    printLn("case 2");
+	    break;
+	case 3:
+	    printLn("case 3");
 	    break;
     }
 }

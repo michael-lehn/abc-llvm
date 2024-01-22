@@ -889,6 +889,7 @@ parseSwitchStmt(void)
     auto defaultLabel = gen::getLabel("default");
     auto endLabel = gen::getLabel("end");
     std::vector<std::pair<gen::ConstIntVal, gen::Label>> caseLabel;
+    std::set<std::uint64_t> usedCaseVal;
 
     ControlStruct::breakLabel.push_back(endLabel);
 
@@ -901,14 +902,21 @@ parseSwitchStmt(void)
 	    auto val = parseExpr();
 	    if (!val || !val->isConst() || !val->getType()->isInteger()) {
 		error::out() << valTok.loc
-		    << ": constant ineteger expression required" << std::endl;
+		    << ": constant integer expression required" << std::endl;
 		error::fatal();
 	    }
 	    error::expected(TokenKind::COLON);
 	    getToken();
 	    auto label = gen::getLabel("case");
 	    caseLabel.push_back({val->loadConstInt(), label});
-	    gen::labelDef(label);
+	    if (usedCaseVal.contains(val->loadConstInt()->getZExtValue())) {
+		error::out() << valTok.loc << ": duplicate case value '"
+		    << val->loadConstInt()->getZExtValue() << "'" << std::endl;
+		error::fatal();
+	    } else {
+		gen::labelDef(label);
+	    }
+	    usedCaseVal.insert(val->loadConstInt()->getZExtValue());
 	} else if (token.kind == TokenKind::DEFAULT) {
 	    getToken();
 	    error::expected(TokenKind::COLON);

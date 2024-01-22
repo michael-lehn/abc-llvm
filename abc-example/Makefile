@@ -1,5 +1,5 @@
 ABC := ../bin/abc_compiler
-#ABCFLAGS := -O3
+ABCFLAGS := -O3
 
 # Uncomment to directly link with ld on MacOS
 
