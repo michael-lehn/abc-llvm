@@ -32,6 +32,11 @@ getCommonType(Token::Loc loc, const Type *left, const Type *right)
 	    || right->getIntegerKind() == Type::UNSIGNED
 	    ? Type::getUnsignedInteger(size)
 	    : Type::getSignedInteger(size);
+    } else if (left->isNullPointer()) {
+	error::out() << loc
+	    << ": Error: operation not defined for '" << left
+	    << "' and '" << right << "'" << std::endl;
+	error::fatal();
     } else if (left->isPointer() && right->isInteger()) {
 	auto ty = Type::getUnsignedInteger(64); // TODO: some size_t type?
 	error::out() << loc
@@ -48,7 +53,7 @@ getCommonType(Token::Loc loc, const Type *left, const Type *right)
 
 
     error::out() << loc
-<< ": Error: operation not defined for '" << left
+	<< ": Error: operation not defined for '" << left
 	<< "' and '" << right << "'" << std::endl;
     error::fatal();
     return nullptr;
@@ -64,15 +69,16 @@ Unary::setTypeAndCastOperands(void)
 	    type = Type::getPointer(child->getType());
 	    return;
 	case DEREF:
+	    if (child->getType()->isNullPointer()) {
+		error::out() << opLoc
+		    << ": Error: dereferencing null pointer" << std::endl;
+		error::fatal();
+	    }
 	    type = child->getType()->getRefType();
 	    return;
 	case LOGICAL_NOT:
 	    type = Type::getBool();
 	    if (child->getType()->isArray()) {
-		/*
-		auto ty = Type::getPointer(child->getType()->getRefType());
-		child = Expr::createCast(std::move(child), ty, opLoc);
-		*/
 		error::out() << opLoc
 		    << ": Warning: Address of array will "
 		    << "always evaluate to 'true'" << std::endl;
@@ -824,6 +830,10 @@ loadValue(const Unary &unary)
 		auto addr = unary.child->loadValue();
 		if (unary.type->isFunction() || unary.type->isArray()) {
 		    return addr;
+		} else if (unary.type->isNullPointer()) {
+		    error::out() << unary.opLoc
+			<< ": Error: dereferencing null pointer" << std::endl;
+		    error::fatal();
 		}
 		auto ty = unary.child->getType()->getRefType();
 		return gen::fetch(addr, ty);

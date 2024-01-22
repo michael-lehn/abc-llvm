@@ -124,6 +124,10 @@ struct TypeMap
 			    t->getIntegerNumBits());
 	    }
 	} else if (t->isPointer()) {
+	    if (t->isNullPointer()) {
+		auto ty = llvm::Type::getInt64Ty(*llvmContext);
+		return ty->getPointerTo();
+	    }
 	    return get_(t->getRefType())->getPointerTo();
 	} else if (t->isArray()) {
 	    return get_(t->getRefType(), t->getDim());

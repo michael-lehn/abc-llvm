@@ -41,6 +41,14 @@ struct Pointer : public Type
 bool
 operator<(const Pointer &x, const Pointer &y)
 {
+    if (x.isNullPointer() && !y.isNullPointer()) {
+	return true;
+    }
+    if (y.isNullPointer()) {
+	return false;
+    }
+    assert(!x.isNullPointer());
+    assert(!y.isNullPointer());
     return x.getRefType() < y.getRefType();
 }
 
@@ -247,6 +255,8 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc)
     } else if (from->isInteger() && to->isInteger()) {
 	// TODO: -Wconversion generate warning if sizeof(to) < sizeof(from)
 	return to;
+    } else if (from->isNullPointer() && to->isPointer()) {
+	return from;
     } else if (from->isArrayOrPointer() && to->isPointer()) {
 	if (from->getRefType() != to->getRefType()
 	    && !to->getRefType()->isVoid()

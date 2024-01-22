@@ -3,8 +3,7 @@ type void_ptr = ->;
 
 fn malloc(size: size_t): void_ptr;
 fn free(ptr: void_ptr);
-fn printU64(:u64);
-fn printNl();
+fn printf(: -> u8, ...): u32;
 
 struct Node
 {
@@ -24,15 +23,14 @@ fn insertInList(list: -> Node, val: u16): -> Node
 fn printList(list: -> Node)
 {
     while (list) {
-	printU64(list->val);
-	printNl();
+	printf("val = %d\n", list->val);
 	list = list->next;
     }
 }
 
 fn main(): u8
 {
-    local list: -> Node = 0;
+    local list: -> Node = nullptr;
 
     list = insertInList(list, 42);
     list = insertInList(list, 24);

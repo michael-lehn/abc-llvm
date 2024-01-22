@@ -458,7 +458,7 @@ parsePrimary(void)
         return expr;
     } else if (token.kind == TokenKind::NULLPTR) {
         getToken();
-	auto ty = Type::getUnsignedInteger(8);
+	auto ty = Type::getNullPointer();
 	auto expr = Expr::createLiteral("0", 10, ty, opTok.loc);
         return expr;
     } else if (token.kind == TokenKind::DECIMAL_LITERAL) {
