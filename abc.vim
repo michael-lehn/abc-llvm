@@ -43,7 +43,6 @@ syntax match type /u8/ skipwhite
 syntax match type /u16/ skipwhite
 syntax match type /u32/ skipwhite
 syntax match type /u64/ skipwhite
-syntax match type /[\-]/ skipwhite
 syntax match type /struct/ skipwhite
 syntax match type /union/ skipwhite
  
@@ -51,6 +50,9 @@ syntax match type /i8/ skipwhite
 syntax match type /i16/ skipwhite
 syntax match type /i32/ skipwhite
 syntax match type /i64/ skipwhite
+
+syn match ty "->|...|[A-Za-z][0-9A-Za-z]*" contained
+syntax region type matchgroup=buflit start=/:/ end=/[,;)=\n]/ contains=ty
 
 syntax match literal /[+-]*[1-9][0-9]*/ skipwhite
 syntax match literal /nullptr/ skipwhite
@@ -66,3 +68,5 @@ highlight link keyword Statement
 highlight link type Type
 highlight link literal Number
 highlight link comment Comment
+
+let b:current_syntax = "abc"
