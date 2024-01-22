@@ -283,7 +283,7 @@ parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
 	    error::out() << retTypeLoc << ": return type expected" << std::endl;
 	    error::fatal();
 	}
-	Symtab::addDecl(retTypeLoc, ".retVal", retType);
+	Symtab::addDecl(retTypeLoc, UStr{".retVal"}, retType);
     }
 
     auto fnType = Type::getFunction(retType, argType);
@@ -793,9 +793,13 @@ parseReturnStmt(void)
     }
     reachableCheck();
     getToken();
+    auto exprTok = token;
     auto expr = parseExpr();
     error::expected(TokenKind::SEMICOLON);
     getToken();
+    auto ret = Expr::createIdentifier(UStr{".retVal"}, exprTok.loc);
+    expr = Expr::createBinary(Binary::Kind::ASSIGN, std::move(ret),
+			      std::move(expr), exprTok.loc);
     gen::ret(expr->loadValue());
     return true;
 }
