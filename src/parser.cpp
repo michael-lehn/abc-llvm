@@ -258,7 +258,7 @@ parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
     }
     if (token.kind == TokenKind::IDENTIFIER) {
 	fnLoc = token.loc;
-	fnIdent = token.val.c_str();
+	fnIdent = token.val;
 	getToken();
     }
 
@@ -275,14 +275,19 @@ parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
 
     // parse function return type
     retType = Type::getVoid();
+    auto retTypeLoc = token.loc;
     if (token.kind == TokenKind::COLON) {
 	getToken();
-	auto retTypeLoc = token.loc;
+	retTypeLoc = token.loc;
 	retType = parseType();
 	if (!retType) {
 	    error::out() << retTypeLoc << ": return type expected" << std::endl;
 	    error::fatal();
 	}
+    } else if (fnIdent == UStr{"main"}) {
+	retType = Type::getUnsignedInteger(8);
+    }
+    if (!retType->isVoid()) {
 	Symtab::addDecl(retTypeLoc, UStr{".retVal"}, retType);
     }
 
@@ -960,6 +965,7 @@ parseFn(void)
 {
     Symtab::openScope();
 
+    auto fnTok = token;
     std::vector<const char *> fnParamIdent;
     auto fnDecl = parseFnDecl(fnParamIdent);
     if (!fnDecl) {
@@ -973,6 +979,21 @@ parseFn(void)
     } else {
 	error::expected(TokenKind::LBRACE);
 	gen::fnDef(fnDecl->ident.c_str(), fnDecl->getType(), fnParamIdent);
+	if (fnDecl->ident == UStr{"main"}) {
+	    auto ty = fnDecl->getType()->getRetType();
+	    if (!ty->isInteger() && !ty->isVoid()) {
+		error::out() << fnTok.loc
+		    << ": function 'main' can only have an integer return type"
+		    << std::endl;
+		error::fatal();
+	    } else if (ty->isInteger()) {
+		auto ret = Expr::createIdentifier(UStr{".retVal"});
+		auto zero = Expr::createLiteral("0", 10);
+		ret = Expr::createBinary(Binary::Kind::ASSIGN, std::move(ret),
+					  std::move(zero));
+		ret->loadValue();
+	    }
+	}
 	assert(parseCompoundStmt(false));
 	gen::fnDefEnd();
     }

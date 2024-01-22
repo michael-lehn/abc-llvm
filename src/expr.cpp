@@ -301,6 +301,8 @@ getIntType(const char *s, const char *end, std::uint8_t radix, const Type *&ty)
 	ty = Type::getSignedInteger(numBits);
 	return true;
     }
+    std::cerr << "ec = "
+	<< std::make_error_code(std::errc(ec)).message() << std::endl;
     ty = nullptr; 
     return false;
 }
@@ -311,15 +313,14 @@ getIntType(const char *s, const char *end, std::uint8_t radix)
     //TODO: Handle type of integer literals like in Rust. Currently handled
     //	    like in C, i.e. it is at least of type 'int' (where i32 is choosen)
     const Type *ty;
-    if (/*getIntType<std::int8_t, 8>(s, end, radix, ty)
-     || getIntType<std::int16_t, 16>(s, end, radix, ty)
-     || */getIntType<std::int32_t, 32>(s, end, radix, ty)
+    if (getIntType<std::int32_t, 32>(s, end, radix, ty)
      || getIntType<std::int64_t, 64>(s, end, radix, ty))
     {
 	return ty;
     }
     std::cerr << "signed integer '" << s << "' does not fit into 64 bits"
 	<< std::endl;
+    std::cerr << "end - s = '" << (end - s) << "'" << std::endl;
     return Type::getSignedInteger(64);
 }
 
