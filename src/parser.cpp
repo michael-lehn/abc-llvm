@@ -886,7 +886,13 @@ parseSwitchStmt(void)
 
     error::expected(TokenKind::LPAREN);
     getToken();
+    auto condTok = token;
     auto cond = parseExpr();
+    if (!cond) {
+	error::out() << condTok.loc
+	    << ": non-empty expression expected" << std::endl;
+	error::fatal();
+    }
     error::expected(TokenKind::RPAREN);
     getToken();
 

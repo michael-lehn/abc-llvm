@@ -594,7 +594,6 @@ Expr::isConst(void) const
 	const auto &unary = std::get<Unary>(variant);
 	switch (unary.kind) {
 	    case Unary::Kind::DEREF:
-		return false;
 	    case Unary::Kind::CAST:
 	    case Unary::Kind::LOGICAL_NOT:
 		return unary.child->isConst();

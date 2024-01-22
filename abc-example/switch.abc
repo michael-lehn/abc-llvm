@@ -6,35 +6,22 @@
     #include "abclib.h"
 */
 
-fn getInt(): i64;
-fn getUnsigned(): u64;
-fn getErr(): u64;
-
-fn printUnsigned(val: u64);
-fn printInt(val: i64);
 fn printf(: -> u8, ...): u32;
-fn printLn(: -> u8);
-fn printNl();
+fn scanf(: -> u8, ...): u32;
 
 fn main()
 {
-    local n: u64 = getInt();
+    local n: u64;
 
-    local i: u8 = 42;
-    printf("n = %03d, n*n = %d\n", n, n*n);
-    switch (n) {
+    printf("n = ");
+    scanf("%d", &n);
+
+    switch () {
 	case 0:
-	    printLn("case 0\n");
+	    printf("gerade\n");
 	    break;
 	case 1:
-	    printLn("case 1");
-	    break;
-	case 2:
-	    local i: u8 = 42;
-	    printLn("case 2");
-	    break;
-	case 3:
-	    printLn("case 3");
+	    printf("ungerade\n");
 	    break;
     }
 }
