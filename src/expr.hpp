@@ -215,6 +215,7 @@ class Expr
 
 	// code generation
 	gen::ConstVal loadConst(void) const;
+	gen::ConstIntVal loadConstInt(void) const;
 	gen::Reg loadValue(void) const;
 	gen::Reg loadAddr(void) const;
 	void condJmp(gen::Label trueLabel, gen::Label falseLabel) const;

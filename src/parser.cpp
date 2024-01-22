@@ -863,6 +863,80 @@ parseExprStmt(void)
 }
 
 static bool
+parseSwitchStmt(void)
+{
+    if (token.kind != TokenKind::SWITCH) {
+	return false;
+    }
+    reachableCheck();
+    getToken();
+
+    error::expected(TokenKind::LPAREN);
+    getToken();
+    auto cond = parseExpr();
+    error::expected(TokenKind::RPAREN);
+    getToken();
+
+    error::expected(TokenKind::LBRACE);
+    getToken();
+
+    auto switchLabel = gen::getLabel("switch");
+    auto defaultLabel = gen::getLabel("default");
+    auto endLabel = gen::getLabel("end");
+    std::vector<std::pair<gen::ConstIntVal, gen::Label>> caseLabel;
+
+    ControlStruct::breakLabel.push_back(endLabel);
+
+    gen::jmp(switchLabel);
+    bool hasDefault = false;
+    while (token.kind != TokenKind::RBRACE) {
+	if (token.kind == TokenKind::CASE) {
+	    getToken();
+	    auto valTok = token;
+	    auto val = parseExpr();
+	    if (!val || !val->isConst() || !val->getType()->isInteger()) {
+		error::out() << valTok.loc
+		    << ": constant ineteger expression required" << std::endl;
+		error::fatal();
+	    }
+	    error::expected(TokenKind::COLON);
+	    getToken();
+	    auto label = gen::getLabel("case");
+	    caseLabel.push_back({val->loadConstInt(), label});
+	    gen::labelDef(label);
+	} else if (token.kind == TokenKind::DEFAULT) {
+	    getToken();
+	    error::expected(TokenKind::COLON);
+	    getToken();
+	    hasDefault = true;
+	    gen::labelDef(defaultLabel);
+	} else {
+	    parseStmt();
+	    continue;
+	}
+	// reached if there was a 'case' or 'default' label
+	if (token.kind == TokenKind::RBRACE) {
+	    error::out() << token.loc
+		<< ": label at end of compound statement: "
+		<< "expected statement" << std::endl;
+	    error::fatal();
+	}
+    }
+    if (!hasDefault) {
+	gen::labelDef(defaultLabel);
+    }
+    gen::jmp(endLabel);
+
+    error::expected(TokenKind::RBRACE);
+    getToken();
+    gen::labelDef(switchLabel);
+    gen::jmp(cond->loadValue(), defaultLabel, caseLabel);
+    gen::labelDef(endLabel);
+    ControlStruct::breakLabel.pop_back();
+    return true;
+}
+
+static bool
 parseStmt(void)
 {
     return parseCompoundStmt(true)
@@ -875,7 +949,8 @@ parseStmt(void)
 	|| parseExprStmt()
 	|| parseTypeDef()
 	|| parseStructDef()
-	|| parseLocalDefStmt();
+	|| parseLocalDefStmt()
+	|| parseSwitchStmt();
 }
 
 //------------------------------------------------------------------------------

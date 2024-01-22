@@ -89,6 +89,12 @@ tokenKindCStr(TokenKind kind)
 	    return "BREAK";
 	case TokenKind::CONTINUE:
 	    return "CONTINUE";
+	case TokenKind::SWITCH:
+	    return "SWITCH";
+	case TokenKind::CASE:
+	    return "CASE";
+	case TokenKind::DEFAULT:
+	    return "DEFAULT";
 	case TokenKind::DOT:
 	    return "DOT";
 	case TokenKind::SEMICOLON:
@@ -230,6 +236,12 @@ tokenCStr(TokenKind kind)
 	    return "break";
 	case TokenKind::CONTINUE:
 	    return "continue";
+	case TokenKind::SWITCH:
+	    return "switch";
+	case TokenKind::CASE:
+	    return "case";
+	case TokenKind::DEFAULT:
+	    return "default";
 	case TokenKind::DOT:
 	    return ".";
 	case TokenKind::SEMICOLON:
@@ -386,6 +398,9 @@ static std::unordered_map<UStr, TokenKind> kw = {
     { "cast", TokenKind::CAST },
     { "break", TokenKind::BREAK },
     { "continue", TokenKind::CONTINUE },
+    { "switch", TokenKind::SWITCH },
+    { "case", TokenKind::CASE },
+    { "default", TokenKind::DEFAULT },
 };
 
 // TODO: proper implementation and support of escape sequences

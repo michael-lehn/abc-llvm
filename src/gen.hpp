@@ -15,6 +15,7 @@ using Cond = llvm::Value *;
 using Label = llvm::BasicBlock *;
 using Reg = llvm::Value *;
 using ConstVal = llvm::Constant *;
+using ConstIntVal = llvm::ConstantInt *;
 
 // enable/disable optimization
 void setOpt(bool);
@@ -64,6 +65,8 @@ Label getLabel(const char *name = "");
 void labelDef(Label label);
 Label jmp(Label &label); // needed for phi: returns label of current block
 void jmp(Cond cond, Label trueLabel, Label falseLabel);
+void jmp(Cond cond, Label defaultLabel,
+	 const std::vector<std::pair<ConstIntVal, Label>> &caseLabel);
 Reg phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type);
 
 // memory

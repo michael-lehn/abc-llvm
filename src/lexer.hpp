@@ -46,6 +46,9 @@ enum class TokenKind {
     CAST,
     BREAK,
     CONTINUE,
+    SWITCH,
+    CASE,
+    DEFAULT,
 
     // punctuators
     DOT,

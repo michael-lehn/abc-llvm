@@ -515,6 +515,18 @@ jmp(Cond cond, Label trueLabel, Label falseLabel)
     currFn.bbClosed = true;
 }
 
+void
+jmp(Cond cond, Label defaultLabel,
+    const std::vector<std::pair<ConstIntVal, Label>> &caseLabel)
+{
+    assureOpenBuildingBlock();
+    auto sw = llvmBuilder->CreateSwitch(cond, defaultLabel, caseLabel.size());
+    for (const auto &[val, label]: caseLabel) {
+	sw->addCase(val, label);
+    }
+    currFn.bbClosed = true;
+}
+
 Reg
 phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type)
 {
@@ -640,7 +652,7 @@ cast(Reg reg, const Type *fromType, const Type *toType)
 Reg
 loadIntConst(const char *val, const Type *type, std::uint8_t radix)
 {
-    assureOpenBuildingBlock();
+    //assureOpenBuildingBlock();
 
     if (type->isInteger()) {
 	auto ty = llvm::APInt(type->getIntegerNumBits(), val, radix);
@@ -659,9 +671,6 @@ Reg
 loadIntConst(std::uint64_t val, const Type *type)
 {
     assert(type->isInteger() || (type->isPointer() && val == 0));
-    if (currFn.bbClosed) {
-	labelDef(getLabel("notReached"));
-    }
     if (type->isPointer() && val == 0) {
 	auto ty = llvm::dyn_cast<llvm::PointerType>(TypeMap::get(type));
 	return llvm::ConstantPointerNull::get(ty);

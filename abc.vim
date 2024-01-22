@@ -34,6 +34,9 @@ syntax match keyword /sizeof/ skipwhite
 syntax match keyword /cast/ skipwhite
 syntax match keyword /break/ skipwhite
 syntax match keyword /continue/ skipwhite
+syntax match keyword /switch/ skipwhite
+syntax match keyword /case/ skipwhite
+syntax match keyword /default/ skipwhite
 
 syntax match type /ro/ skipwhite
 syntax match type /u8/ skipwhite

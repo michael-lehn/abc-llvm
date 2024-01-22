@@ -642,6 +642,16 @@ Expr::loadConst(void) const
     return llvm::dyn_cast<T>(loadValue());
 }
 
+gen::ConstIntVal
+Expr::loadConstInt(void) const
+{
+    assert(isConst());
+    assert(getType()->isInteger());
+
+    using T = std::remove_pointer_t<gen::ConstIntVal>;
+    return llvm::dyn_cast<T>(loadValue());
+}
+
 static gen::AluOp
 getGenAluOp(Binary::Kind kind, const Type *type)
 {
