@@ -485,6 +485,14 @@ parsePrimary(void)
 	auto sym = Symtab::addStringLiteral(val).c_str();
 	auto expr = Expr::createIdentifier(sym, opTok.loc);	
 	return expr;	
+    } else if (token.kind == TokenKind::CHARACTER_LITERAL) {
+	std::stringstream ss;
+	ss << static_cast<int>(*token.val.c_str());
+	UStr val{ss.str()};
+        getToken();
+	auto ty = Type::getSignedInteger(16);
+	auto expr = Expr::createLiteral(val.c_str(), 10, ty, opTok.loc);
+        return expr;
     } else if (token.kind == TokenKind::LPAREN) {
         getToken();
 	auto expr = parseExpr();

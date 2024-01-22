@@ -129,7 +129,7 @@ struct TypeMap
 	    return get_(t->getRefType(), t->getDim());
 	} else if (t->isFunction()) {
 	    return llvm::FunctionType::get(get_(t->getRetType()),
-		    get_(t->getArgType()), false);
+		    get_(t->getArgType()), t->hasVarg());
 	} else if (t->isStruct()) {
 	    auto type = t->getMemberType();
 	    std::vector<llvm::Type *> llvmType(type.size());

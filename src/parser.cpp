@@ -173,6 +173,7 @@ parseGlobalDef(void)
 
 static void
 parseFnParamDeclOrType(std::vector<const Type *> &argType,
+		       bool &hasVarg,
 		       std::vector<const char *> *paramIdent = nullptr)
 {
     static std::size_t paramId;
@@ -183,8 +184,10 @@ parseFnParamDeclOrType(std::vector<const Type *> &argType,
 	paramIdent->clear();
     }
 
+    hasVarg = false;
     while (token.kind == TokenKind::IDENTIFIER
-        || token.kind == TokenKind::COLON)
+        || token.kind == TokenKind::COLON
+	|| token.kind == TokenKind::DOT3)
     {
 	// if parameter has no identifier give it an interal identifier 
 	UStr ident;
@@ -192,6 +195,10 @@ parseFnParamDeclOrType(std::vector<const Type *> &argType,
 	if (token.kind == TokenKind::IDENTIFIER) {
 	    ident = token.val.c_str();
 	    getToken();
+	} else if (token.kind == TokenKind::DOT3) {
+	    getToken();
+	    hasVarg = true;
+	    break;
 	} else {
 	    std::stringstream ss;
 	    ss << ".param" << paramId++;
@@ -225,16 +232,16 @@ parseFnParamDeclOrType(std::vector<const Type *> &argType,
 }
 
 static void
-parseFnParamDecl(std::vector<const Type *> &argType,
+parseFnParamDecl(std::vector<const Type *> &argType, bool &hasVarg,
 		 std::vector<const char *> &paramIdent)
 {
-    parseFnParamDeclOrType(argType, &paramIdent);
+    parseFnParamDeclOrType(argType, hasVarg, &paramIdent);
 }
 
 static void
-parseFnParamType(std::vector<const Type *> &argType)
+parseFnParamType(std::vector<const Type *> &argType, bool &hasVarg)
 {
-    parseFnParamDeclOrType(argType);
+    parseFnParamDeclOrType(argType, hasVarg);
 }
 
 //------------------------------------------------------------------------------
@@ -265,10 +272,11 @@ parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
     // parse function parameters
     error::expected(TokenKind::LPAREN);
     getToken();
+    bool hasVarg;
     if (fnDecl) {
-	parseFnParamDecl(argType, *fnParamIdent);
+	parseFnParamDecl(argType, hasVarg, *fnParamIdent);
     } else {
-	parseFnParamType(argType);
+	parseFnParamType(argType, hasVarg);
     }
     error::expected(TokenKind::RPAREN);
     getToken();
@@ -291,7 +299,7 @@ parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
 	Symtab::addDecl(retTypeLoc, UStr{".retVal"}, retType);
     }
 
-    auto fnType = Type::getFunction(retType, argType);
+    auto fnType = Type::getFunction(retType, argType, hasVarg);
     
     if (fnDecl) {
 	*fnDecl = Symtab::addDeclToRootScope(fnLoc, fnIdent.c_str(), fnType);

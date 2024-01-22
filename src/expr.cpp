@@ -427,7 +427,8 @@ Expr::createCall(ExprPtr &&fn, ExprVector &&param, Token::Loc opLoc)
 	error::fatal();
     }
     auto const argType = fn->getType()->getArgType();
-    if (argType.size() != param.size()) {
+    if ((argType.size() > param.size())
+     || (argType.size() < param.size() && !fn->getType()->hasVarg())) {
 	error::out() << opLoc << ": too "
 	    << (argType.size() < param.size() ? "many" : "few")
 	    << " arguments to function call, expected "
@@ -436,7 +437,7 @@ Expr::createCall(ExprPtr &&fn, ExprVector &&param, Token::Loc opLoc)
 	error::fatal();
     }
     for (std::size_t i = 0; i < argType.size(); ++i) {
-	const auto & p = param[i];
+	const auto &p = param[i];
 	if (!Type::getTypeConversion(p->getType(), argType[i], p->getLoc())) {
 	    error::out() << opLoc << ": incompatible conversion of type '"
 		<< param[i]->getType() << "' to type '" << argType[i]
@@ -877,9 +878,11 @@ loadValue(const Binary &binary)
 		for (std::size_t i = 0; i < r.size(); ++i) {
 		    param[i] = r[i]->loadValue();
 		    // cast parameters
-		    auto fromType = r[i]->getType();
-		    auto toType = fnType->getArgType()[i];
-		    param[i] = gen::cast(param[i], fromType, toType);
+		    if (i < fnType->getArgType().size()) {
+			auto fromType = r[i]->getType();
+			auto toType = fnType->getArgType()[i];
+			param[i] = gen::cast(param[i], fromType, toType);
+		    }
 		}
 
 		if (std::holds_alternative<Identifier>(left->variant)) {

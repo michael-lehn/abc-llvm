@@ -12,7 +12,7 @@ fn getErr(): u64;
 
 fn printUnsigned(val: u64);
 fn printInt(val: i64);
-fn printf(: -> u8, :u32);
+fn printf(: -> u8, ...): u32;
 fn printLn(: -> u8);
 fn printNl();
 
@@ -21,7 +21,7 @@ fn main()
     local n: u64 = getInt();
 
     local i: u8 = 42;
-    printf("n = %03d\n", n);
+    printf("n = %03d, n*n = %d\n", n, n*n);
     switch (n) {
 	case 0:
 	    printLn("case 0\n");

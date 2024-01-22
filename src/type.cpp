@@ -64,8 +64,9 @@ operator<(const Array &x, const Array &y)
 
 struct Function : public Type
 {
-    Function(const Type *retType, std::vector<const Type *> argType)
-	: Type{Type::FUNCTION, FunctionData{retType, argType}}
+    Function(const Type *retType, std::vector<const Type *> argType,
+	     bool hasVarg = false)
+	: Type{Type::FUNCTION, FunctionData{retType, argType, hasVarg}}
     {}
 };
 
@@ -185,12 +186,13 @@ Type::getArray(const Type *refType, std::size_t dim)
 // Create function type or return existing type
 
 const Type *
-Type::getFunction(const Type *retType, std::vector<const Type *> argType)
+Type::getFunction(const Type *retType, std::vector<const Type *> argType,
+		  bool hasVarg)
 {
     if (!fnTypeSet) {
 	fnTypeSet = new std::set<Function>;
     }
-    return &*fnTypeSet->insert(Function{retType, argType}).first;
+    return &*fnTypeSet->insert(Function{retType, argType, hasVarg}).first;
 }
 
 // create strcutured types
@@ -313,6 +315,9 @@ operator<<(std::ostream &out, const Type *type)
 	    if (i + 1 != arg.size()) {
 		out << ",";
 	    }
+	}
+	if (type->hasVarg()) {
+	    out << ", ...";
 	}
 	out << "): " << type->getRetType();
     } else if (type->isStruct()) {

@@ -122,6 +122,12 @@ class Type
 	    return std::get<FunctionData>(data).retType;
 	}
 
+	bool hasVarg() const
+	{
+	    assert(std::holds_alternative<FunctionData>(data));
+	    return std::get<FunctionData>(data).hasVarg;
+	}
+
 	const std::vector<const Type *> &getArgType() const
 	{
 	    assert(std::holds_alternative<FunctionData>(data));
@@ -220,6 +226,7 @@ class Type
 	struct FunctionData {
 	    const Type *retType;
 	    std::vector<const Type *> argType;
+	    bool hasVarg;
 	};
 
 	struct StructData {
@@ -253,7 +260,8 @@ class Type
 	static const Type *getNullPointer(void);
 	static const Type *getArray(const Type *refType, std::size_t dim);
 	static const Type *getFunction(const Type *retType,
-				       std::vector<const Type *> argType);
+				       std::vector<const Type *> argType,
+				       bool hasVarg = false);
 	static Type *createIncompleteStruct(UStr name);
 	static void deleteStruct(const Type *ty);
 

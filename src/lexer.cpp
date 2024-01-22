@@ -34,6 +34,8 @@ tokenKindCStr(TokenKind kind)
 	    return "OCTAL_LITERAL";
 	case TokenKind::STRING_LITERAL:
 	    return "STRING_LITERAL";
+	case TokenKind::CHARACTER_LITERAL:
+	    return "CHARACTER_LITERAL";
 	case TokenKind::I8:
 	    return "I8";
 	case TokenKind::I16:
@@ -98,6 +100,8 @@ tokenKindCStr(TokenKind kind)
 	    return "DEFAULT";
 	case TokenKind::DOT:
 	    return "DOT";
+	case TokenKind::DOT3:
+	    return "DOT3";
 	case TokenKind::SEMICOLON:
 	    return "SEMICOLON";
 	case TokenKind::COLON:
@@ -245,6 +249,8 @@ tokenCStr(TokenKind kind)
 	    return "default";
 	case TokenKind::DOT:
 	    return ".";
+	case TokenKind::DOT3:
+	    return "...";
 	case TokenKind::SEMICOLON:
 	    return ";";
 	case TokenKind::COLON:
@@ -460,6 +466,7 @@ tokenSet(TokenKind kind)
 }
 
 static void parseStringLiteral(void);
+static void parseCharacterLiteral(void);
 
 TokenKind
 getToken(void)
@@ -510,9 +517,22 @@ getToken(void)
     } else if (ch == '"') {
 	parseStringLiteral();
 	return tokenSet(TokenKind::STRING_LITERAL);
+    } else if (ch == '\'') {
+	parseCharacterLiteral();
+	return tokenSet(TokenKind::CHARACTER_LITERAL);
     } else if (ch == '.') {
 	tokenUpdate();
 	nextCh();
+	if (ch == '.') {
+	    tokenUpdate();
+	    nextCh();
+	    if (ch == '.') {
+		tokenUpdate();
+		nextCh();
+		return tokenSet(TokenKind::DOT3);
+	    }
+	    return tokenSet(TokenKind::BAD);
+	}
 	return tokenSet(TokenKind::DOT);
     } else if (ch == ';') {
 	tokenUpdate();
@@ -805,6 +825,117 @@ parseStringLiteral(void)
     }
     nextCh();
 }
+
+static void
+parseCharacterLiteral()
+{
+    // ch == '\''
+    nextCh();
+    if (ch == '\'') {
+	error::out() << token.loc << ": single quote as character literal"
+	    << std::endl;
+	error::fatal();
+    }
+    do {
+        if (ch == '\n') {
+	    error::out() << token.loc << ": newline as character literal"
+		<< std::endl;
+	    error::fatal();
+        } else if (ch == '\\') {
+            nextCh();
+            if (isOctDigit(ch)) {
+                unsigned octalval = ch - '0';
+                nextCh();
+                if (isOctDigit(ch)) {
+                    octalval = octalval * 8 + ch - '0';
+                    nextCh();
+                }
+                if (isOctDigit(ch)) {
+                    octalval = octalval * 8 + ch - '0';
+                    nextCh();
+                }
+                tokenUpdate(octalval);
+            } else {
+                switch (ch) {
+                    /* simple-escape-sequence */
+                    case '\'':
+                        tokenUpdate('\'');
+                        nextCh();
+                        break;
+                    case '"':
+                        tokenUpdate('\"');
+                        nextCh();
+                        break;
+                    case '?':
+                        tokenUpdate('\?');
+                        nextCh();
+                        break;
+                    case '\\':
+                        tokenUpdate('\\');
+                        nextCh();
+                        break;
+                    case 'a':
+                        tokenUpdate('\a');
+                        nextCh();
+                        break;
+                    case 'b':
+                        tokenUpdate('\b');
+                        nextCh();
+                        break;
+                    case 'f':
+                        tokenUpdate('\f');
+                        nextCh();
+                        break;
+                    case 'n':
+                        tokenUpdate('\n');
+                        nextCh();
+                        break;
+                    case 'r':
+                        tokenUpdate('\r');
+                        nextCh();
+                        break;
+                    case 't':
+                        tokenUpdate('\t');
+                        nextCh();
+                        break;
+                    case 'v':
+                        tokenUpdate('\v');
+                        nextCh();
+                        break;
+                    case 'x': {
+                        nextCh();
+                        if (!isHexDigit(ch)) {
+			    error::out() << token.loc
+				<< ": expected hex digit" << std::endl;
+			    error::fatal();
+                        }
+                        unsigned hexval = hexToVal(ch);
+                        nextCh();
+                        while (isHexDigit(ch)) {
+                            hexval = hexval * 16 + hexToVal(ch);
+                            nextCh();
+                        }
+                        tokenUpdate(hexval);
+                        break;
+                    }
+                    default:
+			error::out() << token.loc
+			    << ": invalid character literal" << std::endl;
+			error::fatal();
+                }
+            }
+        } else if (ch == EOF) {
+	    error::out() << token.loc
+		<< ": end of file in character literal" << std::endl;
+	    error::fatal();
+        } else {
+            tokenUpdate(ch);
+            nextCh();
+        }
+    } while (ch != '\'');
+    nextCh();
+}
+
 
 std::ostream &
 operator<<(std::ostream &out, const Token::Loc &loc)

@@ -16,6 +16,7 @@ enum class TokenKind {
     HEXADECIMAL_LITERAL,
     OCTAL_LITERAL,
     STRING_LITERAL,
+    CHARACTER_LITERAL,
 
     // keywords
     I8,
@@ -52,6 +53,7 @@ enum class TokenKind {
 
     // punctuators
     DOT,
+    DOT3,
     SEMICOLON,
     COLON,
     COMMA,
