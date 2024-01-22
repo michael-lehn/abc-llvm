@@ -6,17 +6,20 @@
     #include "abclib.h"
 */
 
-fn printf(: -> u8, ...): u32;
-fn scanf(: -> u8, ...): u32;
+type int = u32;
+type char = u8;
+fn printf(: -> char, ...): int;
+fn scanf(: -> char, ...): int;
 
 fn main()
 {
     local n: u64;
+    local int: int;
 
     printf("n = ");
     scanf("%d", &n);
 
-    switch (n%1) {
+    switch (n % 1) {
 	case 0:
 	    printf("gerade\n");
 	    break;

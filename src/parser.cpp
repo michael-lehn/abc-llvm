@@ -810,6 +810,11 @@ parseReturnStmt(void)
     auto expr = parseExpr();
     error::expected(TokenKind::SEMICOLON);
     getToken();
+    if (!Symtab::get(UStr{".retVal"})) {
+	error::out() << token.loc
+	    << "  void function should not return a value" << std::endl;
+	error::fatal();
+    }
     auto ret = Expr::createIdentifier(UStr{".retVal"}, exprTok.loc);
     expr = Expr::createBinary(Binary::Kind::ASSIGN, std::move(ret),
 			      std::move(expr), exprTok.loc);
