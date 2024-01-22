@@ -59,7 +59,7 @@ syntax match literal /nullptr/ skipwhite
 syntax match literal /[0-7][0-7]*/ skipwhite
 syntax match literal /0x[0-9a-zA-Z][0-9a-zA-Z]*/ skipwhite
 syntax region literal start=/"/ skip=/\\"/ end=/"/ skipwhite
-syntax region literal start=/'/ skip=/\\'/ end=/'/ skipwhite
+syntax match literal /'.'/ skipwhite
 
 syntax region comment start="//" end="$" skipwhite
 syntax region comment start="/\*" end="\*/" skipwhite
