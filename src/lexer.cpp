@@ -3,6 +3,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "error.hpp"
 #include "lexer.hpp"
 
 Token token;
@@ -369,6 +370,18 @@ isLetter(int ch)
            ch == '_';
 }
 
+static unsigned
+hexToVal(char ch)
+{
+    if (ch >= '0' && ch <= '9') {
+        return ch - '0';
+    } else if (ch >= 'a' && ch <= 'f') {
+        return 10 + ch - 'a';
+    } else {
+        return 10 + ch - 'A';
+    }
+}
+
 static std::unordered_map<UStr, TokenKind> kw = {
     { "i8", TokenKind::I8 },
     { "i16", TokenKind::I16 },
@@ -427,9 +440,9 @@ tokenReset(void)
 }
 
 static void
-tokenUpdate(void)
+tokenUpdate(char addCh = ch)
 {
-    token_str += ch;
+    token_str += addCh;
     token.loc.to.line = curr.line;
     token.loc.to.col = curr.col;
 }
@@ -445,6 +458,8 @@ tokenSet(TokenKind kind)
     }
     return token.kind;
 }
+
+static void parseStringLiteral(void);
 
 TokenKind
 getToken(void)
@@ -493,16 +508,7 @@ getToken(void)
             return tokenSet(TokenKind::DECIMAL_LITERAL);
         }
     } else if (ch == '"') {
-	do {
-	    tokenUpdate();
-	    if (ch == '\\') {
-		nextCh();
-		tokenUpdate();
-	    }
-	    nextCh();
-	} while (ch != '"');
-	tokenUpdate();
-	nextCh();
+	parseStringLiteral();
 	return tokenSet(TokenKind::STRING_LITERAL);
     } else if (ch == '.') {
 	tokenUpdate();
@@ -691,6 +697,113 @@ getToken(void)
     tokenUpdate();
     nextCh();
     return tokenSet(TokenKind::BAD);
+}
+
+static void
+parseStringLiteral(void)
+{
+    // ch == '"'
+    nextCh();
+    while (ch != '"') {
+        if (ch == '\n') {
+	    error::out() << token.loc << ": newline in string literal"
+		<< std::endl;
+	    error::fatal();
+        } else if (ch == '\\') {
+            nextCh();
+            if (isOctDigit(ch)) {
+                unsigned octalval = ch - '0';
+                nextCh();
+                if (isOctDigit(ch)) {
+                    octalval = octalval * 8 + ch - '0';
+                    nextCh();
+                }
+                if (isOctDigit(ch)) {
+                    octalval = octalval * 8 + ch - '0';
+                    nextCh();
+                }
+                ch = octalval;
+                tokenUpdate(ch);
+            } else {
+                switch (ch) {
+                    /* simple-escape-sequence */
+                    case '\'':
+                        tokenUpdate('\'');
+                        nextCh();
+                        break;
+                    case '"':
+                        tokenUpdate('\"');
+                        nextCh();
+                        break;
+                    case '?':
+                        tokenUpdate('\?');
+                        nextCh();
+                        break;
+                    case '\\':
+                        tokenUpdate('\\');
+                        nextCh();
+                        break;
+                    case 'a':
+                        tokenUpdate('\a');
+                        nextCh();
+                        break;
+                    case 'b':
+                        tokenUpdate('\b');
+                        nextCh();
+                        break;
+                    case 'f':
+                        tokenUpdate('\f');
+                        nextCh();
+                        break;
+                    case 'n':
+                        tokenUpdate('\n');
+                        nextCh();
+                        break;
+                    case 'r':
+                        tokenUpdate('\r');
+                        nextCh();
+                        break;
+                    case 't':
+                        tokenUpdate('\t');
+                        nextCh();
+                        break;
+                    case 'v':
+                        tokenUpdate('\v');
+                        nextCh();
+                        break;
+                    case 'x': {
+                        nextCh();
+                        if (!isHexDigit(ch)) {
+			    error::out() << token.loc
+				<< ": expected hex digit" << std::endl;
+			    error::fatal();
+                        }
+                        unsigned hexval = hexToVal(ch);
+                        nextCh();
+                        while (isHexDigit(ch)) {
+                            hexval = hexval * 16 + hexToVal(ch);
+                            nextCh();
+                        }
+                        tokenUpdate(hexval);
+                        break;
+                    }
+                    default:
+			error::out() << token.loc
+			    << ": invalid character '" << ch
+			    << "'" << std::endl;
+			error::fatal();
+                }
+            }
+        } else if (ch == EOF) {
+	    error::out() << token.loc << ": end of file in string literal"
+		<< std::endl;
+	    error::fatal();
+        } else {
+            tokenUpdate(ch);
+            nextCh();
+        }
+    }
+    nextCh();
 }
 
 std::ostream &

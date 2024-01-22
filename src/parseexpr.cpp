@@ -480,7 +480,7 @@ parsePrimary(void)
 	auto expr = Expr::createLiteral(val, 8, ty, opTok.loc);
         return expr;
     } else if (token.kind == TokenKind::STRING_LITERAL) {
-	auto val = token.valProcessed.c_str();
+	auto val = token.val.c_str();
         getToken();
 	auto sym = Symtab::addStringLiteral(val).c_str();
 	auto expr = Expr::createIdentifier(sym, opTok.loc);	
