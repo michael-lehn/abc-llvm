@@ -923,11 +923,14 @@ parseSwitchStmt(void)
 	    getToken();
 	    hasDefault = true;
 	    gen::labelDef(defaultLabel);
-	} else {
-	    parseStmt();
+	} else if (parseStmt()) {
 	    continue;
+	} else {
+	    error::out() << token.loc
+		<< ": expected expression" << std::endl;
+	    error::fatal();
 	}
-	// reached if there was a 'case' or 'default' label
+	// only reached if there was a 'case' or 'default' label
 	if (token.kind == TokenKind::RBRACE) {
 	    error::out() << token.loc
 		<< ": label at end of compound statement: "
@@ -935,13 +938,13 @@ parseSwitchStmt(void)
 	    error::fatal();
 	}
     }
+    error::expected(TokenKind::RBRACE);
+    getToken();
     if (!hasDefault) {
 	gen::labelDef(defaultLabel);
     }
     gen::jmp(endLabel);
 
-    error::expected(TokenKind::RBRACE);
-    getToken();
     gen::labelDef(switchLabel);
     gen::jmp(cond->loadValue(), defaultLabel, caseLabel);
     gen::labelDef(endLabel);
