@@ -7,22 +7,20 @@ int
 main(void)
 {
     auto v = Type::getVoid();
-    std::cout << "v = " << v << std::endl;
+    std::cout << "v = " << v << ", addr = " << (int *)v << std::endl;
 
-    auto t1 = Type::getUnsignedInteger(16);
-    auto t2 = Type::getUnsignedInteger(16);
-    auto t3 = Type::getUnsignedInteger(32);
+    auto t1 = Type::getConst(Type::getPointer(Type::getUnsignedInteger(16)));
+    auto t2 = Type::getPointer(Type::getUnsignedInteger(16));
+    auto t3 = Type::getConstRemoved(t2);
     auto t4 = Type::getPointer(t1);
     auto t5 = Type::getPointer(t1);
     auto t6 = Type::getPointer(t2);
     auto t7 = Type::getPointer(t3);
 
-    std::cout << "t1 = " << t1 << std::endl;
+    std::cout << "t1 = " << t1 << ", addr = " << (int *)t1 << std::endl;
+    std::cout << "t2 = " << t2 << ", addr = " << (int *)t2 << std::endl;
+    std::cout << "t3 = " << t3 << ", addr = " << (int *)t3 << std::endl;
 
-    std::printf("u16 t1 = %p\n", t1);
-    std::printf("u16 t2 = %p\n", t2);
-
-    std::printf("u32 t3 = %p\n", t3);
 
     std::printf("-> u16 t4 = %p\n", t4);
     std::printf("-> u16 t5 = %p\n", t5);

@@ -492,8 +492,8 @@ parseNamedType(const char *name = nullptr)
     return ty;
 }
 
-const Type *
-parseType(void)
+static const Type *
+parseUnqualifiedType(void)
 {
     if (auto ty = parseFnType()) {
 	return ty;
@@ -505,6 +505,34 @@ parseType(void)
 	return ty;
     }
     return parseIntType();
+}
+
+const Type *
+parseType(void)
+{
+    bool constFlag = false;
+    auto constTok = token;
+    if (token.kind == TokenKind::CONST) {
+	getToken();
+	constFlag = true;
+    }
+    auto tyTok = token;
+    auto ty = parseUnqualifiedType();
+    if (constFlag && !ty) {
+	error::out() << tyTok.loc
+	    << ": expected type after 'const'" << std::endl;
+	error::fatal();
+    } else if (constFlag) {
+	auto constTy = Type::getConst(ty);
+	if (!constTy) {
+	    error::out() << constTok.loc
+		<< ": 'const' qualifier can not be used for '"
+		<< ty << "'" << std::endl;
+	    error::fatal();
+	}
+	return constTy;
+    }
+    return ty;
 }
 
 //------------------------------------------------------------------------------
@@ -561,7 +589,11 @@ parseLocalDef(void)
 		error::fatal();
 	    }
 
+	    auto rcPtrTy = Type::getPointer(Type::getConstRemoved(type));
 	    auto var = Expr::createIdentifier(ident.c_str(), loc);
+	    var = Expr::createAddr(std::move(var), loc);
+	    var = Expr::createCast(std::move(var), rcPtrTy, loc);
+	    var = Expr::createDeref(std::move(var));
 	    init = Expr::createBinary(Binary::Kind::ASSIGN,
 				      std::move(var),
 				      std::move(init),

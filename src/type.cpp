@@ -11,11 +11,15 @@
 struct Integer : public Type
 {
     Integer()
-	: Type{Type::VOID, IntegerData{0, Type::IntegerKind::UNSIGNED}}
+	: Type{Type::VOID, IntegerData{0, Type::IntegerKind::UNSIGNED, true}}
     {}
 
     Integer(std::size_t numBits, IntegerKind kind = IntegerKind::UNSIGNED)
-	: Type{Type::INTEGER, IntegerData{numBits, kind}}
+	: Type{Type::INTEGER, IntegerData{numBits, kind, false}}
+    {}
+
+    Integer(IntegerData data, bool constFlag)
+	: Type{Type::INTEGER, IntegerData{data.numBits, data.kind, constFlag}}
     {}
 
     friend bool operator<(const Integer &x, const Integer &y);
@@ -26,7 +30,10 @@ operator<(const Integer &x, const Integer &y)
 {
     return x.getIntegerKind() < y.getIntegerKind()
 	|| (x.getIntegerKind() == y.getIntegerKind()
-	    && x.getIntegerNumBits() < y.getIntegerNumBits());
+	    && x.getIntegerNumBits() < y.getIntegerNumBits())
+	|| (x.getIntegerKind() == y.getIntegerKind()
+	    && x.getIntegerNumBits() == y.getIntegerNumBits()
+	    && x.hasConstFlag() < y.hasConstFlag());
 }
 
 //-- Pointer class -------------------------------------------------------------
@@ -34,22 +41,24 @@ operator<(const Integer &x, const Integer &y)
 struct Pointer : public Type
 {
     Pointer(const Type *refType, bool isNullptr)
-	: Type{Type::POINTER, PointerData{refType, isNullptr}}
+	: Type{Type::POINTER, PointerData{refType, isNullptr, false}}
+    {}
+
+    Pointer(PointerData data,  bool constFlag)
+	: Type{Type::POINTER,
+	       PointerData{data.refType, data.isNullptr, constFlag}}
     {}
 };
 
 bool
 operator<(const Pointer &x, const Pointer &y)
 {
-    if (x.isNullPointer() && !y.isNullPointer()) {
-	return true;
-    }
-    if (y.isNullPointer()) {
-	return false;
-    }
-    assert(!x.isNullPointer());
-    assert(!y.isNullPointer());
-    return x.getRefType() < y.getRefType();
+    return (x.isNullPointer() && !y.isNullPointer())
+	|| (!x.isNullPointer() && !y.isNullPointer()
+	    && x.getRefType() < y.getRefType())
+	|| (!x.isNullPointer() && !y.isNullPointer()
+	    && x.getRefType() == y.getRefType()
+	    && x.hasConstFlag() < y.hasConstFlag());
 }
 
 //-- Array class ---------------------------------------------------------------
@@ -120,6 +129,32 @@ static std::unordered_map<std::size_t, Struct> *structMap;
 //-- Static functions ----------------------------------------------------------
 
 // Create integer/void type or return existing type
+
+const Type *
+Type::getConst(const Type *type)
+{
+    if (type->isInteger()) {
+	const auto &data = std::get<IntegerData>(type->data);
+	return &*intTypeSet->insert(Integer{data, true}).first;
+    } else if (type->isPointer()) {
+	const auto &data = std::get<PointerData>(type->data);
+	return &*ptrTypeSet->insert(Pointer{data, true}).first;
+    }
+    return nullptr;
+}
+
+const Type *
+Type::getConstRemoved(const Type *type)
+{
+    if (type->isInteger()) {
+	const auto &data = std::get<IntegerData>(type->data);
+	return &*intTypeSet->insert(Integer{data, false}).first;
+    } else if (type->isPointer()) {
+	const auto &data = std::get<PointerData>(type->data);
+	return &*ptrTypeSet->insert(Pointer{data, false}).first;
+    }
+    return type;
+}
 
 const Type *
 Type::getVoid(void)
@@ -303,7 +338,14 @@ operator<<(std::ostream &out, const Type *type)
 {
     if (!type) {
 	out << "illegal";
-    } else if (type->isVoid()) {
+	return out;
+    }
+
+    if (type->hasConstFlag()) {
+	out << "const ";
+    }
+
+    if (type->isVoid()) {
 	out << "void";
     } else if (type->isInteger()) {
 	out << (type->getIntegerKind() == Type::SIGNED ? "i" : "u")

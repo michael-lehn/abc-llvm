@@ -118,7 +118,7 @@ Binary::setType(void)
 	    type = l->getRetType();
 	    return;
 	case Binary::Kind::ASSIGN:
-	    if (l->isArray() || l->isFunction()) {
+	    if (l->isArray() || l->isFunction() || l->hasConstFlag()) {
 		error::out() << opLoc << " type '"
 		    << l << "' is not is not assignable." << std::endl;
 		error::fatal();
@@ -1064,7 +1064,6 @@ Expr::loadAddr(void) const
 {
     if (!isLValue()) {
 	error::out() << getLoc() << ": not a lvalue" << std::endl;
-	print();
 	error::fatal();
     }
 

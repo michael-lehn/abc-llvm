@@ -52,6 +52,16 @@ class Type
 	    return id == INTEGER && getIntegerNumBits() == 1;
 	}
 
+	bool hasConstFlag() const
+	{
+	    if (isInteger()) {
+		return std::get<IntegerData>(data).constFlag;
+	    } else if (isPointer()) {
+		return std::get<PointerData>(data).constFlag;
+	    }
+	    return false;
+	}
+
 	bool isInteger() const
 	{
 	    return id == INTEGER;
@@ -59,6 +69,7 @@ class Type
 
 	IntegerKind getIntegerKind() const
 	{
+	    assert(std::holds_alternative<IntegerData>(data));
 	    return std::get<IntegerData>(data).kind;
 	}
 
@@ -211,11 +222,13 @@ class Type
 	struct IntegerData {
 	    std::size_t numBits;
 	    IntegerKind kind;
+	    bool constFlag;
 	};
 
 	struct PointerData {
 	    const Type *refType;
 	    bool isNullptr;
+	    bool constFlag;
 	};
 
 	struct ArrayData {
@@ -252,6 +265,8 @@ class Type
 
     public:
 	// for getting a unnamed type
+	static const Type *getConst(const Type *type);
+	static const Type *getConstRemoved(const Type *type);
 	static const Type *getVoid(void);
 	static const Type *getBool(void);
 	static const Type *getUnsignedInteger(std::size_t numBits);
