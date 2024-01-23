@@ -2,7 +2,7 @@ CXX := clang++
 #CXX := g++-13
 
 #llvm.comp := `llvm-config --cxxflags`
-llvm.comp := -I/usr/local/Cellar/llvm/17.0.6/include
+llvm.comp := -I `llvm-config --includedir`
 llvm.link := `llvm-config --ldflags --system-libs --libs core`
 
 CXXFLAGS += $(llvm.comp)
