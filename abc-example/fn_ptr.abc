@@ -6,9 +6,11 @@
     #include "abclib.h"
 */
 
+
 fn printU64(:u64);
 fn printNl();
 fn print(: -> u8);
+
 
 //
 //   Here the real action begins ...
@@ -28,7 +30,7 @@ fn bar(a: u16)
     printNl();
 }
 
-fn sel(s: u8): -> fn(:u16)
+fn sel(s: -> array[10] of u8): -> fn(:u16)
 {
     if (s == 1) {
 	return foo;
@@ -38,10 +40,10 @@ fn sel(s: u8): -> fn(:u16)
 
 fn main(): u8
 {
-    local p: -> fn(:u8),    // pointer to function (aka "function pointer")
-	  q: ->-> fn(:u8);  // pointer to pointer to function
+    local p: -> fn(:u16),    // pointer to function (aka "function pointer")
+	  q: ->-> fn(:u16);  // pointer to pointer to function
 
-    p = foo;
+    p = &foo;
     (*p)(42);		    // one way to use a function pointer
 
     p = bar;

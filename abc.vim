@@ -18,7 +18,7 @@ syntax case match
 " syntax match abcMinus /[-]/ contained skipwhite
 syntax match abcIdentifier /[A-Za-z_][A-Za-z0-9_]*/
  
-syntax match keyword /fn/ skipwhite
+syntax match keyword /fn/ skipwhite 
 syntax match keyword /for/ skipwhite
 syntax match keyword /while/ skipwhite
 syntax match keyword /if/ skipwhite
@@ -35,14 +35,14 @@ syntax match keyword /cast/ skipwhite
 syntax match keyword /break/ skipwhite
 syntax match keyword /continue/ skipwhite
 syntax match keyword /switch/ skipwhite
-syntax match keyword /case/ skipwhite
-syntax match keyword /default/ skipwhite
+syntax match keyword /case/ skipwhite contained
+syntax match keyword /default/ skipwhite contained
 
 syntax match type /ro/ skipwhite
-syntax match type /u8/ skipwhite
-syntax match type /u16/ skipwhite
-syntax match type /u32/ skipwhite
-syntax match type /u64/ skipwhite
+" syntax match type /u8/ skipwhite
+" syntax match type /u16/ skipwhite
+" syntax match type /u32/ skipwhite
+" syntax match type /u64/ skipwhite
 syntax match type /struct/ skipwhite
 syntax match type /union/ skipwhite
  
@@ -51,8 +51,15 @@ syntax match type /i16/ skipwhite
 syntax match type /i32/ skipwhite
 syntax match type /i64/ skipwhite
 
-syn match ty "->|...|[A-Za-z][0-9A-Za-z]*" contained
-syntax region type matchgroup=buflit start=/:/ end=/[,;)=\n]/ contains=ty
+syntax region notype start=/default/ end=/:/ contains=keyword
+syntax region notype start=/case/ end=/:/ contains=keyword,literal
+
+syn match ty /->/
+syn match ty /(/
+syn match ty /\[[^]]*\]/
+"syntax region ty2 start=/fn(/ end=/)/
+"syntax region type matchgroup=buflit start="):" end=/[;{]/
+syntax region type matchgroup=buflit start=/:/ end=/[,;)={]/ contains=ty, keyword
 
 syntax match literal /[+-]*[1-9][0-9]*/ skipwhite
 syntax match literal /nullptr/ skipwhite
