@@ -36,6 +36,8 @@ tokenKindCStr(TokenKind kind)
 	    return "STRING_LITERAL";
 	case TokenKind::CHARACTER_LITERAL:
 	    return "CHARACTER_LITERAL";
+	case TokenKind::CONST:
+	    return "CONST";
 	case TokenKind::I8:
 	    return "I8";
 	case TokenKind::I16:
@@ -185,6 +187,8 @@ const char *
 tokenCStr(TokenKind kind)
 {
     switch (kind) {
+	case TokenKind::CONST:
+	    return "const";
 	case TokenKind::I8:
 	    return "i8";
 	case TokenKind::I16:
@@ -389,6 +393,7 @@ hexToVal(char ch)
 }
 
 static std::unordered_map<UStr, TokenKind> kw = {
+    { "const", TokenKind::CONST },
     { "i8", TokenKind::I8 },
     { "i16", TokenKind::I16 },
     { "i32", TokenKind::I32 },
