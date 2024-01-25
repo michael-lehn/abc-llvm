@@ -181,6 +181,15 @@ class Type
 	    return structData.name;
 	}
 
+	std::size_t getNumMembers(void) const
+	{
+	    if (isArray()) {
+		return getDim();
+	    } else if (isStruct()) {
+		return getMemberType().size();
+	    }
+	    return 1;
+	}
 
 	bool hasMember(UStr ident) const
 	{
@@ -195,6 +204,19 @@ class Type
 	    const auto &structData = std::get<StructData>(data);
 	    assert(hasMember(ident));
 	    return structData.index.at(ident.c_str());
+	}
+
+	const Type *getMemberType(std::size_t index) const
+	{
+	    if (std::holds_alternative<StructData>(data)) {
+		auto type = getMemberType();
+		return index < type.size() ? type.at(index) : nullptr;
+	    } else if (std::holds_alternative<ArrayData>(data)) {
+		auto type = getRefType();
+		return index < getDim() ? type : nullptr;
+	    } else {
+		return this;
+	    }
 	}
 
 	const Type *getMemberType(UStr ident) const

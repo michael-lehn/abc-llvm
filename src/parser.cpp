@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <optional>
 #include <sstream>
 
 #include "error.hpp"
@@ -549,6 +550,50 @@ parseType(void)
 //------------------------------------------------------------------------------
 
 static bool
+parseInitializer(gen::Reg addr, const Type *type)
+{
+    if (token.kind != TokenKind::LBRACE) {
+	return false;
+    }
+    getToken();
+
+    for (std::size_t pos = 0; pos < type->getNumMembers(); ++pos) {
+	auto dest = gen::ptrMember(type, addr, pos);
+	auto memTy = type->getMemberType(pos);
+	if (!memTy) {
+	    error::out() << token.loc
+		<< ": excess elements in initializer" << std::endl;
+	    error::fatal();
+	}
+	auto exprLoc = token.loc;
+	if (auto expr = parseExpr()) {
+	    if (!Type::getTypeConversion(expr->getType(), memTy, exprLoc)) {
+		error::out() << exprLoc
+		    << ": can not cast '" << expr->getType() << "' to '"
+		    << memTy << "'" << std::endl;
+		error::fatal();
+	    }
+	    expr = Expr::createCast(std::move(expr), memTy, exprLoc);
+	    auto val = expr->loadValue();
+	    gen::store(val, dest, memTy);
+	} else if (parseInitializer(dest, memTy)) {
+	} else {
+	    error::expected(TokenKind::RBRACE);
+	    auto val = gen::loadZero(memTy);
+	    gen::store(val, dest, memTy);
+	}
+	if (token.kind == TokenKind::COMMA) {
+	    getToken();
+	    continue;
+	}
+    }
+    error::expected(TokenKind::RBRACE);
+    getToken();
+
+    return true;
+}
+
+static bool
 parseLocalDef(void)
 {
     if (token.kind != TokenKind::LOCAL) {
@@ -591,25 +636,26 @@ parseLocalDef(void)
 
 	// parse initalizer
 	if (token.kind == TokenKind::EQUAL) {
-	    auto opLoc = token.loc;
 	    getToken();
-	    auto init = parseExpr();
-	    if (!init) {
-		error::out() << token.loc << " expected non-empty expression"
-		    << std::endl;
-		error::fatal();
-	    }
 
 	    auto rcPtrTy = Type::getPointer(Type::getConstRemoved(type));
 	    auto var = Expr::createIdentifier(ident.c_str(), loc);
 	    var = Expr::createAddr(std::move(var), loc);
 	    var = Expr::createCast(std::move(var), rcPtrTy, loc);
 	    var = Expr::createDeref(std::move(var));
-	    init = Expr::createBinary(Binary::Kind::ASSIGN,
-				      std::move(var),
-				      std::move(init),
-				      opLoc);
-	    init->loadValue();
+	    auto addr = var->loadAddr();
+	    if (!parseInitializer(addr, var->getType())) {
+		auto initLoc = token.loc;
+		auto init = parseExpr();
+		if (!init) {
+		    error::out() << token.loc
+			<< " expected non-empty expression" << std::endl;
+		    error::fatal();
+		}
+		init = Expr::createCast(std::move(init), type, initLoc);
+		auto val = init->loadValue();
+		gen::store(val, addr, type);
+	    }
 	}
 	if (token.kind != TokenKind::COMMA) {
 	    return true;

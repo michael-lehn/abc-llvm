@@ -323,7 +323,7 @@ fnDefEnd(void)
     llvm::verifyFunction(*currFn.llvmFn);
     if (opt) {
 	llvmFPM->run(*currFn.llvmFn, *llvmFAM);
-	llvmFPM->run(*currFn.llvmFn, *llvmFAM);
+	//llvmFPM->run(*currFn.llvmFn, *llvmFAM);
     }
 }
 
@@ -692,6 +692,13 @@ loadIntConst(std::uint64_t val, const Type *type)
     return nullptr;
 }
 
+Reg
+loadZero(const Type *type)
+{
+    auto ty = TypeMap::get(type);
+    return llvm::Constant::getNullValue(ty);
+}
+
 //------------------------------------------------------------------------------
 
 Reg
@@ -736,7 +743,7 @@ Reg
 ptrMember(const Type *type, Reg addr, std::size_t index)
 {
     assureOpenBuildingBlock();
-    assert(type->isStruct());
+//    assert(type->isStruct());
     auto ty = TypeMap::get(type);
 
     std::vector<Reg> idxList{2};

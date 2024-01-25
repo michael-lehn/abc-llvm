@@ -20,13 +20,12 @@ main(void)
     std::cout << "t1 = " << t1 << ", addr = " << (int *)t1 << std::endl;
     std::cout << "t2 = " << t2 << ", addr = " << (int *)t2 << std::endl;
     std::cout << "t3 = " << t3 << ", addr = " << (int *)t3 << std::endl;
+    std::cout << "t4 = " << t3 << ", addr = " << (int *)t4 << std::endl;
+    std::cout << "t5 = " << t3 << ", addr = " << (int *)t5 << std::endl;
+    std::cout << "t6 = " << t3 << ", addr = " << (int *)t6 << std::endl;
+    std::cout << "t7 = " << t3 << ", addr = " << (int *)t7 << std::endl;
 
 
-    std::printf("-> u16 t4 = %p\n", t4);
-    std::printf("-> u16 t5 = %p\n", t5);
-
-    std::printf("-> u16 t6 = %p\n", t6);
-    std::printf("-> u32 t7 = %p\n", t7);
 
     auto ret = Type::getUnsignedInteger(16);
     std::vector<const Type *>	arg{3};

@@ -90,6 +90,7 @@ enum AluOp {
 Reg cast(Reg reg, const Type *fromType, const Type *toType);
 Reg loadIntConst(const char *val, const Type *type, std::uint8_t radix);
 Reg loadIntConst(std::uint64_t val, const Type *type);
+Reg loadZero(const Type *type);
 Reg aluInstr(AluOp op, Reg l, Reg r);
 
 // compute addr + offset
