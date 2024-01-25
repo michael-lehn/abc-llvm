@@ -1,0 +1,20 @@
+type int = i32;
+type char = u8;
+fn printf(fmt: -> char, ...): int;
+
+fn main() : u8
+{
+    struct Foo {a: u16; b: u64; c: array[5] of u16;};
+
+    local foo: Foo = {1, 2, {3, 4, 5, 6, 7}};
+
+    printf("foo.a = %d\n", foo.a);
+    printf("foo.b = %d\n", foo.b);
+    printf("foo.c[0] = %d\n", foo.c[0]);
+    printf("foo.c[1] = %d\n", foo.c[1]);
+    printf("foo.c[2] = %d\n", foo.c[2]);
+    printf("foo.c[3] = %d\n", foo.c[3]);
+    printf("foo.c[4] = %d\n", foo.c[4]);
+    return 0;
+}
+

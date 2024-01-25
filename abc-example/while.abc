@@ -1,0 +1,10 @@
+fn main(): u8
+{
+    local sum: u64 = 0;
+    local i: u8 = 2;
+    while (sum == 0) {
+	local i: u64 = 42;
+	++sum;
+    }
+    return i;
+}

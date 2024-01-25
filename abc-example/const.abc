@@ -1,0 +1,40 @@
+type int = i32;
+type char = u8;
+fn printf(fmt: -> char, ...): int;
+
+struct Foo
+{
+    a: int;
+    b: array[4] of int;
+    c: array[3] of const int;
+};
+
+
+
+fn main()
+{
+    /*
+    local
+	a: int,
+	b: const int = 2,
+	p: -> int = &a,
+	q: -> const int = &b;
+
+    q = p;
+    p = q;
+    */
+
+    local
+	foo: Foo,
+	bar: const Foo,
+	foobar: array[4] of const int;
+
+    foo = bar;
+    foo.a = 42;
+    *cast(&bar: -> Foo) = foo;
+
+    printf("bar.a = %d\n", bar.a);
+
+    *cast(&foobar[0]: -> int) = 2;
+    printf("foobar[%d] = %d\n", 0, foobar[0]);
+}

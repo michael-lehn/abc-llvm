@@ -1,0 +1,7 @@
+global a: u64;
+
+fn main(): u8
+{
+    return a;
+}
+

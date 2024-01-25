@@ -1,0 +1,23 @@
+fn printU64(: u64);
+fn print(: -> u8);
+fn printNl();
+
+
+global a: array[3] of u64;
+
+fn foo(p: -> u64): u64
+{
+    return p[0];
+}
+
+fn bar(p: -> u64): u64
+{
+    return p[0];
+}
+
+
+fn main()
+{
+    foo(a);
+    bar(a);
+}

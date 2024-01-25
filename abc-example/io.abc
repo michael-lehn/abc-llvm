@@ -1,0 +1,30 @@
+type int = i32;
+type char = u8;
+struct FILE;
+
+fn printf(fmt: -> char, ...): int;
+fn scanf(fmt: -> char, ...): int;
+fn getchar(): int;
+fn fopen(path: -> char, mode: -> char): -> FILE;
+fn fprintf(stream: -> FILE, fmt: -> char, ...): int;
+fn fclose(stream: -> FILE): int;
+
+fn main(argc: int, argv: -> -> char)
+{
+    for (local i: int = 0; i < argc; ++i) {
+	printf("argv[%d] = %s\n", i, argv[i]);
+    }
+    local i: int;
+
+    while (!scanf("%d", &i)) {
+	while (getchar() != '\n') {}
+    }
+    printf("got i = %d\n", i);
+    local f: -> FILE = fopen("file", "w");
+    if (!f) {
+	printf("can not open file\n");
+	return 1;
+    }
+    fprintf(f, "Hallo\n");
+    fclose(f);
+}

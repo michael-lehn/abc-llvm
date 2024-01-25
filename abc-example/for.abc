@@ -1,0 +1,9 @@
+fn main(): u8
+{
+    local sum: u64 = 0;
+    local i: u8 = 42;
+    for (local i: u64 = 0; i < 5; ++i) {
+	sum += i;
+    }
+    return i;
+}
