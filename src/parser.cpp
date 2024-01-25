@@ -522,6 +522,17 @@ parseType(void)
 	error::out() << tyTok.loc
 	    << ": expected type after 'const'" << std::endl;
 	error::fatal();
+    } else if (constFlag && ty->isArray()) {
+	error::out() << tyTok.loc
+	    << ": 'const' qualifier for array not allowed" << std::endl;
+	auto constTy = Type::getConst(ty);
+	if (constTy) {
+	    error::out() << tyTok.loc
+		<< ": You can apply 'const' to the element types: '"
+		<< constTy
+		<< "'" << std::endl;
+	}
+	error::fatal();
     } else if (constFlag) {
 	auto constTy = Type::getConst(ty);
 	if (!constTy) {

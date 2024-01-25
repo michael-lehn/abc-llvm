@@ -18,7 +18,7 @@ struct Integer : public Type
 	: Type{Type::INTEGER, IntegerData{numBits, kind, false}}
     {}
 
-    Integer(IntegerData data, bool constFlag)
+    Integer(const IntegerData &data, bool constFlag)
 	: Type{Type::INTEGER, IntegerData{data.numBits, data.kind, constFlag}}
     {}
 
@@ -44,7 +44,7 @@ struct Pointer : public Type
 	: Type{Type::POINTER, PointerData{refType, isNullptr, false}}
     {}
 
-    Pointer(PointerData data,  bool constFlag)
+    Pointer(const PointerData &data,  bool constFlag)
 	: Type{Type::POINTER,
 	       PointerData{data.refType, data.isNullptr, constFlag}}
     {}
@@ -112,6 +112,13 @@ struct Struct : public Type
 	: Type{Type::STRUCT, StructData{id, name}}
     {}
 
+    Struct(const StructData &data, bool constFlag)
+	: Type{Type::STRUCT, StructData{data, constFlag}}
+    {
+	assert(!constFlag &&
+		"internal error: Only copy struct data when constFlag is set");
+    }
+
     bool isComplete(void)
     {
 	return std::get<StructData>(data).isComplete;
@@ -139,6 +146,22 @@ Type::getConst(const Type *type)
     } else if (type->isPointer()) {
 	const auto &data = std::get<PointerData>(type->data);
 	return &*ptrTypeSet->insert(Pointer{data, true}).first;
+    } else if (type->isArray()) {
+	return getArray(getConst(type->getRefType()), type->getDim());
+    } else if (type->isStruct()) {
+	const auto &data = std::get<StructData>(type->data);
+	std::string name = ".const_" + std::string{data.name.c_str()};
+	auto ty = createIncompleteStruct(UStr{name});
+	std::vector<const Type *> memConstType{data.type.size()};
+	for (std::size_t i = 0; i < data.type.size(); ++ i) {
+	    memConstType[i] = getConst(data.type.at(i));
+	}
+	ty->complete(std::vector<const char *>{data.ident},
+		     std::move(memConstType));
+	auto &tyData = std::get<StructData>(ty->data);
+	tyData.constFlag = true;
+	tyData.name = data.name;
+	return ty;
     }
     return nullptr;
 }
@@ -152,6 +175,11 @@ Type::getConstRemoved(const Type *type)
     } else if (type->isPointer()) {
 	const auto &data = std::get<PointerData>(type->data);
 	return &*ptrTypeSet->insert(Pointer{data, false}).first;
+    } else if (type->isStruct()) {
+	auto name = type->getName();
+	auto  ty = Symtab::getNamedType(name, Symtab::AnyScope);
+	assert(ty);
+	return ty;
     }
     return type;
 }
@@ -287,17 +315,30 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc)
 {
     if (from == to) {
 	return to;
+    } else if (getConstRemoved(from) == getConstRemoved(to)) {
+	if (to->hasConstFlag() && !from->hasConstFlag()) {
+	    error::out() << loc << ": warning: casting '" << from
+		<< "' to '" << to << "' discards const qualifier" << std::endl;
+	}
+	return to;
     } else if (from->isInteger() && to->isInteger()) {
 	// TODO: -Wconversion generate warning if sizeof(to) < sizeof(from)
 	return to;
     } else if (from->isNullPointer() && to->isPointer()) {
 	return from;
     } else if (from->isArrayOrPointer() && to->isPointer()) {
-	if (from->getRefType() != to->getRefType()
-	    && !to->getRefType()->isVoid()
-	    && !from->getRefType()->isVoid()) {
+	auto fromRefTy = Type::getConstRemoved(from->getRefType());
+	auto toRefTy = Type::getConstRemoved(to->getRefType());
+
+	if (fromRefTy != toRefTy && !fromRefTy->isVoid() && !toRefTy->isVoid())
+	{
 	    error::out() << loc << ": warning: casting '" << from
 		<< "' to '" << to << "'" << std::endl;
+	}
+	if (!to->getRefType()->hasConstFlag()
+		&& from->getRefType()->hasConstFlag()) {
+	    error::out() << loc << ": warning: casting '" << from
+		<< "' to '" << to << "' discards const qualifier" << std::endl;
 	}
 	return from;
     } else if (from->isFunction() && to->isPointer()) {
@@ -373,6 +414,7 @@ operator<<(std::ostream &out, const Type *type)
 	}
 	out << "): " << type->getRetType();
     } else if (type->isStruct()) {
+	type = Type::getConstRemoved(type);
 	auto memType = type->getMemberType();
 	auto memIdent = type->getMemberIdent();
 	out << "struct " << type->getName().c_str();

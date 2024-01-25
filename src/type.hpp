@@ -58,6 +58,8 @@ class Type
 		return std::get<IntegerData>(data).constFlag;
 	    } else if (isPointer()) {
 		return std::get<PointerData>(data).constFlag;
+	    } else if (isStruct()) {
+		return std::get<StructData>(data).constFlag;
 	    }
 	    return false;
 	}
@@ -244,17 +246,28 @@ class Type
 
 	struct StructData {
 	    std::size_t id;
-	    UStr name; // only needed for error messages
-	    bool isComplete = false;
+	    UStr name; // needed for getting non-const type and printing type
+	    bool isComplete;
+	    bool constFlag;
 	  
-	    // info about members:
+	    // for complete struct types:
 	    std::unordered_map<const char *, std::size_t> index;
 	    std::vector<const Type *> type;
 	    std::vector<const char *> ident;
 
 	    StructData(std::size_t id, UStr name)
-		: id{id}, name{name}
+		: id{id}, name{name}, isComplete{false}, constFlag{false}
 	    {}
+
+	    StructData(const StructData &data, bool constFlag)
+		: id{data.id}, name{data.name}, isComplete{data.isComplete}
+		, constFlag{constFlag}, type{data.type}, ident{data.ident}
+	    {
+		//TODO: make elements in data.type all const if constFlag is
+		//	true, otherwise assert(0)
+	    }
+
+
 	};
 
 	std::variant<IntegerData, PointerData, ArrayData, FunctionData,

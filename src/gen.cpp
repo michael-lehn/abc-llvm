@@ -619,6 +619,9 @@ cast(Reg reg, const Type *fromType, const Type *toType)
 {
     assureOpenBuildingBlock();
 
+    fromType = Type::getConstRemoved(fromType);
+    toType = Type::getConstRemoved(toType);
+
     if (fromType == toType) {
 	return reg;
     }

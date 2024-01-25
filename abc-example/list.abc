@@ -1,18 +1,21 @@
+type char = u8;
+type int = i32;
 type size_t = u64;
 type void_ptr = ->;
 
 fn malloc(size: size_t): void_ptr;
 fn free(ptr: void_ptr);
-fn printf(: -> u8, ...): u32;
+fn printf(fmt: -> char, ...): int;
+fn scanf(fmt: -> char): int;
+fn getchar(): int;
 
 struct Node
 {
-    val: u16;
+    val: int;
     next: -> Node;
 };
 
-
-fn insertInList(list: -> Node, val: u16): -> Node
+fn insertInList(list: -> Node, val: int): -> Node
 {
     local n: -> Node = malloc(sizeof(*n));
     n->val = val;
@@ -32,10 +35,18 @@ fn main(): u8
 {
     local list: -> Node = nullptr;
 
-    list = insertInList(list, 42);
-    list = insertInList(list, 24);
-    list = insertInList(list, 123);
 
+    while (1) {
+	printf("Gib eine Zahl ein oder breche ab mit 'x': ");
+
+	local i: int; 
+	if (!scanf("%d", &i)) {
+	    break;
+	}
+	list = insertInList(list, i);
+    }
+
+    printf("Diese Zahlen wurden eingegeben: \n");
     printList(list);
 
     return 0;

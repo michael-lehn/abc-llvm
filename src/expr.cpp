@@ -119,8 +119,9 @@ Binary::setType(void)
 	    return;
 	case Binary::Kind::ASSIGN:
 	    if (l->isArray() || l->isFunction() || l->hasConstFlag()) {
-		error::out() << opLoc << " type '"
-		    << l << "' is not is not assignable." << std::endl;
+		error::out() << opLoc
+		    << " cannot assign to variable with type '"
+		    << l << "'" << std::endl;
 		error::fatal();
 	    }
 	    type = Type::getTypeConversion(r, l, opLoc);
