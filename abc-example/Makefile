@@ -54,5 +54,5 @@ asm: $(asm.abc)
 
 .PHONY: clean
 clean:
-	$(RM) $(target) $(asm.abc) $(bc.abc) $(lib)
+	$(RM) $(target) $(asm.abc) $(obj.abc) $(bc.abc) $(lib)
 
