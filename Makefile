@@ -16,7 +16,7 @@ obj.dir := obj
 # support generation of dep files
 CXXFLAGS += -MT $@ -MMD -MP -MF $(dep.dir)/$(<F).d
 
-compiler.src := src/abc_compiler.cpp
+compiler.src := src/abc.cpp
 
 xsrc := $(wildcard $(src.dir)/xtest_*.cpp) \
 	$(compiler.src)
