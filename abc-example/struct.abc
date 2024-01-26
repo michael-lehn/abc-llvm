@@ -20,13 +20,24 @@ struct FooBar {
 };
 
 global
-    x: int = 12345,
-    bar: Bar;
+    x: int = {12345},
+    bar: Bar = {123, 456},
+    foobar: FooBar = {{1, &x}, {2, 3}, {4, 5}, 6};
 
 fn main()
 {
     printf("global: x = %d\n", x);
     printf("global: bar.a = %d, bar.b = %d\n", bar.a, bar.b);
+    printf("global: foobar.a.a = %d\n", foobar.a.a);
+    printf("global: foobar.a.b = %p\n", foobar.a.b);
+    printf("global: foobar.b.a = %d\n", foobar.b.a);
+    printf("global: foobar.b.b = %d\n", foobar.b.b);
+    printf("global: foobar.c[0] = %d\n", foobar.c[0]);
+    printf("global: foobar.c[1] = %d\n", foobar.c[1]);
+    printf("global: foobar.c[2] = %d\n", foobar.c[2]);
+    printf("global: foobar.c[3] = %d\n", foobar.c[3]);
+    printf("global: foobar.c[4] = %d\n", foobar.c[4]);
+    printf("global: foobar.d = %d\n", foobar.d);
 
     local
 	x: int = 42;
@@ -34,7 +45,7 @@ fn main()
     local
 	foo: Foo = { 123, nullptr},
 	bar: Bar = { 4, 156},
-	foobar: FooBar = { foo, bar, {1, 2, 3} };
+	foobar: FooBar = { foo, bar, {1,  2, 3} };
 
     //foobar.a = foo;
     //foobar.b = bar;
@@ -52,6 +63,7 @@ fn main()
     printf("foobar.c[2] = %d\n", foobar.c[2]);
     printf("foobar.c[3] = %d\n", foobar.c[3]);
     printf("foobar.c[4] = %d\n", foobar.c[4]);
+    printf("foobar.d = %d\n", foobar.d);
     /*
     printf("foo.a = %d\n", foo.a);
     printf("foo.b = %d\n", foo.b);

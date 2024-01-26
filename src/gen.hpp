@@ -88,9 +88,16 @@ enum AluOp {
 };
 
 Reg cast(Reg reg, const Type *fromType, const Type *toType);
-Reg loadIntConst(const char *val, const Type *type, std::uint8_t radix);
-Reg loadIntConst(std::uint64_t val, const Type *type);
-Reg loadZero(const Type *type);
+
+ConstVal loadIntConst(const char *val, const Type *type, std::uint8_t radix);
+ConstVal loadIntConst(std::uint64_t val, const Type *type);
+ConstVal loadZero(const Type *type);
+
+ConstVal loadConstArray(const std::vector<ConstVal> &val, const Type *type);
+ConstVal loadConstStruct(const std::vector<ConstVal> &val, const Type *type);
+
+//Reg loadConst(const ConstExpr *constExpr);
+
 Reg aluInstr(AluOp op, Reg l, Reg r);
 
 // compute addr + offset

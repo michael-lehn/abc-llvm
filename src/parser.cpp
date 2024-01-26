@@ -5,6 +5,7 @@
 #include <optional>
 #include <sstream>
 
+#include "constexpr.hpp"
 #include "error.hpp"
 #include "gen.hpp"
 #include "lexer.hpp"
@@ -103,6 +104,38 @@ parseStructDef(void)
 }
 
 static bool
+parseConstExpr(ConstExpr &constExpr)
+{
+    if (token.kind != TokenKind::LBRACE) {
+	return false;
+    }
+    getToken();
+
+    auto type = constExpr.getType();
+    for (std::size_t pos = 0; pos < type->getNumMembers(); ++pos) {
+	if (auto expr = parseExpr()) {
+	    constExpr.add(std::move(expr));
+	} else {
+	    ConstExpr constMemberExpr(type->getMemberType(pos));
+	    if (parseConstExpr(constMemberExpr)) {
+		constExpr.add(std::move(constMemberExpr));
+	    } else {
+		break;
+	    }
+	}
+	if (token.kind != TokenKind::COMMA) {
+	    break;
+	}
+	getToken();
+    }
+
+    error::expected(TokenKind::RBRACE);
+    getToken();
+
+    return true;
+}
+
+static bool
 parseGlobalDef(void)
 {
     if (token.kind != TokenKind::GLOBAL) {
@@ -134,6 +167,29 @@ parseGlobalDef(void)
 	auto ty = s->getType();
 
 	// parse initalizer
+	ConstExpr constExpr(type);
+	if (token.kind == TokenKind::EQUAL) {
+	    getToken();
+	    auto opLoc = token.loc;
+	    if (auto expr = parseExpr()) {
+		if (!expr->isConst()) {
+		    error::out() << opLoc
+			<< " initializer element is not constant" << std::endl;
+		    error::fatal();
+		}
+		constExpr.add(std::move(expr));
+	    } else if (parseConstExpr(constExpr)) {
+	    } else {
+		error::out() << opLoc
+		    << " expected constant initializer or constant expression"
+		    << std::endl;
+		error::fatal();
+	    }
+	}
+	gen::defGlobal(s->ident.c_str(), ty, constExpr.load());
+
+
+	/*
 	ExprPtr init = nullptr;
 	if (token.kind == TokenKind::EQUAL) {
 	    auto opLoc = token.loc;
@@ -157,6 +213,7 @@ parseGlobalDef(void)
 	}
 	auto initValue = init ? init->loadConst() : nullptr;
 	gen::defGlobal(s->ident.c_str(), ty, initValue);
+	*/
 	if (token.kind != TokenKind::COMMA) {
 	    break;
 	}
@@ -586,6 +643,7 @@ parseInitializer(gen::Reg addr, const Type *type)
 	    getToken();
 	    continue;
 	}
+	error::expected(TokenKind::RBRACE);
     }
     error::expected(TokenKind::RBRACE);
     getToken();

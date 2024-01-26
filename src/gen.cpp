@@ -656,7 +656,7 @@ cast(Reg reg, const Type *fromType, const Type *toType)
     return nullptr;
 }
 
-Reg
+ConstVal
 loadIntConst(const char *val, const Type *type, std::uint8_t radix)
 {
     //assureOpenBuildingBlock();
@@ -674,7 +674,7 @@ loadIntConst(const char *val, const Type *type, std::uint8_t radix)
     return nullptr;
 }
 
-Reg
+ConstVal
 loadIntConst(std::uint64_t val, const Type *type)
 {
     assert(type->isInteger() || (type->isPointer() && val == 0));
@@ -692,11 +692,27 @@ loadIntConst(std::uint64_t val, const Type *type)
     return nullptr;
 }
 
-Reg
+ConstVal
 loadZero(const Type *type)
 {
     auto ty = TypeMap::get(type);
     return llvm::Constant::getNullValue(ty);
+}
+
+ConstVal
+loadConstArray(const std::vector<ConstVal> &val, const Type *type)
+{
+    assert(type->isArray());
+    auto ty = llvm::dyn_cast<llvm::ArrayType>(TypeMap::get(type));
+    return llvm::ConstantArray::get(ty, val);
+}
+
+ConstVal
+loadConstStruct(const std::vector<ConstVal> &val, const Type *type)
+{
+    assert(type->isStruct());
+    auto ty = llvm::dyn_cast<llvm::StructType>(TypeMap::get(type));
+    return llvm::ConstantStruct::get(ty, val);
 }
 
 //------------------------------------------------------------------------------

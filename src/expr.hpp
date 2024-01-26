@@ -177,7 +177,7 @@ class Expr
 	Expr(ExprVector &&vec) : variant{std::move(vec)} {}
 
     public:
-	static ExprPtr createLiteral(const char *val, std::uint8_t radix,
+	static ExprPtr createLiteral(const char *val, std::uint8_t radix = 10,
 				     const Type *type = nullptr,
 				     Token::Loc loc = Token::Loc{});
 	static ExprPtr createIdentifier(UStr ident,
