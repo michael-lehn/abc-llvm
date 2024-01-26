@@ -185,11 +185,12 @@ void
 Binary::castOperands(void)
 {
     if (!type) {
-	std::cerr << "ERROR: binary operation not allowed" << std::endl;
-	std::cerr << "binary kind = " << int(kind) << std::endl;
-	std::cerr << "left operand:" << std::endl;
+	error::out()
+	    << "ERROR: binary operation not allowed" << std::endl
+	    << "binary kind = " << int(kind) << std::endl
+	    << "left operand:" << std::endl;
 	left->print();
-	std::cerr << "right operand:" << std::endl;
+	error::out() << "right operand:" << std::endl;
 	right->print();
 	assert("illegal type");
 	return;
@@ -308,7 +309,7 @@ getIntType(const char *s, const char *end, std::uint8_t radix, const Type *&ty)
 	ty = Type::getSignedInteger(numBits);
 	return true;
     }
-    std::cerr << "ec = "
+    error::out() << "warning: in getIntType ec = "
 	<< std::make_error_code(std::errc(ec)).message() << std::endl;
     ty = nullptr; 
     return false;
@@ -325,9 +326,10 @@ getIntType(const char *s, const char *end, std::uint8_t radix)
     {
 	return ty;
     }
-    std::cerr << "signed integer '" << s << "' does not fit into 64 bits"
+    error::out() << "warning: signed integer '" << s
+	<< "' does not fit into 64 bits"
 	<< std::endl;
-    std::cerr << "end - s = '" << (end - s) << "'" << std::endl;
+    error::out() << "end - s = '" << (end - s) << "'" << std::endl;
     return Type::getSignedInteger(64);
 }
 
@@ -628,14 +630,6 @@ Expr::isConst(void) const
 	} else {
 	    return expr.right->isConst();
 	}
-
-	/*
-	if (expr.cond->constIntValue<std::size_t>()) {
-	    return expr.left->isConst();
-	} else {
-	    return expr.right->isConst();
-	}
-	*/
     }
     assert(0);
     return false;
@@ -647,7 +641,8 @@ Expr::loadConst(void) const
     assert(isConst());
 
     using T = std::remove_pointer_t<gen::ConstVal>;
-    return llvm::dyn_cast<T>(loadValue());
+    auto constVal = llvm::dyn_cast<T>(loadValue());
+    return constVal;
 }
 
 gen::ConstIntVal
@@ -993,7 +988,7 @@ loadValue(const Binary &binary)
 	    }
 
 	default:
-	    std::cerr << "binary.kind = " << int(binary.kind) << std::endl;
+	    error::out() << "binary.kind = " << int(binary.kind) << std::endl;
 	    assert(0);
 	    return nullptr;
     }

@@ -386,11 +386,14 @@ defGlobal(const char *ident, const Type *type, ConstVal val)
     if (!val) {
 	val = llvm::ConstantInt::getNullValue(ty);
     }
-    global[ident] = new llvm::GlobalVariable(*llvmModule, ty,
+    global[ident] = new llvm::GlobalVariable(
+			*llvmModule,
+			 ty,
 			/*isConstant=*/false,
 			/*Linkage=*/llvm::GlobalValue::ExternalLinkage,
 			/*Initializer=*/val,
-			/*Name=*/ident);
+			/*Name=*/ident,
+			nullptr);
 }
 
 void
@@ -561,6 +564,7 @@ loadAddr(const char *ident)
     auto addr = local.contains(ident)
 	? llvm::dyn_cast<llvm::Value>(local[ident])
 	: llvm::dyn_cast<llvm::Value>(global[ident]);
+    assert(addr);
     return addr;
 }
 
@@ -632,7 +636,7 @@ cast(Reg reg, const Type *fromType, const Type *toType)
 	auto fromNumBits = fromType->getIntegerNumBits();
 
 	if (toNumBits > fromNumBits) {
-	    return toType->getIntegerKind() == Type::UNSIGNED
+	    return fromType->getIntegerKind() == Type::UNSIGNED
 		? llvmBuilder->CreateZExtOrBitCast(reg, ty)
 		: llvmBuilder->CreateSExtOrBitCast(reg, ty); 
 	}
@@ -770,11 +774,12 @@ ptrMember(const Type *type, Reg addr, std::size_t index)
 }
 
 Reg
-ptrDiff(const Type *type, Reg addrLeft, Reg addRight)
+ptrDiff(const Type *type, Reg addrLeft, Reg addrRight)
 {
     assureOpenBuildingBlock();
+
     auto ty = TypeMap::get(type);
-    return llvmBuilder->CreatePtrDiff(ty, addrLeft, addRight);
+    return llvmBuilder->CreatePtrDiff(ty, addrLeft, addrRight);
 }
 
 //------------------------------------------------------------------------------

@@ -11,12 +11,13 @@ fn getErr(): u64;
 
 fn printU64(val: u64);
 fn printNl();
+fn printf(fmt: -> u8, ...);
 
 //
 //   Here the real action begins ...
 //
 
-global foo: u64,
+global foo: u64 = 23,
        bar: u64 = 42;
 
 
@@ -28,14 +29,30 @@ fn printFooBar()
     printNl();
 }
 
+
 fn main(): u8
 {
-    local bar: u8;
+    local ptrDiff: i64;
 
+    ptrDiff = &bar > &foo;
+    printf("ptrDiff = %td\n", ptrDiff);
+    /*
+    printf("&bar = %p\n", &bar);
+    printf("&foo = %p\n", &foo);
+    printf("&bar - &foo = %p\n", (&bar - &foo) * sizeof(bar));
+
+    ptrDiff = &bar - &foo;
+    printf("ptrDiff = %td\n", ptrDiff);
+    printU64(ptrDiff);
+    printNl();
+    printNl();
+
+    local bar: u8;
     printFooBar();
     foo = 1; // changes global variable
     bar = 2; // changes local variable
 
     printFooBar();
-    return 0;
+    */
+    return ptrDiff;
 }
