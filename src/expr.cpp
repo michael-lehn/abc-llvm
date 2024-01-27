@@ -577,6 +577,32 @@ Expr::isLValue(void) const
     return false;
 }
 
+static bool
+isIntegerConstExpr(const Binary &binary)
+{
+    return binary.type->isInteger()
+	&& binary.left->getType()->isInteger()
+	&& binary.left->isConst()
+	&& binary.right->getType()->isInteger()
+	&& binary.right->isConst();
+}
+
+static bool
+isArithmeticConstExpr(const Binary &binary)
+{
+    // identical to 'isIntegerConstExp" until float is supported
+    return isIntegerConstExpr(binary);
+}
+
+static bool
+isAddressConstant(const Binary &binary)
+{
+    return binary.type->isPointer()
+	&& binary.left->isConst()
+	&& binary.right->isConst();
+}
+
+// In ISO/IEC 9899:2017 constant expression are defined in 6.6
 bool
 Expr::isConst(void) const
 {
@@ -616,8 +642,8 @@ Expr::isConst(void) const
 	    case Binary::Kind::POSTFIX_DEC:
 		return false;
 	    default:
-		return binary.left->isConst()
-		    && binary.right->isConst();
+		return isArithmeticConstExpr(binary)
+		    || isAddressConstant(binary);
 	}
     } else if (std::holds_alternative<Conditional>(variant)) {
 	const auto &expr = std::get<Conditional>(variant);

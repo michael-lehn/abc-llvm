@@ -173,15 +173,15 @@ parseGlobalDef(void)
 	    auto opLoc = token.loc;
 	    if (auto expr = parseExpr()) {
 		if (!expr->isConst()) {
-		    error::out() << opLoc
-			<< " initializer element is not constant" << std::endl;
+		    error::out() << opLoc << ": initializer element is not a"
+			<< " compile-time constant" << std::endl;
 		    error::fatal();
 		}
 		constExpr.add(std::move(expr));
 	    } else if (parseConstExpr(constExpr)) {
 	    } else {
 		error::out() << opLoc
-		    << " expected constant initializer or constant expression"
+		    << " expected initializer or expression"
 		    << std::endl;
 		error::fatal();
 	    }

@@ -20,7 +20,7 @@ fn printf(fmt: -> u8, ...);
 global foo: u64 = 23,
        bar: array[20] of u64 = {1, 2, 3, };
 
-global p: -> i64 = &bar[3];
+global p: -> i64 = &bar[3] - bar;
 
 fn printFooBar()
 {
