@@ -18,8 +18,9 @@ fn printf(fmt: -> u8, ...);
 //
 
 global foo: u64 = 23,
-       bar: u64 = 42;
+       bar: array[20] of u64 = {1, 2, 3, };
 
+global p: -> i64 = &bar[3];
 
 fn printFooBar()
 {
@@ -34,25 +35,6 @@ fn main(): u8
 {
     local ptrDiff: i64;
 
-    ptrDiff = &bar > &foo;
-    printf("ptrDiff = %td\n", ptrDiff);
-    /*
-    printf("&bar = %p\n", &bar);
-    printf("&foo = %p\n", &foo);
-    printf("&bar - &foo = %p\n", (&bar - &foo) * sizeof(bar));
-
-    ptrDiff = &bar - &foo;
-    printf("ptrDiff = %td\n", ptrDiff);
-    printU64(ptrDiff);
-    printNl();
-    printNl();
-
-    local bar: u8;
-    printFooBar();
-    foo = 1; // changes global variable
-    bar = 2; // changes local variable
-
-    printFooBar();
-    */
+    printf("p = %p\n", p);
     return ptrDiff;
 }

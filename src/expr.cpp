@@ -652,7 +652,13 @@ Expr::loadConstInt(void) const
     assert(getType()->isInteger());
 
     using T = std::remove_pointer_t<gen::ConstIntVal>;
-    return llvm::dyn_cast<T>(loadValue());
+    auto check = llvm::dyn_cast<T>(loadValue());
+
+    if (!check) {
+	error::out() << "expression is not constant" << std::endl;
+    }
+
+    return check;
 }
 
 static gen::AluOp

@@ -1,0 +1,10 @@
+name: ABC
+scope: source.abc
+file-types: [abc]
+
+keywords:
+  keyword:
+    - for
+    - if
+    - else
+    - while
