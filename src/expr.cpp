@@ -616,7 +616,7 @@ Expr::isConst(void) const
 	    return true;
 	}
 	if (ident.type->isArray()) {
-	    return true; // TODO: check if ident is 'global' or 'static' 
+	    return true;
 	}
 	return false;
     } else if (std::holds_alternative<Unary>(variant)) {
@@ -627,7 +627,6 @@ Expr::isConst(void) const
 	    case Unary::Kind::LOGICAL_NOT:
 		return unary.child->isConst();
 	    case Unary::Kind::ADDRESS:
-		// TODO: assert that address of global variable is taken
 		return true;
 	    default:
 		assert(0 && "internal error: case not handled");

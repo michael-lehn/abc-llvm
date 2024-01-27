@@ -19,10 +19,14 @@ struct FooBar {
     d: int;
 };
 
+
+struct InComplete;
+
 global
     x: int = {12345},
     bar: Bar = {123, 456},
-    foobar: FooBar = {{1, &x}, {2, 3}, {4, 5}, 6};
+    arr: array[3] of InComplete,
+    foobar: FooBar = {{1, &x + 1}, {2, 3}, {4/2, 5}, 6};
 
 fn main()
 {

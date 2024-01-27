@@ -472,6 +472,11 @@ parseArrayDimAndType(void)
 	error::out() << token.loc << " expected element type"
 	    << std::endl;
 	error::fatal();
+    } else if (!ty->hasSize()) {
+	error::out() << token.loc << ": array has incomplete element type '"
+	    << ty << "'"
+	    << std::endl;
+	error::fatal();
     }
     return Type::getArray(ty, dimVal->getZExtValue());
 }

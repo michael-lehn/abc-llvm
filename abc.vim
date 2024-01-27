@@ -14,33 +14,33 @@ endif
 
 syntax case match
 
-" syntax match abcIdentifier /[A-Za-z_][A-Za-z0-9_]*/ skipwhite
+syntax match abcIdentifier /[A-Za-z_][A-Za-z0-9_]*/ skipwhite
 " syntax match abcMinus /[-]/ contained skipwhite
 syntax match abcIdentifier /[A-Za-z_][A-Za-z0-9_]*/
  
-syntax match keyword /fn/ skipwhite 
-syntax match keyword /for/ skipwhite
-syntax match keyword /while/ skipwhite
-syntax match keyword /if/ skipwhite
-syntax match keyword /else/ skipwhite
-syntax match keyword /local/ skipwhite
-syntax match keyword /global/ skipwhite
-syntax match keyword /return/ skipwhite
-syntax match keyword /array/ skipwhite
-syntax match keyword /of/ skipwhite
-syntax match keyword /type/ skipwhite
-syntax match keyword /let/ skipwhite
-syntax match keyword /sizeof/ skipwhite
-syntax match keyword /cast/ skipwhite
-syntax match keyword /break/ skipwhite
-syntax match keyword /continue/ skipwhite
-syntax match keyword /switch/ skipwhite
-syntax match keyword /case/ skipwhite
-syntax match keyword /default/ skipwhite
-syntax match keyword /struct/ skipwhite
-syntax match keyword /union/ skipwhite
+syntax match keyword /\<fn\>/ skipwhite 
+syntax match keyword /\<for\>/ skipwhite
+syntax match keyword /\<while\>/ skipwhite
+syntax match keyword /\<if\>/ skipwhite
+syntax match keyword /\<else\>/ skipwhite
+syntax match keyword /\<local\>/ skipwhite
+syntax match keyword /\<global\>/ skipwhite
+syntax match keyword /\<return\>/ skipwhite
+syntax match keyword /\<array\>/ skipwhite
+syntax match keyword /\<of\>/ skipwhite
+syntax match keyword /\<type\>/ skipwhite
+syntax match keyword /\<let\>/ skipwhite
+syntax match keyword /\<sizeof\>/ skipwhite
+syntax match keyword /\<cast\>/ skipwhite
+syntax match keyword /\<break\>/ skipwhite
+syntax match keyword /\<continue\>/ skipwhite
+syntax match keyword /\<switch\>/ skipwhite
+syntax match keyword /\<case\>/ skipwhite
+syntax match keyword /\<default\>/ skipwhite
+syntax match keyword /\<struct\>/ skipwhite
+syntax match keyword /\<union\>/ skipwhite
 
-syntax match type /const/ skipwhite
+syntax match type /\<const\>/ skipwhite
  
 
 syntax region notype start=/default/ end=/:/ contains=keyword

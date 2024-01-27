@@ -30,6 +30,8 @@ class Type
 		return false;
 	    } else if (isStruct()) {
 		return std::get<StructData>(data).isComplete;
+	    } else if (isArray()) {
+		return getDim();
 	    } else {
 		return true;
 	    }
