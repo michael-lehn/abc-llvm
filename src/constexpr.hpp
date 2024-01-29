@@ -12,8 +12,10 @@
 class ConstExpr
 {
     public:
-	ConstExpr(const Type *type)
-	    : type{type}, pos{0}, value{type->getNumMembers()}
+	ConstExpr(const Type *type= nullptr)
+	    : type{type}, pos{0}, value{type ? type->getNumMembers() : 0}
+	    , valueLoc{type ? type->getNumMembers() : 0}
+
 	{
 	}
 
@@ -22,17 +24,56 @@ class ConstExpr
 	    return type;
 	}
 
-	void add(ExprPtr &&expr)
+	// only use if type was not already set in constructor
+	void setType(const Type *ty)
 	{
-	    assert(expr->isConst());
-	    auto ty = type->getMemberType(pos);
-	    expr = Expr::createCast(std::move(expr), ty, expr->getLoc());
-	    value.at(pos++) = std::move(expr);
+	    assert(!type);
+	    assert(ty);
+	    type = ty;
+
+	    if (value.size() > type->getNumMembers()) {
+		error::out() << valueLoc[type->getNumMembers()]
+		    << ": excess elements in struct initializer" << std::endl;
+		error::fatal();
+	    }
+
+	    valueType.resize(type->getNumMembers());
+	    valueLoc.resize(valueType.size());
+
+	    for (std::size_t i = 0; i < type->getNumMembers(); ++i) {
+		valueType[i] = type->getMemberType(pos);
+		auto &v = value[i];
+		if (std::holds_alternative<ConstExpr>(v)) {
+		    std::get<ConstExpr>(v).setType(valueType[i]);
+		}
+	    }
 	}
 
-	void add(ConstExpr &&constExpr)
+	void add(ExprPtr &&expr, Token::Loc loc = Token::Loc{})
 	{
-	    value.at(pos++) = std::move(constExpr);
+	    assert(expr->isConst());
+	    if (!type) {
+		valueLoc.resize(valueLoc.size()  + 1);
+		value.resize(value.size()  + 1);
+	    }
+
+	    if (type) {
+		auto ty = type->getMemberType(pos);
+		expr = Expr::createCast(std::move(expr), ty, expr->getLoc());
+	    }
+	    valueLoc[pos] = loc;
+	    value[pos++] = std::move(expr);
+	}
+
+	void add(ConstExpr &&constExpr, Token::Loc loc = Token::Loc{})
+	{
+	    if (!type) {
+		valueLoc.resize(valueLoc.size()  + 1);
+		value.resize(value.size()  + 1);
+	    }
+
+	    valueLoc[pos] = loc;
+	    value[pos++] = std::move(constExpr);
 	}
 
 	std::size_t size(void) const
@@ -42,6 +83,8 @@ class ConstExpr
 
 	gen::ConstVal load(void) const
 	{
+	    assert(type);
+
 	    if (type->isArray() || type->isStruct()) {
 		std::vector<gen::ConstVal> val{size()};
 		for (size_t i = 0; i < size(); ++i) {
@@ -60,7 +103,9 @@ class ConstExpr
 
 	gen::ConstVal load(size_t index) const
 	{
-	    auto &v = value.at(index);
+	    assert(type);
+
+	    auto &v = value[index];
 	    auto ty = type->getMemberType(index);
 	    if (std::holds_alternative<ExprPtr>(v)) {
 		const auto &e = std::get<ExprPtr>(v);
@@ -70,7 +115,7 @@ class ConstExpr
 		    return gen::loadZero(ty);
 		}
 	    } else if (std::holds_alternative<ConstExpr>(v)) {
-		const auto &v = std::get<ConstExpr>(value.at(index));
+		const auto &v = std::get<ConstExpr>(value[index]);
 		return v.load();
 	    }
 	    assert(0);
@@ -80,7 +125,7 @@ class ConstExpr
 	void print(int indent = 0) const
 	{
 	    for (std::size_t i = 0; i < size(); ++i) {
-		const auto &v = value.at(i);
+		const auto &v = value[i];
 		if (std::holds_alternative<ExprPtr>(v)) {
 		    const auto &e = std::get<ExprPtr>(v);
 		    if (e) {
@@ -98,6 +143,8 @@ class ConstExpr
 	const Type *type;
 	std::size_t pos;
 	std::vector<std::variant<ExprPtr, ConstExpr>> value;
+	std::vector<const Type *> valueType;
+	std::vector<Token::Loc> valueLoc;
 };
 
 

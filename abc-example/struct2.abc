@@ -5,40 +5,16 @@ fn printU64(:u64);
 
 
 struct Foo {
-    a: array[5] of u8;
-    b: u8;
+    a: u8;
 };
 
-fn getFoo(a0: u8, b: u32): Foo
+fn foo()
 {
     local foo : Foo;
-
-    for (local i: u64 = 0; i < 5; ++i) {
-	foo.a[i] = a0 + i;
-    }
-    foo.b = b;
-    return foo;
-}
-
-fn printFoo(ident: -> u8, f: Foo)
-{
-    for (local i: u64 = 0; i < 5; ++i) {
-	print(ident); print(".a["); printU64(i); print("] = ");
-	printU64(f.a[i]);
-	print(", ");
-    }
-    print(ident); print(".b = "); printU64(f.b);
-    printNl();
 }
 
 fn main(): u8
 {
-    local foo: Foo = getFoo(3, 42);
-    printFoo("foo", foo);
-    foo = getFoo(5, 123);
-    printFoo("foo", foo);
-
-    local a: array[5] of u8;
-    local b: array[15] of u8;
+    local foo : Foo;
     return 0;
 }

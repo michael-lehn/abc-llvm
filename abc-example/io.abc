@@ -20,6 +20,10 @@ fn main(argc: int, argv: -> -> char)
 	while (getchar() != '\n') {}
     }
     printf("got i = %d\n", i);
+
+    local g: -> FILE = cast(123: -> FILE);
+
+
     local f: -> FILE = fopen("file", "w");
     if (!f) {
 	printf("can not open file\n");

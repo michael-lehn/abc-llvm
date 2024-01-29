@@ -323,7 +323,7 @@ fnDefEnd(void)
     llvm::verifyFunction(*currFn.llvmFn);
     if (opt) {
 	llvmFPM->run(*currFn.llvmFn, *llvmFAM);
-	//llvmFPM->run(*currFn.llvmFn, *llvmFAM);
+	llvmFPM->run(*currFn.llvmFn, *llvmFAM);
     }
 }
 
@@ -644,6 +644,8 @@ cast(Reg reg, const Type *fromType, const Type *toType)
     } else if (fromType->isFunction() && toType->isPointer()) {
 	return reg;
     } else if (fromType->isArray() && toType->isPointer()) {
+	return reg;
+    } else if (fromType->isPointer() && toType->isArray()) {
 	return reg;
     } else if (fromType->isPointer() && toType->isPointer()) {
 	return reg;

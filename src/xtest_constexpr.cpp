@@ -7,13 +7,15 @@ main(void)
     auto aTy = Type::getUnsignedInteger(64);
     aTy = Type::getArray(aTy, 5);
 
-    ConstExpr	constExpr(aTy);
+    //ConstExpr	constExpr(aTy);
+    ConstExpr	constExpr;
 
     constExpr.add(Expr::createLiteral("1"));
     constExpr.add(Expr::createLiteral("2"));
     constExpr.add(Expr::createLiteral("3"));
 
     constExpr.print();
+    constExpr.setType(aTy);
     auto aVal = constExpr.load();
 
     Symtab::addDecl(Token::Loc{}, "a", aTy);

@@ -13,7 +13,7 @@ static FILE* fp = stdin;
 bool
 setLexerInputfile(const char *path)
 {
-    return fp = std::fopen(path, "r");
+    return (fp = std::fopen(path, "r"));
 }
 
 const char *

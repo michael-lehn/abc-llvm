@@ -334,6 +334,15 @@ getIntType(const char *s, const char *end, std::uint8_t radix)
 }
 
 ExprPtr
+Expr::createNull(const Type *type, Token::Loc loc)
+{
+    if (type->isPointer()) {
+	type = Type::getNullPointer();
+    }
+    return ExprPtr{new Expr{Literal{UStr{"0"}.c_str(), type, 10, loc}}};
+}
+
+ExprPtr
 Expr::createLiteral(const char *val, std::uint8_t radix, const Type *type,
 		    Token::Loc loc)
 {
@@ -360,7 +369,7 @@ ExprPtr
 Expr::createUnaryMinus(ExprPtr &&expr, Token::Loc opLoc)
 {
     auto ty = expr->getType();
-    auto zero = createLiteral("0", 10, ty);
+    auto zero = createNull(ty, opLoc);
     return createBinary(Binary::Kind::SUB, std::move(zero), std::move(expr),
 			opLoc);
 }
@@ -678,11 +687,6 @@ Expr::loadConstInt(void) const
 
     using T = std::remove_pointer_t<gen::ConstIntVal>;
     auto check = llvm::dyn_cast<T>(loadValue());
-
-    if (!check) {
-	error::out() << "expression is not constant" << std::endl;
-    }
-
     return check;
 }
 
@@ -816,7 +820,16 @@ Expr::print(int indent) const
 static gen::Reg
 loadValue(const Literal &l)
 {
-    //assert(l.type->isInteger());
+    if (!l.type->isInteger() && !l.type->isNullPointer()) {
+	error::out() << l.loc << ": literal has type '"
+	    << l.type << "' and value '" << l.val << "'"
+	    << std::endl;
+	if (l.type->isPointer()) {
+	    error::out() << l.loc << ": deref type '"
+		<< l.type->getRefType() << "'" << std::endl;
+	}
+	error::fatal();
+    }
     return gen::loadIntConst(l.val, l.type, l.radix);
 }
 
@@ -839,7 +852,7 @@ loadValue(const Unary &unary)
 	case Unary::Kind::CAST:
 	    if (unary.type->isBool()) {
 		auto ty = unary.child->getType();
-		auto zero = Expr::createLiteral("0", 10, ty)->loadValue();
+		auto zero = Expr::createNull(ty, unary.opLoc)->loadValue();
 		return gen::cond(gen::NE, unary.child->loadValue(), zero);
 	    }
 	    return gen::cast(unary.child->loadValue(), unary.child->getType(),
@@ -848,7 +861,7 @@ loadValue(const Unary &unary)
 	    {
 		auto ty = unary.child->getType();
 		ty = Type::convertArrayOrFunctionToPointer(ty);
-		auto zero = Expr::createLiteral("0", 10, ty)->loadValue();
+		auto zero = Expr::createNull(ty, unary.opLoc)->loadValue();
 		return gen::cond(gen::EQ, unary.child->loadValue(), zero);
 	    }
 	case Unary::Kind::DEREF:
@@ -1124,7 +1137,7 @@ condJmp(const Unary &unary, gen::Label trueLabel, gen::Label falseLabel)
 	default:
 	    {
 		auto ty = unary.type;
-		auto zero = Expr::createLiteral("0", 10, ty)->loadValue();
+		auto zero = Expr::createNull(ty, unary.opLoc)->loadValue();
 		auto cond = gen::cond(gen::NE, loadValue(unary), zero);
 		gen::jmp(cond, trueLabel, falseLabel);
 	    }
@@ -1173,7 +1186,7 @@ condJmp(const Binary &binary, gen::Label trueLabel, gen::Label falseLabel)
 	default:
 	    {
 		auto ty = binary.type;
-		auto zero = Expr::createLiteral("0", 10, ty)->loadValue();
+		auto zero = Expr::createNull(ty, binary.opLoc)->loadValue();
 		auto cond = gen::cond(gen::NE, loadValue(binary), zero);
 		gen::jmp(cond, trueLabel, falseLabel);
 		return;
@@ -1191,7 +1204,7 @@ Expr::condJmp(gen::Label trueLabel, gen::Label falseLabel) const
     } else if (std::holds_alternative<Proxy>(variant)) {
 	std::get<Proxy>(variant).expr->condJmp(trueLabel, falseLabel);
     } else {
-	auto zero = createLiteral("0", 10, getType())->loadValue();
+	auto zero = createNull(getType(), getLoc())->loadValue();
 	auto cond = gen::cond(gen::NE, loadValue(), zero);
 	gen::jmp(cond, trueLabel, falseLabel);
     }

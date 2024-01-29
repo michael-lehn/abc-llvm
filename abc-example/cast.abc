@@ -1,15 +1,16 @@
-fn printU64(: u64);
-fn print(: -> u8);
-fn printNl();
+fn printf(fmt: -> u8, ...);
 
 fn main()
 {
     local
 	a: u64,
-	b: -> u8;
+	p: -> u64;
 
-    b = cast(main: -> u8);
-    a = cast(b: u64);
+    a = 123;
+    p = &a;
 
-    print("a = "); printU64(a); printNl();
+    p = cast(p: array[2] of u64);
+    p[0] = 42;
+
+    printf("a = %ld\n", a);
 }

@@ -9,7 +9,7 @@ struct Foo {
 
 struct Bar {
     a: u64;
-    b: u64;
+    b: i16;
 };
 
 struct FooBar {
@@ -25,7 +25,9 @@ struct InComplete;
 global
     x: int = {12345},
     bar: Bar = {123, 456},
-    arr: array[3] of InComplete,
+    //arr: array[3] of InComplete,	// error
+    //parr: -> array[3] of InComplete,	// error
+    arrp:  array[3] of -> InComplete,	// eok
     foobar: FooBar = {{1, &x + 1}, {2, 3}, {4/2, 5}, 6};
 
 fn main()
@@ -47,8 +49,8 @@ fn main()
 	x: int = 42;
 
     local
-	foo: Foo = { 123, nullptr},
-	bar: Bar = { 4, 156},
+	foo: Foo = { 823, nullptr},
+	bar: Bar = { 4, 856},
 	foobar: FooBar = { foo, bar, {1,  2, 3} };
 
     //foobar.a = foo;
@@ -74,6 +76,11 @@ fn main()
     printf("bar.a = %d\n", bar.a);
     printf("bar.b = %d\n", bar.b);
     */
+
+    local p: -> int;
+
+    p = cast(p: array[2] of int);
+
 
 }
 

@@ -1,4 +1,5 @@
-CXX := clang++
+CXX := g++
+#CXX := clang++
 #CXX := g++-13
 
 #llvm.comp := `llvm-config --cxxflags`

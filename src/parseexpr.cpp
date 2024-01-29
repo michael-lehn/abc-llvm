@@ -372,6 +372,7 @@ parsePostfix(ExprPtr &&expr)
 		error::out() << token.loc << " expected non-empty expression"
 		    << std::endl;
 		error::fatal();
+		return nullptr;
 	    }
 	case TokenKind::PLUS2:
 	case TokenKind::MINUS2:
