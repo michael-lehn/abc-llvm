@@ -1,6 +1,7 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
+#include "initializerlist.hpp"
 #include "lexer.hpp"
 #include "type.hpp"
 
@@ -12,5 +13,6 @@ void parser(void);
 const Type *parseType(void);
 // usefull for parsing literal suffix
 const Type *parseIntType(void);
+bool parseInitializerList(InitializerList &initList);
 
 #endif // PARSER_HPP

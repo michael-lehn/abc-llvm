@@ -1,5 +1,5 @@
 #include "expr.hpp"
-#include "constexpr.hpp"
+#include "initializerlist.hpp"
 
 int
 main(void)
@@ -7,16 +7,16 @@ main(void)
     auto aTy = Type::getUnsignedInteger(64);
     aTy = Type::getArray(aTy, 5);
 
-    //ConstExpr	constExpr(aTy);
-    ConstExpr	constExpr;
+    //InitializerList initList(aTy);
+    InitializerList initList;
 
-    constExpr.add(Expr::createLiteral("1"));
-    constExpr.add(Expr::createLiteral("2"));
-    constExpr.add(Expr::createLiteral("3"));
+    initList.add(Expr::createLiteral("1"));
+    initList.add(Expr::createLiteral("2"));
+    initList.add(Expr::createLiteral("3"));
 
-    constExpr.print();
-    constExpr.setType(aTy);
-    auto aVal = constExpr.load();
+    initList.print();
+    initList.setType(aTy);
+    auto aVal = initList.load();
 
     Symtab::addDecl(Token::Loc{}, "a", aTy);
     auto a = Expr::createIdentifier("a");
@@ -28,12 +28,12 @@ main(void)
     auto bTy = Type::createIncompleteStruct("B");
     bTy->complete({"first", "second"}, {b1Ty, b2Ty});
 
-    ConstExpr	constExpr2(bTy);
-    constExpr2.add(Expr::createLiteral("11"));
-    constExpr2.add(Expr::createLiteral("21"));
+    InitializerList initList2(bTy);
+    initList2.add(Expr::createLiteral("11"));
+    initList2.add(Expr::createLiteral("21"));
 
-    constExpr2.print();
-    auto bVal = constExpr2.load();
+    initList2.print();
+    auto bVal = initList2.load();
 
     Symtab::addDecl(Token::Loc{}, "b", bTy);
     auto b = Expr::createIdentifier("b");
@@ -41,7 +41,7 @@ main(void)
 
     // --------
 
-    constExpr.add(std::move(constExpr2));
+    initList.add(std::move(initList2));
 
     gen::dump_bc("constexpr");
 }

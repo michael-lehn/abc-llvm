@@ -187,6 +187,8 @@ const char *
 tokenCStr(TokenKind kind)
 {
     switch (kind) {
+	case TokenKind::IDENTIFIER:
+	    return "identifier";
 	case TokenKind::CONST:
 	    return "const";
 	case TokenKind::I8:
@@ -328,7 +330,8 @@ tokenCStr(TokenKind kind)
 	case TokenKind::QUERY:
 	    return "?";
 	default:
-	    return "<no general symbolic representation";
+	    std::cerr << "kind = " << int(kind) << std::endl;
+	    return "<no general symbolic representation>";
     }
 }
 

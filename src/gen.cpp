@@ -663,6 +663,13 @@ cast(Reg reg, const Type *fromType, const Type *toType)
 }
 
 ConstVal
+cast(ConstVal constVal, const Type *fromType, const Type *toType)
+{
+    auto reg = llvm::dyn_cast<llvm::Value>(constVal);
+    return llvm::dyn_cast<llvm::Constant>(cast(reg, fromType, toType));
+}
+
+ConstVal
 loadIntConst(const char *val, const Type *type, std::uint8_t radix)
 {
     //assureOpenBuildingBlock();

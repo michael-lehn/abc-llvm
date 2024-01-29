@@ -3,6 +3,7 @@
 #include <unordered_map>
 
 #include "error.hpp"
+#include "initializerlist.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "parseexpr.hpp"
@@ -408,22 +409,65 @@ parsePrimary(void)
 	getToken();
 	error::expected(TokenKind::LPAREN);
 	getToken();
-	auto expr = parseExpr();
-	if (!expr) {
-	    error::out() << token.loc << " expected non-empty expression"
-		<< std::endl;
-	    error::fatal();
+	InitializerList initList;
+	if (parseInitializerList(initList)) {
+	    error::expected(TokenKind::COLON);
+	    getToken();
+
+	    auto loc = token.loc;
+	    auto type = parseType();
+	    if (!type) {
+		error::out() << token.loc << " type expected"
+		    << std::endl;
+		error::fatal();
+	    } else if (!type->hasSize()) {
+		error::out() << token.loc
+		    << ": incomplete type '" << type << "'" << std::endl;
+		error::fatal();
+	    } else if (type->isFunction()) {
+		error::out() << loc
+		    << ": Function can not be defined as local variable. "
+		    << std::endl
+		    << "\tIf this is supposed to be a function pointer "
+		    << "use type '" << Type::getPointer(type) << "'"
+		    << std::endl;
+		error::fatal();
+	    }
+	    initList.setType(type);
+
+	    static std::size_t tmpId;
+	    std::stringstream ss;
+	    ss << ".compound" << tmpId++;
+	    UStr ident{ss.str()};
+	    auto s = Symtab::addDecl(loc, ident.c_str(), type);
+	    gen::defLocal(s->ident.c_str(), s->getType());
+
+	    auto tmp = Expr::createIdentifier(ident.c_str(), loc);
+	    auto addr = tmp->loadAddr();
+	    auto val = initList.load();
+	    gen::store(val, addr, type);
+
+	    error::expected(TokenKind::RPAREN);
+	    getToken();
+	    return tmp;
+	} else {
+	    auto expr = parseExpr();
+	    if (!expr) {
+		error::out() << token.loc << " expected non-empty expression"
+		    << std::endl;
+		error::fatal();
+	    }
+	    error::expected(TokenKind::COLON);
+	    getToken();
+	    auto ty = parseType();
+	    if (!ty) {
+		error::out() << token.loc << " type expected" << std::endl;
+		error::fatal();
+	    }
+	    error::expected(TokenKind::RPAREN);
+	    getToken();
+	    return Expr::createCast(std::move(expr), ty, opTok.loc);
 	}
-	error::expected(TokenKind::COLON);
-	getToken();
-	auto ty = parseType();
-	if (!ty) {
-	    error::out() << token.loc << " type expected" << std::endl;
-	    error::fatal();
-	}
-	error::expected(TokenKind::RPAREN);
-	getToken();
-	return Expr::createCast(std::move(expr), ty, opTok.loc);
     } else if (token.kind == TokenKind::SIZEOF) {
 	getToken();
 	error::expected(TokenKind::LPAREN);

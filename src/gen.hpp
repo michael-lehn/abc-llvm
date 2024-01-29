@@ -88,6 +88,7 @@ enum AluOp {
 };
 
 Reg cast(Reg reg, const Type *fromType, const Type *toType);
+ConstVal cast(ConstVal constVal, const Type *fromType, const Type *toType);
 
 ConstVal loadIntConst(const char *val, const Type *type, std::uint8_t radix);
 ConstVal loadIntConst(std::uint64_t val, const Type *type);

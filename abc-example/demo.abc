@@ -1,0 +1,26 @@
+fn printf(fmt: -> u8, ...);
+
+struct Foo
+{
+    a: u8;
+    b: u16;
+};
+
+
+fn main()
+{
+    for (local i: u8 = 0; i < 10; ++i) {
+	printf("hello, world!\n");
+    }
+
+    local
+	a: u8,
+	foo: Foo;
+
+    foo = cast({123, 12345678912345}: Foo);
+    a = ++cast({1}: u8);
+
+    printf("foo.a = %d, foo.b = %lld\n", foo.a, foo.b);
+    printf("a = %d\n", a);
+
+}

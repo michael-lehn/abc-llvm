@@ -5,7 +5,7 @@
 #include <optional>
 #include <sstream>
 
-#include "constexpr.hpp"
+#include "initializerlist.hpp"
 #include "error.hpp"
 #include "gen.hpp"
 #include "lexer.hpp"
@@ -103,22 +103,23 @@ parseStructDef(void)
     return true;
 }
 
-static bool
-parseConstExpr(ConstExpr &constExpr)
+bool
+parseInitializerList(InitializerList &initList)
 {
     if (token.kind != TokenKind::LBRACE) {
 	return false;
     }
     getToken();
 
-    auto type = constExpr.getType();
-    for (std::size_t pos = 0; pos < type->getNumMembers(); ++pos) {
+    auto type = initList.getType();
+    for (std::size_t pos = 0; type ? pos < type->getNumMembers(): true; ++pos) {
 	if (auto expr = parseExpr()) {
-	    constExpr.add(std::move(expr));
+	    initList.add(std::move(expr));
 	} else {
-	    ConstExpr constMemberExpr(type->getMemberType(pos));
-	    if (parseConstExpr(constMemberExpr)) {
-		constExpr.add(std::move(constMemberExpr));
+	    auto ty = type ? type->getMemberType(pos) : nullptr;
+	    InitializerList constMemberExpr(ty);
+	    if (parseInitializerList(constMemberExpr)) {
+		initList.add(std::move(constMemberExpr));
 	    } else {
 		break;
 	    }
@@ -167,7 +168,7 @@ parseGlobalDef(void)
 	auto ty = s->getType();
 
 	// parse initalizer
-	ConstExpr constExpr(type);
+	InitializerList initList(type);
 	if (token.kind == TokenKind::EQUAL) {
 	    getToken();
 	    auto opLoc = token.loc;
@@ -177,8 +178,8 @@ parseGlobalDef(void)
 			<< " compile-time constant" << std::endl;
 		    error::fatal();
 		}
-		constExpr.add(std::move(expr));
-	    } else if (parseConstExpr(constExpr)) {
+		initList.add(std::move(expr));
+	    } else if (parseInitializerList(initList)) {
 	    } else {
 		error::out() << opLoc
 		    << " expected initializer or expression"
@@ -186,34 +187,8 @@ parseGlobalDef(void)
 		error::fatal();
 	    }
 	}
-	gen::defGlobal(s->ident.c_str(), ty, constExpr.load());
+	gen::defGlobal(s->ident.c_str(), ty, initList.load());
 
-
-	/*
-	ExprPtr init = nullptr;
-	if (token.kind == TokenKind::EQUAL) {
-	    auto opLoc = token.loc;
-	    getToken();
-	    init = parseConstExpr();
-	    if (!init) {
-		error::out() << token.loc
-		    << " expected non-empty constant expression" << std::endl;
-		error::fatal();
-	    }
-	    auto toTy = Type::getTypeConversion(init->getType(), ty, opLoc);
-	    if (toTy != ty) {
-		init->print();
-		error::out() << opLoc << " can not cast expression of type '"
-		    << init->getType() << "' to type '" << ty
-		    << "'" <<std::endl;
-		error::fatal();
-	    } else if (toTy != init->getType()) {
-	    	init = Expr::createCast(std::move(init), toTy, loc);
-	    }
-	}
-	auto initValue = init ? init->loadConst() : nullptr;
-	gen::defGlobal(s->ident.c_str(), ty, initValue);
-	*/
 	if (token.kind != TokenKind::COMMA) {
 	    break;
 	}
@@ -1136,11 +1111,11 @@ parseStmt(void)
 	|| parseReturnStmt()
 	|| parseBreakStmt()
 	|| parseContinueStmt()
-	|| parseExprStmt()
 	|| parseTypeDef()
 	|| parseStructDef()
 	|| parseLocalDefStmt()
-	|| parseSwitchStmt();
+	|| parseSwitchStmt()
+	|| parseExprStmt();
 }
 
 //------------------------------------------------------------------------------
