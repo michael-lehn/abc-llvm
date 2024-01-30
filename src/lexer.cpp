@@ -342,10 +342,10 @@ tokenCStr(TokenKind kind)
 
 
 static Token::Loc::Pos curr = { 1, 0 };
-static char ch;
+static int ch;
 
 static char
-nextCh(void)
+nextCh()
 {
     ch = std::fgetc(fp);
     ++curr.col;
@@ -451,7 +451,7 @@ processString(const char *s)
 static std::string token_str;
 
 static void
-tokenReset(void)
+tokenReset()
 {
     token.loc.from.line = curr.line;
     token.loc.from.col = curr.col;
@@ -479,11 +479,11 @@ tokenSet(TokenKind kind)
     return token.kind;
 }
 
-static void parseStringLiteral(void);
-static void parseCharacterLiteral(void);
+static void parseStringLiteral();
+static void parseCharacterLiteral();
 
 TokenKind
-getToken(void)
+getToken()
 {
     // init ch, skip white spaces and newlines
     while (ch == 0 || isWhiteSpace(ch) || ch == '\n') {
@@ -734,7 +734,7 @@ getToken(void)
 }
 
 static void
-parseStringLiteral(void)
+parseStringLiteral()
 {
     // ch == '"'
     nextCh();
