@@ -4,7 +4,7 @@
 
 static std::set<std::string> *ustrSet;
 
-UStr::UStr(void)
+UStr::UStr()
     : c_str_{nullptr}
 {
 }

@@ -844,6 +844,7 @@ loadValue(const Identifier &ident)
 }
 
 static void condJmp(const Unary &, gen::Label, gen::Label);
+static gen::Reg loadAddr(const Binary &binary);
 
 static gen::Reg
 loadValue(const Unary &unary)
@@ -891,12 +892,14 @@ loadValue(const Unary &unary)
 		    }
 		    assert(0);
 		    return nullptr;
+		} else if (std::holds_alternative<Binary>(lValue->variant)) {
+		    const auto &binary = std::get<Binary>(lValue->variant);
+		    return loadAddr(binary);
 		} else {
 		    assert(0); // not implemented
 		    return nullptr;
 		}
 	    }
-
 	default:
 	    assert(0);
 	    return nullptr;
@@ -941,7 +944,6 @@ loadValue(const Binary &binary)
 		auto fnPtr = left->loadValue();
 		return gen::call(fnPtr, fnType, param);
 	    }
-
 	case Binary::Kind::ASSIGN:
 	    {
 		auto addr = binary.left->loadAddr();
@@ -1030,7 +1032,6 @@ loadValue(const Binary &binary)
 		auto r = binary.right->loadValue();
 		return gen::cond(condOp, l, r);
 	    }
-
 	default:
 	    error::out() << "binary.kind = " << int(binary.kind) << std::endl;
 	    assert(0);

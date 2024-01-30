@@ -8,7 +8,7 @@
 class UStr
 {
     public:
-	UStr(void);
+	UStr();
 	UStr(const char *s);
 	UStr(const std::string &s);
 

@@ -23,226 +23,49 @@ class Type
 	    STRUCT,
 	} id;
 
+	UStr getAliasIdent() const;
 	// only types with size can be used to define a variabel
-	bool hasSize() const
-	{
-	    if (isVoid()) {
-		return false;
-	    } else if (isStruct()) {
-		return std::get<StructData>(data).isComplete;
-	    } else if (isArray()) {
-		return getDim();
-	    } else {
-		return true;
-	    }
-	}
-
-	bool isVoid() const
-	{
-	    return id == VOID;
-	}
+	bool hasSize() const;
+	bool isVoid() const;
 
 	// for integer (sub-)types 
-
 	enum IntegerKind {
 	    SIGNED,
 	    UNSIGNED,
 	};
 
-	bool isBool() const
-	{
-	    return id == INTEGER && getIntegerNumBits() == 1;
-	}
-
-	bool hasConstFlag() const
-	{
-	    if (isInteger()) {
-		return std::get<IntegerData>(data).constFlag;
-	    } else if (isPointer()) {
-		return std::get<PointerData>(data).constFlag;
-	    } else if (isStruct()) {
-		return std::get<StructData>(data).constFlag;
-	    }
-	    return false;
-	}
-
-	bool isInteger() const
-	{
-	    return id == INTEGER;
-	}
-
-	IntegerKind getIntegerKind() const
-	{
-	    assert(std::holds_alternative<IntegerData>(data));
-	    return std::get<IntegerData>(data).kind;
-	}
-
-	std::size_t getIntegerNumBits() const
-	{
-	    assert(std::holds_alternative<IntegerData>(data));
-	    return std::get<IntegerData>(data).numBits;
-	}
+	bool isBool() const;
+	bool hasConstFlag() const;
+	bool isInteger() const;
+	IntegerKind getIntegerKind() const;
+	std::size_t getIntegerNumBits() const;
 
 	// for pointer and array (sub-)types
-
-	bool isPointer() const
-	{
-	    return id == POINTER;
-	}
-
-	bool isNullPointer() const
-	{
-	    if (!isPointer()) {
-		return false;
-	    }
-	    assert(std::holds_alternative<PointerData>(data));
-	    return std::get<PointerData>(data).isNullptr;
-	}
-
-	bool isArray() const
-	{
-	    return id == ARRAY;
-	}
-
-	bool isArrayOrPointer() const
-	{
-	    return isArray() || isPointer();
-	}
-
-	const Type *getRefType() const
-	{
-	    assert(!isNullPointer());
-	    if (std::holds_alternative<ArrayData>(data)) {
-		return std::get<ArrayData>(data).refType;
-	    }
-	    assert(std::holds_alternative<PointerData>(data));
-	    return std::get<PointerData>(data).refType;
-	}
-
-	std::size_t getDim() const
-	{
-	    assert(std::holds_alternative<ArrayData>(data));
-	    return std::get<ArrayData>(data).dim;
-	}
+	bool isPointer() const;
+	bool isNullPointer() const;
+	bool isArray() const;
+	bool isArrayOrPointer() const;
+	const Type *getRefType() const;
+	std::size_t getDim() const;
 
 	// for function (sub-)types 
-	bool isFunction() const
-	{
-	    return id == FUNCTION;
-	}
-
-	const Type *getRetType() const
-	{
-	    assert(std::holds_alternative<FunctionData>(data));
-	    return std::get<FunctionData>(data).retType;
-	}
-
-	bool hasVarg() const
-	{
-	    assert(std::holds_alternative<FunctionData>(data));
-	    return std::get<FunctionData>(data).hasVarg;
-	}
-
-	const std::vector<const Type *> &getArgType() const
-	{
-	    assert(std::holds_alternative<FunctionData>(data));
-	    return std::get<FunctionData>(data).argType;
-	}
+	bool isFunction() const;
+	const Type *getRetType() const;
+	bool hasVarg() const;
+	const std::vector<const Type *> &getArgType() const;
 
 	// for struct (sub-)types
-	bool isStruct() const
-	{
-	    return id == STRUCT;
-	}
-
+	bool isStruct() const;
 	const Type *complete(std::vector<const char *> &&ident,
-			     std::vector<const Type *> &&type)
-	{
-	    assert(std::holds_alternative<StructData>(data));
-	    assert(ident.size() == type.size());
-	    auto &structData = std::get<StructData>(data);
-
-	    if (structData.isComplete) {
-		// struct members already defined
-		return nullptr;
-	    }
-
-	    structData.isComplete = true;	
-	    structData.ident = ident;	
-	    structData.type = type;
-	    for (std::size_t i = 0; i < ident.size(); ++i) {
-		structData.index[ident.at(i)] = i;
-	    }
-	    return this;
-	}
-
-	UStr getName(void) const
-	{
-	    assert(std::holds_alternative<StructData>(data));
-	    const auto &structData = std::get<StructData>(data);
-	    return structData.name;
-	}
-
-	std::size_t getNumMembers(void) const
-	{
-	    if (isArray()) {
-		return getDim();
-	    } else if (isStruct()) {
-		return getMemberType().size();
-	    }
-	    return 1;
-	}
-
-	bool hasMember(UStr ident) const
-	{
-	    assert(std::holds_alternative<StructData>(data));
-	    const auto &structData = std::get<StructData>(data);
-	    return structData.index.contains(ident.c_str());
-	}
-
-	std::size_t getMemberIndex(UStr ident) const
-	{
-	    assert(std::holds_alternative<StructData>(data));
-	    const auto &structData = std::get<StructData>(data);
-	    assert(hasMember(ident));
-	    return structData.index.at(ident.c_str());
-	}
-
-	const Type *getMemberType(std::size_t index) const
-	{
-	    if (std::holds_alternative<StructData>(data)) {
-		auto type = getMemberType();
-		return index < type.size() ? type.at(index) : nullptr;
-	    } else if (std::holds_alternative<ArrayData>(data)) {
-		auto type = getRefType();
-		return index < getDim() ? type : nullptr;
-	    } else {
-		return this;
-	    }
-	}
-
-	const Type *getMemberType(UStr ident) const
-	{
-	    assert(std::holds_alternative<StructData>(data));
-	    const auto &structData = std::get<StructData>(data);
-	    assert(hasMember(ident));
-	    return structData.type[getMemberIndex(ident)];
-	}
-
-	const std::vector<const Type *> &getMemberType(void) const
-	{
-	    assert(std::holds_alternative<StructData>(data));
-	    const auto &structData = std::get<StructData>(data);
-	    return structData.type;
-	}
-
-	const std::vector<const char *> &getMemberIdent(void) const
-	{
-	    assert(std::holds_alternative<StructData>(data));
-	    const auto &structData = std::get<StructData>(data);
-	    return structData.ident;
-	}
-
+			     std::vector<const Type *> &&type);
+	UStr getName() const;
+	std::size_t getNumMembers() const;
+	bool hasMember(UStr ident) const;
+	std::size_t getMemberIndex(UStr ident) const;
+	const Type *getMemberType(std::size_t index) const;
+	const Type *getMemberType(UStr ident) const;
+	const std::vector<const Type *> &getMemberType() const;
+	const std::vector<const char *> &getMemberIdent() const;
 
     protected:
 	struct IntegerData {
@@ -279,43 +102,35 @@ class Type
 	    std::vector<const Type *> type;
 	    std::vector<const char *> ident;
 
-	    StructData(std::size_t id, UStr name)
-		: id{id}, name{name}, isComplete{false}, constFlag{false}
-	    {}
-
-	    StructData(const StructData &data, bool constFlag)
-		: id{data.id}, name{data.name}, isComplete{data.isComplete}
-		, constFlag{constFlag}, type{data.type}, ident{data.ident}
-	    {
-		//TODO: make elements in data.type all const if constFlag is
-		//	true, otherwise assert(0)
-	    }
-
-
+	    StructData(std::size_t id, UStr name);
+	    StructData(const StructData &data, bool constFlag);
 	};
 
 	std::variant<IntegerData, PointerData, ArrayData, FunctionData,
 		     StructData> data;
+	UStr aliasIdent;
 
 	template <typename Data>
-	Type(Id id, Data &&data) : id{id}, data{data} {}
+	Type(Id id, Data &&data, UStr aliasIdent = UStr{})
+	    : id{id}, data{data}, aliasIdent{aliasIdent}
+	{}
 
     public:
-	// for getting a unnamed type
+	static const Type *createAlias(UStr aliasIdent, const Type *forType);
 	static const Type *getConst(const Type *type);
 	static const Type *getConstRemoved(const Type *type);
-	static const Type *getVoid(void);
-	static const Type *getBool(void);
+	static const Type *getVoid();
+	static const Type *getBool();
 	static const Type *getUnsignedInteger(std::size_t numBits);
 	static const Type *getSignedInteger(std::size_t numBits);
 	static const Type *getPointer(const Type *refType);
-	static const Type *getNullPointer(void);
+	static const Type *getNullPointer();
 	static const Type *getArray(const Type *refType, std::size_t dim);
 	static const Type *getFunction(const Type *retType,
 				       std::vector<const Type *> argType,
 				       bool hasVarg = false);
 	static Type *createIncompleteStruct(UStr name);
-	static void deleteStruct(const Type *ty);
+	static void remove(const Type *ty);
 
 	// type casts
 	static const Type *getTypeConversion(const Type *from, const Type *to,

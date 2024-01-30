@@ -21,7 +21,7 @@ struct ScopeNode
     ~ScopeNode()
     {
 	for (const auto &ty: nametab) {
-	    Type::deleteStruct(ty);
+	    Type::remove(ty);
 	}
     }
 };
@@ -177,11 +177,6 @@ Symtab::addNamedType(UStr ident, const Type *type)
     if (!addTypeAlias(ident, type)) {
 	return nullptr;
     }
-
-    if (curr->up) {
-	// only types added to a local scope need (and can) be deleted
-	curr->nametab.push_back(type);
-    }
     return type;
 }
 
@@ -196,6 +191,10 @@ Symtab::addTypeAlias(UStr ident, const Type *type)
     }
 
     curr.get()->typetab.emplace(ident.c_str(), type);
+    if (curr->up) {
+	// only types added to a local scope need (and can) be removed
+	curr->nametab.push_back(type);
+    }
     return type;
 }
 

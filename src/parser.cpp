@@ -68,6 +68,7 @@ parseTypeDef(void)
 	    error::out() << token.loc << ": type expected" << std::endl;
 	    error::fatal();
 	}
+	ty = Type::createAlias(ident, ty);
 	if (!Symtab::addTypeAlias(ident, ty)) {
 	    error::out() << token.loc << ": '" << ident << "' already defined "
 		<< std::endl;

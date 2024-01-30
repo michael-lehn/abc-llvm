@@ -7,14 +7,15 @@ struct Foo
 };
 
 global
-    a: u8 = 42,
-    foo: Foo = {a, 2};
+    foo: const Foo = {42, 2};
 
 fn main()
 {
     for (local i: u8 = 0; i < 10; ++i) {
 	printf("hello, world!\n");
     }
+
+    *cast(&foo.a: ->u8) = 123;
 
     local
 	a: u8,
@@ -25,5 +26,4 @@ fn main()
 
     printf("foo.a = %d, foo.b = %lld\n", foo.a, foo.b);
     printf("a = %d\n", a);
-
 }

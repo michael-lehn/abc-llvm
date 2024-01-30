@@ -6,6 +6,24 @@
 #include "symtab.hpp"
 #include "type.hpp"
 
+/*
+ * Innder class: Type::StructData
+ */
+
+Type::StructData::StructData(std::size_t id, UStr name)
+    : id{id}, name{name}, isComplete{false}, constFlag{false}
+{}
+
+Type::StructData::StructData(const StructData &data, bool constFlag)
+    : id{data.id}, name{data.name}, isComplete{data.isComplete}
+    , constFlag{constFlag}, type{data.type}, ident{data.ident}
+{
+}
+
+/*
+ * Hidden types: Integer, Pointer, Array, Function, Struct 
+ */
+
 //--  Integer class (also misused to represent 'void') -------------------------
 
 struct Integer : public Type
@@ -22,16 +40,24 @@ struct Integer : public Type
 	: Type{Type::INTEGER, IntegerData{data.numBits, data.kind, constFlag}}
     {}
 
+    Integer(const IntegerData &data, UStr aliasIdent)
+	: Type{Type::INTEGER, data, aliasIdent}
+    {}
+
     friend bool operator<(const Integer &x, const Integer &y);
 };
 
 bool
 operator<(const Integer &x, const Integer &y)
 {
-    return x.getIntegerKind() < y.getIntegerKind()
-	|| (x.getIntegerKind() == y.getIntegerKind()
+    return x.aliasIdent.c_str() < y.aliasIdent.c_str()
+	|| (x.aliasIdent.c_str() == y.aliasIdent.c_str()
+	    && x.getIntegerKind() < y.getIntegerKind())
+	|| (x.aliasIdent.c_str() == y.aliasIdent.c_str()
+	    && x.getIntegerKind() == y.getIntegerKind()
 	    && x.getIntegerNumBits() < y.getIntegerNumBits())
-	|| (x.getIntegerKind() == y.getIntegerKind()
+	|| (x.aliasIdent.c_str() == y.aliasIdent.c_str()
+	    && x.getIntegerKind() == y.getIntegerKind()
 	    && x.getIntegerNumBits() == y.getIntegerNumBits()
 	    && x.hasConstFlag() < y.hasConstFlag());
 }
@@ -48,15 +74,23 @@ struct Pointer : public Type
 	: Type{Type::POINTER,
 	       PointerData{data.refType, data.isNullptr, constFlag}}
     {}
+
+    Pointer(const PointerData &data,  UStr aliasIdent)
+	: Type{Type::POINTER, data, aliasIdent}
+    {}
 };
 
 bool
 operator<(const Pointer &x, const Pointer &y)
 {
-    return (x.isNullPointer() && !y.isNullPointer())
-	|| (!x.isNullPointer() && !y.isNullPointer()
+    return x.getAliasIdent().c_str() < y.getAliasIdent().c_str()
+	|| (x.getAliasIdent().c_str() == y.getAliasIdent().c_str()
+	    && x.isNullPointer() && !y.isNullPointer())
+	|| (x.getAliasIdent().c_str() == y.getAliasIdent().c_str()
+	    && !x.isNullPointer() && !y.isNullPointer()
 	    && x.getRefType() < y.getRefType())
-	|| (!x.isNullPointer() && !y.isNullPointer()
+	|| (x.getAliasIdent().c_str() == y.getAliasIdent().c_str()
+	    && !x.isNullPointer() && !y.isNullPointer()
 	    && x.getRefType() == y.getRefType()
 	    && x.hasConstFlag() < y.hasConstFlag());
 }
@@ -68,13 +102,21 @@ struct Array : public Type
     Array(const Type *refType, std::size_t dim)
 	: Type{Type::ARRAY, ArrayData{refType, dim}}
     {}
+
+    Array(const ArrayData data, UStr aliasIdent)
+	: Type{Type::ARRAY, data, aliasIdent}
+    {}
 };
 
 bool
 operator<(const Array &x, const Array &y)
 {
-    return x.getRefType() < y.getRefType()
-	|| (x.getRefType() == y.getRefType() && x.getDim() < y.getDim());
+    return x.getAliasIdent().c_str() < y.getAliasIdent().c_str()
+	|| (x.getAliasIdent().c_str() == y.getAliasIdent().c_str()
+	    && x.getRefType() < y.getRefType())
+	|| (x.getAliasIdent().c_str() == y.getAliasIdent().c_str()
+	    && x.getRefType() == y.getRefType()
+	    && x.getDim() < y.getDim());
 }
 
 //-- Function class ------------------------------------------------------------
@@ -93,15 +135,32 @@ operator<(const Function &x, const Function &y)
     auto xArg = x.getArgType();
     auto yArg = y.getArgType();
 
-    if (x.getRetType() < y.getRetType() || xArg.size() < yArg.size()) {
+    if (x.getAliasIdent().c_str() < y.getAliasIdent().c_str()) {
 	return true;
+    } else if (x.getAliasIdent().c_str() > y.getAliasIdent().c_str()) {
+	return false;
     }
+
+    if (x.getRetType() < y.getRetType()) {
+	return true;
+    } else if (x.getRetType() > y.getRetType()) {
+	return false;
+    }
+
+    if (xArg.size() < yArg.size()) {
+	return true;
+    } else if (xArg.size() > yArg.size()) {
+	return false;
+    }
+
     for (std::size_t i = 0; i < yArg.size(); ++ i) {
 	if (xArg[i] < yArg[i]) {
 	    return true;
+	} else if (xArg[i] > yArg[i]) {
+	    return false;
 	}
     }
-    return false;
+    return false; // x == y
 }
 
 //--  Struct class -------------------------------------------------------------
@@ -119,7 +178,12 @@ struct Struct : public Type
 		"internal error: Only copy struct data when constFlag is set");
     }
 
-    bool isComplete(void)
+    Struct(const StructData &data, UStr aliasIdent)
+	: Type{Type::STRUCT, data, aliasIdent}
+    {
+    }
+
+    bool isComplete()
     {
 	return std::get<StructData>(data).isComplete;
     }
@@ -133,9 +197,280 @@ static std::set<Array> *arrayTypeSet;
 static std::set<Function> *fnTypeSet;
 static std::unordered_map<std::size_t, Struct> *structMap;
 
+/*
+ * Public class Type
+ */
+
+//-- Methods -------------------------------------------------------------------
+
+UStr
+Type::getAliasIdent() const
+{
+    return aliasIdent;
+}
+
+bool
+Type::hasSize() const
+{
+    if (isVoid()) {
+	return false;
+    } else if (isStruct()) {
+	return std::get<StructData>(data).isComplete;
+    } else if (isArray()) {
+	return getDim();
+    } else {
+	return true;
+    }
+}
+
+bool
+Type::isVoid() const
+{
+    return id == VOID;
+}
+
+// for integer (sub-)types 
+
+bool
+Type::isBool() const
+{
+    return id == INTEGER && getIntegerNumBits() == 1;
+}
+
+bool
+Type::hasConstFlag() const
+{
+    if (isInteger()) {
+	return std::get<IntegerData>(data).constFlag;
+    } else if (isPointer()) {
+	return std::get<PointerData>(data).constFlag;
+    } else if (isStruct()) {
+	return std::get<StructData>(data).constFlag;
+    }
+    return false;
+}
+
+bool
+Type::isInteger() const
+{
+    return id == INTEGER;
+}
+
+Type::IntegerKind
+Type::getIntegerKind() const
+{
+    assert(std::holds_alternative<IntegerData>(data));
+    return std::get<IntegerData>(data).kind;
+}
+
+std::size_t
+Type::getIntegerNumBits() const
+{
+    assert(std::holds_alternative<IntegerData>(data));
+    return std::get<IntegerData>(data).numBits;
+}
+
+// for pointer and array (sub-)types
+
+bool
+Type::isPointer() const
+{
+    return id == POINTER;
+}
+
+bool
+Type::isNullPointer() const
+{
+    if (!isPointer()) {
+	return false;
+    }
+    assert(std::holds_alternative<PointerData>(data));
+    return std::get<PointerData>(data).isNullptr;
+}
+
+bool
+Type::isArray() const
+{
+    return id == ARRAY;
+}
+
+bool
+Type::isArrayOrPointer() const
+{
+    return isArray() || isPointer();
+}
+
+const Type *
+Type::getRefType() const
+{
+    assert(!isNullPointer());
+    if (std::holds_alternative<ArrayData>(data)) {
+	return std::get<ArrayData>(data).refType;
+    }
+    assert(std::holds_alternative<PointerData>(data));
+    return std::get<PointerData>(data).refType;
+}
+
+std::size_t
+Type::getDim() const
+{
+    assert(std::holds_alternative<ArrayData>(data));
+    return std::get<ArrayData>(data).dim;
+}
+
+// for function (sub-)types 
+bool
+Type::isFunction() const
+{
+    return id == FUNCTION;
+}
+
+const Type *
+Type::getRetType() const
+{
+    assert(std::holds_alternative<FunctionData>(data));
+    return std::get<FunctionData>(data).retType;
+}
+
+bool
+Type::hasVarg() const
+{
+    assert(std::holds_alternative<FunctionData>(data));
+    return std::get<FunctionData>(data).hasVarg;
+}
+
+const std::vector<const Type *> &
+Type::getArgType() const
+{
+    assert(std::holds_alternative<FunctionData>(data));
+    return std::get<FunctionData>(data).argType;
+}
+
+// for struct (sub-)types
+bool
+Type::isStruct() const
+{
+    return id == STRUCT;
+}
+
+const Type *
+Type::complete(std::vector<const char *> &&ident,
+	       std::vector<const Type *> &&type)
+{
+    assert(std::holds_alternative<StructData>(data));
+    assert(ident.size() == type.size());
+    auto &structData = std::get<StructData>(data);
+
+    if (structData.isComplete) {
+	// struct members already defined
+	return nullptr;
+    }
+
+    structData.isComplete = true;	
+    structData.ident = ident;	
+    structData.type = type;
+    for (std::size_t i = 0; i < ident.size(); ++i) {
+	structData.index[ident.at(i)] = i;
+    }
+    return this;
+}
+
+UStr
+Type::getName() const
+{
+    assert(std::holds_alternative<StructData>(data));
+    const auto &structData = std::get<StructData>(data);
+    return structData.name;
+}
+
+std::size_t
+Type::getNumMembers() const
+{
+    if (isArray()) {
+	return getDim();
+    } else if (isStruct()) {
+	return getMemberType().size();
+    }
+    return 1;
+}
+
+bool
+Type::hasMember(UStr ident) const
+{
+    assert(std::holds_alternative<StructData>(data));
+    const auto &structData = std::get<StructData>(data);
+    return structData.index.contains(ident.c_str());
+}
+
+std::size_t
+Type::getMemberIndex(UStr ident) const
+{
+    assert(std::holds_alternative<StructData>(data));
+    const auto &structData = std::get<StructData>(data);
+    assert(hasMember(ident));
+    return structData.index.at(ident.c_str());
+}
+
+const Type *
+Type::getMemberType(std::size_t index) const
+{
+    if (std::holds_alternative<StructData>(data)) {
+	auto type = getMemberType();
+	return index < type.size() ? type.at(index) : nullptr;
+    } else if (std::holds_alternative<ArrayData>(data)) {
+	auto type = getRefType();
+	return index < getDim() ? type : nullptr;
+    } else {
+	return this;
+    }
+}
+
+const Type *
+Type::getMemberType(UStr ident) const
+{
+    assert(std::holds_alternative<StructData>(data));
+    const auto &structData = std::get<StructData>(data);
+    assert(hasMember(ident));
+    return structData.type[getMemberIndex(ident)];
+}
+
+const std::vector<const Type *> &
+Type::getMemberType() const
+{
+    assert(std::holds_alternative<StructData>(data));
+    const auto &structData = std::get<StructData>(data);
+    return structData.type;
+}
+
+const std::vector<const char *> &
+Type::getMemberIdent() const
+{
+    assert(std::holds_alternative<StructData>(data));
+    const auto &structData = std::get<StructData>(data);
+    return structData.ident;
+}
+
 //-- Static functions ----------------------------------------------------------
 
-// Create integer/void type or return existing type
+const Type *
+Type::createAlias(UStr aliasIdent, const Type *forType)
+{
+    if (forType->isInteger()) {
+	const auto &data = std::get<IntegerData>(forType->data);
+	return &*intTypeSet->insert(Integer{data, aliasIdent}).first;
+    } else if (forType->isPointer()) {
+	const auto &data = std::get<PointerData>(forType->data);
+	return &*ptrTypeSet->insert(Pointer{data, aliasIdent}).first;
+    } else if (forType->isArray()) {
+	const auto &data = std::get<ArrayData>(forType->data);
+	return &*arrayTypeSet->insert(Array{data, aliasIdent}).first;
+    } else if (forType->isStruct()) {
+	auto ty = createIncompleteStruct(aliasIdent);
+	ty->data = std::get<StructData>(forType->data);
+	return ty;
+    }
+    return nullptr;
+}
 
 const Type *
 Type::getConst(const Type *type)
@@ -184,8 +519,10 @@ Type::getConstRemoved(const Type *type)
     return type;
 }
 
+// Create integer/void type or return existing type
+
 const Type *
-Type::getVoid(void)
+Type::getVoid()
 {
     if (!intTypeSet) {
 	intTypeSet = new std::set<Integer>;
@@ -194,7 +531,7 @@ Type::getVoid(void)
 }
 
 const Type *
-Type::getBool(void)
+Type::getBool()
 {
     if (!intTypeSet) {
 	intTypeSet = new std::set<Integer>;
@@ -235,7 +572,7 @@ Type::getPointer(const Type *refType)
 }
 
 const Type *
-Type::getNullPointer(void)
+Type::getNullPointer()
 {
     if (!ptrTypeSet) {
 	ptrTypeSet = new std::set<Pointer>;
@@ -295,15 +632,37 @@ Type::createIncompleteStruct(UStr name)
 }
 
 void
-Type::deleteStruct(const Type *ty)
+Type::remove(const Type *ty)
 {
-    assert(structMap
-	    && "Type::deleteStruct() called before any struct was created");
+    if (ty->isInteger()) {
+	assert(intTypeSet
+		&& "Type::remove() called before any int type was created");
+
+	auto intTy = static_cast<const Integer *>(ty);
+	auto numErased = intTypeSet->erase(*intTy);
+	assert(numErased == 1 && "Type::remove(): no int type deleted");
+    } else if (ty->isPointer()) {
+	assert(ptrTypeSet
+		&& "Type::remove() called before any pointer type was created");
+
+	auto ptrTy = static_cast<const Pointer *>(ty);
+	auto numErased = ptrTypeSet->erase(*ptrTy);
+	assert(numErased == 1 && "Type::remove(): no pointer type deleted");
+    } else if (ty->isArray()) {
+	assert(arrayTypeSet
+		&& "Type::remove() called before any array type was created");
+
+	auto arrayTy = static_cast<const Array *>(ty);
+	auto numErased = arrayTypeSet->erase(*arrayTy);
+	assert(numErased == 1 && "Type::remove(): no array type deleted");
+    } else if (ty->isStruct()) {
+	assert(structMap
+		&& "Type::remove() called before any struct was created");
     
-    assert(ty->isStruct());
-    const auto &structData = std::get<StructData>(ty->data);
-    auto numErased = structMap->erase(structData.id);
-    assert(numErased == 1 && "Type::deleteStruct(): no struct deleted");
+	const auto &structData = std::get<StructData>(ty->data);
+	auto numErased = structMap->erase(structData.id);
+	assert(numErased == 1 && "Type::remove(): no struct type deleted");
+    }
 }
 
 /*
@@ -382,6 +741,9 @@ operator<<(std::ostream &out, const Type *type)
 	return out;
     }
 
+    if (type->getAliasIdent().c_str()) {
+	out << type->getAliasIdent().c_str() << " (aka '";
+    }
     if (type->hasConstFlag()) {
 	out << "const ";
     }
@@ -433,6 +795,9 @@ operator<<(std::ostream &out, const Type *type)
 	    << ", address = " << (int *)type
 	    << std::endl;
 	error::fatal();
+    }
+    if (type->getAliasIdent().c_str()) {
+	out << "')";
     }
     return out;
 }
