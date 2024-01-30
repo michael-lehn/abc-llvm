@@ -46,7 +46,6 @@ addToRootScope(UStr ident)
     }
 }
 
-
 int
 main(void)
 {

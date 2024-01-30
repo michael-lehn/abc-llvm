@@ -95,13 +95,6 @@ class Symtab
 
 	// returns nullptr if 'ident' was found in current type scope,
 	// otherwise returns 'type'.
-	//
-	// When 'ident' goes out of scope the type
-	// interface gets notified and can delete the type
-	static const Type *addNamedType(UStr ident, const Type *type);
-
-	// returns nullptr if 'ident' was found in current type scope,
-	// otherwise returns 'type'.
 	static const Type *addTypeAlias(UStr ident, const Type *type);
 
 	static std::ostream &print(std::ostream &out);

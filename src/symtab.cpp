@@ -171,16 +171,6 @@ Symtab::getNamedType(UStr ident, Scope scope)
 }
 
 const Type *
-Symtab::addNamedType(UStr ident, const Type *type)
-{
-    assert(curr.get());
-    if (!addTypeAlias(ident, type)) {
-	return nullptr;
-    }
-    return type;
-}
-
-const Type *
 Symtab::addTypeAlias(UStr ident, const Type *type)
 {
     assert(curr.get());

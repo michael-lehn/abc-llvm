@@ -626,7 +626,7 @@ Type::createIncompleteStruct(UStr name)
     ++id;
 
     // add type to current scope
-    auto tyAdded = Symtab::addNamedType(name, ty);
+    auto tyAdded = Symtab::addTypeAlias(name, ty);
     assert(ty == tyAdded);
     return ty;
 }
