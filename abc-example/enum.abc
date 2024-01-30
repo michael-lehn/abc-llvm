@@ -7,9 +7,17 @@ enum Foo : i16
     C,
 };
 
+global p: u8 = B + C;
+
 fn main()
 {
     printf("A = %d\n", A);
     printf("B = %d\n", B);
     printf("C = %d\n", C);
+    printf("p = %d\n", p);
+
+    local err: -> i32;
+    err = cast(B: -> i32);
+
+    printf("err = %p\n", err);
 }

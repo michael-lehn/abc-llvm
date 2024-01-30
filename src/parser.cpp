@@ -79,7 +79,7 @@ parseTypeDef(void)
 	    break;
 	}
 	getToken();
-    }
+}
     error::expected(TokenKind::SEMICOLON);
     getToken();
     return true;
@@ -114,6 +114,8 @@ parseEnumDef(void)
     getToken();
 
     error::expected(TokenKind::IDENTIFIER);
+    auto enumTok = token;
+    UStr enumName = token.val;
     getToken();
 
     error::expected(TokenKind::COLON);
@@ -125,6 +127,17 @@ parseEnumDef(void)
 	error::out() << enumTyTok.loc << ": integer type expected" << std::endl;
 	error::fatal();
     }
+
+    enumTy = Symtab::addTypeAlias(enumName, enumTy);
+    if (!enumTy) {
+	auto sym = Symtab::get(enumName);
+	error::out() << enumTok.loc << ": redefinition of type name '"
+	    << enumName.c_str() << "'. Previous definition at "
+	    << sym->getLoc() << std::endl;
+	error::fatal();
+    }
+    enumTy = Type::createAlias(enumName, enumTy);
+    std::cerr << "enumTy = " << enumTy << std::endl;
 
     // TODO: support incomplete enum decl
     error::expected(TokenKind::LBRACE);
