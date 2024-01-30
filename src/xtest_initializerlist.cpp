@@ -16,7 +16,7 @@ main(void)
 
     initList.print();
     initList.setType(aTy);
-    auto aVal = initList.load();
+    auto aVal = initList.loadConst();
 
     Symtab::addDecl(Token::Loc{}, "a", aTy);
     auto a = Expr::createIdentifier("a");
@@ -33,7 +33,7 @@ main(void)
     initList2.add(Expr::createLiteral("21"));
 
     initList2.print();
-    auto bVal = initList2.load();
+    auto bVal = initList2.loadConst();
 
     Symtab::addDecl(Token::Loc{}, "b", bTy);
     auto b = Expr::createIdentifier("b");

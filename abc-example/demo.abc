@@ -17,8 +17,8 @@ fn main()
 	a: u8,
 	foo: Foo;
 
-    foo = cast({123, 12345678912345}: Foo);
     a = ++cast({1}: u8);
+    foo = cast({a, 12345678912345}: Foo);
 
     printf("foo.a = %d, foo.b = %lld\n", foo.a, foo.b);
     printf("a = %d\n", a);

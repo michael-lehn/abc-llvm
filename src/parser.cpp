@@ -187,7 +187,7 @@ parseGlobalDef(void)
 		error::fatal();
 	    }
 	}
-	gen::defGlobal(s->ident.c_str(), ty, initList.load());
+	gen::defGlobal(s->ident.c_str(), ty, initList.loadConst());
 
 	if (token.kind != TokenKind::COMMA) {
 	    break;

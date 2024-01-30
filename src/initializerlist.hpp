@@ -23,8 +23,11 @@ class InitializerList
 	void add(ExprPtr &&expr, Token::Loc loc = Token::Loc{});
 	void add(InitializerList &&initList, Token::Loc loc = Token::Loc{});
 
-	gen::ConstVal load() const;
-	gen::ConstVal load(size_t index) const;
+	void store(gen::Reg addr) const;
+	void store(size_t index, gen::Reg addr) const;
+
+	gen::ConstVal loadConst() const;
+	gen::ConstVal loadConst(size_t index) const;
 
 	void print(int indent = 0) const;
 

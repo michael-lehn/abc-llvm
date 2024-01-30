@@ -444,8 +444,7 @@ parsePrimary(void)
 
 	    auto tmp = Expr::createIdentifier(ident.c_str(), loc);
 	    auto addr = tmp->loadAddr();
-	    auto val = initList.load();
-	    gen::store(val, addr, type);
+	    initList.store(addr);
 
 	    error::expected(TokenKind::RPAREN);
 	    getToken();
