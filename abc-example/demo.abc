@@ -6,6 +6,9 @@ struct Foo
     b: u16;
 };
 
+global
+    a: u8 = 42,
+    foo: Foo = {a, 2};
 
 fn main()
 {

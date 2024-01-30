@@ -104,7 +104,7 @@ parseStructDef(void)
 }
 
 bool
-parseInitializerList(InitializerList &initList)
+parseInitializerList(InitializerList &initList, bool global)
 {
     if (token.kind != TokenKind::LBRACE) {
 	return false;
@@ -113,12 +113,18 @@ parseInitializerList(InitializerList &initList)
 
     auto type = initList.getType();
     for (std::size_t pos = 0; type ? pos < type->getNumMembers(): true; ++pos) {
+	auto loc = token.loc;
 	if (auto expr = parseExpr()) {
+	    if (global && !expr->isConst()) {
+		error::out() << loc
+		    << ": initializer element is not constant" << std::endl;
+		error::fatal();
+	    }
 	    initList.add(std::move(expr));
 	} else {
 	    auto ty = type ? type->getMemberType(pos) : nullptr;
 	    InitializerList constMemberExpr(ty);
-	    if (parseInitializerList(constMemberExpr)) {
+	    if (parseInitializerList(constMemberExpr, global)) {
 		initList.add(std::move(constMemberExpr));
 	    } else {
 		break;
@@ -179,7 +185,7 @@ parseGlobalDef(void)
 		    error::fatal();
 		}
 		initList.add(std::move(expr));
-	    } else if (parseInitializerList(initList)) {
+	    } else if (parseInitializerList(initList, true)) {
 	    } else {
 		error::out() << opLoc
 		    << " expected initializer or expression"

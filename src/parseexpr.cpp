@@ -410,7 +410,7 @@ parsePrimary(void)
 	error::expected(TokenKind::LPAREN);
 	getToken();
 	InitializerList initList;
-	if (parseInitializerList(initList)) {
+	if (parseInitializerList(initList, false)) {
 	    error::expected(TokenKind::COLON);
 	    getToken();
 
