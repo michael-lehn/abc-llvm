@@ -1,0 +1,333 @@
+type bool: u8;
+type int: i32;
+type long: i64;
+type char: u8;
+
+enum StdIO_Constants : int
+{
+    EOF = -1,
+    true = 1,
+    false = 0,
+};
+
+fn printf(fmt: -> char, ...): int;
+fn getchar(): int;
+fn strtol(str: -> char, end: -> char, base: int): long;
+
+
+enum TokenKind : int
+{
+    BAD_TOKEN,
+    EOI,
+    DECIMAL_LITERAL,
+    HEXADECIMAL_LITERAL,
+    OCTAL_LITERAL,
+    PLUS,
+    MINUS,
+    ASTERISK,
+    SLASH,
+    LPAREN,
+    RPAREN,
+    SEMICOLON,
+};
+
+struct TokenPos
+{
+    line: int;
+    col: int;
+};
+
+struct TokenLoc
+{
+    from: TokenPos;
+    to: TokenPos;
+};
+
+struct Token {
+    kind:   TokenKind;
+    loc:    TokenLoc;
+    val:    array[42] of u8;
+    valLen: int;
+};
+
+
+fn tokenKindStr(kind: TokenKind): -> char
+{
+    switch (kind) {
+	case EOI:
+	    return "End of input";
+	case DECIMAL_LITERAL:
+	    return "DECIMAL_LITERAL";
+	case HEXADECIMAL_LITERAL:
+	    return "HEXADECIMAL_LITERAL";
+	case OCTAL_LITERAL:
+	    return "OCTAL_LITERAL";
+	case PLUS:
+	    return "+";
+	case MINUS:
+	    return "-";
+	case ASTERISK:
+	    return "*";
+	case SLASH:
+	    return "/";
+	case LPAREN:
+	    return "(";
+	case RPAREN:
+	    return ")";
+	case SEMICOLON:
+	    return ";";
+	default:
+	    return "<unknown token kind>";
+    }
+}
+
+global
+    pos: TokenPos = { 1, 0},
+    ch: int,
+    token: Token;
+
+fn nextCh(): char
+{
+    ch = getchar();
+    ++pos.col;
+    if (ch == '\n') {
+	++pos.line;
+	pos.col = 0;
+    }
+    return ch;
+}
+
+fn isWhiteSpace(ch: int): bool
+{
+    return ch == ' ' || ch == '\t';
+}
+
+fn isDecDigit(ch: int): bool
+{
+    return ch >= '0' && ch <= '9';
+}
+
+fn isOctDigit(ch: int): bool
+{
+    return ch >= '0' && ch <= '7';
+}
+
+fn isHexDigit(ch: int): bool
+{
+    return isDecDigit(ch) || (ch >= 'a' && ch <= 'f') ||
+           (ch >= 'A' && ch <= 'F');
+}
+
+fn isLetter(ch: int): bool
+{
+    return ((ch >= 'a') && (ch <= 'z')) || ((ch >= 'A' && ch <= 'Z')) ||
+           ch == '_';
+}
+
+fn tokenSet(kind: TokenKind): TokenKind
+{
+    return token.kind = kind;
+}
+
+fn tokenReset()
+{
+    token.loc.from.line = pos.line;
+    token.loc.from.col = pos.col;
+    token.valLen = 0;
+}
+
+fn tokenUpdate(ch: int)
+{
+    token.loc.to.line = pos.line;
+    token.loc.to.col = pos.col;
+    token.val[token.valLen++] = ch;
+    token.val[token.valLen] = 0;
+}
+
+fn getToken(): TokenKind
+{
+    // init ch, skip white spaces and newlines
+    while (ch == 0 || isWhiteSpace(ch) || ch == '\n') {
+        nextCh();
+    }
+
+    tokenReset();
+
+    if (ch == EOF) {
+        return tokenSet(EOI);
+    } else if (isDecDigit(ch)) {
+        // parse literal
+        if (ch == '0') {
+	    tokenUpdate(ch);
+            nextCh();
+            if (ch == 'x') {
+		tokenUpdate(ch);
+                nextCh();
+                if (isHexDigit(ch)) {
+                    while (isHexDigit(ch)) {
+			tokenUpdate(ch);
+                        nextCh();
+                    }
+                    return tokenSet(HEXADECIMAL_LITERAL);
+                }
+                return tokenSet(BAD_TOKEN);
+            }
+            while (isOctDigit(ch)) {
+		tokenUpdate(ch);
+                nextCh();
+            }
+            return tokenSet(OCTAL_LITERAL);
+        } else if (isDecDigit(ch)) {
+            while (isDecDigit(ch)) {
+		tokenUpdate(ch);
+                nextCh();
+            }
+            return tokenSet(DECIMAL_LITERAL);
+	}
+    } else if (ch == '+') {
+	tokenUpdate(ch);
+	nextCh();
+	return tokenSet(PLUS);
+    } else if (ch == '-') {
+	tokenUpdate(ch);
+	nextCh();
+	return tokenSet(MINUS);
+    } else if (ch == '(') {
+	tokenUpdate(ch);
+	nextCh();
+	return tokenSet(LPAREN);
+    } else if (ch == ')') {
+	tokenUpdate(ch);
+	nextCh();
+	return tokenSet(RPAREN);
+    } else if (ch == ';') {
+	tokenUpdate(ch);
+	nextCh();
+	return tokenSet(SEMICOLON);
+    } else if (ch == '*') {
+	tokenUpdate(ch);
+	nextCh();
+	return tokenSet(ASTERISK);
+    } else if (ch == '/') {
+	tokenUpdate(ch);
+	nextCh();
+	return tokenSet(SLASH);
+    } else {
+	tokenUpdate(ch);
+	nextCh();
+	return tokenSet(BAD_TOKEN);
+    }
+}
+
+fn parseAdditiveExpression(val: -> int) : bool;
+fn parseMultiplicativeExpression(val: -> int) : bool;
+fn parsePrimary(val: -> int) : bool;
+
+fn parseExpression(val: -> int) : bool
+{
+    if (parseAdditiveExpression(val)) {
+	return true;
+    }
+    return false;
+}
+
+fn parseAdditiveExpression(val: -> int) : bool
+{
+    if (!parseMultiplicativeExpression(val)) {
+	return false;
+    }
+
+    while (token.kind == PLUS || token.kind == MINUS) {
+	local op: TokenKind = token.kind;
+        getToken();
+
+	local val2: int;
+	if (!parseMultiplicativeExpression(&val2)) {
+	    printf("multiplicative expression expected\n");
+            return false;
+        }
+	op == PLUS ? (*val += val2) : (*val -= val2);
+    }
+    return true;
+}
+
+fn parseMultiplicativeExpression(val: -> int) : bool
+{
+    if (!parsePrimary(val)) {
+	return false;
+    }
+
+    while (token.kind == ASTERISK || token.kind == SLASH) {
+	local op: TokenKind = token.kind;
+        getToken();
+
+	local val2: int;
+	if (!parsePrimary(&val2)) {
+	    printf("primary expression expected\n");
+            return false;
+        }
+	op == ASTERISK ? (*val *= val2) : (*val /= val2);
+    }
+    return true;
+}
+
+fn parsePrimary(val: -> int) : bool
+{
+    if (token.kind == DECIMAL_LITERAL) {
+	*val = strtol(&token.val[0], &token.val[token.valLen], 10);
+	getToken();
+	return true;
+    } else if (token.kind == HEXADECIMAL_LITERAL) {
+	*val = strtol(&token.val[0], &token.val[token.valLen], 16);
+	getToken();
+	return true;
+    } else if (token.kind == OCTAL_LITERAL) {
+	*val = strtol(&token.val[0], &token.val[token.valLen], 8);
+	getToken();
+	return true;
+    } else if (token.kind == LPAREN) {
+	getToken();
+	if (!parseAdditiveExpression(val)) {
+	    printf("multiplicative expression expected\n");
+	    return false;
+	}
+	if (token.kind != RPAREN) {
+	    printf("')' expected\n");
+	    return false;
+	}
+	getToken();
+	return true;
+    }
+    return false;
+}
+
+fn main()
+{
+    /*
+    printf("'%s'\n", &token.val[0]);
+    while (getToken() != EOI) {
+	printf("%d.%d-%d.%d: '%s' %d ('%s')\n", token.loc.from.line,
+	    token.loc.from.col, token.loc.to.line, token.loc.to.col,
+	    &token.val[0], token.valLen, tokenKindStr(token.kind));
+    }
+    printf("> %s\n", tokenKindStr(token.kind));
+    */
+
+    printf("\n*** Integer Calculator ***\n\n");
+    printf("Supported integer representation: dec, hex, oct\n");
+    printf("Operators: '+', '-', '*'/\n");
+    printf("Punctuators: '(', ')', ';'\n\n");
+    printf("Enter ';' to evaluate the expression\n");
+    printf("Enter '.' to exit\n\n");
+
+    local val: int = 0;
+    getToken();
+    while (parseExpression(&val)) {
+	printf("> %d\n", val);
+	if (token.kind != SEMICOLON) {
+	    break;
+	}
+	getToken();
+    }
+}
+

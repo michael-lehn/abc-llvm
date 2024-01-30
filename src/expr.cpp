@@ -205,14 +205,11 @@ void
 Binary::castOperands(void)
 {
     if (!type) {
-	error::out()
-	    << "ERROR: binary operation not allowed" << std::endl
-	    << "binary kind = " << int(kind) << std::endl
-	    << "left operand:" << std::endl;
-	left->print();
-	error::out() << "right operand:" << std::endl;
-	right->print();
-	assert("illegal type");
+	error::out() << opLoc
+	    << ": ERROR: binary operation not allowed for type '"
+	    << left->getType() << "' and type '" << right->getType() << "'"
+	    << std::endl;
+	error::fatal();
 	return;
     }
 
