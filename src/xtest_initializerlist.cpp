@@ -1,4 +1,5 @@
 #include "expr.hpp"
+#include "symtab.hpp"
 #include "initializerlist.hpp"
 
 int

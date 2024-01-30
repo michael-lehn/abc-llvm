@@ -92,7 +92,7 @@ Symtab::get(UStr ident, Scope scope)
 }
 
 Symtab::Entry *
-Symtab::add(Token::Loc loc, UStr ident, const Type *type, ScopeNode *sn)
+Symtab::add(Token::Loc loc, UStr ident, Entry::Data &&data, ScopeNode *sn)
 {
     assert(sn);
     Symtab::Entry *found = get(ident, sn, sn->up.get());
@@ -109,7 +109,7 @@ Symtab::add(Token::Loc loc, UStr ident, const Type *type, ScopeNode *sn)
 	internalIdent = ss.str();
     }
 
-    auto entry = Entry{loc, type, ident, internalIdent};
+    auto entry = Entry{loc, std::move(data), ident, internalIdent};
     sn->symtab.emplace(ident.c_str(), std::move(entry));
     return &sn->symtab.at(ident.c_str());
 }
@@ -119,6 +119,13 @@ Symtab::addDecl(Token::Loc loc, UStr ident, const Type *type)
 {
     return add(loc, ident, type, curr.get());
 }
+
+Symtab::Entry *
+Symtab::addConstant(Token::Loc loc, UStr ident, ExprPtr &&val)
+{
+    return add(loc, ident, std::move(val), curr.get());
+}
+
 
 Symtab::Entry *
 Symtab::addDeclToRootScope(Token::Loc loc, UStr ident, const Type *type)
@@ -198,7 +205,7 @@ print(std::ostream &out, ScopeNode *sn)
     std::size_t indent = print(out, sn->up.get());
     out << std::setfill(' ') << std::setw(indent * 4) << " " << "start of scope"
 	<< indent << std::endl;
-    for (auto sym: sn->symtab) {
+    for (const auto &sym: sn->symtab) {
 	out << std::setfill(' ') << std::setw(indent * 4) << " "
 	    << sym.second.ident.c_str() << ": "
 	    << sym.second.getLoc() << ", "

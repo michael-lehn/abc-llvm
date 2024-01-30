@@ -1,5 +1,5 @@
-type int = i32;
-type char = u8;
+type int : i32;
+type char : u8;
 fn printf(fmt: -> char, ...): int;
 
 struct Foo {

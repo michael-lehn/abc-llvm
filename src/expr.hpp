@@ -10,7 +10,6 @@
 #include "error.hpp"
 #include "gen.hpp"
 #include "lexer.hpp"
-#include "symtab.hpp"
 #include "type.hpp"
 #include "ustr.hpp"
 
@@ -33,9 +32,7 @@ struct Literal
     Token::Loc loc;
 
     Literal(const char *val, const Type *type, std::uint8_t radix,
-	    Token::Loc loc)
-	: val{val}, type{type}, radix{radix}, loc{loc}
-    {}
+	    Token::Loc loc);
 };
 
 struct Identifier
@@ -44,23 +41,8 @@ struct Identifier
     const Type *type;
     Token::Loc loc;
 
-    Identifier(UStr ident, const Type *type, Token::Loc loc)
-	: val{ident.c_str()}, type{type}, loc{loc}
-    {}
-
-    Identifier(UStr ident, Token::Loc loc)
-	: loc{loc}
-    {
-	auto symEntry = Symtab::get(ident);
-	if (symEntry) {
-	    val = symEntry->ident.c_str();
-	    type = symEntry->getType();
-	    return;
-	}
-	error::out() << loc << " undeclared identifier '"
-	    << ident.c_str() << "'" << std::endl;
-	error::fatal(); // TODO: use error::raise()
-    }
+    Identifier(UStr ident, const Type *type, Token::Loc loc);
+    Identifier(UStr ident, Token::Loc loc);
 };
 
 struct Proxy

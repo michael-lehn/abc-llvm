@@ -6,8 +6,8 @@
     #include "abclib.h"
 */
 
-type int = u32;
-type char = u8;
+type int : u32;
+type char : u8;
 fn printf(: -> char, ...): int;
 fn scanf(: -> char, ...): int;
 

@@ -61,7 +61,7 @@ parseTypeDef(void)
     while (token.kind == TokenKind::IDENTIFIER) {
 	const char *ident = token.val.c_str();
 	getToken();
-	error::expected(TokenKind::EQUAL);
+	error::expected(TokenKind::COLON);
 	getToken();
 	auto ty = parseType();
 	if (!ty) {

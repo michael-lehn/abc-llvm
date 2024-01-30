@@ -16,8 +16,8 @@ fn print(: -> u8);
 fn printLn(: -> u8);
 fn printNl();
 
-type size_t = u64;
-type void_ptr = ->;
+type size_t : u64;
+type void_ptr : ->;
 
 fn malloc(size: size_t): void_ptr;
 fn free(ptr: void_ptr);

@@ -2,7 +2,9 @@
 #define SYMTAB_HPP
 
 #include <ostream>
+#include <variant>
 
+#include "expr.hpp"
 #include "lexer.hpp"
 #include "type.hpp"
 #include "ustr.hpp"
@@ -31,9 +33,21 @@ class Symtab
 		    return hasDefinitionFlag() ? loc : lastDeclLoc;
 		}
 
-		const Type *getType()
+		bool holdsConstant() const
 		{
-		    return type;
+		    return std::holds_alternative<ExprPtr>(data);
+		}
+
+		const Type *getType() const
+		{
+		    if (std::holds_alternative<const Type *>(data)) {
+			return std::get<const Type *>(data);
+		    } else if (std::holds_alternative<ExprPtr>(data)) {
+			const auto &e = std::get<ExprPtr>(data);
+			return e->getType();
+		    }
+		    assert(0);
+		    return nullptr;
 		}
 
 		bool hasDefinitionFlag() const
@@ -51,14 +65,16 @@ class Symtab
 		}
 	
 	    private:
-		Entry(Token::Loc loc, const Type *type, UStr ident,
+		using Data = std::variant<const Type *, ExprPtr>;
+
+		Entry(Token::Loc loc, Data &&data, UStr ident,
 		      UStr internalIdent)
-		    : ident{ident}, loc{loc}, type{type}
+		    : ident{ident}, loc{loc}, data{std::move(data)}
 		    , internalIdent_{internalIdent}, definition_{false}
 		{}
 
 		Token::Loc loc, lastDeclLoc;
-		const Type *type;
+		Data data;
 		UStr internalIdent_;
 		bool definition_;
 	};
@@ -70,13 +86,15 @@ class Symtab
 
     private:
 	static Symtab::Entry *get(UStr ident, ScopeNode *begin, ScopeNode *end);
-	static Entry *add(Token::Loc loc, UStr ident, const Type *type,
+	static Entry *add(Token::Loc loc, UStr ident, Entry::Data &&data,
 			  ScopeNode *sn);
 
     public:
 	// Add a new symbol to current scope. Returns nullptr if symbol already
 	// exists, otherwise returns a pointer to the created entry.
 	static Entry *addDecl(Token::Loc loc, UStr ident, const Type *type);
+
+	static Entry *addConstant(Token::Loc loc, UStr ident, ExprPtr &&val);
 
 	// Add a new symbol to root scope. Returns nullptr if symbol already
 	// exists, otherwise a pointer to the created entry.

@@ -5,6 +5,7 @@
 #include <variant>
 
 #include "expr.hpp"
+#include "symtab.hpp"
 
 //------------------------------------------------------------------------------
 
@@ -12,6 +13,39 @@ void
 ExprDeleter::operator()(const Expr *expr) const
 {
     delete expr;
+}
+//
+//------------------------------------------------------------------------------
+
+/*
+ * Class Literal
+ */
+
+Literal::Literal(const char *val, const Type *type, std::uint8_t radix,
+		 Token::Loc loc)
+    : val{val}, type{type}, radix{radix}, loc{loc}
+{}
+    
+/*
+ * Class Identifier
+ */
+
+Identifier::Identifier(UStr ident, const Type *type, Token::Loc loc)
+    : val{ident.c_str()}, type{type}, loc{loc}
+{}
+
+Identifier::Identifier(UStr ident, Token::Loc loc)
+    : loc{loc}
+{
+    auto symEntry = Symtab::get(ident);
+    if (symEntry) {
+	val = symEntry->ident.c_str();
+	type = symEntry->getType();
+	return;
+    }
+    error::out() << loc << " undeclared identifier '"
+	<< ident.c_str() << "'" << std::endl;
+    error::fatal();
 }
 
 //-- handling type conversions and casts ---------------------------------------
