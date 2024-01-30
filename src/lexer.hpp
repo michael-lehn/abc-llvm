@@ -101,6 +101,7 @@ extern struct Token {
 	    Pos(std::size_t line, std::size_t col) : line{line}, col{col} {}
 	    std::size_t line, col;
 	} from, to;
+	UStr path;
     } loc;
     UStr val;
     UStr valProcessed; // string literal with escaped characters processed

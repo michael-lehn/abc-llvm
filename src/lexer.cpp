@@ -13,6 +13,7 @@ static FILE* fp = stdin;
 bool
 setLexerInputfile(const char *path)
 {
+    token.loc.path = UStr{path};
     return (fp = std::fopen(path, "r"));
 }
 
@@ -949,6 +950,9 @@ std::ostream &
 operator<<(std::ostream &out, const Token::Loc &loc)
 {
     if (loc.from.line) {
+	if (loc.path.c_str()) {
+	    out << loc.path.c_str() << ":";
+	}
 	out << loc.from.line << '.' << loc.from.col << '-'
 	    << loc.to.line << '.' << loc.to.col;
     } else {

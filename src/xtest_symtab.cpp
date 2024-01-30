@@ -21,7 +21,7 @@ add(UStr ident)
     if (Symtab::get(ident, Symtab::CurrentScope)) {
 	printf("add: identifier '%s' already declared!\n", ident.c_str());
     } else {
-	Token::Loc loc = {{1, 2}, {1, 4}};
+	Token::Loc loc = {{1, 2}, {1, 4}, "some_file"};
 	auto t = Type::getUnsignedInteger(16);
 
 	assert(Symtab::addDecl(loc, ident, t));
@@ -37,7 +37,7 @@ addToRootScope(UStr ident)
 	printf("add: identifier '%s' already declared in root scope!\n",
 	       ident.c_str());
     } else {
-	Token::Loc loc = {{1, 2}, {1, 4}};
+	Token::Loc loc = {{1, 2}, {1, 4}, "some_file"};
 	auto t = Type::getUnsignedInteger(16);
 
 	assert(Symtab::addDeclToRootScope(loc, ident, t));
