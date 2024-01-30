@@ -21,7 +21,7 @@ ExprDeleter::operator()(const Expr *expr) const
  * Class Literal
  */
 
-Literal::Literal(const char *val, const Type *type, std::uint8_t radix,
+Literal::Literal(UStr val, const Type *type, std::uint8_t radix,
 		 Token::Loc loc)
     : val{val}, type{type}, radix{radix}, loc{loc}
 {}
@@ -33,20 +33,6 @@ Literal::Literal(const char *val, const Type *type, std::uint8_t radix,
 Identifier::Identifier(UStr ident, const Type *type, Token::Loc loc)
     : val{ident.c_str()}, type{type}, loc{loc}
 {}
-
-Identifier::Identifier(UStr ident, Token::Loc loc)
-    : loc{loc}
-{
-    auto symEntry = Symtab::get(ident);
-    if (symEntry) {
-	val = symEntry->ident.c_str();
-	type = symEntry->getType();
-	return;
-    }
-    error::out() << loc << " undeclared identifier '"
-	<< ident.c_str() << "'" << std::endl;
-    error::fatal();
-}
 
 //-- handling type conversions and casts ---------------------------------------
 
@@ -377,11 +363,12 @@ Expr::createNull(const Type *type, Token::Loc loc)
 }
 
 ExprPtr
-Expr::createLiteral(const char *val, std::uint8_t radix, const Type *type,
+Expr::createLiteral(UStr val, std::uint8_t radix, const Type *type,
 		    Token::Loc loc)
 {
     if (!type)  {
-	type = getIntType(val, val + strlen(val), radix);
+	auto cstr = val.c_str();
+	type = getIntType(cstr, cstr + strlen(cstr), radix);
     }
     return ExprPtr{new Expr{Literal{val, type, radix, loc}}};
 }
@@ -389,7 +376,16 @@ Expr::createLiteral(const char *val, std::uint8_t radix, const Type *type,
 ExprPtr
 Expr::createIdentifier(UStr ident, Token::Loc loc)
 {
-    return ExprPtr{new Expr{Identifier{ident, loc}}};
+    auto symEntry = Symtab::get(ident);
+    if (!symEntry) {
+	error::out() << loc << " undeclared identifier '"
+	    << ident.c_str() << "'" << std::endl;
+	error::fatal();
+    } else if (symEntry->holdsExpr()) {
+	return ExprPtr{new Expr{Proxy{symEntry->getExpr()}}};
+    }
+    auto type = symEntry->getType();
+    return ExprPtr{new Expr{Identifier{ident, type, loc}}};
 }
 
 ExprPtr
@@ -812,7 +808,7 @@ Expr::print(int indent) const
 	std::get<Proxy>(variant).expr->print(indent);
     } else if (std::holds_alternative<Literal>(variant)) {
 	const auto &lit = std::get<Literal>(variant);
-	std::printf("Literal: %s ", lit.val);
+	std::printf("Literal: %s ", lit.val.c_str());
 	std::cout << getType() << std::endl;
     } else if (std::holds_alternative<Identifier>(variant)) {
 	const auto &ident = std::get<Identifier>(variant);
@@ -856,7 +852,7 @@ loadValue(const Literal &l)
 {
     if (!l.type->isInteger() && !l.type->isNullPointer()) {
 	error::out() << l.loc << ": literal has type '"
-	    << l.type << "' and value '" << l.val << "'"
+	    << l.type << "' and value '" << l.val.c_str() << "'"
 	    << std::endl;
 	if (l.type->isPointer()) {
 	    error::out() << l.loc << ": deref type '"
@@ -864,7 +860,7 @@ loadValue(const Literal &l)
 	}
 	error::fatal();
     }
-    return gen::loadIntConst(l.val, l.type, l.radix);
+    return gen::loadIntConst(l.val.c_str(), l.type, l.radix);
 }
 
 static gen::Reg

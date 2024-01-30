@@ -33,9 +33,15 @@ class Symtab
 		    return hasDefinitionFlag() ? loc : lastDeclLoc;
 		}
 
-		bool holdsConstant() const
+		bool holdsExpr() const
 		{
 		    return std::holds_alternative<ExprPtr>(data);
+		}
+
+		const Expr *getExpr() const
+		{
+		    assert(std::holds_alternative<ExprPtr>(data));
+		    return std::get<ExprPtr>(data).get();
 		}
 
 		const Type *getType() const

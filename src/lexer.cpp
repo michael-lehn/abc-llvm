@@ -101,6 +101,8 @@ tokenKindCStr(TokenKind kind)
 	    return "CASE";
 	case TokenKind::DEFAULT:
 	    return "DEFAULT";
+	case TokenKind::ENUM:
+	    return "ENUM";
 	case TokenKind::DOT:
 	    return "DOT";
 	case TokenKind::DOT3:
@@ -254,6 +256,8 @@ tokenCStr(TokenKind kind)
 	    return "case";
 	case TokenKind::DEFAULT:
 	    return "default";
+	case TokenKind::ENUM:
+	    return "enum";
 	case TokenKind::DOT:
 	    return ".";
 	case TokenKind::DOT3:
@@ -429,6 +433,7 @@ static std::unordered_map<UStr, TokenKind> kw = {
     { "switch", TokenKind::SWITCH },
     { "case", TokenKind::CASE },
     { "default", TokenKind::DEFAULT },
+    { "enum", TokenKind::ENUM },
 };
 
 // TODO: proper implementation and support of escape sequences

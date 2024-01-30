@@ -1,0 +1,15 @@
+fn printf(fmt: -> u8, ...);
+
+enum Foo : i16
+{
+    A,
+    B,
+    C,
+};
+
+fn main()
+{
+    printf("A = %d\n", A);
+    printf("B = %d\n", B);
+    printf("C = %d\n", C);
+}

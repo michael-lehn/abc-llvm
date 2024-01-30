@@ -29,6 +29,7 @@ static bool parseFn(void);
 static bool parseGlobalDef(void);
 static bool parseStructDef(void);
 static bool parseTypeDef(void);
+static bool parseEnumDef(void);
 
 void
 parser(void)
@@ -36,11 +37,11 @@ parser(void)
     getToken();
     while (token.kind != TokenKind::EOI) {
 	if (!parseGlobalDef() && !parseFn() && !parseTypeDef()
-		&& !parseStructDef()) {
+		&& !parseStructDef() && !parseEnumDef()) {
 	    error::out() << token.loc
 		<< ": expected function declaration,"
 		<< " global variable definition,"
-		<< " type definition"
+		<< " type declaration, enum declaration"
 		<< " or EOF"
 		<< std::endl;
 	    error::fatal();
@@ -99,6 +100,51 @@ parseStructDef(void)
 	    << ": struct definition expected" << std::endl;
 	error::fatal();
     }
+    error::expected(TokenKind::SEMICOLON);
+    getToken();
+    return true;
+}
+
+static bool
+parseEnumDef(void)
+{
+    if (token.kind != TokenKind::ENUM) {
+	return false;
+    }
+    getToken();
+
+    error::expected(TokenKind::IDENTIFIER);
+    getToken();
+
+    error::expected(TokenKind::COLON);
+    getToken();
+
+    auto enumTyTok = token;
+    auto enumTy = parseType();
+    if (!enumTy && !enumTy->isInteger()) {
+	error::out() << enumTyTok.loc << ": integer type expected" << std::endl;
+	error::fatal();
+    }
+
+    // TODO: support incomplete enum decl
+    error::expected(TokenKind::LBRACE);
+    getToken();
+
+    for (std::size_t i = 0; token.kind == TokenKind::IDENTIFIER; ++i) {
+	std::stringstream ss;
+	ss << i;
+	UStr val{ss.str()};
+	auto expr = Expr::createLiteral(val, 10, enumTy, token.loc);
+	Symtab::addConstant(token.loc, token.val, std::move(expr));
+	getToken();
+	if (token.kind != TokenKind::COMMA) {
+	    break;
+	}
+	getToken();
+    }
+
+    error::expected(TokenKind::RBRACE);
+    getToken();
     error::expected(TokenKind::SEMICOLON);
     getToken();
     return true;

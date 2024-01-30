@@ -51,6 +51,7 @@ enum class TokenKind {
     SWITCH,
     CASE,
     DEFAULT,
+    ENUM,
 
     // punctuators
     DOT,

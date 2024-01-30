@@ -26,13 +26,12 @@ using ExprVectorPtr = std::unique_ptr<ExprVector>;
 
 struct Literal
 {
-    const char *val;
+    UStr val;
     const Type *type;
     std::uint8_t radix;
     Token::Loc loc;
 
-    Literal(const char *val, const Type *type, std::uint8_t radix,
-	    Token::Loc loc);
+    Literal(UStr val, const Type *type, std::uint8_t radix, Token::Loc loc);
 };
 
 struct Identifier
@@ -42,7 +41,6 @@ struct Identifier
     Token::Loc loc;
 
     Identifier(UStr ident, const Type *type, Token::Loc loc);
-    Identifier(UStr ident, Token::Loc loc);
 };
 
 struct Proxy
@@ -160,7 +158,7 @@ class Expr
     public:
 	static ExprPtr createNull(const Type *type,
 				  Token::Loc loc = Token::Loc{});
-	static ExprPtr createLiteral(const char *val, std::uint8_t radix = 10,
+	static ExprPtr createLiteral(UStr val, std::uint8_t radix = 10,
 				     const Type *type = nullptr,
 				     Token::Loc loc = Token::Loc{});
 	static ExprPtr createIdentifier(UStr ident,
