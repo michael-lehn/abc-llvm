@@ -143,13 +143,26 @@ parseEnumDef(void)
     error::expected(TokenKind::LBRACE);
     getToken();
 
-    for (std::size_t i = 0; token.kind == TokenKind::IDENTIFIER; ++i) {
+    // TODO: instead of 'ptrdiff_t' use 'enumTy' equivalent
+    for (std::ptrdiff_t i = 0; token.kind == TokenKind::IDENTIFIER; ++i) {
+	auto identTok = token;
+	getToken();
+	if (token.kind == TokenKind::EQUAL) {
+	    getToken();
+	    auto valTok = token;
+	    auto val = parseExpr();
+	    if (!val && !val->isConst() && !val->getType()->isInteger()) {
+		error::out() << valTok.loc << ": integer constant expected"
+		    << std::endl;
+		error::fatal();
+	    }
+	    i = val->loadConstInt()->getSExtValue();
+	}
 	std::stringstream ss;
 	ss << i;
 	UStr val{ss.str()};
 	auto expr = Expr::createLiteral(val, 10, enumTy, token.loc);
-	Symtab::addConstant(token.loc, token.val, std::move(expr));
-	getToken();
+	Symtab::addConstant(identTok.loc, identTok.val, std::move(expr));
 	if (token.kind != TokenKind::COMMA) {
 	    break;
 	}

@@ -2,9 +2,9 @@ fn printf(fmt: -> u8, ...);
 
 enum Foo : i16
 {
-    A,
+    A = 42,
     B,
-    C,
+    C = 13,
 };
 
 global p: u8 = B + C;
