@@ -731,6 +731,17 @@ Type::convertArrayOrFunctionToPointer(const Type *ty)
     return ty;
 }
 
+//-- Compare types -------------------------------------------------------------
+bool
+operator==(const Type &x, const Type &y)
+{
+    if (x.isInteger() && y.isInteger()) {
+	return x.getIntegerKind() == y.getIntegerKind()
+	    && x.getIntegerNumBits() == y.getIntegerNumBits();
+    }
+    return &x == &y;
+}
+
 //-- Print type ----------------------------------------------------------------
 
 std::ostream &

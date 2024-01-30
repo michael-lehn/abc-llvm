@@ -137,7 +137,6 @@ parseEnumDef(void)
 	error::fatal();
     }
     enumTy = Type::createAlias(enumName, enumTy);
-    std::cerr << "enumTy = " << enumTy << std::endl;
 
     // TODO: support incomplete enum decl
     error::expected(TokenKind::LBRACE);

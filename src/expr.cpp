@@ -42,7 +42,7 @@ getCommonType(Token::Loc loc, const Type *left, const Type *right)
     left = Type::convertArrayOrFunctionToPointer(left);
     right = Type::convertArrayOrFunctionToPointer(right);
 
-    if (left == right) {
+    if (*left == *right) {
 	return left;
     } else if (left->isInteger() && right->isInteger()) {
 	auto size = std::max(left->getIntegerNumBits(),
@@ -226,7 +226,7 @@ Binary::castOperands(void)
 
     switch (kind) {
 	case Binary::Kind::ASSIGN:
-	    if (r != type) {
+	    if (*r != *type) {
 		right = Expr::createCast(std::move(right), type, opLoc);
 	    }
 	    return;
@@ -236,10 +236,10 @@ Binary::castOperands(void)
 		// for pointer arithmeitc let right always be the index
 		assert(l->isPointer() && r->isInteger());
 	    } else if (l->isInteger() && r->isInteger()) {
-		if (l != type) {
+		if (*l != *type) {
 		    left = Expr::createCast(std::move(left), type);
 		}
-		if (r != type) {
+		if (*r != *type) {
 		    right = Expr::createCast(std::move(right), type);
 		}
 	    }
@@ -247,10 +247,10 @@ Binary::castOperands(void)
 	case Binary::Kind::POSTFIX_DEC:
 	case Binary::Kind::SUB:
 	    if (l->isInteger() && r->isInteger()) {
-		if (l != type) {
+		if (*l != *type) {
 		    left = Expr::createCast(std::move(left), type);
 		}
-		if (r != type) {
+		if (*r != *type) {
 		    right = Expr::createCast(std::move(right), type);
 		}
 	    }
@@ -259,10 +259,10 @@ Binary::castOperands(void)
 	case Binary::Kind::DIV:
 	case Binary::Kind::MOD:
 	    if (l->isInteger() && r->isInteger()) {
-		if (l != type) {
+		if (*l != *type) {
 		    left = Expr::createCast(std::move(left), type);
 		}
-		if (r != type) {
+		if (*r != *type) {
 		    right = Expr::createCast(std::move(right), type);
 		}
 	    }
@@ -275,10 +275,10 @@ Binary::castOperands(void)
 	case Binary::Kind::LESS_EQUAL:
 	    {
 		auto ty = getCommonType(opLoc, l, r);
-		if (l != ty) {
+		if (*l != *ty) {
 		    left = Expr::createCast(std::move(left), ty);
 		}
-		if (r != ty) {
+		if (*r != *ty) {
 		    right = Expr::createCast(std::move(right), ty);
 		}
 		return;
@@ -287,10 +287,10 @@ Binary::castOperands(void)
 	case Binary::Kind::LOGICAL_OR:
 	    {
 		auto ty = Type::getBool();
-		if (l != ty) {
+		if (*l != *ty) {
 		    left = Expr::createCast(std::move(left), ty);
 		}
-		if (r != ty) {
+		if (*r != *ty) {
 		    right = Expr::createCast(std::move(right), ty);
 		}
 		return;
@@ -1054,7 +1054,7 @@ loadValue(const Binary &binary)
 	case Binary::Kind::LOGICAL_AND:
 	case Binary::Kind::LOGICAL_OR:
 	    {
-		assert(binary.left->getType() == binary.right->getType()
+		assert(*binary.left->getType() == *binary.right->getType()
 			&& "operand types not casted?");
 		auto ty = binary.left->getType();
 		auto condOp = getGenCondOp(binary.kind, ty);
@@ -1186,7 +1186,7 @@ condJmp(const Binary &binary, gen::Label trueLabel, gen::Label falseLabel)
 	case Binary::Kind::NOT_EQUAL:
 	case Binary::Kind::EQUAL:
 	    {
-		assert(binary.left->getType() == binary.right->getType());
+		assert(*binary.left->getType() == *binary.right->getType());
 		auto ty = binary.left->getType();
 
 		auto condOp = getGenCondOp(binary.kind, ty);

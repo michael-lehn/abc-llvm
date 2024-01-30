@@ -138,6 +138,7 @@ class Type
 	static const Type *convertArrayOrFunctionToPointer(const Type *ty);
 };
 
+bool operator==(const Type &x, const Type &y);
 std::ostream &operator<<(std::ostream &out, const Type *type);
 
 #endif // TYPE_HPP

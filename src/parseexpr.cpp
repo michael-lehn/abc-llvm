@@ -379,7 +379,7 @@ parsePostfix(ExprPtr &&expr)
 	case TokenKind::MINUS2:
 	    if (!expr->isLValue()) {
 		error::out() << token.loc
-		    << "'&' can only be applied to an l-value" << std::endl;
+		    << "'++' can only be applied to an l-value" << std::endl;
 		error::fatal();
 	    } else {
 		auto binaryOp = opTok.kind == TokenKind::PLUS2

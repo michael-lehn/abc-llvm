@@ -1,7 +1,15 @@
-global a: u64;
+type int: i32;
+
+struct Foo
+{
+    val: int;
+};
+
+global
+    foo: Foo = {1};
 
 fn main(): u8
 {
-    return a;
+    foo.val--;
 }
 
