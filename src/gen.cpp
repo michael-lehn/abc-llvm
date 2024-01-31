@@ -386,7 +386,7 @@ declGlobal(const char *ident, const Type *type)
 			*llvmModule,
 			 ty,
 			/*isConstant=*/false,
-			/*Linkage=*/llvm::GlobalValue::CommonLinkage,
+			/*Linkage=*/llvm::GlobalValue::ExternalLinkage,
 			/*Initializer=*/nullptr,
 			/*Name=*/ident,
 			nullptr);
@@ -421,7 +421,7 @@ defGlobal(const char *ident, const Type *type, ConstVal val)
 			*llvmModule,
 			 ty,
 			/*isConstant=*/false,
-			/*Linkage=*/llvm::GlobalValue::CommonLinkage,
+			/*Linkage=*/llvm::GlobalValue::ExternalLinkage,
 			/*Initializer=*/val,
 			/*Name=*/ident,
 			nullptr);
