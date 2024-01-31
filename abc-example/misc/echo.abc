@@ -1,0 +1,10 @@
+#include "stdio.abh"
+
+fn main(): u8
+{
+    local ch: i16;
+
+    while ((ch = getchar()) != EOF) {
+	putchar(ch);
+    }
+}

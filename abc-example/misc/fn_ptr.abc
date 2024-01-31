@@ -1,0 +1,41 @@
+#include "stdio.abh"
+
+fn foo(a: u64)
+{
+    printf("I am 'foo' and a = %llu\n", a);
+}
+
+fn bar(a: u64)
+{
+    printf("I am 'bar' and a = %llu\n", a);
+}
+
+fn sel(s: u8): -> fn(:u64)
+{
+    if (s == 1) {
+	return foo;
+    }
+    return bar;
+}
+
+fn main(): u8
+{
+    local p: -> fn(:u64),    // pointer to function (aka "function pointer")
+	  q: ->-> fn(:u64);  // pointer to pointer to function
+
+    p = &foo;
+    (*p)(42);		    // one way to use a function pointer
+
+    p = bar;
+    p->(13);		    // another way to use a function pointer
+    p(24);		    // ... or just like that (C style)
+
+    // p(12);		    // error: in ABC function pointers need to be
+			    //	      dereferenced
+    q = &p;		    // using a pointer to a function pointer
+    q->->(123);
+    (**q)(21);
+
+    sel(1)->(111);
+    sel(2)->(422);
+}

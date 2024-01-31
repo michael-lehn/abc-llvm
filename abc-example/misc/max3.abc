@@ -1,0 +1,41 @@
+#include "stdio.abh"
+
+// not intended to be pretty, just another conditional test
+fn max3(a: u64, b: u64, c: u64) : u64
+{
+    return a > b ? a > c ? a
+			 : c
+		 : b > c ? b
+			 : c;
+}
+
+fn max3_(a: u64, b: u64, c: u64) : u64
+{
+    return a > (b = b > c ? b : c) ? a : b;
+}
+
+fn max(a: u64, b: u64): u64
+{
+    return a > b ? a : b;
+}
+
+fn max3__(a: u64, b: u64, c: u64): u64
+{
+    return max(a, max(b, c));
+}
+
+fn main(): u8
+{
+    local a: u64,
+	  b: u64,
+	  c: u64;
+
+    printf("enter a, b, c: ");
+    scanf("%llu %llu %llu", &a, &b, &c);
+    printf("max3(a, b, c) = %llu\n", max3(a, b, c));
+    printf("max3_(a, b, c) = %llu\n", max3_(a, b, c));
+    printf("max3__(a, b, c) = %llu\n", max3__(a, b, c));
+    return 0;
+}
+
+

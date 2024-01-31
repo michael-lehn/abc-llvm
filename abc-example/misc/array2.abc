@@ -1,7 +1,4 @@
-fn printU64(:u64);
-fn printLn(:->u8);
-fn print(:->u8);
-fn printNl();
+#include "stdio.abh"
 
 fn initArray(p: -> u64, dim: u64)
 {
@@ -13,10 +10,9 @@ fn initArray(p: -> u64, dim: u64)
 fn printArray(p: -> u64, dim: u64)
 {
     for (local i: u64 = 0; i < dim; ++i) {
-	printU64(p[i]);
-	print(" ");
+	printf("%llu ", p[i]);
     }
-    printNl();
+    printf("\n");
 }
 
 fn main(): u8

@@ -1,4 +1,4 @@
-fn printf(fmt: -> u8, ...);
+#include "stdio.abh"
 
 fn main()
 {

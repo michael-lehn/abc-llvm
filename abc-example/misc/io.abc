@@ -1,13 +1,4 @@
-type int : i32;
-type char : u8;
-struct FILE;
-
-fn printf(fmt: -> char, ...): int;
-fn scanf(fmt: -> char, ...): int;
-fn getchar(): int;
-fn fopen(path: -> char, mode: -> char): -> FILE;
-fn fprintf(stream: -> FILE, fmt: -> char, ...): int;
-fn fclose(stream: -> FILE): int;
+#include "stdio.abh"
 
 fn main(argc: int, argv: -> -> char)
 {

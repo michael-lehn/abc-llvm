@@ -1074,11 +1074,12 @@ parseExprStmt(void)
 {
     auto exprTok = token;
     auto expr = parseExpr();
-    if (token.kind != TokenKind::SEMICOLON) {
+    if (!expr) {
 	return false;
     }
-    reachableCheck(exprTok, "expression");
+    error::expected(TokenKind::SEMICOLON);
     getToken();
+    reachableCheck(exprTok, "expression");
     if (expr) {
 	expr->loadValue();
     }

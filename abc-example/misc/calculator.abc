@@ -1,19 +1,4 @@
-type bool: u8;
-type int: i32;
-type long: i64;
-type char: u8;
-
-enum StdIO_Constants : int
-{
-    EOF = -1,
-    true = 1,
-    false = 0,
-};
-
-fn printf(fmt: -> char, ...): int;
-fn getchar(): int;
-fn strtol(str: -> char, end: -> char, base: int): long;
-
+#include "stdio.abh"
 
 enum TokenKind : int
 {

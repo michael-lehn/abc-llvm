@@ -1,0 +1,12 @@
+#include "stdio.abh"
+
+fn main(): u8
+{
+    local a: u64;
+    local b: u64;
+
+    printf("enter a and b: ");
+    scanf("%llu %llu", &a, &b);
+
+    printf("a && b = %d\n", a && b);
+}

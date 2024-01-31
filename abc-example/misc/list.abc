@@ -1,13 +1,6 @@
-type char : u8;
-type int : i32;
-type size_t : u64;
-type void_ptr : ->;
+#include "stdio.abh"
+#include "stdlib.abh"
 
-fn malloc(size: size_t): void_ptr;
-fn free(ptr: void_ptr);
-fn printf(fmt: -> char, ...): int;
-fn scanf(fmt: -> char): int;
-fn getchar(): int;
 
 struct Node
 {

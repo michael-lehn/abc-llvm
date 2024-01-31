@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "error.hpp"
 #include "lexer.hpp"
@@ -10,11 +11,36 @@ Token token;
 
 static FILE* fp = stdin;
 
+std::vector<std::pair<UStr, FILE *>> openFile;
+
 bool
 setLexerInputfile(const char *path)
 {
-    token.loc.path = UStr{path};
-    return (fp = std::fopen(path, "r"));
+    std::pair<UStr, FILE*> p = {UStr{path}, std::fopen(path, "r")};
+    openFile.push_back(p);
+
+    token.loc.path = p.first;
+    fp = p.second;
+    return fp;
+}
+
+// return true if after closing another file is open.
+bool
+closeLexerInputfile()
+{
+    if (openFile.empty()) {
+	return false;
+    }
+    std::fclose(openFile.back().second);
+    openFile.pop_back();
+
+    if (!openFile.empty()) {
+	auto &p =  openFile.back();
+	token.loc.path = p.first;
+	fp = p.second;
+	return true;
+    }
+    return false;
 }
 
 const char *
@@ -179,6 +205,8 @@ tokenKindCStr(TokenKind kind)
 	    return "OR2";
 	case TokenKind::QUERY:
 	    return "QUERY";
+	case TokenKind::HASH:
+	    return "HASH";
 	default:
 	    std::cerr << "kind = " << int(kind) << std::endl;
 	    assert(0); // never reached
@@ -334,6 +362,8 @@ tokenCStr(TokenKind kind)
 	    return "||";
 	case TokenKind::QUERY:
 	    return "?";
+	case TokenKind::HASH:
+	    return "#";
 	default:
 	    std::cerr << "kind = " << int(kind) << std::endl;
 	    return "<no general symbolic representation>";
@@ -343,6 +373,18 @@ tokenCStr(TokenKind kind)
 
 static Token::Loc::Pos curr = { 1, 0 };
 static int ch;
+
+static void
+fixCurrentLocatation(const std::string &path)
+{
+    token.loc.path = path;
+}
+
+static void
+fixCurrentLocatation(std::size_t line)
+{
+    curr.line = line;
+}
 
 static char
 nextCh()
@@ -481,6 +523,7 @@ tokenSet(TokenKind kind)
 
 static void parseStringLiteral();
 static void parseCharacterLiteral();
+static void parseDirective();
 
 TokenKind
 getToken()
@@ -492,7 +535,10 @@ getToken()
 
     tokenReset();
     if (ch == EOF) {
-	return tokenSet(TokenKind::EOI);
+	if (!closeLexerInputfile()) {
+	    return tokenSet(TokenKind::EOI);
+	}
+	return getToken();
     } else if (isLetter(ch)) {
         while (isLetter(ch) || isDecDigit(ch)) {
 	    tokenUpdate();
@@ -726,6 +772,14 @@ getToken()
 	tokenUpdate();
 	nextCh();
 	return tokenSet(TokenKind::QUERY);
+    } else if (ch == '#') {
+	if (curr.col == 1) {
+	    nextCh();
+	    parseDirective();
+	    return getToken();
+	}
+	nextCh();
+	return tokenSet(TokenKind::HASH);
     }
 
     tokenUpdate();
@@ -733,6 +787,9 @@ getToken()
     return tokenSet(TokenKind::BAD);
 }
 
+/*
+ * from: https://github.com/afborchert/astl-c/blob/master/astl-c/scanner.cpp
+ */
 static void
 parseStringLiteral()
 {
@@ -840,6 +897,9 @@ parseStringLiteral()
     nextCh();
 }
 
+/*
+ * from: https://github.com/afborchert/astl-c/blob/master/astl-c/scanner.cpp
+ */
 static void
 parseCharacterLiteral()
 {
@@ -950,6 +1010,71 @@ parseCharacterLiteral()
     nextCh();
 }
 
+/*
+ * from: https://github.com/afborchert/astl-c/blob/master/astl-c/scanner.cpp
+ */
+static void
+parseDirective()
+{
+    while (ch != '\n' && isWhiteSpace(ch)) {
+	nextCh();
+    }
+    if (isLetter(ch)) {
+	// regular directives including #pragma are ignored
+	while (ch != EOF && ch != '\n') {
+	    nextCh();
+	}
+    } else if (isDecDigit(ch)) {
+	// line number and actual pathname in gcc preprocessor output syntax,
+	// see:
+	// http://boredzo.org/blog/archives/category/programming/toolchain/gcc
+	int line = ch - '0';
+	nextCh();
+	while (isDecDigit(ch)) {
+	    line = line * 10 + ch - '0';
+	    nextCh();
+	}
+	// skip whitespace but not the line terminator
+	while (ch != '\n' && isWhiteSpace(ch)) {
+	    nextCh();
+	}
+	// some preprocessors (not gcc) make the pathname optional
+	if (ch == '"') {
+	    // extract pathname
+	    nextCh();
+	    std::string path;
+	    while (ch != EOF && ch != '"' && ch != '\n') {
+		path += ch;
+		nextCh();
+	    }
+	    if (ch == EOF || ch == '\n') {
+		error::out() << token.loc
+		    << ": broken linemarker in cpp output" << std::endl;
+		error::fatal();
+	    }
+	    // skip flags (1 = push, 2 = pop, 3 = system header,
+	    // 4 = requires extern "C") as they do not concern us
+	    while (ch != EOF && ch != '\n') {
+		nextCh();
+	    }
+	    // update filename
+	    fixCurrentLocatation(path);
+	} else {
+	    if (ch == EOF || ch != '\n') {
+		error::out() << token.loc
+		    << ": broken linemarker in cpp output" << std::endl;
+		error::fatal();
+	    }
+	    nextCh(); // skip '\n'
+	}
+	// fix line number of current position
+	fixCurrentLocatation(line);
+    } else if (ch != '\n') {
+	error::out() << token.loc
+	    << ": broken preprocessor directive" << std::endl;
+	error::fatal();
+    }
+}
 
 std::ostream &
 operator<<(std::ostream &out, const Token::Loc &loc)

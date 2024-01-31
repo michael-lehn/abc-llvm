@@ -1,0 +1,32 @@
+#include "stdio.abh"
+
+fn printBytes(s: -> u8, n: u64)
+{
+    for (local i: u64 = 0; i < n; ++i) {
+	printf("%02x\n", i[s]);
+    }
+    printf("now in reverse order:\n");
+    for (local i: u64 = n; i--; ) {
+	printf("%02x\n", i[s]);
+    }
+}
+
+fn main(): u8
+{
+    local s1: -> u8 = "hello world\n",
+	  s2: -> u8 = "ABC\n",
+	  sel: -> -> u8 = &s1;
+
+    printf(*sel);
+    sel = &s2;
+    printf(*sel);
+
+    printf("First 15 bytes from s1:\n");
+    printBytes(s1, 15);
+
+    printf("First 5 bytes of function 'printBytes':\n");
+    s1 = printBytes;
+    printBytes(s1, 5);
+
+    return 0;
+}

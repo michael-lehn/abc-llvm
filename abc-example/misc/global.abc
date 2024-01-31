@@ -1,0 +1,18 @@
+#include "stdio.abh"
+
+global foo: u64 = 23,
+       bar: array[20] of u64 = {1, 2, 3, };
+
+fn printFooBar()
+{
+    printf("foo = %llu\n", foo);
+    printf("bar[0] = %llu\n", bar[0]);
+    printf("bar[1] = %llu\n", bar[1]);
+    printf("bar[2] = %llu\n", bar[2]);
+}
+
+
+fn main()
+{
+    printFooBar();
+}

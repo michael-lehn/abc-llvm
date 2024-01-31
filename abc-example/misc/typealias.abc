@@ -1,0 +1,38 @@
+fn foo()
+{
+    type int : u64;
+
+    local
+	a: -> int,
+	b: int;
+
+    a = b;
+}
+
+fn bar()
+{
+    struct int {
+	a: u8;
+    };
+
+    /*
+    local
+	a: -> int,
+	b: int;
+
+    a = b;
+    */
+}
+
+
+fn main()
+{
+    type
+	int : i32;
+
+    local
+	a: -> int,
+	b: int;
+
+    a = b;
+}

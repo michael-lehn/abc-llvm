@@ -1,0 +1,29 @@
+#ifndef STDIO_ABH
+#define STDIO_ABH
+
+type bool: u8;
+type int: i32;
+type long: i64;
+type char: u8;
+
+
+enum StdIO_Constants : int
+{
+    EOF = -1,
+    true = 1,
+    false = 0,
+};
+
+fn printf(fmt: -> char, ...): int;
+fn scanf(fmt: -> char, ...): int;
+fn getchar(): int;
+fn putchar(ch : int);
+fn strtol(str: -> char, end: -> char, base: int): long;
+
+struct FILE;
+fn fopen(path: -> char, mode: -> char): -> FILE;
+fn fprintf(stream: -> FILE, fmt: -> char, ...): int;
+fn fclose(stream: -> FILE): int;
+
+#endif // STDIO_ABH
+

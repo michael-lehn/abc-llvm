@@ -1,0 +1,29 @@
+#include "stdio.abh"
+
+fn factorial(n: u64): u64
+{
+    return n ? n * factorial(n - 1) : 1;
+}
+
+fn main()
+{
+    local n: u64;
+
+    while (1) {
+	printf("Gib eine nicht-negative ganze Zahl ein:\n");
+	local a: i64;
+	if (!scanf("%lld", &a)) {
+	    printf("Das hat gar nicht leider nicht geklappt\n");
+	    // clear all input 
+	    for (local ch: u8; scanf("%c", &ch);) {
+	    }
+	} else if (a < 0) {
+	    printf("Fast, aber das ist eine negative Zahl\n");
+	} else {
+	    n = a;
+	    break;
+	}
+    }
+
+    printf("%lld = %lld\n", n, factorial(n));
+}

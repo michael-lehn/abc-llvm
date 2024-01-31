@@ -1,0 +1,8 @@
+#include "stdio.abh"
+
+
+fn main()
+{
+    printf("hello, world!\n");
+}
+

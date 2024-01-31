@@ -1,8 +1,3 @@
-fn print(: -> u8);
-fn printLn(: -> u8);
-fn printNl();
-fn printU64(:u64);
-
 
 struct Foo {
     a: u8;

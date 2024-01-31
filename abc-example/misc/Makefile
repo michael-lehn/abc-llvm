@@ -1,5 +1,7 @@
-ABC := ../bin/abc
+ABC := ../../bin/abc
 ABCFLAGS := -O3
+CPP := $(CC) -E -x c -traditional -Wno-endif-labels
+CPPFLAGS += -MT $(@:%.abc_p=%.o) -MMD -MP -MF $(dep.dir)/$(<F).d
 
 # Uncomment to directly link with ld on MacOS
 
@@ -11,37 +13,30 @@ ABCFLAGS := -O3
 src.c := $(wildcard *.c)
 obj.o := $(src.c:%.c=%.o)
 lib := $(obj.o)
+dep.dir := dep
 
 src.abc := $(wildcard *.abc)
+cpp.abc := $(src.abc:%.abc=%.abc_p)
 asm.abc := $(src.abc:%.abc=%.s)
 obj.abc := $(src.abc:%.abc=%.o)
 bc.abc := $(src.abc:%.abc=%.bc)
 target := $(src.abc:%.abc=%)
 
+dep := $(src.abc:%=$(dep.dir)/%.d)
 
 .DEFAULT_GOAL := all
 
 .PHONY: all
-all: $(target)
+all: $(target) $(obj.abc)
 
-.PHONY: asm
-asm: $(asm.abc)
+# %.abc_p : %.abc | $(dep.dir)
+%.abc_p : %.abc
+	$(CPP) $(CPPFLAGS) -o $@ $< 
 
-.PHONY: obj
-obj: $(obj.abc)
-
-
-
-.PHONY: all
-bc: $(bc.abc)
-
-.PHONY: all
-asm: $(asm.abc)
-
-%.s : %.abc
+%.s : %.abc_p
 	$(ABC) -S $(ABCFLAGS) $<
 
-%.bc : %.abc
+%.bc : %.abc_p
 	$(ABC) -B $<
 
 %.o : %.s
@@ -52,7 +47,12 @@ asm: $(asm.abc)
 % : %.o $(lib)
 	$(LINK.o) $^ -o $@
 
+$(dep.dir): ; mkdir -p $@
+
 .PHONY: clean
 clean:
-	$(RM) $(target) $(asm.abc) $(obj.abc) $(bc.abc) $(lib)
+	$(RM) $(target) $(asm.abc) $(obj.abc) $(bc.abc) $(lib) $(cpp.abc) $(dep)
+
+$(dep):
+-include $(dep)
 

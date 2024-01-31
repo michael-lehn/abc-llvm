@@ -1,7 +1,4 @@
-fn printU64(: u64);
-fn print(: -> u8);
-fn printNl();
-
+#include "stdio.abh"
 
 global a: array[3] of u64;
 

@@ -1,0 +1,8 @@
+fn main(): u64
+{
+    local r: u64 = 1;
+    for (local i: u64 = 1; i <= 5; i = i + 1) {
+	r = r * i;
+    }
+    return r;
+}

@@ -1,0 +1,15 @@
+#include "stdio.abh"
+
+fn foo(n: u64)
+{
+    local i:u64 = n--;
+    printf("i = %llu\n", i);
+    while (i--) {
+	printf("i = %llu\n", i);
+    }
+}
+
+fn main(): u8
+{
+    foo(5);
+}

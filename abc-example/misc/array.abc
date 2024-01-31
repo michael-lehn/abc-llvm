@@ -1,38 +1,32 @@
-fn printU64(:u64);
-fn printLn(: -> u8);
-fn printNl();
+#include "stdio.abh"
 
 global a: array[5] of u64,
        b: array[sizeof(a)/sizeof(a[0])] of -> u64;
 
 fn main()
 {
-    printLn("Init a: array of u64");
+    printf("Init a: array of u64\n");
     for (local i: u64 = 0; i < 5; ++i) {
 	a[i] = i;
-	printLn("Hallo");
     }
-    printLn("Init b: array of pointer to u64");
+    printf("Init b: array of pointer to u64\n");
     for (local i: u64 = 0; i < sizeof(a)/sizeof(a[0]); ++i) {
 	b[i] = &a[i];
     }
-    printLn("Print dereference integers in b:");
+    printf("Print dereference integers in b:\n");
     for (local i: u64 = 0; i < sizeof(a)/sizeof(a[0]); ++i) {
-	printU64(b[i]->);
-	printNl();
+	printf("b[%llu]-> = %llu\n", i, b[i]->);
     }
 
-    printLn("Define a pointer to a (and print elements of a)");
+    printf("Define a pointer to a (and print elements of a)\n");
     local c: -> array[sizeof(a)/sizeof(a[0])] of u64 = &a;
     for (local i: u64 = 0; i < sizeof(a)/sizeof(a[0]); ++i) {
-	printU64(c->[i]);
-	printNl();
+	printf("c->[%llu] = %llu\n", i, c->[i]);
     }
 
-    printLn("Define a pointer to b (and print elements of a)");
+    printf("Define a pointer to b (and print elements of a)\n");
     local d: -> array[sizeof(a)/sizeof(a[0])] of -> u64 = &b;
     for (local i: u64 = 0; i < sizeof(a)/sizeof(a[0]); ++i) {
-	printU64(d->[i]->);
-	printNl();
+	printf("d->[%llu]-> = %llu\n", i, d->[i]->);
     }
 }

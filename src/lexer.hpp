@@ -92,6 +92,7 @@ enum class TokenKind {
     OR,
     OR2,
     QUERY,
+    HASH,
 };
 
 extern struct Token {
@@ -111,7 +112,7 @@ extern struct Token {
 bool setLexerInputfile(const char *path);
 const char *tokenKindCStr(TokenKind kind);
 const char *tokenCStr(TokenKind kind);
-TokenKind getToken(void);
+TokenKind getToken();
 
 std::ostream &operator<<(std::ostream &out, const Token::Loc &loc);
 

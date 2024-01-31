@@ -1,7 +1,4 @@
-fn printU64(: u64);
-fn print(: -> u8);
-fn printNl();
-
+#include "stdio.abh"
 
 global a: array[3][12] of u64;
 
@@ -18,16 +15,14 @@ fn printMat(p: -> array[12] of u64, dim0: u64, dim1: u64)
 {
     for (local i: u64 = 0; i < dim0; ++i) {
 	for (local j: u64 = 0; j < dim1; ++j) {
-	    printU64(p[i][j]);
-	    print(" ");
+	    printf("%4llu ", p[i][j]);
 	}
-	printNl();
+	printf("\n");
     }
 }
-
 
 fn main()
 {
     initMat(cast(a:->u64), 3, 12);
-    printMat(cast(a:->u64), 3, 12);
+    printMat(cast(a:-> array[12] of u64), 3, 12);
 }
