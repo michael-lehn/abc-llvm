@@ -370,7 +370,7 @@ Type::complete(std::vector<const char *> &&ident,
     structData.ident = ident;	
     structData.type = type;
     for (std::size_t i = 0; i < ident.size(); ++i) {
-	structData.index[ident.at(i)] = i;
+	structData.index[ident[i]] = i;
     }
     return this;
 }
