@@ -19,11 +19,6 @@ enum TokenKind : int
     SEMICOLON,
 };
 
-struct Expr {
-    val: int;
-    ident: -> char;
-};
-
 struct Token {
     kind:   TokenKind;
     loc:    struct TokenLoc {
