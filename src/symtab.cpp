@@ -34,14 +34,14 @@ static ScopeNode *root = curr.get();
 bool
 Symtab::Entry::setDefinitionFlag(void)
 {
-    if (definition_) {
+    if (definition) {
 	error::out() << lastDeclLoc << ": '" << ident.c_str()
 	    << "' already defined. Previous definition at "
 	    << loc << std::endl;
 	error::fatal();
 	return false; // failed
     }
-    definition_ = true;
+    definition = true;
     loc = lastDeclLoc;
     return true; // success
 }
@@ -126,7 +126,6 @@ Symtab::addConstant(Token::Loc loc, UStr ident, ExprPtr &&val)
     return add(loc, ident, std::move(val), curr.get());
 }
 
-
 Symtab::Entry *
 Symtab::addDeclToRootScope(Token::Loc loc, UStr ident, const Type *type)
 {
@@ -155,7 +154,6 @@ Symtab::addStringLiteral(UStr str)
 	gen::defStringLiteral(ident.c_str(), str.c_str(), true);
     }
     return ident;
-
 }
 
 const Type *
@@ -210,7 +208,7 @@ print(std::ostream &out, ScopeNode *sn)
 	    << sym.second.ident.c_str() << ": "
 	    << sym.second.getLoc() << ", "
 	    << sym.second.getType() << ", "
-	    << sym.second.internalIdent().c_str()
+	    << sym.second.getInternalIdent().c_str()
 	    << std::endl;
     }
     out << std::setfill(' ') << std::setw(indent * 4) << " " << "end of scope"

@@ -5,9 +5,17 @@
 global
     bar: i32 = 123;
 
+fn dummy()
+{
+    printf("called dummy() in foo.abc\n");
+}
+
+global xxx: int;
+
 fn foo()
 {
     printf("I am foo\n");
     bar = 42;
+    dummy();
     printf("I am foo: bar = %d\n", bar);
 }

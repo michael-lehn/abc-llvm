@@ -227,7 +227,14 @@ makeFnDecl(const char *ident, const Type *fnType)
 	return fn;
     }
 
-    auto linkage = llvm::Function::ExternalLinkage;
+    auto s = Symtab::get(ident, Symtab::RootScope);
+    if (!s) {
+	assert(0 && "symbol for function not declared in root scope");
+    }
+
+    auto linkage = s->hasExternFlag() || !strcmp(ident, "main")
+	? llvm::Function::ExternalLinkage
+	: llvm::Function::InternalLinkage;
     auto llvmType = TypeMap::get<llvm::FunctionType>(fnType);
     return llvm::Function::Create(llvmType, linkage, ident, llvmModule.get());
 }
@@ -269,7 +276,7 @@ fnDef(const char *ident, const Type *fnType,
 {
     if (auto s = Symtab::get(ident, Symtab::RootScope)) {
 	s->setDefinitionFlag();
-	ident = s->internalIdent().c_str();
+	ident = s->getInternalIdent().c_str();
     } else {
 	assert(0 && "symbol for function not declared in root scope");
     }
@@ -346,7 +353,7 @@ defLocal(const char *ident, const Type *type)
 
     if (auto s = Symtab::get(ident, Symtab::CurrentScope)) {
 	s->setDefinitionFlag();
-	ident = s->internalIdent().c_str();
+	ident = s->getInternalIdent().c_str();
     } else {
 	error::out() << "internal error: Symbol '" << ident
 	    << "' not found in current scope" << std::endl;
@@ -375,18 +382,23 @@ declGlobal(const char *ident, const Type *type)
 	return;
     }
 
-    if (auto s = Symtab::get(ident, Symtab::RootScope)) {
-	ident = s->internalIdent().c_str();
+    auto s = Symtab::get(ident, Symtab::RootScope);
+    if (s) {
+	ident = s->getInternalIdent().c_str();
     } else {
 	assert(0 && "symbol for global variable not declared in root scope");
     }
+
+    auto linkage = s->hasExternFlag()
+	? llvm::GlobalValue::ExternalLinkage
+	: llvm::GlobalValue::InternalLinkage;
 
     auto ty = TypeMap::get(type);
     global[ident] = new llvm::GlobalVariable(
 			*llvmModule,
 			 ty,
 			/*isConstant=*/false,
-			/*Linkage=*/llvm::GlobalValue::ExternalLinkage,
+			/*Linkage=*/linkage,
 			/*Initializer=*/nullptr,
 			/*Name=*/ident,
 			nullptr);
@@ -400,12 +412,17 @@ defGlobal(const char *ident, const Type *type, ConstVal val)
 	return;
     }
 
-    if (auto s = Symtab::get(ident, Symtab::RootScope)) {
+    auto s = Symtab::get(ident, Symtab::RootScope);
+    if (s) {
 	s->setDefinitionFlag();
-	ident = s->internalIdent().c_str();
+	ident = s->getInternalIdent().c_str();
     } else {
 	assert(0 && "symbol for global variable not declared in root scope");
     }
+
+    auto linkage = s->hasExternFlag()
+	? llvm::GlobalValue::ExternalLinkage
+	: llvm::GlobalValue::InternalLinkage;
 
     auto ty = TypeMap::get(type);
     if (!val) {
@@ -421,7 +438,7 @@ defGlobal(const char *ident, const Type *type, ConstVal val)
 			*llvmModule,
 			 ty,
 			/*isConstant=*/false,
-			/*Linkage=*/llvm::GlobalValue::ExternalLinkage,
+			/*Linkage=*/linkage,
 			/*Initializer=*/val,
 			/*Name=*/ident,
 			nullptr);
@@ -457,7 +474,7 @@ call(const char *ident, const std::vector<Reg> &param)
 {
     assureOpenBuildingBlock();
     if (auto s = Symtab::get(ident, Symtab::RootScope)) {
-	ident = s->internalIdent().c_str();
+	ident = s->getInternalIdent().c_str();
     } else {
 	assert(0 && "symbol for function not declared in root scope");
     }
@@ -584,7 +601,7 @@ loadAddr(const char *ident)
 {
     assureOpenBuildingBlock();
     if (auto s = Symtab::get(ident)) {
-	ident = s->internalIdent().c_str();
+	ident = s->getInternalIdent().c_str();
     } else {
 	error::out() << "internal error: symbol '" << ident
 	    << "' not found in symbol table" << std::endl;
@@ -604,7 +621,7 @@ fetch(const char *ident, const Type *type)
 {
     assureOpenBuildingBlock();
     if (auto s = Symtab::get(ident)) {
-	ident = s->internalIdent().c_str();
+	ident = s->getInternalIdent().c_str();
     } else {
 	assert(0 && "symbol for not declared in any scope");
     }
@@ -629,7 +646,7 @@ store(Reg val, const char *ident, const Type *type)
 {
     assureOpenBuildingBlock();
     if (auto s = Symtab::get(ident)) {
-	ident = s->internalIdent().c_str();
+	ident = s->getInternalIdent().c_str();
     } else {
 	assert(0 && "symbol for not declared in any scope");
     }

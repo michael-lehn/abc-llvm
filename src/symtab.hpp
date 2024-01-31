@@ -20,6 +20,11 @@ class Symtab
 	    CurrentScope,
 	    RootScope,
 	};
+
+	enum Linkage {
+	    Internal,
+	    Extern,
+	};
 	
 	struct Entry
 	{
@@ -56,18 +61,29 @@ class Symtab
 		    return nullptr;
 		}
 
+		bool hasExternFlag() const
+		{
+		    return externFlag;
+		}
+
+		void setExternFlag()
+		{
+		    externFlag = true;
+		}
+
+
 		bool hasDefinitionFlag() const
 		{
-		    return definition_;
+		    return definition;
 		}
 
 		// returns 'false' iff symbol was alreay defined.
 		bool setDefinitionFlag(void);
 
 		// returns an identifier that can be used for code generation
-		UStr internalIdent(void) const
+		UStr getInternalIdent(void) const
 		{
-		    return internalIdent_;
+		    return internalIdent;
 		}
 	
 	    private:
@@ -76,13 +92,15 @@ class Symtab
 		Entry(Token::Loc loc, Data &&data, UStr ident,
 		      UStr internalIdent)
 		    : ident{ident}, loc{loc}, data{std::move(data)}
-		    , internalIdent_{internalIdent}, definition_{false}
+		    , internalIdent{internalIdent}, definition{false}
+		    , externFlag{false}
 		{}
 
 		Token::Loc loc, lastDeclLoc;
 		Data data;
-		UStr internalIdent_;
-		bool definition_;
+		UStr internalIdent;
+		bool definition;
+		bool externFlag;
 	};
 
 	static void openScope(void);

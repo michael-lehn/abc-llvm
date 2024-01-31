@@ -1,9 +1,7 @@
 #ifndef FOO_HDR
 #define FOO_HDR
 
-fn foo();
-
-extern
-    bar: i32;
+extern fn foo();
+extern bar: i32;
 
 #endif // FOO_HDR

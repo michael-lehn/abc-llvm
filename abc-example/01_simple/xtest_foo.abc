@@ -2,8 +2,16 @@
 
 #include "foo.hdr"
 
+fn dummy()
+{
+    printf("called dummy() in xtest_foo.abc\n");
+}
+
+global xxx: int;
+
 fn main()
 {
+    dummy();
     foo();
     printf("bar = %d\n", bar);
 }

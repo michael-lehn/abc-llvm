@@ -26,6 +26,7 @@ std::vector<gen::Label> ControlStruct::breakLabel;
 //------------------------------------------------------------------------------
 
 static bool parseFn(void);
+static bool parseExternDecl(void);
 static bool parseGlobalDef(void);
 static bool parseStructDef(void);
 static bool parseTypeDef(void);
@@ -37,11 +38,11 @@ parser(void)
     getToken();
     while (token.kind != TokenKind::EOI) {
 	if (!parseGlobalDef() && !parseFn() && !parseTypeDef()
-		&& !parseStructDef() && !parseEnumDef()) {
+		&& !parseExternDecl() && !parseStructDef() && !parseEnumDef()) {
 	    error::out() << token.loc
 		<< ": expected function declaration,"
 		<< " global variable definition,"
-		<< " type declaration, enum declaration"
+		<< " type declaration, extern declaration, enum declaration"
 		<< " or EOF"
 		<< std::endl;
 	    error::fatal();
@@ -217,10 +218,9 @@ parseInitializerList(InitializerList &initList, bool global)
 static bool
 parseGlobalDef(void)
 {
-    if (token.kind != TokenKind::GLOBAL && token.kind != TokenKind::EXTERN) {
+    if (token.kind != TokenKind::GLOBAL) {
 	return false;
     }
-    bool isDef = token.kind == TokenKind::GLOBAL;
     getToken();
 
     do {
@@ -248,7 +248,7 @@ parseGlobalDef(void)
 
 	// parse initalizer
 	InitializerList initList(type);
-	if (isDef && token.kind == TokenKind::EQUAL) {
+	if (token.kind == TokenKind::EQUAL) {
 	    getToken();
 	    auto opLoc = token.loc;
 	    if (auto expr = parseExpr()) {
@@ -266,11 +266,7 @@ parseGlobalDef(void)
 		error::fatal();
 	    }
 	}
-	if (isDef) {
-	    gen::defGlobal(s->ident.c_str(), ty, initList.loadConst());
-	} else {
-	    gen::declGlobal(s->ident.c_str(), ty);
-	}
+	gen::defGlobal(s->ident.c_str(), ty, initList.loadConst());
 
 	if (token.kind != TokenKind::COMMA) {
 	    break;
@@ -433,6 +429,13 @@ parseFnDecl(std::vector<const char *> &fnParamIdent)
 
     parseFnDeclOrType(argType, retType, &fnDecl, &fnParamIdent);
     return fnDecl;
+}
+
+static Symtab::Entry *
+parseFnDecl()
+{
+    std::vector<const char *> fnParamIdent;
+    return parseFnDecl(fnParamIdent);
 }
 
 static const Type *
@@ -1200,6 +1203,53 @@ parseStmt(void)
 	|| parseLocalDefStmt()
 	|| parseSwitchStmt()
 	|| parseExprStmt();
+}
+
+//------------------------------------------------------------------------------
+
+static bool
+parseExternDecl(void)
+{
+    if (token.kind != TokenKind::EXTERN) {
+	return false;
+    }
+    getToken();
+
+    Symtab::openScope();
+    auto fnDecl = parseFnDecl();
+    Symtab::closeScope();
+
+    if (fnDecl) {
+	fnDecl->setExternFlag();
+	gen::fnDecl(fnDecl->ident.c_str(), fnDecl->getType());
+    } else {
+	error::expected(TokenKind::IDENTIFIER);
+	auto loc = token.loc;
+	auto ident = token.val;
+	getToken();
+	
+	error::expected(TokenKind::COLON);
+	getToken();
+	
+	auto type = parseType();
+	if (!type) {
+	    error::out() << token.loc << " type expected" << std::endl;
+	    error::fatal();
+	} else if (!type->hasSize()) {
+	    error::out() << token.loc
+		<< ": variable '" << ident.c_str() << "' has incomplete type '"
+		<< type << "'" << std::endl;
+	    error::fatal();
+	}
+
+	auto s = Symtab::addDeclToRootScope(loc, ident.c_str(), type);
+	s->setExternFlag();
+	gen::declGlobal(ident.c_str(), type);
+    }
+    error::expected(TokenKind::SEMICOLON);
+    getToken();
+
+    return true;
 }
 
 //------------------------------------------------------------------------------
