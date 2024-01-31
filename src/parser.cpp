@@ -243,7 +243,8 @@ parseGlobalDef(void)
 	    error::fatal();
 	}
 
-	auto s = Symtab::addDeclToRootScope(loc, ident.c_str(), type);
+	//auto s = Symtab::addDeclToRootScope(loc, ident.c_str(), type);
+	auto s = Symtab::addDecl(loc, ident.c_str(), type);
 	auto ty = s->getType();
 
 	// parse initalizer
@@ -1201,6 +1202,7 @@ parseStmt(void)
 	|| parseTypeDef()
 	|| parseStructDef()
 	|| parseLocalDefStmt()
+	|| parseGlobalDef()
 	|| parseSwitchStmt()
 	|| parseExprStmt();
 }

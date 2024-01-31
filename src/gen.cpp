@@ -412,7 +412,7 @@ defGlobal(const char *ident, const Type *type, ConstVal val)
 	return;
     }
 
-    auto s = Symtab::get(ident, Symtab::RootScope);
+    auto s = Symtab::get(ident);
     if (s) {
 	s->setDefinitionFlag();
 	ident = s->getInternalIdent().c_str();

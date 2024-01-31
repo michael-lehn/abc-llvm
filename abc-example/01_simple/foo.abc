@@ -7,7 +7,8 @@ global
 
 fn dummy()
 {
-    printf("called dummy() in foo.abc\n");
+    global bar: int = 123456;
+    printf("called dummy() in foo.abc, here bar = %d\n", bar);
 }
 
 global xxx: int;
