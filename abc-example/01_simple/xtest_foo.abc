@@ -1,0 +1,9 @@
+#include <stdio.hdr>
+
+#include "foo.hdr"
+
+fn main()
+{
+    foo();
+    printf("bar = %d\n", bar);
+}

@@ -1,4 +1,4 @@
-#include "stdio.abh"
+#include <stdio.hdr>
 
 global foo: u64 = 23,
        bar: array[20] of u64 = {1, 2, 3, };

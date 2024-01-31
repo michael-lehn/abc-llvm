@@ -1,4 +1,4 @@
-#include "stdio.abh"
+#include <stdio.hdr>
 
 // not intended to be pretty, just another conditional test
 fn max3(a: u64, b: u64, c: u64) : u64

@@ -217,9 +217,10 @@ parseInitializerList(InitializerList &initList, bool global)
 static bool
 parseGlobalDef(void)
 {
-    if (token.kind != TokenKind::GLOBAL) {
+    if (token.kind != TokenKind::GLOBAL && token.kind != TokenKind::EXTERN) {
 	return false;
     }
+    bool isDef = token.kind == TokenKind::GLOBAL;
     getToken();
 
     do {
@@ -247,7 +248,7 @@ parseGlobalDef(void)
 
 	// parse initalizer
 	InitializerList initList(type);
-	if (token.kind == TokenKind::EQUAL) {
+	if (isDef && token.kind == TokenKind::EQUAL) {
 	    getToken();
 	    auto opLoc = token.loc;
 	    if (auto expr = parseExpr()) {
@@ -265,7 +266,11 @@ parseGlobalDef(void)
 		error::fatal();
 	    }
 	}
-	gen::defGlobal(s->ident.c_str(), ty, initList.loadConst());
+	if (isDef) {
+	    gen::defGlobal(s->ident.c_str(), ty, initList.loadConst());
+	} else {
+	    gen::declGlobal(s->ident.c_str(), ty);
+	}
 
 	if (token.kind != TokenKind::COMMA) {
 	    break;

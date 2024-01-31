@@ -368,6 +368,31 @@ defLocal(const char *ident, const Type *type)
 }
 
 void
+declGlobal(const char *ident, const Type *type)
+{
+    if (type->isFunction()) {
+	fnDecl(ident, type);
+	return;
+    }
+
+    if (auto s = Symtab::get(ident, Symtab::RootScope)) {
+	ident = s->internalIdent().c_str();
+    } else {
+	assert(0 && "symbol for global variable not declared in root scope");
+    }
+
+    auto ty = TypeMap::get(type);
+    global[ident] = new llvm::GlobalVariable(
+			*llvmModule,
+			 ty,
+			/*isConstant=*/false,
+			/*Linkage=*/llvm::GlobalValue::CommonLinkage,
+			/*Initializer=*/nullptr,
+			/*Name=*/ident,
+			nullptr);
+}
+
+void
 defGlobal(const char *ident, const Type *type, ConstVal val)
 {
     if (type->isFunction()) {
@@ -379,18 +404,24 @@ defGlobal(const char *ident, const Type *type, ConstVal val)
 	s->setDefinitionFlag();
 	ident = s->internalIdent().c_str();
     } else {
-	assert(0 && "symbol for local variable not declared in root scope");
+	assert(0 && "symbol for global variable not declared in root scope");
     }
 
     auto ty = TypeMap::get(type);
     if (!val) {
 	val = llvm::ConstantInt::getNullValue(ty);
     }
+    if (global.contains(ident)) {
+	auto v = llvm::dyn_cast<llvm::GlobalVariable>(global[ident]);
+	v->setInitializer(val);
+	return;
+    }
+
     global[ident] = new llvm::GlobalVariable(
 			*llvmModule,
 			 ty,
 			/*isConstant=*/false,
-			/*Linkage=*/llvm::GlobalValue::ExternalLinkage,
+			/*Linkage=*/llvm::GlobalValue::CommonLinkage,
 			/*Initializer=*/val,
 			/*Name=*/ident,
 			nullptr);

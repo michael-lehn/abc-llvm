@@ -1,6 +1,6 @@
 ABC := ../../bin/abc
 ABCFLAGS := -O3
-CPP := $(CC) -E -x c -traditional -Wno-endif-labels
+CPP := $(CC) -E -x c -traditional -Wno-endif-labels -I../include
 CPPFLAGS += -MT $(@:%.abc_p=%.o) -MMD -MP -MF $(dep.dir)/$(<F).d
 
 # Uncomment to directly link with ld on MacOS

@@ -34,6 +34,7 @@ enum class TokenKind {
     GLOBAL,
     LOCAL,
     STATIC,
+    EXTERN,
     FOR,
     WHILE,
     IF,

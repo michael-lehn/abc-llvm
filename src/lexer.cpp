@@ -93,6 +93,8 @@ tokenKindCStr(TokenKind kind)
 	    return "LOCAL";
 	case TokenKind::STATIC:
 	    return "STATIC";
+	case TokenKind::EXTERN:
+	    return "EXTERN";
 	case TokenKind::FOR:
 	    return "FOR";
 	case TokenKind::WHILE:
@@ -250,6 +252,8 @@ tokenCStr(TokenKind kind)
 	    return "local";
 	case TokenKind::STATIC:
 	    return "static";
+	case TokenKind::EXTERN:
+	    return "extern";
 	case TokenKind::FOR:
 	    return "for";
 	case TokenKind::WHILE:
@@ -458,6 +462,7 @@ static std::unordered_map<UStr, TokenKind> kw = {
     { "global", TokenKind::GLOBAL },
     { "local", TokenKind::LOCAL },
     { "static", TokenKind::STATIC },
+    { "extern", TokenKind::EXTERN },
     { "while", TokenKind::WHILE },
     { "for", TokenKind::FOR },
     { "if", TokenKind::IF },

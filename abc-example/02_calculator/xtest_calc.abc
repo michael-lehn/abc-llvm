@@ -1,0 +1,25 @@
+#include <stdio.hdr>
+
+#include "lexer.hdr"
+#include "parser.hdr"
+
+fn main()
+{
+    printf("\n*** Integer Calculator ***\n\n");
+    printf("Supported integer representation: dec, hex, oct\n");
+    printf("Operators: '+', '-', '*'/\n");
+    printf("Punctuators: '(', ')', ';'\n\n");
+    printf("Enter ';' to evaluate the expression\n");
+    printf("Enter '.' to exit\n\n");
+
+    local val: int = 0;
+    getToken();
+    while (parseExpression(&val)) {
+	printf("> %d\n", val);
+	if (token.kind != SEMICOLON) {
+	    break;
+	}
+	getToken();
+    }
+}
+

@@ -1,0 +1,13 @@
+#include <stdio.hdr>
+
+#include "foo.hdr"
+
+global
+    bar: i32 = 123;
+
+fn foo()
+{
+    printf("I am foo\n");
+    bar = 42;
+    printf("I am foo: bar = %d\n", bar);
+}

@@ -1,4 +1,4 @@
-#include "stdio.abh"
+#include <stdio.hdr>
 
 fn foo(n: u64)
 {

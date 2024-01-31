@@ -1,5 +1,5 @@
-#ifndef STDIO_ABH
-#define STDIO_ABH
+#ifndef STDIO_HBC
+#define STDIO_HBC
 
 type bool: u8;
 type int: i32;
@@ -25,5 +25,5 @@ fn fopen(path: -> char, mode: -> char): -> FILE;
 fn fprintf(stream: -> FILE, fmt: -> char, ...): int;
 fn fclose(stream: -> FILE): int;
 
-#endif // STDIO_ABH
+#endif // STDIO_HBC
 

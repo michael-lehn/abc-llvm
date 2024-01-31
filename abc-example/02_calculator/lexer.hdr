@@ -1,0 +1,47 @@
+#ifndef LEXER_HDR
+#define LEXER_HDR
+
+#include <stdio.hdr>
+
+enum TokenKind : int
+{
+    BAD_TOKEN,
+    EOI,
+    DECIMAL_LITERAL,
+    HEXADECIMAL_LITERAL,
+    OCTAL_LITERAL,
+    PLUS,
+    MINUS,
+    ASTERISK,
+    SLASH,
+    LPAREN,
+    RPAREN,
+    SEMICOLON,
+};
+
+struct TokenPos
+{
+    line: int;
+    col: int;
+};
+
+struct TokenLoc
+{
+    from: TokenPos;
+    to: TokenPos;
+};
+
+struct Token {
+    kind:   TokenKind;
+    loc:    TokenLoc;
+    val:    array[42] of u8;
+    valLen: int;
+};
+
+extern
+    token: Token;
+
+fn tokenKindStr(kind: TokenKind): -> char;
+fn getToken(): TokenKind;
+
+#endif // LEXER_HDR
