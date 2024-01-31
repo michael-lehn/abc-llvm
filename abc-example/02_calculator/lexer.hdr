@@ -19,21 +19,13 @@ enum TokenKind : int
     SEMICOLON,
 };
 
-struct TokenPos
-{
-    line: int;
-    col: int;
-};
-
-struct TokenLoc
-{
-    from: TokenPos;
-    to: TokenPos;
-};
-
 struct Token {
     kind:   TokenKind;
-    loc:    TokenLoc;
+    loc:    struct TokenLoc {
+		from, to:   struct TokenPos {
+				line, col: int;
+			    };
+	    };
     val:    array[42] of u8;
     valLen: int;
 };

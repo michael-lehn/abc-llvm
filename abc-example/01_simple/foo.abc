@@ -2,8 +2,7 @@
 
 #include "foo.hdr"
 
-global
-    bar: i32 = 123;
+global bar: i32 = 123;
 
 fn dummy()
 {

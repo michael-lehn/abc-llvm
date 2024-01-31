@@ -581,16 +581,29 @@ parseStructDecl(void)
     std::vector<const char *> ident;
     std::vector<const Type *> type;
     while (token.kind == TokenKind::IDENTIFIER) {
-	ident.push_back(token.val.c_str());
-	getToken();
+	std::vector<const char *> identWithSameType;
+	while (token.kind == TokenKind::IDENTIFIER) {
+	    identWithSameType.push_back(token.val.c_str());
+	    getToken();
+	    if (token.kind != TokenKind::COMMA) {
+		break;
+	    }
+	    getToken();
+	}
 	error::expected(TokenKind::COLON);
 	getToken();
 	auto ty = parseType();
 	if (!ty) {
+	    ty = parseStructDecl();
+	}
+	if (!ty) {
 	    error::out() << token.loc << ": type expected" << std::endl;
 	    error::fatal();
 	}
-	type.push_back(ty);
+	for (auto id : identWithSameType) {
+	    ident.push_back(id);
+	    type.push_back(ty);
+	}
 	error::expected(TokenKind::SEMICOLON);
 	getToken();
     }
