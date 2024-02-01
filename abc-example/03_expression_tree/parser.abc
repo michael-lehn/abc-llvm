@@ -1,0 +1,98 @@
+#include <stdio.hdr>
+
+#include "lexer.hdr"
+#include "parser.hdr"
+
+fn parseAdditiveExpression() : -> Expr;
+fn parseMultiplicativeExpression() : -> Expr;
+fn parsePrimaryExpression() : -> Expr;
+
+fn parseExpression() : -> Expr
+{
+    return parseAdditiveExpression();
+}
+
+fn parseAdditiveExpression() : -> Expr
+{
+    local expr: -> Expr = parseMultiplicativeExpression();
+
+    if (!expr) {
+	return nullptr;
+    }
+
+    while (token.kind == PLUS || token.kind == MINUS) {
+	local op: TokenKind = token.kind;
+        getToken();
+
+	local expr2: -> Expr = parseMultiplicativeExpression();
+	if (!expr2) {
+	    printf("multiplicative expression expected\n");
+            return nullptr;
+        }
+	expr = op == PLUS
+	    ? createBinaryExpr(EXPR_ADD, expr, expr2)
+	    : createBinaryExpr(EXPR_SUB, expr, expr2);
+    }
+    return expr;
+}
+
+fn parseMultiplicativeExpression() : -> Expr
+{
+    local expr: -> Expr = parsePrimaryExpression();
+
+    if (!expr) {
+	return nullptr;
+    }
+
+    while (token.kind == ASTERISK || token.kind == SLASH) {
+	local op: TokenKind = token.kind;
+        getToken();
+
+	local expr2: -> Expr = parsePrimaryExpression();
+	if (!expr2) {
+	    printf("multiplicative expression expected\n");
+            return nullptr;
+        }
+	//
+	//    FIXME: Gives error 'not an lvalue'
+	//    op == ASTERISK
+	//	? expr = createBinaryExpr(EXPR_MUL, expr, expr2)
+	//	: expr = createBinaryExpr(EXPR_DIV, expr, expr2);
+	//
+	expr = op == ASTERISK
+	    ? createBinaryExpr(EXPR_MUL, expr, expr2)
+	    : createBinaryExpr(EXPR_DIV, expr, expr2);
+    }
+    return expr;
+}
+
+fn parsePrimaryExpression() : -> Expr
+{
+    if (token.kind == DECIMAL_LITERAL) {
+	local val: i64 = strtol(&token.val[0], &token.val[token.valLen], 10);
+	getToken();
+	return createLiteralExpr(val);
+    } else if (token.kind == HEXADECIMAL_LITERAL) {
+	local val: i64 = strtol(&token.val[0], &token.val[token.valLen], 16);
+	getToken();
+	return createLiteralExpr(val);
+    } else if (token.kind == OCTAL_LITERAL) {
+	local val: i64 = strtol(&token.val[0], &token.val[token.valLen], 8);
+	getToken();
+	return createLiteralExpr(val);
+    } else if (token.kind == LPAREN) {
+	getToken();
+	local expr: -> Expr = parseAdditiveExpression();
+	if (!expr) {
+	    printf("multiplicative expression expected\n");
+	    return nullptr;
+	}
+	if (token.kind != RPAREN) {
+	    printf("')' expected\n");
+	    return nullptr;
+	}
+	getToken();
+	return expr;
+    }
+    return nullptr;
+}

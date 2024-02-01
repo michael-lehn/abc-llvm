@@ -1,11 +1,7 @@
 #ifndef STDIO_HBC
 #define STDIO_HBC
 
-type bool: u8;
-type int: i32;
-type long: i64;
-type char: u8;
-
+#include <stdabc.hdr>
 
 enum StdIO_Constants : int
 {
@@ -14,16 +10,24 @@ enum StdIO_Constants : int
     false = 0,
 };
 
-fn printf(fmt: -> char, ...): int;
-fn scanf(fmt: -> char, ...): int;
-fn getchar(): int;
-fn putchar(ch : int);
-fn strtol(str: -> char, end: -> char, base: int): long;
+extern fn printf(fmt: -> char, ...): int;
+extern fn scanf(fmt: -> char, ...): int;
+extern fn getchar(): int;
+extern fn putchar(ch : int);
+extern fn strtol(str: -> char, end: -> char, base: int): long;
+
+#define stdin __stdinp
+#define stdout __stdoutp
+#define stderr __stderrp
 
 struct FILE;
-fn fopen(path: -> char, mode: -> char): -> FILE;
-fn fprintf(stream: -> FILE, fmt: -> char, ...): int;
-fn fclose(stream: -> FILE): int;
+extern stdin: -> FILE;
+extern stdout: -> FILE;
+extern stderr: -> FILE;
+
+extern fn fopen(path: -> char, mode: -> char): -> FILE;
+extern fn fprintf(stream: -> FILE, fmt: -> char, ...): int;
+extern fn fclose(stream: -> FILE): int;
 
 #endif // STDIO_HBC
 

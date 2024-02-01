@@ -1,0 +1,10 @@
+#include "expr.hdr"
+
+fn main()
+{
+    local one: -> Expr = createLiteralExpr(1);
+    local two: -> Expr = createLiteralExpr(2);
+    local sum: -> Expr = createBinaryExpr(EXPR_ADD, one, two);
+
+    printExpr(sum);
+}
