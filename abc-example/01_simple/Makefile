@@ -22,12 +22,12 @@ asm.dir := asm
 obj.dir := obj
 
 xsrc.abc := $(wildcard xtest_*.abc)
-src.abc := $(filter-out $(xsrc),$(wildcard *.abc))
+src.abc := $(filter-out $(xsrc.abc),$(wildcard *.abc))
 
 cpp.abc := $(src.abc:%.abc=$(cpp.dir)/%.abc_cpp)
 asm.abc := $(src.abc:%.abc=$(asm.dir)/%.s)
 obj.abc := $(src.abc:%.abc=$(obj.dir)/%.o)
-xobj := $(xsrc:$(src.dir)/%.cpp=$(obj.dir)/%.o)
+xobj := $(xsrc.abc:$(src.dir)/%.cpp=$(obj.dir)/%.o)
 bc.abc := $(src.abc:%.abc=%.bc)
 target := $(patsubst %.abc,%,$(xsrc.abc))
 

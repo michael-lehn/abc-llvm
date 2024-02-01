@@ -75,9 +75,9 @@ class Type
 	};
 
 	struct PointerData {
-	    const Type *refType;
-	    bool isNullptr;
-	    bool constFlag;
+	    const Type * const refType;
+	    const bool isNullptr;
+	    const bool constFlag;
 	};
 
 	struct ArrayData {
@@ -140,5 +140,6 @@ class Type
 
 bool operator==(const Type &x, const Type &y);
 std::ostream &operator<<(std::ostream &out, const Type *type);
+void printTypeSet();
 
 #endif // TYPE_HPP

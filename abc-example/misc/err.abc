@@ -1,7 +1,8 @@
-#include <stdio.hdr>
+struct Foo
+{
+    foo: u8;
+};
 
 fn main()
 {
-    printf("hello, world!\n");
 }
-

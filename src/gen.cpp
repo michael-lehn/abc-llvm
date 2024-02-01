@@ -316,6 +316,7 @@ fnDefEnd(void)
     assert(currFn.llvmFn);
 
     // leave function
+    // FIXME: TODO: avoid creating unreachable block
     ret(nullptr);
     labelDef(currFn.leave);
 

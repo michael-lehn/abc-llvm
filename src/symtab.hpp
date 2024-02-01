@@ -35,7 +35,7 @@ class Symtab
 
 		Token::Loc getLoc(void) const
 		{
-		    return hasDefinitionFlag() ? loc : lastDeclLoc;
+		    return hasDefinitionFlag() ? loc : firstDeclLoc;
 		}
 
 		bool holdsExpr() const
@@ -85,18 +85,25 @@ class Symtab
 		{
 		    return internalIdent;
 		}
+
+		void invalidate()
+		{
+		    *(char *)&internalIdent = 0;
+		    data = nullptr;
+		    loc = firstDeclLoc = lastDeclLoc = Token::Loc{};
+		}
 	
 	    private:
 		using Data = std::variant<const Type *, ExprPtr>;
 
 		Entry(Token::Loc loc, Data &&data, UStr ident,
 		      UStr internalIdent)
-		    : ident{ident}, loc{loc}, data{std::move(data)}
-		    , internalIdent{internalIdent}, definition{false}
-		    , externFlag{false}
+		    : ident{ident}, loc{loc}, firstDeclLoc{loc}
+		    , data{std::move(data)} , internalIdent{internalIdent}
+		    , definition{false} , externFlag{false}
 		{}
 
-		Token::Loc loc, lastDeclLoc;
+		Token::Loc loc, firstDeclLoc, lastDeclLoc;
 		Data data;
 		UStr internalIdent;
 		bool definition;

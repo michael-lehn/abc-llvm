@@ -20,6 +20,9 @@ struct ScopeNode
     ScopeNode() { }
     ~ScopeNode()
     {
+	for (auto &s: symtab) {
+	    s.second.invalidate();
+	}
 	for (const auto &ty: nametab) {
 	    Type::remove(ty);
 	}
@@ -98,6 +101,19 @@ Symtab::add(Token::Loc loc, UStr ident, Entry::Data &&data, ScopeNode *sn)
     Symtab::Entry *found = get(ident, sn, sn->up.get());
 
     if (found) {
+	if (std::holds_alternative<const Type *>(data)) {
+	    const auto &tyOld = *found->getType();
+	    const auto &tyNew = *std::get<const Type *>(data);
+	    if (tyOld != tyNew) {
+		error::out() << loc
+		    << ": error: redefinition of '" << ident.c_str()
+		    << "' with type " << &tyNew << std::endl;
+		error::out() << found->getLoc()
+		    << ": error: previous definition of '" << ident.c_str()
+		    << "' with type " << &tyOld << std::endl;
+		error::fatal();
+	    }
+	}
 	found->lastDeclLoc = loc;
 	return found;
     }
@@ -111,7 +127,11 @@ Symtab::add(Token::Loc loc, UStr ident, Entry::Data &&data, ScopeNode *sn)
 
     auto entry = Entry{loc, std::move(data), ident, internalIdent};
     sn->symtab.emplace(ident.c_str(), std::move(entry));
-    return &sn->symtab.at(ident.c_str());
+    //return &sn->symtab.at(ident.c_str());
+
+
+    auto ret = &sn->symtab.at(ident.c_str());
+    return ret;
 }
 
 Symtab::Entry *
@@ -207,7 +227,8 @@ print(std::ostream &out, ScopeNode *sn)
 	out << std::setfill(' ') << std::setw(indent * 4) << " "
 	    << sym.second.ident.c_str() << ": "
 	    << sym.second.getLoc() << ", "
-	    << sym.second.getType() << ", "
+	    << sym.second.getType() << " ["
+	    << (void *)sym.second.getType() << "], "
 	    << sym.second.getInternalIdent().c_str()
 	    << std::endl;
     }

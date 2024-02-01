@@ -1,6 +1,7 @@
 #include <iostream>
 #include <set>
 #include <sstream>
+#include <tuple>
 
 #include "error.hpp"
 #include "symtab.hpp"
@@ -50,16 +51,15 @@ struct Integer : public Type
 bool
 operator<(const Integer &x, const Integer &y)
 {
-    return x.aliasIdent.c_str() < y.aliasIdent.c_str()
-	|| (x.aliasIdent.c_str() == y.aliasIdent.c_str()
-	    && x.getIntegerKind() < y.getIntegerKind())
-	|| (x.aliasIdent.c_str() == y.aliasIdent.c_str()
-	    && x.getIntegerKind() == y.getIntegerKind()
-	    && x.getIntegerNumBits() < y.getIntegerNumBits())
-	|| (x.aliasIdent.c_str() == y.aliasIdent.c_str()
-	    && x.getIntegerKind() == y.getIntegerKind()
-	    && x.getIntegerNumBits() == y.getIntegerNumBits()
-	    && x.hasConstFlag() < y.hasConstFlag());
+    const auto &tx = std::tuple{x.aliasIdent.c_str(),
+			        x.getIntegerNumBits(),
+				x.getIntegerKind(),
+				x.hasConstFlag()};
+    const auto &ty = std::tuple{y.aliasIdent.c_str(),
+				y.getIntegerNumBits(),
+				y.getIntegerKind(),
+				y.hasConstFlag()};
+    return tx < ty;
 }
 
 //-- Pointer class -------------------------------------------------------------
@@ -83,16 +83,15 @@ struct Pointer : public Type
 bool
 operator<(const Pointer &x, const Pointer &y)
 {
-    return x.getAliasIdent().c_str() < y.getAliasIdent().c_str()
-	|| (x.getAliasIdent().c_str() == y.getAliasIdent().c_str()
-	    && x.isNullPointer() && !y.isNullPointer())
-	|| (x.getAliasIdent().c_str() == y.getAliasIdent().c_str()
-	    && !x.isNullPointer() && !y.isNullPointer()
-	    && x.getRefType() < y.getRefType())
-	|| (x.getAliasIdent().c_str() == y.getAliasIdent().c_str()
-	    && !x.isNullPointer() && !y.isNullPointer()
-	    && x.getRefType() == y.getRefType()
-	    && x.hasConstFlag() < y.hasConstFlag());
+    const auto &tx = std::tuple{x.getAliasIdent().c_str(),
+			       x.isNullPointer(),
+			       x.isNullPointer() ? nullptr : x.getRefType(),
+			       x.hasConstFlag()};
+    const auto &ty = std::tuple{y.getAliasIdent().c_str(),
+			       y.isNullPointer(),
+			       y.isNullPointer() ? nullptr : y.getRefType(),
+			       y.hasConstFlag()};
+    return tx < ty;
 }
 
 //-- Array class ---------------------------------------------------------------
@@ -111,12 +110,13 @@ struct Array : public Type
 bool
 operator<(const Array &x, const Array &y)
 {
-    return x.getAliasIdent().c_str() < y.getAliasIdent().c_str()
-	|| (x.getAliasIdent().c_str() == y.getAliasIdent().c_str()
-	    && x.getRefType() < y.getRefType())
-	|| (x.getAliasIdent().c_str() == y.getAliasIdent().c_str()
-	    && x.getRefType() == y.getRefType()
-	    && x.getDim() < y.getDim());
+    const auto &tx = std::tuple{x.getAliasIdent().c_str(),
+			       x.getRefType(),
+			       x.getDim()};
+    const auto &ty = std::tuple{y.getAliasIdent().c_str(),
+			       y.getRefType(),
+			       y.getDim()};
+    return tx < ty;
 }
 
 //-- Function class ------------------------------------------------------------
@@ -132,35 +132,9 @@ struct Function : public Type
 bool
 operator<(const Function &x, const Function &y)
 {
-    auto xArg = x.getArgType();
-    auto yArg = y.getArgType();
-
-    if (x.getAliasIdent().c_str() < y.getAliasIdent().c_str()) {
-	return true;
-    } else if (x.getAliasIdent().c_str() > y.getAliasIdent().c_str()) {
-	return false;
-    }
-
-    if (x.getRetType() < y.getRetType()) {
-	return true;
-    } else if (x.getRetType() > y.getRetType()) {
-	return false;
-    }
-
-    if (xArg.size() < yArg.size()) {
-	return true;
-    } else if (xArg.size() > yArg.size()) {
-	return false;
-    }
-
-    for (std::size_t i = 0; i < yArg.size(); ++ i) {
-	if (xArg[i] < yArg[i]) {
-	    return true;
-	} else if (xArg[i] > yArg[i]) {
-	    return false;
-	}
-    }
-    return false; // x == y
+    const auto &tx = std::tuple{x.getArgType(), x.getRetType()};
+    const auto &ty = std::tuple{y.getArgType(), y.getRetType()};
+    return tx < ty;
 }
 
 //--  Struct class -------------------------------------------------------------
@@ -174,8 +148,6 @@ struct Struct : public Type
     Struct(const StructData &data, bool constFlag)
 	: Type{Type::STRUCT, StructData{data, constFlag}}
     {
-	assert(!constFlag &&
-		"internal error: Only copy struct data when constFlag is set");
     }
 
     Struct(const StructData &data, UStr aliasIdent)
@@ -196,6 +168,56 @@ static std::set<Pointer> *ptrTypeSet;
 static std::set<Array> *arrayTypeSet;
 static std::set<Function> *fnTypeSet;
 static std::unordered_map<std::size_t, Struct> *structMap;
+static std::unordered_map<std::size_t, Struct> *constStructMap;
+
+void
+printTypeSet()
+{
+    if (intTypeSet) {
+	std::cerr << "Integer set (size: " << intTypeSet->size() << ")"
+	    << std::endl;
+	for (const auto &ty: *intTypeSet) {
+	    std::cerr << " " << (void *)&ty << ": " << &ty << std::endl;
+	}
+    }
+    if (ptrTypeSet) {
+	std::cerr << "Pointer set (size: " << ptrTypeSet->size() << ")"
+	    << std::endl;
+	for (const auto &ty: *ptrTypeSet) {
+	    std::cerr << " " << (void *)&ty << ": " << &ty << std::endl;
+	}
+    }
+    if (arrayTypeSet) {
+	std::cerr << "Array set (size: " << arrayTypeSet->size() << ")"
+	    << std::endl;
+	for (const auto &ty: *arrayTypeSet) {
+	    std::cerr << " " << (void *)&ty << ": " << &ty << std::endl;
+	}
+    }
+    if (fnTypeSet) {
+	std::cerr << "Function set (size: " << fnTypeSet->size() << ")"
+	    << std::endl;
+	for (const auto &ty: *fnTypeSet) {
+	    std::cerr << " " << (void *)&ty << ": " << &ty << std::endl;
+	}
+    }
+    if (structMap) {
+	std::cerr << "Struct map (size: " << structMap->size() << ")"
+	    << std::endl;
+	for (const auto &ty: *structMap) {
+	    std::cerr << " id: " << ty.first << ": " << (void *)&ty.second
+		<< std::endl;
+	}
+    }
+    if (constStructMap) {
+	std::cerr << "Const struct map (size: " << constStructMap->size() << ")"
+	    << std::endl;
+	for (const auto &ty: *constStructMap) {
+	    std::cerr << " id: " << ty.first << ": " << (void *)&ty.second
+		<< std::endl;
+	}
+    }
+}
 
 /*
  * Public class Type
@@ -372,6 +394,21 @@ Type::complete(std::vector<const char *> &&ident,
     for (std::size_t i = 0; i < ident.size(); ++i) {
 	structData.index[ident[i]] = i;
     }
+
+    // complete const version
+    auto &constStruct = constStructMap->at(structData.id);
+    auto &constStructData = std::get<StructData>(constStruct.data);
+    constStructData.isComplete = true;	
+    constStructData.ident = ident;
+    constStructData.type.resize(structData.type.size());
+    for (std::size_t i = 0; i < structData.type.size(); ++i) {
+	constStructData.type[i] = getConst(structData.type[i]);
+    }
+    for (std::size_t i = 0; i < ident.size(); ++i) {
+	constStructData.index[ident[i]] = i;
+    }
+
+
     return this;
 }
 
@@ -485,18 +522,7 @@ Type::getConst(const Type *type)
 	return getArray(getConst(type->getRefType()), type->getDim());
     } else if (type->isStruct()) {
 	const auto &data = std::get<StructData>(type->data);
-	std::string name = ".const_" + std::string{data.name.c_str()};
-	auto ty = createIncompleteStruct(UStr{name});
-	std::vector<const Type *> memConstType{data.type.size()};
-	for (std::size_t i = 0; i < data.type.size(); ++ i) {
-	    memConstType[i] = getConst(data.type.at(i));
-	}
-	ty->complete(std::vector<const char *>{data.ident},
-		     std::move(memConstType));
-	auto &tyData = std::get<StructData>(ty->data);
-	tyData.constFlag = true;
-	tyData.name = data.name;
-	return ty;
+	return &constStructMap->at(data.id);
     }
     return nullptr;
 }
@@ -511,10 +537,8 @@ Type::getConstRemoved(const Type *type)
 	const auto &data = std::get<PointerData>(type->data);
 	return &*ptrTypeSet->insert(Pointer{data, false}).first;
     } else if (type->isStruct()) {
-	auto name = type->getName();
-	auto  ty = Symtab::getNamedType(name, Symtab::AnyScope);
-	assert(ty);
-	return ty;
+	const auto &data = std::get<StructData>(type->data);
+	return &structMap->at(data.id);
     }
     return type;
 }
@@ -608,21 +632,25 @@ Type::getFunction(const Type *retType, std::vector<const Type *> argType,
 Type *
 Type::createIncompleteStruct(UStr name)
 {
+    assert(!constStructMap == !structMap);
     if (!structMap) {
 	structMap = new std::unordered_map<std::size_t, Struct>;
+	constStructMap = new std::unordered_map<std::size_t, Struct>;
     }
     if (auto ty = Symtab::getNamedType(name, Symtab::CurrentScope)) {
 	if (!ty->isStruct()) {
 	    return nullptr;
 	}
 	auto &structData = std::get<StructData>(ty->data);
-	// type already exists (not a problem if it's already complete)
 	return &structMap->at(structData.id);
     }
 
     // new struct type is needed
     static size_t id;
     auto ty = &structMap->insert({id, Struct{id, name}}).first->second;
+    // also create the const version
+    auto data = std::get<StructData>(ty->data);
+    constStructMap->insert({id, Struct{data, true}});
     ++id;
 
     // add type to current scope
@@ -735,9 +763,42 @@ Type::convertArrayOrFunctionToPointer(const Type *ty)
 bool
 operator==(const Type &x, const Type &y)
 {
-    if (x.isInteger() && y.isInteger()) {
+    if (x.id != y.id) {
+	return false;
+    }
+    if (x.isVoid() && y.isVoid()) {
+	return true;
+    } else if (x.isInteger() && y.isInteger()) {
 	return x.getIntegerKind() == y.getIntegerKind()
-	    && x.getIntegerNumBits() == y.getIntegerNumBits();
+	    && x.getIntegerNumBits() == y.getIntegerNumBits()
+	    && x.hasConstFlag() == y.hasConstFlag();
+    } else if (x.isNullPointer() && y.isNullPointer()) {
+	return true;
+    } else if (x.isNullPointer() || y.isNullPointer()) {
+	return false;
+    } else if (x.isPointer() && y.isPointer()) {
+	const auto &xRef = *x.getRefType();
+	const auto &yRef = *y.getRefType();
+	return xRef == yRef;
+    } else if (x.isArray() && y.isArray()) {
+	const auto &xRef = *x.getRefType();
+	const auto &yRef = *y.getRefType();
+	return x.getDim() == y.getDim() && xRef == yRef;
+    } else if (x.isFunction() && y.isFunction()) {
+	const auto &xRet = *x.getRetType();
+	const auto &yRet = *y.getRetType();
+	if (xRet != yRet) {
+	    return false;
+	}
+	if (x.getArgType().size() != y.getArgType().size()) {
+	    return false;
+	}
+	for (std::size_t i = 0; i < x.getArgType().size(); ++i) {
+	    if (*x.getArgType()[i] != *y.getArgType()[i]) {
+		return false;
+	    }
+	}
+	return true;
     }
     return &x == &y;
 }
@@ -752,11 +813,14 @@ operator<<(std::ostream &out, const Type *type)
 	return out;
     }
 
-    if (type->getAliasIdent().c_str()) {
-	out << type->getAliasIdent().c_str() << " (aka '";
-    }
     if (type->hasConstFlag()) {
 	out << "const ";
+    }
+    if (type->getAliasIdent().c_str()) {
+	out << type->getAliasIdent().c_str() << " (aka '";
+	if (type->hasConstFlag()) {
+	    out << "const ";
+	}
     }
 
     if (type->isVoid()) {
@@ -764,10 +828,16 @@ operator<<(std::ostream &out, const Type *type)
     } else if (type->isInteger()) {
 	out << (type->getIntegerKind() == Type::SIGNED ? "i" : "u")
 	    << type->getIntegerNumBits();
+    } else if (type->isNullPointer()) {
+	    out << "-> NULL";
     } else if (type->isPointer()) {
 	auto refTy = type->getRefType();
 	if (refTy->isStruct()) {
-	    out << "-> struct{..}";
+	    out << "-> ";
+	    if (refTy->hasConstFlag()) {
+		out << "const ";
+	    }
+	    out << refTy->getName().c_str();
 	} else {
 	    out << "-> " << refTy;
 	}
@@ -794,7 +864,7 @@ operator<<(std::ostream &out, const Type *type)
 	if (type->hasSize()) {
 	    out << "{";
 	    for (std::size_t i = 0; i < memType.size(); ++i) {
-		out << memIdent[i] << ":" << memType[i];
+		out << memIdent[i] << ": " << memType[i];
 		if (i + 1 < memType.size()) {
 		    out << ", ";
 		}

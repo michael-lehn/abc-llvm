@@ -289,8 +289,7 @@ parseFnParamDeclOrType(std::vector<const Type *> &argType,
 		       bool &hasVarg,
 		       std::vector<const char *> *paramIdent = nullptr)
 {
-    static std::size_t paramId;
-    paramId = 0;
+    std::size_t paramId = 0;
 
     argType.clear();
     if (paramIdent) {
@@ -333,6 +332,11 @@ parseFnParamDeclOrType(std::vector<const Type *> &argType,
 	// add param to symtab if this is a declaration
 	if (paramIdent) {
 	    auto s = Symtab::addDecl(loc, ident.c_str(), type);
+	    if (!s) {
+		error::out() << loc << ": parameter '" << ident.c_str()
+		    << "' already defined" << std::endl;
+		error::fatal();
+	    }
 	    paramIdent->push_back(s->ident.c_str());
 	}
 
@@ -365,19 +369,18 @@ parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
 		  std::vector<const char *> *fnParamIdent = nullptr)
 {
     UStr fnIdent;
-    Token::Loc fnLoc;
 
     if (token.kind != TokenKind::FN) {
 	return nullptr;
     }
     getToken();
+    Token::Loc fnLoc = token.loc;
 
     // parse function identifier
     if (fnDecl) {
 	error::expected(TokenKind::IDENTIFIER);
     }
     if (token.kind == TokenKind::IDENTIFIER) {
-	fnLoc = token.loc;
 	fnIdent = token.val;
 	getToken();
     }
@@ -413,9 +416,11 @@ parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
     }
 
     auto fnType = Type::getFunction(retType, argType, hasVarg);
+    assert(fnType);
     
     if (fnDecl) {
 	*fnDecl = Symtab::addDeclToRootScope(fnLoc, fnIdent.c_str(), fnType);
+	assert((*fnDecl)->getType() == fnType);
     }
 
     return fnType;
@@ -425,8 +430,8 @@ static Symtab::Entry *
 parseFnDecl(std::vector<const char *> &fnParamIdent)
 {
     std::vector<const Type *> argType;
-    const Type *retType;
-    Symtab::Entry *fnDecl;
+    const Type *retType = nullptr;
+    Symtab::Entry *fnDecl = nullptr;
 
     parseFnDeclOrType(argType, retType, &fnDecl, &fnParamIdent);
     return fnDecl;
@@ -443,7 +448,7 @@ static const Type *
 parseFnType(void)
 {
     std::vector<const Type *> argType;
-    const Type *retType;
+    const Type *retType = nullptr;
 
     return parseFnDeclOrType(argType, retType);
 }

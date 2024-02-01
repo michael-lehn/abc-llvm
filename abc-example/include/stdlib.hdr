@@ -2,7 +2,7 @@
 #define STDLIB_ABH
 
 type size_t : u64;
-type void_ptr : ->;
+type void_ptr: -> ;
 
 fn malloc(size: size_t): void_ptr;
 fn free(ptr: void_ptr);
