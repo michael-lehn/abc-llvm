@@ -11,8 +11,18 @@ fn printBytes(s: -> u8, n: u64)
     }
 }
 
+type int: i32;
+
 fn main(): u8
 {
+
+    local
+	a: array[10] of -> int,
+	b: -> array[10] of int,
+	c: array[10] of -> const int,
+	d: array[10] of const -> int,
+	e: array[10] of const -> const int;
+
     local s1: -> u8 = "hello world\n",
 	  s2: -> u8 = "ABC\n",
 	  sel: -> -> u8 = &s1;
