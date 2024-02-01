@@ -22,6 +22,7 @@ fn releaseExpr(expr: -> const Expr)
 fn createLiteralExpr(val: i64): -> Expr
 {
     local expr: -> Expr = malloc(sizeof(*expr));
+    assert(expr);
     expr->val = val;
     expr->kind = EXPR_PRIMARY;
 }
@@ -31,6 +32,7 @@ fn createBinaryExpr(op: BinaryExprKind,
 		    right: -> const Expr): -> Expr
 {
     local expr: -> Expr = malloc(sizeof(*expr));
+    assert(expr);
     expr->binary.op = op;
     expr->binary.left = left;
     expr->binary.right = right;
