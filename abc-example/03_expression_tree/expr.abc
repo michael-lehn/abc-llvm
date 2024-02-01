@@ -14,7 +14,7 @@ fn releaseExpr(expr: -> const Expr)
 	    releaseExpr(expr->binary.right);
 	    break;	
 	default:
-	    //assert(0);
+	    assert(0);
 	    break;
     }
 }
