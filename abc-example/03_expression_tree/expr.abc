@@ -75,15 +75,15 @@ fn printExprWithIndent(indent: i32, expr: -> const Expr)
     switch (expr->kind) {
 	case EXPR_PRIMARY:
 	    printf("%lld\n", expr->val);
-	    break;
+	    return;
 	case EXPR_BINARY:
 	    printf("%s\n", binaryExprKindStr(expr->binary.op));
 	    printExprWithIndent(indent + 4, expr->binary.left);
 	    printExprWithIndent(indent + 4, expr->binary.right);
-	    break;
+	    return;
 	default:
 	    assert(0);
-	    break;
+	    return;
     }
 }
 
