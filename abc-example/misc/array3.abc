@@ -23,6 +23,13 @@ fn printMat(p: -> array[12] of u64, dim0: u64, dim1: u64)
 
 fn main()
 {
+    // verbose case
     initMat(cast(a:->u64), 3, 12);
     printMat(cast(a:-> array[12] of u64), 3, 12);
+
+    printf("\n\n");
+
+    // slick cast
+    initMat(:->u64(a), 3, 12);
+    printMat(:-> array[12] of u64(a), 3, 12);
 }

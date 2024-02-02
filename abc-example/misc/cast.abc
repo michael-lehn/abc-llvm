@@ -4,13 +4,25 @@ fn main()
 {
     local
 	a: u64,
+	b: i32,
 	p: -> u64;
 
     a = 123;
     p = &a;
 
+    // verbose cast
     p = cast(p: array[2] of u64);
     p[0] = 42;
+
+    // slick cast
+    p = :array[2] of u64(p);
+    p[0] = 42;
+
+    // conditional with a slick cast ... hmm
+    a = a > 0 ? a : :u64(b);
+
+    // verbose consditional with a slick cast ... maybe more like it
+    a = a > 0 then a else :u64(b);
 
     printf("a = %ld\n", a);
 }

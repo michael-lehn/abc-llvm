@@ -103,6 +103,8 @@ tokenKindCStr(TokenKind kind)
 	    return "IF";
 	case TokenKind::ELSE:
 	    return "ELSE";
+	case TokenKind::THEN:
+	    return "THEN";
 	case TokenKind::ARRAY:
 	    return "ARRAY";
 	case TokenKind::OF:
@@ -262,6 +264,8 @@ tokenCStr(TokenKind kind)
 	    return "if";
 	case TokenKind::ELSE:
 	    return "else";
+	case TokenKind::THEN:
+	    return "then";
 	case TokenKind::ARRAY:
 	    return "array";
 	case TokenKind::OF:
@@ -467,6 +471,7 @@ static std::unordered_map<UStr, TokenKind> kw = {
     { "for", TokenKind::FOR },
     { "if", TokenKind::IF },
     { "else", TokenKind::ELSE },
+    { "then", TokenKind::THEN },
     { "array", TokenKind::ARRAY },
     { "of", TokenKind::OF },
     { "sizeof", TokenKind::SIZEOF },

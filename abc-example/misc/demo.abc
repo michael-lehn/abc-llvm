@@ -15,7 +15,11 @@ fn main()
 	printf("hello, world!\n");
     }
 
+    // verbose cast
     *cast(&foo.a: ->u8) = 123;
+
+    // slick cast
+    * :->u8( &foo.a ) = 123;
 
     local
 	a: u8,

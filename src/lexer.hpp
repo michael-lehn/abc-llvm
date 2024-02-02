@@ -39,6 +39,7 @@ enum class TokenKind {
     WHILE,
     IF,
     ELSE,
+    THEN,
     ARRAY,
     OF,
     SIZEOF,
