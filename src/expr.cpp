@@ -1120,6 +1120,7 @@ loadValue(const Conditional &expr)
     auto elseLabel = gen::getLabel("condFalse");
     auto endLabel = gen::getLabel("end");
 
+    expr.cond->print();
     expr.cond->condJmp(thenLabel, elseLabel);
     gen::labelDef(thenLabel);
     auto condTrue = expr.left->loadValue();

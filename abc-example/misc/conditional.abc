@@ -1,0 +1,37 @@
+#include <assert.hdr>
+#include <stdio.hdr>
+
+/*
+ * I think a programming language should not provide too many alternatives
+ * to express the same thing. Ideally there should just be one. But in the
+ * beginning we have to try out things ...
+ * ... so here an example how conditional expressions can look like.
+ */
+
+fn main()
+{
+    local a: int,
+	  b: int;
+
+    
+    printf("enter integer a: ");
+    scanf("%d", &a);
+
+    printf("enter integer b: ");
+    scanf("%d", &b);
+
+
+    printf("%d > %d is %s\n", a, b, a > b ? "true" : "false");
+
+    printf("conditional expression:  '%d > %d ? %d : %d' has value %d\n",
+	   a, b, a, b, a > b ? a : b); 
+
+    printf("conditional expression:  '%d > %d then %d else %d' has value %d\n",
+	   a, b, a, b, a > b then a else b); 
+
+    printf("conditional expression:  '%d > %d ? %d else %d' has value %d\n",
+	   a, b, a, b, a > b ? a else b); 
+
+    printf("conditional expression:  '%d > %d then %d : %d' has value %u\n",
+	   a, b, a, b, a > b then  a : b); 
+}

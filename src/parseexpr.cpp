@@ -143,7 +143,7 @@ parseConditional(void)
 	return nullptr;
     }
 
-    if (token.kind == TokenKind::QUERY) {
+    if (token.kind == TokenKind::QUERY || token.kind == TokenKind::THEN) {
 	auto queryOpLoc = token.loc;
 	getToken();
 	
@@ -153,7 +153,11 @@ parseConditional(void)
 		<< std::endl;
 	    error::fatal();
 	}
-	error::expected(TokenKind::COLON);
+	if (token.kind != TokenKind::COLON && token.kind != TokenKind::ELSE) {
+	    error::out() << token.loc << " expected ':' or 'else'"
+		<< std::endl;
+	    error::fatal();
+	}
 	auto colonOpLoc = token.loc;
 	getToken();
 	auto right = parseConditional();
