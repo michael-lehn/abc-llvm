@@ -1,0 +1,201 @@
+#include <assert.hdr>
+#include <stdlib.hdr>
+#include <stdio.hdr>
+#include <string.hdr>
+
+#include "expr.hdr"
+#include "symtab.hdr"
+
+fn releaseExpr(expr: -> const Expr)
+{
+    switch (expr->kind) {
+	case EXPR_PRIMARY:
+	    break;
+	case EXPR_BINARY:
+	    releaseExpr(expr->binary.left);
+	    releaseExpr(expr->binary.right);
+	    break;	
+	default:
+	    assert(0);
+	    break;
+    }
+}
+
+fn isIdentifierExpr(expr: -> const Expr): bool
+{
+    return expr->kind == EXPR_PRIMARY && expr->primary.kind == EXPR_IDENTIFIER;
+}
+
+fn createLiteralExpr(val: i64): -> Expr
+{
+    local expr: -> Expr = malloc(sizeof(*expr));
+    assert(expr);
+    expr->kind = EXPR_PRIMARY;
+    expr->primary.kind = EXPR_LITERAL;
+    expr->primary.val = val;
+    return expr;
+}
+
+fn createIdentifierExpr(ident: -> char): -> Expr
+{
+    local expr: -> Expr = malloc(sizeof(*expr));
+    assert(expr);
+    expr->kind = EXPR_PRIMARY;
+    expr->primary.kind = EXPR_IDENTIFIER;
+    strncpy(expr->primary.ident, ident, TOKEN_VAL_MAX_LEN);
+    return expr;
+}
+
+fn createBinaryExpr(op: BinaryExprKind,
+		    left: -> const Expr,
+		    right: -> const Expr): -> Expr
+{
+    local expr: -> Expr = malloc(sizeof(*expr));
+    assert(expr);
+    expr->binary.op = op;
+    expr->binary.left = left;
+    expr->binary.right = right;
+    expr->kind = EXPR_BINARY;
+    return expr;
+}
+
+fn evalExpr(expr: -> const Expr): i64
+{
+    switch (expr->kind) {
+	case EXPR_PRIMARY:
+	    switch (expr->primary.kind) {
+		case EXPR_LITERAL:
+		    return expr->primary.val;
+		case EXPR_IDENTIFIER:
+		    if (!symtabContains(expr->primary.ident)) {
+			printf("warning: implicit definition of '%s'\n",
+			       expr->primary.ident);
+			return symtabSet(expr->primary.ident, 0);
+		    }
+		    return symtabGet(expr->primary.ident);
+		default:
+		    assert(0);
+	    }
+	case EXPR_BINARY:
+	    switch (expr->binary.op) {
+		case EXPR_ASSIGN:
+		    {
+			local left: -> const Expr = expr->binary.left;
+			local right: -> const Expr = expr->binary.right;
+
+			assert(isIdentifierExpr(left));
+			return symtabSet(left->primary.ident, evalExpr(right));
+		    }
+		case EXPR_ADD:
+		    return evalExpr(expr->binary.left)
+			 + evalExpr(expr->binary.right);
+		case EXPR_SUB:
+		    return evalExpr(expr->binary.left)
+			 - evalExpr(expr->binary.right);
+		case EXPR_MUL:
+		    return evalExpr(expr->binary.left)
+			 * evalExpr(expr->binary.right);
+		case EXPR_DIV:
+		    return evalExpr(expr->binary.left)
+			 / evalExpr(expr->binary.right);
+		default:
+		    assert(0);
+	    }
+	    break;
+	default:
+	    assert(0);
+    }
+}
+
+fn loadExpr(expr: -> const Expr): GenReg
+{
+    switch (expr->kind) {
+	case EXPR_PRIMARY:
+	    switch (expr->primary.kind) {
+		case EXPR_LITERAL:
+		    return genLoad(expr->primary.val);
+		case EXPR_IDENTIFIER:
+		    return genFetch(genLoadAddr(expr->primary.ident));
+		default:
+		    assert(0);
+	    }
+	case EXPR_BINARY:
+	    switch (expr->binary.op) {
+		case EXPR_ASSIGN:
+		    {
+			local res: GenReg = loadExpr(expr->binary.right);
+			genStore(res,
+				 genLoadAddr(expr->binary.left->primary.ident));
+			return res;
+		    }
+		case EXPR_ADD:
+		    return genAluInstr(GEN_ADD,
+				       loadExpr(expr->binary.left),
+				       loadExpr(expr->binary.right));
+		case EXPR_SUB:
+		    return genAluInstr(GEN_SUB,
+				       loadExpr(expr->binary.left),
+				       loadExpr(expr->binary.right));
+		case EXPR_MUL:
+		    return genAluInstr(GEN_MUL,
+				       loadExpr(expr->binary.left),
+				       loadExpr(expr->binary.right));
+		case EXPR_DIV:
+		    return genAluInstr(GEN_DIV,
+				       loadExpr(expr->binary.left),
+				       loadExpr(expr->binary.right));
+		default:
+		    assert(0);
+	    }
+	    break;
+	default:
+	    assert(0);
+    }
+}
+
+fn binaryExprKindStr(kind: BinaryExprKind): -> char;
+
+fn printExprWithIndent(indent: i32, expr: -> const Expr)
+{
+    printf("%*s%", indent, "");
+    switch (expr->kind) {
+	case EXPR_PRIMARY:
+	    switch (expr->primary.kind) {
+		case EXPR_LITERAL:
+		    printf("%lld\n", expr->primary.val);
+		    return;
+		case EXPR_IDENTIFIER:
+		    printf("%s\n", expr->primary.ident);
+		    return;
+		default:
+		    assert(0);
+	    }
+	    return;
+	case EXPR_BINARY:
+	    printf("%s\n", binaryExprKindStr(expr->binary.op));
+	    printExprWithIndent(indent + 4, expr->binary.left);
+	    printExprWithIndent(indent + 4, expr->binary.right);
+	    return;
+	default:
+	    printf("expr->kind = %d\n", expr->kind);
+	    assert(0);
+	    return;
+    }
+}
+
+fn printExpr(expr: -> const Expr)
+{
+    printExprWithIndent(0, expr);
+}
+
+fn binaryExprKindStr(kind: BinaryExprKind): -> char
+{
+    switch (kind) {
+	case EXPR_ASSIGN: return "=";
+	case EXPR_ADD: return "+";
+	case EXPR_SUB: return "-";
+	case EXPR_MUL: return "*";
+	case EXPR_DIV: return "/";
+	default: return "<? Binary Expr Kind ?>";
+    }
+}

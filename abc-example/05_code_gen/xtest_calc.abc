@@ -22,6 +22,7 @@ fn main()
 	printf("expression tree:\n");
 	printExpr(expr);
 	printf("value of expression = %lld\n", evalExpr(expr));
+	loadExpr(expr);
 	printf("> ");
 	if (token.kind != SEMICOLON) {
 	    break;

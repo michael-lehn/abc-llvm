@@ -1,0 +1,14 @@
+#include <stdio.hdr>
+
+#include "lexer.hdr"
+
+fn main()
+{
+    while (getToken() != EOI) {
+	printf("%d.%d-%d.%d: '%s' %d ('%s')\n", token.loc.from.line,
+	    token.loc.from.col, token.loc.to.line, token.loc.to.col,
+	    &token.val[0], token.valLen, tokenKindStr(token.kind));
+    }
+    printf("> %s\n", tokenKindStr(token.kind));
+}
+

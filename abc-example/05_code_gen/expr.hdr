@@ -1,0 +1,61 @@
+#ifndef EXPR_HDR
+#define EXPR_HDR
+
+#include "gen.hdr"
+#include "lexer.hdr"
+
+enum ExprKind : i32
+{
+    EXPR_PRIMARY,
+    EXPR_BINARY
+};
+
+enum PrimaryExprKind : i32
+{
+    EXPR_LITERAL,
+    EXPR_IDENTIFIER,
+};
+
+enum BinaryExprKind : i32
+{
+    EXPR_ASSIGN,
+    EXPR_ADD,
+    EXPR_SUB,
+    EXPR_MUL,
+    EXPR_DIV,
+};
+
+struct Expr
+{
+    primary:	struct PrimaryExpr {
+		    kind:   PrimaryExprKind;
+		    val:    i64;
+		    ident:  array[TOKEN_VAL_MAX_LEN + 1] of char;
+		};
+    binary:	struct BinaryExpr {
+		    op: BinaryExprKind;
+		    left, right: -> const Expr;
+		};
+    kind:	ExprKind;
+};
+
+extern fn releaseExpr(expr: -> const Expr);
+
+extern fn isIdentifierExpr(expr: -> const Expr): bool;
+
+extern fn createLiteralExpr(val: i64): -> Expr;
+
+extern fn createIdentifierExpr(ident: -> char): -> Expr;
+
+extern fn createBinaryExpr(op: BinaryExprKind,
+			   left: -> const Expr,
+			   right: -> const Expr): -> Expr;
+
+extern fn evalExpr(expr: -> const Expr): i64;
+
+extern fn loadExpr(expr: -> const Expr): GenReg;
+
+extern fn printExpr(expr: -> const Expr);
+
+
+#endif // EXPR_HDR

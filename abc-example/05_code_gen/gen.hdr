@@ -1,0 +1,23 @@
+#ifndef GEN_HDR
+#define GEN_HDR
+
+#include <stdio.hdr>
+
+type GenReg : u8;
+
+enum GEN_ALU_OP : u8
+{
+    GEN_ADD,
+    GEN_SUB,
+    GEN_MUL,
+    GEN_DIV,
+};
+
+extern fn genLoad(val: u64): GenReg;
+extern fn genLoadAddr(ident: -> const char): GenReg;
+extern fn genFetch(reg: GenReg): GenReg;
+extern fn genStore(val: GenReg, addr: GenReg);
+
+extern fn genAluInstr(op: GEN_ALU_OP, left: GenReg, right: GenReg) : GenReg;
+
+#endif // GEN_HDR
