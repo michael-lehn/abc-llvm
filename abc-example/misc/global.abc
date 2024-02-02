@@ -1,18 +1,26 @@
 #include <stdio.hdr>
 
-global foo: u64 = 23,
-       bar: array[20] of u64 = {1, 2, 3, };
+global val: u64 = 12;
 
-fn printFooBar()
+fn foo()
 {
-    printf("foo = %llu\n", foo);
-    printf("bar[0] = %llu\n", bar[0]);
-    printf("bar[1] = %llu\n", bar[1]);
-    printf("bar[2] = %llu\n", bar[2]);
+    global val: u64 = 34;
+    printf("foo: val = %llu\n", val++);
 }
 
+fn bar()
+{
+    global val: u64 = 56;
+    printf("bar: val = %llu\n", val++);
+}
 
 fn main()
 {
-    printFooBar();
+    printf("main: val = %llu\n", val++);
+    foo();
+    bar();
+    printf("main: val = %llu\n", val++);
+    foo();
+    bar();
+    printf("main: val = %llu\n", val++);
 }

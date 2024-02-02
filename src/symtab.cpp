@@ -50,6 +50,13 @@ Symtab::Entry::setDefinitionFlag(void)
 }
 
 //------------------------------------------------------------------------------
+static const char *scopePrefix;
+
+void
+Symtab::setPrefix(UStr prefix)
+{
+    scopePrefix = prefix.c_str();
+}
 
 void
 Symtab::openScope(void)
@@ -121,6 +128,9 @@ Symtab::add(Token::Loc loc, UStr ident, Entry::Data &&data, ScopeNode *sn)
     UStr internalIdent = ident;
     if (sn->id) {
 	std::stringstream ss;
+	if (scopePrefix) {
+	    ss << scopePrefix;
+	}
 	ss << "._" << ident.c_str() << sn->id << "_.";
 	internalIdent = ss.str();
     }

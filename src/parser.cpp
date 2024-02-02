@@ -1304,6 +1304,7 @@ parseFn(void)
     } else {
 	error::expected(TokenKind::LBRACE);
 	gen::fnDef(fnDecl->ident.c_str(), fnDecl->getType(), fnParamIdent);
+	Symtab::setPrefix(fnDecl->ident.c_str());
 	if (fnDecl->ident == UStr{"main"}) {
 	    auto ty = fnDecl->getType()->getRetType();
 	    if (!ty->isInteger() && !ty->isVoid()) {

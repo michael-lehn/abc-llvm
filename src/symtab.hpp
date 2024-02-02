@@ -110,6 +110,9 @@ class Symtab
 		bool externFlag;
 	};
 
+	// Used to create unique identifieriers within functions scope.
+	static void setPrefix(UStr prefix);
+
 	static void openScope(void);
 	static void closeScope(void);
 
@@ -145,6 +148,7 @@ class Symtab
 	// returns nullptr if 'ident' was found in current type scope,
 	// otherwise returns 'type'.
 	static const Type *addTypeAlias(UStr ident, const Type *type);
+
 
 	static std::ostream &print(std::ostream &out);
 
