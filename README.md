@@ -70,6 +70,6 @@ Let us consider some more exciting examples:
 
 Got the idea? Then you might already guess that
 ```abc
-foo: -> fn(sel: int, value: int) -> fn(value: int): -> int;
+foo: -> fn(sel: int, value: int): -> fn(value: int): -> int;
 ```
 declares a function pointer `foo` to a function with two integer parameters which returns a pointer to a function that has one integer parameter and returns a pointer to an integer. Now declare this in C without typedefs ;-)
