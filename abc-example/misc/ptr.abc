@@ -11,8 +11,6 @@ fn printBytes(s: -> u8, n: u64)
     }
 }
 
-type int: i32;
-
 fn main(): u8
 {
 
@@ -35,7 +33,7 @@ fn main(): u8
     printBytes(s1, 15);
 
     printf("First 5 bytes of function 'printBytes':\n");
-    s1 = printBytes;
+    s1 = cast(printBytes: -> char);
     printBytes(s1, 5);
 
     return 0;

@@ -941,6 +941,9 @@ loadValue(const Binary &binary)
 	case Binary::Kind::MEMBER:
 	    {
 		auto addr = loadAddr(binary);
+		if (binary.type->isArray()) {
+		    return addr;
+		}
 		return gen::fetch(addr, binary.type);
 	    }
 	case Binary::Kind::CALL:
@@ -1046,8 +1049,6 @@ loadValue(const Binary &binary)
 	case Binary::Kind::GREATER_EQUAL:
 	case Binary::Kind::NOT_EQUAL:
 	case Binary::Kind::EQUAL:
-	case Binary::Kind::LOGICAL_AND:
-	case Binary::Kind::LOGICAL_OR:
 	    {
 		assert(*binary.left->getType() == *binary.right->getType()
 			&& "operand types not casted?");
@@ -1056,6 +1057,46 @@ loadValue(const Binary &binary)
 		auto l = binary.left->loadValue();
 		auto r = binary.right->loadValue();
 		return gen::cond(condOp, l, r);
+	    }
+	case Binary::Kind::LOGICAL_AND:
+	case Binary::Kind::LOGICAL_OR:
+	    {
+		assert(*binary.left->getType() == *binary.right->getType()
+			&& "operand types not casted?");
+		auto ty = binary.type;
+		ty = Type::convertArrayOrFunctionToPointer(ty);
+
+		if (binary.left->isConst() && binary.right->isConst()) {
+		    auto val = binary.left->loadConstInt()->getZExtValue();
+		    if (val && binary.kind == Binary::Kind::LOGICAL_OR) {
+			return gen::loadIntConst(1, ty);
+		    }
+		    if (!val && binary.kind == Binary::Kind::LOGICAL_AND) {
+			return gen::loadIntConst(0, ty);
+		    }
+		    val = binary.right->loadConstInt()->getZExtValue();
+		    if (val) {
+			return gen::loadIntConst(1, ty);
+		    }
+		    return gen::loadIntConst(0, ty);
+		} else {
+		    auto trueLabel = gen::getLabel("true");
+		    auto falseLabel = gen::getLabel("false");
+		    auto phiLabel = gen::getLabel("true");
+
+		    condJmp(binary, trueLabel, falseLabel);
+
+		    gen::labelDef(trueLabel);
+		    auto one = gen::loadIntConst(1, ty);
+		    gen::jmp(phiLabel);
+
+		    gen::labelDef(falseLabel);
+		    auto zero = gen::loadIntConst(0, ty);
+		    gen::jmp(phiLabel);
+
+		    gen::labelDef(phiLabel);
+		    return gen::phi(one, trueLabel, zero, falseLabel, ty);
+		}
 	    }
 	default:
 	    error::out() << "binary.kind = " << int(binary.kind) << std::endl;

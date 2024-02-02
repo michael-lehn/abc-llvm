@@ -1,8 +1,10 @@
 #include <assert.hdr>
 #include <stdlib.hdr>
 #include <stdio.hdr>
+#include <string.hdr>
 
 #include "expr.hdr"
+#include "symtab.hdr"
 
 fn releaseExpr(expr: -> const Expr)
 {
@@ -19,12 +21,28 @@ fn releaseExpr(expr: -> const Expr)
     }
 }
 
+fn isIdentifierExpr(expr: -> const Expr): bool
+{
+    return expr->kind == EXPR_PRIMARY && expr->primary.kind == EXPR_IDENTIFIER;
+}
+
 fn createLiteralExpr(val: i64): -> Expr
 {
     local expr: -> Expr = malloc(sizeof(*expr));
     assert(expr);
-    expr->val = val;
     expr->kind = EXPR_PRIMARY;
+    expr->primary.kind = EXPR_LITERAL;
+    expr->primary.val = val;
+    return expr;
+}
+
+fn createIdentifierExpr(ident: -> char): -> Expr
+{
+    local expr: -> Expr = malloc(sizeof(*expr));
+    assert(expr);
+    expr->kind = EXPR_PRIMARY;
+    expr->primary.kind = EXPR_IDENTIFIER;
+    strncpy(expr->primary.ident, ident, TOKEN_VAL_MAX_LEN);
     return expr;
 }
 
@@ -45,9 +63,29 @@ fn evalExpr(expr: -> const Expr): i64
 {
     switch (expr->kind) {
 	case EXPR_PRIMARY:
-	    return expr->val;
+	    switch (expr->primary.kind) {
+		case EXPR_LITERAL:
+		    return expr->primary.val;
+		case EXPR_IDENTIFIER:
+		    if (!symtabContains(expr->primary.ident)) {
+			printf("warning: implicit definition of '%s'\n",
+			       expr->primary.ident);
+			return symtabSet(expr->primary.ident, 0);
+		    }
+		    return symtabGet(expr->primary.ident);
+		default:
+		    assert(0);
+	    }
 	case EXPR_BINARY:
 	    switch (expr->binary.op) {
+		case EXPR_ASSIGN:
+		    {
+			local left: -> const Expr = expr->binary.left;
+			local right: -> const Expr = expr->binary.right;
+
+			assert(isIdentifierExpr(left));
+			return symtabSet(left->primary.ident, evalExpr(right));
+		    }
 		case EXPR_ADD:
 		    return evalExpr(expr->binary.left)
 			 + evalExpr(expr->binary.right);
@@ -62,12 +100,10 @@ fn evalExpr(expr: -> const Expr): i64
 			 / evalExpr(expr->binary.right);
 		default:
 		    assert(0);
-		    break;
 	    }
 	    break;
 	default:
 	    assert(0);
-	    break;
     }
 }
 
@@ -78,7 +114,16 @@ fn printExprWithIndent(indent: i32, expr: -> const Expr)
     printf("%*s%", indent, "");
     switch (expr->kind) {
 	case EXPR_PRIMARY:
-	    printf("%lld\n", expr->val);
+	    switch (expr->primary.kind) {
+		case EXPR_LITERAL:
+		    printf("%lld\n", expr->primary.val);
+		    return;
+		case EXPR_IDENTIFIER:
+		    printf("%s\n", expr->primary.ident);
+		    return;
+		default:
+		    assert(0);
+	    }
 	    return;
 	case EXPR_BINARY:
 	    printf("%s\n", binaryExprKindStr(expr->binary.op));
@@ -100,6 +145,7 @@ fn printExpr(expr: -> const Expr)
 fn binaryExprKindStr(kind: BinaryExprKind): -> char
 {
     switch (kind) {
+	case EXPR_ASSIGN: return "=";
 	case EXPR_ADD: return "+";
 	case EXPR_SUB: return "-";
 	case EXPR_MUL: return "*";

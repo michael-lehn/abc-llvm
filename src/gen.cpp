@@ -333,6 +333,7 @@ fnDefEnd(void)
 	llvmFPM->run(*currFn.llvmFn, *llvmFAM);
 	llvmFPM->run(*currFn.llvmFn, *llvmFAM);
     }
+    currFn.llvmFn = nullptr;
 }
 
 void
@@ -540,6 +541,7 @@ getLabel(const char *name)
 void
 labelDef(Label label)
 {
+    assert(currFn.llvmFn);
     if (!currFn.bbClosed) {
 	jmp(label);
     }
@@ -552,6 +554,7 @@ labelDef(Label label)
 Label
 jmp(Label &label)
 {
+    assert(currFn.llvmFn);
     assureOpenBuildingBlock();
     auto ib = llvmBuilder->GetInsertBlock();
     if (!currFn.bbClosed) {
@@ -564,6 +567,7 @@ jmp(Label &label)
 void
 jmp(Cond cond, Label trueLabel, Label falseLabel)
 {
+    assert(currFn.llvmFn);
     assureOpenBuildingBlock();
     if (!currFn.bbClosed) {
 	llvmBuilder->CreateCondBr(cond, trueLabel, falseLabel);
@@ -575,6 +579,7 @@ void
 jmp(Cond cond, Label defaultLabel,
     const std::vector<std::pair<ConstIntVal, Label>> &caseLabel)
 {
+    assert(currFn.llvmFn);
     assureOpenBuildingBlock();
     auto sw = llvmBuilder->CreateSwitch(cond, defaultLabel, caseLabel.size());
     for (const auto &[val, label]: caseLabel) {
@@ -586,6 +591,7 @@ jmp(Cond cond, Label defaultLabel,
 Reg
 phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type)
 {
+    assert(currFn.llvmFn);
     assureOpenBuildingBlock();
 
     auto ty = TypeMap::get(type);

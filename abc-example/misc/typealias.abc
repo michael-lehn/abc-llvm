@@ -6,7 +6,7 @@ fn foo()
 	a: -> int,
 	b: int;
 
-    a = b;
+    *a = b;
 }
 
 fn bar()
@@ -34,5 +34,5 @@ fn main()
 	a: -> int,
 	b: int;
 
-    a = b;
+    *a = b;
 }

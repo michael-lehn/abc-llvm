@@ -1,3 +1,5 @@
+#include <stdio.hdr>
+
 #include "expr.hdr"
 
 fn main()

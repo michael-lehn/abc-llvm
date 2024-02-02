@@ -1,5 +1,5 @@
 ABC := ../../bin/abc
-ABCFLAGS := -O3
+#ABCFLAGS := -O3
 CPP := $(CC) -E -x c -traditional -Wno-endif-labels -I../include
 CPPFLAGS += \
 	    -MT $(@:$(cpp.dir)/%.abc_cpp=$(obj.dir)/%.o)\
@@ -69,6 +69,7 @@ $(obj.dir): ; mkdir -p $@
 .PHONY: clean
 clean:
 	$(RM) $(target) $(asm.abc) $(obj.abc) $(bc.abc) $(lib) $(cpp.abc) $(dep)
+	$(RM) -rf $(dep.dir) $(cpp.dir) $(asm.dir) $(obj.dir)
 
 $(dep):
 -include $(dep)

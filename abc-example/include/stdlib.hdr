@@ -1,7 +1,8 @@
 #ifndef STDLIB_ABH
 #define STDLIB_ABH
 
-type size_t : u64;
+#include <stdabc.hdr>
+
 type void_ptr: -> ;
 
 fn malloc(size: size_t): void_ptr;
