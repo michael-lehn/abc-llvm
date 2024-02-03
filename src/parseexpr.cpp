@@ -577,10 +577,13 @@ parsePrimary(void)
 	auto expr = Expr::createLiteral(val, 8, ty, opTok.loc);
         return expr;
     } else if (token.kind == TokenKind::STRING_LITERAL) {
-	auto val = token.val.c_str();
-        getToken();
-	auto sym = Symtab::addStringLiteral(val).c_str();
-	auto expr = Expr::createIdentifier(sym, opTok.loc);	
+	std::string str{};
+	do {
+	    str += token.val.c_str();
+	    getToken();
+	} while (token.kind == TokenKind::STRING_LITERAL);
+	auto ident = Symtab::addStringLiteral(UStr{str}).c_str();
+	auto expr = Expr::createIdentifier(ident, opTok.loc);	
 	return expr;	
     } else if (token.kind == TokenKind::CHARACTER_LITERAL) {
 	std::stringstream ss;
