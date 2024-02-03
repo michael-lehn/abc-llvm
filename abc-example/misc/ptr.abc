@@ -1,6 +1,6 @@
 #include <stdio.hdr>
 
-fn printBytes(s: -> u8, n: u64)
+fn printBytes(s: -> char, n: u64)
 {
     for (local i: u64 = 0; i < n; ++i) {
 	printf("%02x\n", i[s]);
@@ -21,9 +21,9 @@ fn main(): u8
 	d: array[10] of const -> int,
 	e: array[10] of const -> const int;
 
-    local s1: -> u8 = "hello world\n",
-	  s2: -> u8 = "ABC\n",
-	  sel: -> -> u8 = &s1;
+    local s1: -> char = "hello world\n",
+	  s2: -> char = "ABC\n",
+	  sel: -> -> char = &s1;
 
     printf(*sel);
     sel = &s2;

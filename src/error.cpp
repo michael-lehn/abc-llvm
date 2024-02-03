@@ -18,6 +18,13 @@ fatal(void)
 }
 
 void
+warning(void)
+{
+    std::exit(1);
+}
+
+
+void
 expected(TokenKind kind)
 {
     if (token.kind != kind) {

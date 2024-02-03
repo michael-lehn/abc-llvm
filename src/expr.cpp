@@ -166,7 +166,11 @@ Binary::setType(void)
 		    type = nullptr;
 		}
 	    } else {
-		type = getCommonType(opLoc, l, r);
+		if (kind == Binary::Kind::ADD) {
+		    type = getCommonType(opLoc, l, r);
+		} else {
+		    type = l; // prevent any cast
+		}
 	    }
 	    return;
 	case Binary::Kind::SUB:
@@ -344,6 +348,7 @@ getIntType(const char *s, const char *end, std::uint8_t radix, Token::Loc loc)
     error::out() << loc << ": warning: signed integer '" << s
 	<< "' does not fit into 64 bits"
 	<< std::endl;
+    error::warning();
     return Type::getSignedInteger(64);
 }
 

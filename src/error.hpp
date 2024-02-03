@@ -9,6 +9,7 @@ namespace error {
 
 std::ostream& out(void);
 void fatal(void);
+void warning(void);
 
 void expected(TokenKind kind);
 

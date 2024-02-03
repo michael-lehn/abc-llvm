@@ -26,7 +26,7 @@ struct Token {
 				line, col: int;
 			    };
 	    };
-    val:    array[42] of u8;
+    val:    array[42] of char;
     valLen: int;
 };
 

@@ -555,6 +555,15 @@ Type::getVoid()
 }
 
 const Type *
+Type::getChar()
+{
+    if (std::numeric_limits<char>::is_signed) {
+	return getSignedInteger(8);
+    }
+    return getUnsignedInteger(8);
+}
+
+const Type *
 Type::getBool()
 {
     if (!intTypeSet) {
@@ -706,6 +715,7 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc)
 	if (to->hasConstFlag() && !from->hasConstFlag()) {
 	    error::out() << loc << ": warning: casting '" << from
 		<< "' to '" << to << "' discards const qualifier" << std::endl;
+	    error::warning();
 	}
 	return to;
     } else if (from->isInteger() && to->isInteger()) {
@@ -721,28 +731,33 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc)
 	{
 	    error::out() << loc << ": warning: casting '" << from
 		<< "' to '" << to << "'" << std::endl;
+	    error::warning();
 	}
 	if (!to->getRefType()->hasConstFlag()
 		&& from->getRefType()->hasConstFlag()) {
 	    error::out() << loc << ": warning: casting '" << from
 		<< "' to '" << to << "' discards const qualifier" << std::endl;
+	    error::warning();
 	}
 	return from;
     } else if (from->isFunction() && to->isPointer()) {
 	if (from != to->getRefType() && !to->getRefType()->isVoid()) {
 	    error::out() << loc << ": warning: casting '" << from
 		<< "' to '" << to << "'" << std::endl;
+	    error::warning();
 	}
 	return from; // no cast required
     } else if (convertArrayOrFunctionToPointer(from)->isPointer()
 	    && to->isInteger()) {
 	error::out() << loc << ": warning: casting '" << from
 	    << "' to '" << to << "'" << std::endl;
+	error::warning();
 	return to;
     } else if (from->isInteger()
 	    && convertArrayOrFunctionToPointer(to)->isPointer()) {
 	error::out() << loc << ": warning: casting '" << from
 	    << "' to '" << to << "'" << std::endl;
+	error::warning();
 	return to;
     }
     return nullptr;

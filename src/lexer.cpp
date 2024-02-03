@@ -65,22 +65,6 @@ tokenKindCStr(TokenKind kind)
 	    return "CHARACTER_LITERAL";
 	case TokenKind::CONST:
 	    return "CONST";
-	case TokenKind::I8:
-	    return "I8";
-	case TokenKind::I16:
-	    return "I16";
-	case TokenKind::I32:
-	    return "I32";
-	case TokenKind::I64:
-	    return "I64";
-	case TokenKind::U8:
-	    return "U8";
-	case TokenKind::U16:
-	    return "U16";
-	case TokenKind::U32:
-	    return "U32";
-	case TokenKind::U64:
-	    return "U64";
 	case TokenKind::FN:
 	    return "FN";
 	case TokenKind::RETURN:
@@ -226,22 +210,6 @@ tokenCStr(TokenKind kind)
 	    return "identifier";
 	case TokenKind::CONST:
 	    return "const";
-	case TokenKind::I8:
-	    return "i8";
-	case TokenKind::I16:
-	    return "i16";
-	case TokenKind::I32:
-	    return "i32";
-	case TokenKind::I64:
-	    return "i64";
-	case TokenKind::U8:
-	    return "u8";
-	case TokenKind::U16:
-	    return "u16";
-	case TokenKind::U32:
-	    return "u32";
-	case TokenKind::U64:
-	    return "u64";
 	case TokenKind::FN:
 	    return "fn";
 	case TokenKind::RETURN:
@@ -452,14 +420,6 @@ hexToVal(char ch)
 
 static std::unordered_map<UStr, TokenKind> kw = {
     { "const", TokenKind::CONST },
-    { "i8", TokenKind::I8 },
-    { "i16", TokenKind::I16 },
-    { "i32", TokenKind::I32 },
-    { "i64", TokenKind::I64 },
-    { "u8", TokenKind::U8 },
-    { "u16", TokenKind::U16 },
-    { "u32", TokenKind::U32 },
-    { "u64", TokenKind::U64 },
     { "fn", TokenKind::FN },
     { "return", TokenKind::RETURN },
     { "decl", TokenKind::DECL },

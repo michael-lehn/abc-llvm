@@ -1,10 +1,13 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
+#include <limits>
 
 #include "gen.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "symtab.hpp"
+#include "type.hpp"
 
 void
 usage(const char *prog)
@@ -16,12 +19,49 @@ usage(const char *prog)
     std::exit(1);
 }
 
+static void
+initDefaultTypes()
+{
+    Symtab::addTypeAlias("char", Type::getChar());
+    Symtab::addTypeAlias("void", Type::getVoid());
+    Symtab::addTypeAlias("bool", Type::getBool());
+
+    Symtab::addTypeAlias("u8", Type::getUnsignedInteger(8));
+    Symtab::addTypeAlias("u16", Type::getUnsignedInteger(16));
+    Symtab::addTypeAlias("u32", Type::getUnsignedInteger(32));
+    Symtab::addTypeAlias("u64", Type::getUnsignedInteger(64));
+    Symtab::addTypeAlias("i8", Type::getSignedInteger(8));
+    Symtab::addTypeAlias("i16", Type::getSignedInteger(16));
+    Symtab::addTypeAlias("i32", Type::getSignedInteger(32));
+    Symtab::addTypeAlias("i64", Type::getSignedInteger(64));
+
+    Symtab::addTypeAlias("int",
+			 Type::getUnsignedInteger(sizeof(int)));
+    Symtab::addTypeAlias("long",
+			 Type::getUnsignedInteger(sizeof(long)));
+    Symtab::addTypeAlias("long_long",
+			 Type::getUnsignedInteger(sizeof(long long)));
+    Symtab::addTypeAlias("unsigned",
+			 Type::getUnsignedInteger(sizeof(unsigned)));
+    Symtab::addTypeAlias("unsigned_long",
+			 Type::getUnsignedInteger(sizeof(unsigned long)));
+    Symtab::addTypeAlias("unsigned_long_long",
+			 Type::getUnsignedInteger(sizeof(unsigned long long)));
+    Symtab::addTypeAlias("size_t",
+			 Type::getUnsignedInteger(sizeof(std::size_t)));
+    Symtab::addTypeAlias("ptrdiff_t",
+			 Type::getUnsignedInteger(sizeof(std::ptrdiff_t)));
+}
+
+
 int
 main(int argc, char *argv[])
 {
     const char *infile = nullptr;
     enum Output { ASM = 1, BC = 2 } output = ASM;
     int optLevel = 0;
+
+    initDefaultTypes();
 
     for (int i = 1; i < argc; ++i) {
 	if (argv[i][0] == '-') {

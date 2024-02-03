@@ -31,7 +31,7 @@ struct TokenLoc
 struct Token {
     kind:   TokenKind;
     loc:    TokenLoc;
-    val:    array[42] of u8;
+    val:    array[42] of char;
     valLen: int;
 };
 

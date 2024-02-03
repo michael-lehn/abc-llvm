@@ -26,7 +26,10 @@ fn main()
 	foo: Foo;
 
     a = ++cast({1}: u8);
-    foo = cast({a, 123456789123456789123}: Foo);
+    foo = cast({a, 123456789123456789}: Foo);
+
+    // This will give a warning literal does not fit into 64 bits
+    //foo = cast({a, 123456789123456789123}: Foo);
 
     printf("foo.a = %d, foo.b = %lld\n", foo.a, foo.b);
     printf("a = %d\n", a);

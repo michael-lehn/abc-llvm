@@ -178,7 +178,7 @@ Symtab::addStringLiteral(UStr str)
     UStr ident{ss.str()};
 
     if (added) {
-	auto ty = Type::getArray(Type::getUnsignedInteger(8),
+	auto ty = Type::getArray(Type::getChar(),
 				 strlen(str.c_str()) + 1);
 	addDeclToRootScope(Token::Loc{}, ident, ty);
 	gen::defStringLiteral(ident.c_str(), str.c_str(), true);

@@ -455,39 +455,6 @@ parseFnType(void)
 
 //------------------------------------------------------------------------------
 
-const Type *
-parseIntType(void)
-{
-    switch (token.kind) {
-	case TokenKind::U8:
-	    getToken();
-	    return Type::getUnsignedInteger(8);
-	case TokenKind::U16:
-	    getToken();
-	    return Type::getUnsignedInteger(16);
-	case TokenKind::U32:
-	    getToken();
-	    return Type::getUnsignedInteger(32);
-	case TokenKind::U64:
-	    getToken();
-	    return Type::getUnsignedInteger(64);
-	case TokenKind::I8:
-	    getToken();
-	    return Type::getSignedInteger(8);
-	case TokenKind::I16:
-	    getToken();
-	    return Type::getSignedInteger(16);
-	case TokenKind::I32:
-	    getToken();
-	    return Type::getSignedInteger(32);
-	case TokenKind::I64:
-	    getToken();
-	    return Type::getSignedInteger(64);
-	default:
-	    return nullptr;
-    }
-}
-
 static const Type *
 parsePtrType(void)
 {
@@ -647,7 +614,7 @@ parseUnqualifiedType(void)
     } else if (auto ty = parseNamedType()) {
 	return ty;
     }
-    return parseIntType();
+    return nullptr;
 }
 
 const Type *
@@ -687,6 +654,20 @@ parseType(void)
 	return constTy;
     }
     return ty;
+}
+
+const Type *
+parseIntType(void)
+{
+    if (token.kind != TokenKind::IDENTIFIER) {
+	return nullptr;
+    }
+    if (auto ty = Symtab::getNamedType(token.val, Symtab::AnyScope)) {
+	getToken();
+	return ty;
+    }
+    return nullptr;
+
 }
 
 //------------------------------------------------------------------------------
@@ -855,6 +836,7 @@ reachableCheck(Token tok = token, const char *s = nullptr)
 	    << (s ? s : tok.val.c_str())
 	    << (s ? "" : "'")
 	    << " not reachable" << std::endl;
+	error::warning();
     }
 }
 

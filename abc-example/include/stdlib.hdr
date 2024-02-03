@@ -3,10 +3,8 @@
 
 #include <stdabc.hdr>
 
-type void_ptr: -> ;
-
-fn malloc(size: size_t): void_ptr;
-fn free(ptr: void_ptr);
+fn malloc(size: size_t): -> void;
+fn free(ptr: -> void);
 fn abort();
 
 #endif // STDLIB_ABH
