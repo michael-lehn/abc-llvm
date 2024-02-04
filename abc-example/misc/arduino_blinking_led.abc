@@ -1,0 +1,41 @@
+/*
+ * Blinking LED for the Arduino
+ *
+ * Connect pin 2 with an Led:   pin 2 --- Led --- 220 Resitor --- ground.
+ * Gnerate and upload program:
+ *   1) ./arduino_blinking_led > led
+ *   2) avrdude -c arduino -P <USB-SERIAL> -p atmega328p -U flash:w:led:i
+ *      wehere <USB-SERIAL> is for example /dev/cu.usbserial-14210 (look it
+ *      up for your machine).
+ */
+
+#include <stdio.hdr>
+
+global instr: array[30] of char = {
+    0x52, 0x9a, // sbi	0x0a, 2
+    0x94, 0xe0, // ldi	r25, 0x04
+    0x8b, 0xb1, // in	r24, 0x0b
+    0x89, 0x27, // eor	r24, r25
+    0x8b, 0xb9, // out	0x0b, r24
+    0x2f, 0xef, // ldi	r18, 0xFF
+    0x33, 0xed, // ldi	r19, 0xD3
+    0x80, 0xe3, // ldi	r24, 0x30
+    0x21, 0x50, // subi	r18, 0x01
+    0x30, 0x40, // sbci	r19, 0x00
+    0x80, 0x40, // sbci	r24, 0x00
+    0xe1, 0xf7, // brne	.-8
+    0x00, 0xc0, // rjmp	.+0
+    0x00, 0x00, // nop
+    0xf3, 0xcf, // rjmp	.-26
+};
+
+fn main()
+{
+    local checkSum: u8 = sizeof(instr);
+    printf(":%02X000000", checkSum);
+    for (local i: int = 0; i < sizeof(instr); ++i) {
+	printf("%02X", instr[i]);
+	checkSum += instr[i];
+    }
+    printf("%02X\n", :char(-checkSum));
+}
