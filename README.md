@@ -11,8 +11,8 @@ For comparison, these declarations in C:
 are equivalent to these declarations in ABC:
 
 ```abc
-    a: array[10] of -> int,
-    b: -> array[10] of int,
+    a: array[10] of -> int;
+    b: -> array[10] of int;
 ```
 
 In both cases, one declares
@@ -30,8 +30,8 @@ Of course, sometimes we need to express that the data at the end of the pointer 
 and the equivalent declarations in ABC:
 
 ```abc
-    c: array[10] of -> const int,
-    d: array[10] of const -> int,
+    c: array[10] of -> const int;
+    d: array[10] of const -> int;
     e: array[10] of const -> const int;
 ```
 Here, we have declared
@@ -56,7 +56,7 @@ function `someFunction` has a parameter `f` which is a function pointer with the
 
 In ABC, you just have one way to declare such a function pointer:
 ```abc
-f: -> fn()
+f: -> fn();
 ```
 Hence the declaration of `someFunction` becomes
 ```abc
