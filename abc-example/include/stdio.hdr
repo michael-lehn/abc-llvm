@@ -10,7 +10,9 @@ enum StdIO_Constants : int
     false = 0,
 };
 
-extern fn printf(fmt: -> char, ...): int;
+extern fn printf(fmt: -> const char, ...): int;
+extern fn snprintf(dest: -> char, size: size_t, fmt: -> const char, ...): int;
+
 extern fn scanf(fmt: -> char, ...): int;
 extern fn getchar(): int;
 extern fn putchar(ch : int);

@@ -327,6 +327,9 @@ parseFnParamDeclOrType(std::vector<const Type *> &argType,
 		<< std::endl;
 	    error::fatal();
 	}
+	if (type->isArray()) {
+	    type = Type::convertArrayOrFunctionToPointer(type);
+	}
 	argType.push_back(type);
 
 	// add param to symtab if this is a declaration
