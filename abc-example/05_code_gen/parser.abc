@@ -1,5 +1,6 @@
 #include <stdio.hdr>
 
+#include "error.hdr"
 #include "lexer.hdr"
 #include "parser.hdr"
 #include "symtab.hdr"
@@ -27,7 +28,8 @@ fn parseAssignmentExpression() : -> Expr
 
 	local expr2: -> Expr = parseAssignmentExpression();
 	if (!expr2) {
-	    printf("assignment expression expected\n");
+	    errorMsg(token.loc, "expression expected\n");
+	    errorFatal();
             return nullptr;
         }
 	expr = createBinaryExpr(EXPR_ASSIGN, expr, expr2);
@@ -49,7 +51,8 @@ fn parseAdditiveExpression() : -> Expr
 
 	local expr2: -> Expr = parseMultiplicativeExpression();
 	if (!expr2) {
-	    printf("multiplicative expression expected\n");
+	    errorMsg(token.loc, "expression expected\n");
+	    errorFatal();
             return nullptr;
         }
 	expr = op == PLUS
@@ -73,7 +76,8 @@ fn parseMultiplicativeExpression() : -> Expr
 
 	local expr2: -> Expr = parsePrimaryExpression();
 	if (!expr2) {
-	    printf("multiplicative expression expected\n");
+	    errorMsg(token.loc, "expression expected\n");
+	    errorFatal();
             return nullptr;
         }
 	//
@@ -111,13 +115,11 @@ fn parsePrimaryExpression() : -> Expr
 	getToken();
 	local expr: -> Expr = parseAdditiveExpression();
 	if (!expr) {
-	    printf("multiplicative expression expected\n");
+	    errorMsg(token.loc, "expression expected\n");
+	    errorFatal();
 	    return nullptr;
 	}
-	if (token.kind != RPAREN) {
-	    printf("')' expected\n");
-	    return nullptr;
-	}
+	errorExpected(RPAREN);
 	getToken();
 	return expr;
     }

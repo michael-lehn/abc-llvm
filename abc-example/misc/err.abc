@@ -1,8 +1,10 @@
-struct Foo
-{
-    foo: u8;
-};
+fn foo(a: int): int
+{}
+
+fn bar(): int
+{}
 
 fn main()
 {
+    foo(1) || bar();
 }

@@ -44,6 +44,8 @@ getCommonType(Token::Loc loc, const Type *left, const Type *right)
 
     if (*left == *right) {
 	return left;
+    } else if (*left != *right && (left->isVoid() || right->isVoid())) {
+	// error: operation not defined (handled below)
     } else if (left->isInteger() && right->isInteger()) {
 	auto size = std::max(left->getIntegerNumBits(),
 			     right->getIntegerNumBits());
@@ -431,6 +433,11 @@ Expr::createDeref(ExprPtr &&expr, Token::Loc opLoc)
 ExprPtr
 Expr::createCast(ExprPtr &&child, const Type *toType, Token::Loc opLoc)
 {
+    if (!Type::getTypeConversion(child->getType(), toType, opLoc, true)) {
+	error::out() << opLoc << ": can not cast '" << child->getType()
+	    << "' to '" << toType << std::endl;
+	error::fatal();
+    }
     auto expr = new Expr{Unary{Unary::Kind::CAST, std::move(child), toType,
 			       opLoc}};
     return ExprPtr{expr};
@@ -442,7 +449,6 @@ Expr::createBinary(Binary::Kind kind, ExprPtr &&left, ExprPtr &&right,
 {
     auto expr = new Expr{Binary{kind, std::move(left), std::move(right),
 			        opLoc}};
-    //expr->print();
     return ExprPtr{expr};
 }
 

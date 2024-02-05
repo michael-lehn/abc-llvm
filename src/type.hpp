@@ -135,7 +135,8 @@ class Type
 
 	// type casts
 	static const Type *getTypeConversion(const Type *from, const Type *to,
-					     Token::Loc loc = Token::Loc{});
+					     Token::Loc loc = Token::Loc{},
+					     bool silent = true);
 	static const Type *convertArrayOrFunctionToPointer(const Type *ty);
 };
 

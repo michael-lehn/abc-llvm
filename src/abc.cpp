@@ -22,7 +22,13 @@ usage(const char *prog)
 static void
 initDefaultTypes()
 {
-    Symtab::addTypeAlias("char", Type::getChar());
+
+    Symtab::addTypeAlias(
+	    "char",
+	    Type::createAlias(
+		"char",
+		Type::getChar()));
+
     Symtab::addTypeAlias("void", Type::getVoid());
     Symtab::addTypeAlias("bool", Type::getBool());
 
@@ -35,22 +41,46 @@ initDefaultTypes()
     Symtab::addTypeAlias("i32", Type::getSignedInteger(32));
     Symtab::addTypeAlias("i64", Type::getSignedInteger(64));
 
-    Symtab::addTypeAlias("int",
-			 Type::getSignedInteger(8 * sizeof(int)));
-    Symtab::addTypeAlias("long",
-			 Type::getSignedInteger(8 * sizeof(long)));
-    Symtab::addTypeAlias("long_long",
-			 Type::getSignedInteger(8 * sizeof(long long)));
-    Symtab::addTypeAlias("unsigned",
-			 Type::getUnsignedInteger(8 * sizeof(unsigned)));
-    Symtab::addTypeAlias("unsigned_long",
-			 Type::getUnsignedInteger(8 * sizeof(unsigned long)));
-    Symtab::addTypeAlias("unsigned_long_long",
-			 Type::getUnsignedInteger(8 * sizeof(unsigned long long)));
-    Symtab::addTypeAlias("size_t",
-			 Type::getUnsignedInteger(8 * sizeof(std::size_t)));
-    Symtab::addTypeAlias("ptrdiff_t",
-			 Type::getSignedInteger(8 * sizeof(std::ptrdiff_t)));
+    Symtab::addTypeAlias(
+		"int",
+		Type::createAlias(
+		    "int",
+		    Type::getSignedInteger(8 * sizeof(int))));
+    Symtab::addTypeAlias(
+		"long",
+		Type::createAlias(
+		    "long",
+		    Type::getSignedInteger(8 * sizeof(long))));
+    Symtab::addTypeAlias(
+		"long_long",
+		Type::createAlias(
+		    "long_long",
+		    Type::getSignedInteger(8 * sizeof(long long))));
+    Symtab::addTypeAlias(
+		"unsigned",
+		 Type::createAlias(
+		     "unsigned",
+		     Type::getUnsignedInteger(8 * sizeof(unsigned))));
+    Symtab::addTypeAlias(
+		"unsigned_long",
+		 Type::createAlias(
+		     "unsigned_long",
+		     Type::getUnsignedInteger(8 * sizeof(unsigned long))));
+    Symtab::addTypeAlias(
+		"unsigned_long_long",
+		 Type::createAlias(
+		     "unsigned_long_long",
+		     Type::getUnsignedInteger(8 * sizeof(unsigned long long))));
+    Symtab::addTypeAlias(
+		"size_t",
+		 Type::createAlias(
+		     "size_t",
+		     Type::getUnsignedInteger(8 * sizeof(std::size_t))));
+    Symtab::addTypeAlias(
+		"ptrdiff_t",
+		 Type::createAlias(
+		     "ptrdiff_t",
+		     Type::getSignedInteger(8 * sizeof(std::ptrdiff_t))));
 }
 
 

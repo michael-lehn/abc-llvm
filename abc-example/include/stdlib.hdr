@@ -1,10 +1,9 @@
 #ifndef STDLIB_ABH
 #define STDLIB_ABH
 
-#include <stdabc.hdr>
-
-fn malloc(size: size_t): -> void;
-fn free(ptr: -> void);
-fn abort();
+extern fn malloc(size: size_t): -> void;
+extern fn free(ptr: -> void);
+extern fn abort();
+extern fn exit(status: int);
 
 #endif // STDLIB_ABH

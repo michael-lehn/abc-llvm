@@ -216,7 +216,7 @@ parseBinary(int prec)
 	    auto op = getBinaryExprKind(token.kind);
             getToken();
 	    auto right = parseBinary(p + 1);
-            if (!expr) {
+            if (!right) {
 		error::out() << token.loc << " expected non-empty expression"
 		    << std::endl;
 		error::fatal();

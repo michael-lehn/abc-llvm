@@ -707,15 +707,24 @@ Type::remove(const Type *ty)
  */
 
 const Type *
-Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc)
+Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc,
+			bool silent)
 {
     if (from == to) {
 	return to;
+    } else if (from->isVoid() && !to->isVoid()) {
+	return nullptr;
     } else if (getConstRemoved(from) == getConstRemoved(to)) {
 	if (to->hasConstFlag() && !from->hasConstFlag()) {
-	    error::out() << loc << ": warning: casting '" << from
-		<< "' to '" << to << "' discards const qualifier" << std::endl;
-	    error::warning();
+	    if (!silent) {
+		error::out() << loc << ": warning: casting '" << from
+		    << "' to '" << to << "' discards const qualifier"
+		    << std::endl;
+		error::warning();
+	    }
+	    from = getConstRemoved(from);
+	    to = getConstRemoved(to);
+	    return getTypeConversion(from, to);
 	}
 	return to;
     } else if (from->isInteger() && to->isInteger()) {
@@ -727,14 +736,17 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc)
 	auto fromRefTy = Type::getConstRemoved(from->getRefType());
 	auto toRefTy = Type::getConstRemoved(to->getRefType());
 
-	if (fromRefTy != toRefTy && !fromRefTy->isVoid() && !toRefTy->isVoid())
+	if (!silent
+	 && fromRefTy != toRefTy && !fromRefTy->isVoid() && !toRefTy->isVoid())
 	{
 	    error::out() << loc << ": warning: casting '" << from
 		<< "' to '" << to << "'" << std::endl;
 	    error::warning();
 	}
-	if (!to->getRefType()->hasConstFlag()
-		&& from->getRefType()->hasConstFlag()) {
+	if (!silent
+	 && !to->getRefType()->hasConstFlag()
+	 && from->getRefType()->hasConstFlag())
+	{
 	    error::out() << loc << ": warning: casting '" << from
 		<< "' to '" << to << "' discards const qualifier" << std::endl;
 	    error::warning();
@@ -749,15 +761,19 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc)
 	return from; // no cast required
     } else if (convertArrayOrFunctionToPointer(from)->isPointer()
 	    && to->isInteger()) {
-	error::out() << loc << ": warning: casting '" << from
-	    << "' to '" << to << "'" << std::endl;
-	error::warning();
+	if (!silent) {
+	    error::out() << loc << ": warning: casting '" << from
+		<< "' to '" << to << "'" << std::endl;
+	    error::warning();
+	}
 	return to;
     } else if (from->isInteger()
 	    && convertArrayOrFunctionToPointer(to)->isPointer()) {
-	error::out() << loc << ": warning: casting '" << from
-	    << "' to '" << to << "'" << std::endl;
-	error::warning();
+	if (!silent) {
+	    error::out() << loc << ": warning: casting '" << from
+		<< "' to '" << to << "'" << std::endl;
+	    error::warning();
+	}
 	return to;
     }
     return nullptr;
@@ -840,6 +856,8 @@ operator<<(std::ostream &out, const Type *type)
 
     if (type->isVoid()) {
 	out << "void";
+    } else if (type->isBool()) {
+	out << "bool";
     } else if (type->isInteger()) {
 	out << (type->getIntegerKind() == Type::SIGNED ? "i" : "u")
 	    << type->getIntegerNumBits();
