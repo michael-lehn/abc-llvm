@@ -3,10 +3,24 @@
 
 #include "gen.hdr"
 
+global usedReg: array[256] of bool;
+
+fn genRelease(reg: GenReg)
+{
+    assert(usedReg[reg]);
+    usedReg[reg] = false;
+}
+
 fn getReg() :GenReg
 {
-    global reg: GenReg;
-    return reg++;
+    for (local i: size_t = 0; i < sizeof(usedReg) / sizeof(usedReg[0]); ++i) {
+	if (!usedReg[i]) {
+	    usedReg[i] = true;
+	    return i;
+	}
+    }
+    assert(0); // out of registers
+    return 0;
 }
 
 fn genLoad(val: u64) : GenReg

@@ -13,6 +13,7 @@ enum GEN_ALU_OP : u8
     GEN_DIV,
 };
 
+extern fn genRelease(reg: GenReg);
 extern fn genLoad(val: u64): GenReg;
 extern fn genLoadAddr(ident: -> const char): GenReg;
 extern fn genFetch(reg: GenReg): GenReg;

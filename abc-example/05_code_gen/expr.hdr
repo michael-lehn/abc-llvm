@@ -53,6 +53,8 @@ extern fn createBinaryExpr(op: BinaryExprKind,
 
 extern fn evalExpr(expr: -> const Expr): i64;
 
+extern fn loadExprAddr(expr: -> const Expr): GenReg;
+
 extern fn loadExpr(expr: -> const Expr): GenReg;
 
 extern fn printExpr(expr: -> const Expr);
