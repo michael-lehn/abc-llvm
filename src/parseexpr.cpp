@@ -345,11 +345,12 @@ parsePostfix(ExprPtr &&expr)
 		    }
 		    getToken();
 		}
+		auto loc = token.loc;
 		error::expected(TokenKind::RPAREN);
 		getToken();
 
-		expr = Expr::createCall(std::move(expr), std::move(param),
-					opTok.loc);
+		loc = combineLoc(expr->getLoc(), loc);
+		expr = Expr::createCall(std::move(expr), std::move(param), loc);
 		return parsePostfix(std::move(expr));
 	    }
 	case TokenKind::LBRACKET:

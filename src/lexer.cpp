@@ -1,5 +1,7 @@
 #include <cassert>
+#include <fstream>
 #include <iostream>
+#include <limits>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -346,7 +348,6 @@ tokenCStr(TokenKind kind)
     }
 }
 
-
 static Token::Loc::Pos curr = { 1, 0 };
 static int ch;
 
@@ -447,6 +448,7 @@ static std::unordered_map<UStr, TokenKind> kw = {
     { "default", TokenKind::DEFAULT },
     { "enum", TokenKind::ENUM },
 };
+
 
 // TODO: proper implementation and support of escape sequences
 static std::string
@@ -1046,9 +1048,44 @@ parseDirective()
     }
 }
 
+Token::Loc
+combineLoc(Token::Loc fromLoc, Token::Loc toLoc)
+{
+    return Token::Loc{fromLoc.from, toLoc.to, fromLoc.path};
+}
+
+std::size_t
+printLine(std::ostream &out, const char *path, std::size_t lineNumber)
+{
+    std::fstream file{path};
+
+    file.seekg(std::ios::beg);
+    for (std::size_t i = 0; i + 1 < lineNumber; ++i) {
+        file.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+    }
+    std::string line;
+    std::getline(file, line);
+    out << line << std::endl;
+    return line.length();
+}	
+
 std::ostream &
 operator<<(std::ostream &out, const Token::Loc &loc)
 {
+    out << std::endl;
+    for (std::size_t line = loc.from.line; line <= loc.to.line; ++line) {
+	auto len = printLine(out, loc.path.c_str(), line);
+	std::size_t fromCol = line == loc.from.line ? loc.from.col : 1;
+	std::size_t toCol = line == loc.to.line ? loc.to.col : len;
+	for (size_t i = 1; i <= toCol; ++i) {
+	    if (i < fromCol) {
+		out << " ";
+	    } else {
+		out << "^";
+	    }
+	}
+	out << std::endl;
+    }
     if (loc.from.line) {
 	if (loc.path.c_str()) {
 	    out << loc.path.c_str() << ":";

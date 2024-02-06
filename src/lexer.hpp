@@ -31,7 +31,7 @@ enum class TokenKind {
     WHILE,
     IF,
     ELSE,
-    THEN,
+THEN,
     ARRAY,
     OF,
     SIZEOF,
@@ -107,6 +107,7 @@ bool setLexerInputfile(const char *path);
 const char *tokenKindCStr(TokenKind kind);
 const char *tokenCStr(TokenKind kind);
 TokenKind getToken();
+Token::Loc combineLoc(Token::Loc fromLoc, Token::Loc toLoc);
 
 std::ostream &operator<<(std::ostream &out, const Token::Loc &loc);
 

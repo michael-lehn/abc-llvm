@@ -1034,21 +1034,25 @@ parseReturnStmt(void)
     error::expected(TokenKind::SEMICOLON);
     getToken();
     if (expr && !Symtab::get(UStr{".retVal"})) {
-	error::out() << token.loc
+	error::out() << exprTok.loc
 	    << "  function with return type 'void' should not return a value"
 	    << std::endl;
 	error::fatal();
     } else if (!expr && Symtab::get(UStr{".retVal"})) {
 	auto s = Symtab::get(UStr{".retVal"});
-	error::out() << token.loc
+	error::out() << exprTok.loc
 	    << "  function with return type '" << s->getType()
 	    << "' should return a value" << std::endl;
 	error::fatal();
     }
     if (expr) { 
+	/*
 	auto ret = Expr::createIdentifier(UStr{".retVal"}, exprTok.loc);
 	expr = Expr::createBinary(Binary::Kind::ASSIGN, std::move(ret),
 				  std::move(expr), exprTok.loc);
+				  */
+	auto retTy = Symtab::get(UStr{".retVal"})->getType();
+	expr = Expr::createCast(std::move(expr), retTy, exprTok.loc);
 	gen::ret(expr->loadValue());
     } else {
 	gen::ret();

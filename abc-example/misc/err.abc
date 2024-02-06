@@ -14,18 +14,30 @@ fn foo(a: array[10] of int): array[10] of int
     return a;
 }
 
+fn bar(n: int): int
+{
+    return n then n * bar(n-1) else 1;
+}
+
 fn main(): int
 {
     b = a; // copy a to b
-    p = a; // p points to a[0]
+    p = a; // treated as p = &a[0].  I.e. p points to a[0]
     //a = p; // error
-    a = foo(b);
+    //a = foo(b);
     foo(b);
-    foo(a);
+    p = foo(
+          a
+              );
+    printf("p = %p\n", p);
+    printf("p[0] = %d\n", p[0]);
 
     local fmt: -> char = "Hallo %d\n";
     printf("b[0] = %d\n", b[0]);
-    printf(fmt, p[0]);
+    printf("bar(10) = %d\n", bar(10));
+    printf("p[0] = %d\n", p[0]);
+    printf("p[1] = %d\n", p[1]);
+    printf("p[2] = %d\n", p[2]);
 
     //printf("b[0] = %d\n", b[0]);
     return a[0];

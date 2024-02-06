@@ -440,6 +440,13 @@ Expr::createCast(ExprPtr &&child, const Type *toType, Token::Loc opLoc)
 	error::fatal();
     }
     if (child->getType()->isArray() && toType->isPointer()) {
+	if (!child->isLValue()) {
+	    error::out() << opLoc
+		<< ": only an lvalue array can be casted to a pointer"
+		<< std::endl;
+	    error::out() << child->getLoc() << ": not an lvalue" << std::endl;
+	    error::fatal();
+	}
 	child = createAddr(std::move(child), opLoc);
     }
     auto expr = new Expr{Unary{Unary::Kind::CAST, std::move(child), toType,
