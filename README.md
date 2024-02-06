@@ -77,15 +77,17 @@ declares a function pointer `foo` to a function with two integer parameters whic
 
 
 
+Certainly, I'll help you with the corrections. Here's the revised version:
+
 ## Language Description
 
 ### Lexical Elements
 
-Comments can be delimited by `/*` and `*/`. Nested comments are not supported. Alternatively, comments start with `//` and are ended by the next line terminator. Comments are handled like space characters.
+Comments can be delimited by `/*` and `*/`. Nested comments are not supported. Alternatively, comments start with `//` and are ended by the next line terminator. Comments are treated like space characters.
 
-Each program source is converted into a sequence of tokens during the lexical analysis. Tokens can be punctuators consisting of one or more special characters, reserved keywords, identifiers, or literals. Tokens end if the next character is a space or if the next character cannot be added to it.
+Each program source is converted into a sequence of tokens during lexical analysis. Tokens can be punctuators consisting of one or more special characters, reserved keywords, identifiers, or literals. Tokens end if the next character is a space or if the next character cannot be added to it.
 
-Punctuators are
+Punctuators are:
 
 `.`         `...`       `;`         `:`         `,`         `{`
 `}`         `(`         `)`         `[`         `]`         `^`
@@ -95,18 +97,18 @@ Punctuators are
 `>=`        `<`         `<=`        `&`         `&&`        `|`
 `||`        `?`         `#`
 
-Following keywords are reserved. They cannot be used as identifiers:
+The following keywords are reserved and cannot be used as identifiers:
 
 `alignas`   `alignof`   `array`     `break`     `case`
-`cast`      `const`     `continue`  `decl`      `default`
-`else`      `enum`      `extern`    `fn`        `for`
-`global`    `if`        `local`     `nullptr`   `of`
-`return`    `sizeof`    `static`    `struct`    `switch`
-`then`      `type`      `union`     `while`
+`const`     `continue`  `default`   `do`        `else`
+`enum`      `extern`    `fn`        `for`       `global`
+`if`        `local`     `nullptr`   `of`        `return`
+`sizeof`    `struct`    `switch`    `then`      `type`
+`union`     `while`
 
-Identifiers begin with a letter, i.e. `A` to `Z` and `a` to `z`, or an underscore `_`, and are optionally continued with a sequence of more letters, underscores, or decimal digits `0` to `9`. Some identifiers are predefined.
+Identifiers begin with a letter, i.e., `A` to `Z` and `a` to `z`, or an underscore `_`, and are optionally followed by a sequence of more letters, underscores, or decimal digits `0` to `9`. Some identifiers are predefined.
 
-The following predefined indentifieres are used as named types (i.e. they basically can be considered as keywords):
+The following predefined identifiers are used as named types (essentially keywords):
 
 `void`              `bool`              `u8`                `u16`
 `u32`               `u64`               `i8`                `i16`
@@ -114,29 +116,29 @@ The following predefined indentifieres are used as named types (i.e. they basica
 `long_long`         `unsigned`          `unsigned_long`     `unsigned_long_long`
 `size_t`            `ptrdiff_t`
 
-The following predefined indentifieres are used as named constants
+The following predefined identifiers are used as named constants:
 
 `nullptr`
 
 Literals can be decimal literals, octal literals, hexadecimal literals, string literals, and character literals.
-- Decimal literals begin with a digit `1` to `9` and optionally more digits from `0` to `9`. Decimal constants are unsigned and can be of arbitrary size.
-- Octal literals begin with a digit `0` and optionally more digits from `0` to `7`.
-- Hexadecimal literals begin with a prefix `0x` and one ore more digits from `0` to `9`, 'a' to 'f', or 'A' to 'F'.
-- String literals are delimited by `"`. Backslashes, i.e. `\`, are escape characters, i.e. they remove the special meaning of the following character or allow to insert special characters into a string.
+- Decimal literals begin with a digit `1` to `9` and optionally have more digits from `0` to `9`. Decimal constants are unsigned and can be of arbitrary size.
+- Octal literals begin with a digit `0` and optionally have more digits from `0` to `7`.
+- Hexadecimal literals begin with a prefix `0x` and one or more digits from `0` to `9`, 'a' to 'f', or 'A' to 'F'.
+- String literals are delimited by `"`. Backslashes, i.e., `\`, are escape characters, removing the special meaning of the following character or allowing the insertion of special characters into a string.
 - Character literals are delimited by `'` and consist of a single character (which can be an escaped character).
 
 ### Expressions
 
-The syntax for expressions is very similar to expressions in C. Except for the following:
-- Expression list are currently not implemented.
-- Not all operators are currently supported. On the todo list are bitwise operators, the `alignas` operator, and the `alignof` operator.
-- For an conditional expression the ternary Operator from C can be used, e.g. `x = a > b ? y : z` or alternatively the more verbose notation `x = a > b then y else z`. At least currently "?" and "then", and ":" and "else" are interchangable. That means also `x = a > b ? y else z` and `x = a > b then y : z` are alternatives.
-- For type casts the C syntax is *not* supported. Instead the C++ style notation `x = int(y)` is used for casting the expression `y` to type `int`.
-- Pointers can be dereferenced like in C with the prefix operator `*`. In addition the arrow operator `->` can be used, i.e. the use of operator `->` is not restricted to "struct pointers". Hence, if `x` is a pointer to `int` the expressions `*x = 42` and `x-> = 42` are equivalent, and in both cases `42` is assigned to the integer at the end of pointer `x`.
+The syntax for expressions is very similar to expressions in C, with the following exceptions:
+- Expression lists are currently not implemented.
+- Not all operators are currently supported. On the to-do list are bitwise operators, the `alignas` operator, and the `alignof` operator.
+- For a conditional expression, the ternary Operator from C can be used, e.g., `x = a > b ? y : z`, or alternatively, the more verbose notation `x = a > b then y else z`. At least currently, "?" and "then", and ":" and "else" are interchangeable. That means `x = a > b ? y else z` and `x = a > b then y : z` are also alternatives.
+- For type casts, the C syntax is *not* supported. Instead, the C++ style notation `x = int(y)` is used for casting the expression `y` to type `int`.
+- Pointers can be dereferenced like in C with the prefix operator `*`. Additionally, the arrow operator `->` can be used; i.e., the use of the operator `->` is not restricted to "struct pointers". Hence, if `x` is a pointer to `int`, the expressions `*x = 42` and `x-> = 42` are equivalent, and in both cases, `42` is assigned to the integer at the end of pointer `x`.
 
-The EBNF grammar for expressions is
+The EBNF grammar for expressions is:
 
-```
+```ebnf
                expression = assignment-expression
     assignment-expression = conditional-expression { ("=" | "+=" | "-=" | "*=" | "/=" | "%=") assignment-expression }
    conditional-expression = logical-or-expression [ ("?" | "then") assignment-expression (":" | "else") conditional-expression ]
@@ -161,28 +163,26 @@ multiplicative-expression = unary-prefix-expression [ ("*" | "/" | "%" ) unary-p
                           | decimal-literal
                           | octal-literal
                           | hexadecimal-literal
-
-
 ```
 
-For convenience the precedence and associativity is summarized in the following table:
+For convenience, the precedence and associativity are summarized in the following table:
 
 | Precedence    |   Associativity   |   Operators                           |   Meaning     |
 |---------------|-------------------|---------------------------------------|---------------|
-| 16 (highest) |  left | Indentifier <br> Literal <br> `++` (post-increment) <br> `--` (post-decrement) <br> `f()` (function call) <br> `[i]` (index operator) <br> `->` (indirect member access or dereference operator) <br> `s.member` (direct member access)  }` | Primary and  Unary postfix expression |
+| 16 (highest) |  left | Identifier <br> Literal <br> `++` (post-increment) <br> `--` (post-decrement) <br> `f()` (function call) <br> `[i]` (index operator) <br> `->` (indirect member access or dereference operator) <br> `s.member` (direct member access)  | Primary and  Unary postfix expression |
 | 15 | right | `*` (dereference operator) <br> `&` (address operator) <br> `-` (unary minus) <br>  `+` (unary plus) <br>  `!` (logical not) <br>  <br> `++` (pre-increment) <br> `--` (pre-decrement) <br> `sizeof` <br> type(expression) | Unary prefix expression |
-| 13 | left | `*` (multiply) <br>  `/` (divide) <br> `%` (modulo) <br> | Multiplicative expression |
+| 13 | left | `*` (multiply) <br>  `/` (divide) <br> `%` (modulo) | Multiplicative expression |
 | 12 | left | `+` (add) <br> `-` (subtract) | Additive expression |
 | 10 | left | `<`  (less) <br> `>`  (greater) <br> `<=` (less equal) <br> `>=` (greater equal) | Relational expression |
 | 9  | left | `==` (equal) <br> `!=` (not equal) | Equality and inequality expression |
 | 5  | left | `&&` | Logical and |
 | 4  | left | `\|\|` | Logical or |
 | 3  | right | `?` in conjunction with `:` or `then` in conjunction with `else` | Conditional expression |
-| 2  | right | `=` <br> `+=` <br> `-=` <br> `*=` <br> `/=` <br> `%=` <br> | Assignment |
+| 2  | right | `=` <br> `+=` <br> `-=` <br> `*=` <br> `/=` <br> `%=` | Assignment |
 
 ### Types
 
-```
+```ebnf
             type = [const] unqualified-type
 unqualified-type = named-type
                  | pointer-type
@@ -192,8 +192,9 @@ unqualified-type = named-type
       array-type = "array" "[" expression "]" { "[" expression "]" } "of" type
 ```
 
-### Structure of a ABC Program
-```
+### Structure of an ABC Program
+
+```ebnf
 input-sequence        = {top-level-declaration} EOI
 top-level-declaration = function-declaration-or-definition
                       | extern-declaration
@@ -201,21 +202,21 @@ top-level-declaration = function-declaration-or-definition
                       | type-declaration
                       | struct-declaration
                       | enum-declaration
-````
-
 ```
+
+```ebnf
 function-declaration-or-definition = function-type (";" | compound-statement)
                      function-type = "fn" [identifier] "(" function-parameter-list ")" [ ":" type ]
-           function-parameter-list = [ [identifier] ":" type} { "," [identifier] ":" type} } ]
+           function-parameter-list = [ [identifier] ":" type] { "," [identifier] ":" type} } ]
 ```
 
-```
+```ebnf
   extern-declaration = "extern" ( function-declaration | variable-declaration ) ";"
 function-declaration = function-type
 variable-declaration = identifier ":" type
 ```
 
-```
+```ebnf
 global-variable-definition = "global" variable-declaration-list ";"
  variable-declaration-list = variable-declaration { "," variable-declaration }
       variable-declaration = identifier ":" type [ "=" initializer ]
@@ -224,22 +225,22 @@ global-variable-definition = "global" variable-declaration-list ";"
           initializer-list = [ initializer ] { "," initializer }
 ```
 
-```
+```ebnf
 type-declaration = "type" identifier ":" type ";"
 ```
 
-```
+```ebnf
        struct-declaration = "struct" identifier (";" | struct-member-declaration )
 struct-member-declaration = "{" { struct-member-list } "}" ";"
        struct-member-list = identifier { "," identifier } ":" ( type | struct-declaration ) ";"
 ```
 
-```
+```ebnf
   enum-declaration = "enum" identifier ":" integer-type "{" { enum-constant-list } "}" ";"
 enum-constant-list = identifier [ "=" expression] { "," identifier [ "=" expression] }
 ```
 
-```
+```ebnf
         compound-statement = "{" { statement-or-declaration } "}"
                  statement = compound-statement
                            | if-statement
@@ -259,38 +260,36 @@ enum-constant-list = identifier [ "=" expression] { "," identifier [ "=" express
 local-variable-declaration = "local" variable-declaration-list
 ```
 
-```
+```ebnf
 if-statement      = "if" "(" expression ")" compound-statement [ "else" compound-statement ]
 ```
 
-```
+```ebnf
         switch-statement = "switch" "(" expression ")" "{" switch-case-or-statement "}"
 switch-case-or-statement = "case" expression ":"
                          | "default" ":"
                          | statement
 ```
 
-```
+```ebnf
 while-statement = "while" "(" expression ")" compound-statement
 ```
 
-```
+```ebnf
 for-statement = "for" "(" [expression-or-local-variable-definition] ";" [expression] ";" [expression] ")" compound-statement
 expression-or-local-variable-definition = expression
                                         | local-variable-declaration
 ```
 
-```
+```ebnf
 return-statement = "return" [ expression ] ";"
 ```
 
-```
+```ebnf
 break-statement = "break" ";"
 continue-statement = "continue" ";"
 ```
 
-```
+```ebnf
 expression-statement = [expression] ";"
 ```
-
-
