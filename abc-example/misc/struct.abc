@@ -75,10 +75,6 @@ fn main()
     printf("bar.b = %d\n", bar.b);
     */
 
-    local p: -> int;
-
-    p = cast(p: array[2] of int);
-
 
 }
 

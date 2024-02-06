@@ -321,19 +321,21 @@ parseFnParamDeclOrType(std::vector<const Type *> &argType,
 	getToken();
 
 	// parse param type
-	auto typeLoc = token.loc;
+	//auto typeLoc = token.loc;
 	auto type = parseType();
 	if (!type) {
 	    error::out() << token.loc << " type expected"
 		<< std::endl;
 	    error::fatal();
 	}
+	/*
 	if (type->isArray()) {
 	    error::out() << typeLoc << ": warning: treating '" << type
 		<< "' as '" << Type::convertArrayOrFunctionToPointer(type)
 		<< std::endl;
 	    type = Type::convertArrayOrFunctionToPointer(type);
 	}
+	*/
 	argType.push_back(type);
 
 	// add param to symtab if this is a declaration

@@ -140,7 +140,8 @@ Binary::setType(void)
 	    type = l->getRetType();
 	    return;
 	case Binary::Kind::ASSIGN:
-	    if (l->isArray() || l->isFunction() || l->hasConstFlag()) {
+	    if (l->isFunction() || l->hasConstFlag()) {
+	    //if (l->isArray() || l->isFunction() || l->hasConstFlag()) {
 		error::out() << opLoc
 		    << " cannot assign to variable with type '"
 		    << l << "'" << std::endl;
@@ -437,6 +438,9 @@ Expr::createCast(ExprPtr &&child, const Type *toType, Token::Loc opLoc)
 	error::out() << opLoc << ": can not cast '" << child->getType()
 	    << "' to '" << toType << std::endl;
 	error::fatal();
+    }
+    if (child->getType()->isArray() && toType->isPointer()) {
+	child = createAddr(std::move(child), opLoc);
     }
     auto expr = new Expr{Unary{Unary::Kind::CAST, std::move(child), toType,
 			       opLoc}};
@@ -872,7 +876,8 @@ loadValue(const Literal &l)
 static gen::Reg
 loadValue(const Identifier &ident)
 {
-    if (ident.type->isFunction() || ident.type->isArray()) {
+    //if (ident.type->isFunction() || ident.type->isArray()) {
+    if (ident.type->isFunction()) {
 	return gen::loadAddr(ident.val);
     }
 
@@ -904,7 +909,8 @@ loadValue(const Unary &unary)
 	case Unary::Kind::DEREF:
 	    {
 		auto addr = unary.child->loadValue();
-		if (unary.type->isFunction() || unary.type->isArray()) {
+		//if (unary.type->isFunction() || unary.type->isArray()) {
+		if (unary.type->isFunction()) {
 		    return addr;
 		} else if (unary.type->isNullPointer()) {
 		    error::out() << unary.opLoc
@@ -931,6 +937,9 @@ loadValue(const Unary &unary)
 		} else if (std::holds_alternative<Binary>(lValue->variant)) {
 		    const auto &binary = std::get<Binary>(lValue->variant);
 		    return loadAddr(binary);
+		} else if (std::holds_alternative<Proxy>(lValue->variant)) {
+		    const auto &proxy = std::get<Proxy>(lValue->variant);
+		    return proxy.expr->loadAddr();
 		} else {
 		    assert(0); // not implemented
 		    return nullptr;
@@ -952,9 +961,11 @@ loadValue(const Binary &binary)
 	case Binary::Kind::MEMBER:
 	    {
 		auto addr = loadAddr(binary);
+		/*
 		if (binary.type->isArray()) {
 		    return addr;
 		}
+		*/
 		return gen::fetch(addr, binary.type);
 	    }
 	case Binary::Kind::CALL:
@@ -967,7 +978,6 @@ loadValue(const Binary &binary)
 		auto &r = std::get<ExprVector>(right->variant);
 		std::vector<gen::Reg> param{r.size()};
 		for (std::size_t i = 0; i < r.size(); ++i) {
-		    param[i] = r[i]->loadValue();
 		    // cast parameters
 		    if (i < fnType->getArgType().size()) {
 			auto fromType = r[i]->getType();
@@ -979,7 +989,14 @@ loadValue(const Binary &binary)
 				<< std::endl;
 			    error::fatal();
 			}
-			param[i] = gen::cast(param[i], fromType, toType);
+			auto loc = r[i]->getLoc();
+			auto tmp
+			    = Expr::createCast(Expr::createProxy(r[i].get()),
+					       toType, loc);
+			//param[i] = gen::cast(param[i], fromType, toType);
+			param[i] = tmp->loadValue();
+		    } else {
+			param[i] = r[i]->loadValue();
 		    }
 		}
 

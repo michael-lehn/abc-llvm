@@ -699,7 +699,8 @@ cast(Reg reg, const Type *fromType, const Type *toType)
     } else if (fromType->isFunction() && toType->isPointer()) {
 	return reg;
     } else if (fromType->isArray() && toType->isPointer()) {
-	return reg;
+	assert(0 && "cast of array to pointer");
+	return nullptr;
     } else if (fromType->isPointer() && toType->isArray()) {
 	return reg;
     } else if (fromType->isPointer() && toType->isPointer()) {

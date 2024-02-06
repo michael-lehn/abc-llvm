@@ -2,17 +2,31 @@
 
 global
     a: array[10] of int = {1, 2, 3, 4, },
-    b: array[10] of int;
+    b: array[10] of int,
+    p: -> int;
 
-fn foo(a: array[10] of int)
+fn foo(a: array[10] of int): array[10] of int
 {
     for (local i: int = 0; i < 10; ++i) {
 	printf("a[%d] = %d\n", i, a[i]);
+	a[i] = 42 + i;
     }
+    return a;
 }
 
-fn main()
+fn main(): int
 {
+    b = a; // copy a to b
+    p = a; // p points to a[0]
+    //a = p; // error
+    a = foo(b);
+    foo(b);
     foo(a);
-    // b = a;
+
+    local fmt: -> char = "Hallo %d\n";
+    printf("b[0] = %d\n", b[0]);
+    printf(fmt, p[0]);
+
+    //printf("b[0] = %d\n", b[0]);
+    return a[0];
 }

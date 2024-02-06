@@ -732,6 +732,14 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc,
 	return to;
     } else if (from->isNullPointer() && to->isPointer()) {
 	return from;
+    } else if (from->isArray() && to->isPointer()) {
+	/*
+	error::out() << loc << ": warning: cast '" << from << "' to '" << to
+	    << std::endl;
+	*/
+	return to;
+    } else if (from->isPointer() && to->isArray()) {
+	return nullptr;
     } else if (from->isArrayOrPointer() && to->isArrayOrPointer()) {
 	auto fromRefTy = Type::getConstRemoved(from->getRefType());
 	auto toRefTy = Type::getConstRemoved(to->getRefType());
