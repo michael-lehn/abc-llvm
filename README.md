@@ -106,7 +106,7 @@ The following keywords are reserved and cannot be used as identifiers:
 
 Identifiers begin with a letter, i.e., `A` to `Z` and `a` to `z`, or an underscore `_`, and are optionally followed by a sequence of more letters, underscores, or decimal digits `0` to `9`. Some identifiers are predefined.
 
-The following predefined identifiers are used as named types (essentially keywords):
+The following predefined identifiers are used as named [types](#types) (essentially keywords):
 
 `void`              `bool`              `u8`                `u16`
 `u32`               `u64`               `i8`                `i16`
