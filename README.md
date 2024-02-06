@@ -77,9 +77,9 @@ declares a function pointer `foo` to a function with two integer parameters whic
 
 
 
-## Language Description
+# Language Description
 
-### Lexical Elements
+## Lexical Elements
 
 Comments can be delimited by `/*` and `*/`. Nested comments are not supported. Alternatively, comments start with `//` and are ended by the next line terminator. Comments are treated like space characters.
 
@@ -125,7 +125,7 @@ Literals can be decimal literals, octal literals, hexadecimal literals, string l
 - String literals are delimited by `"`. Backslashes, i.e., `\`, are escape characters, removing the special meaning of the following character or allowing the insertion of special characters into a string.
 - Character literals are delimited by `'` and consist of a single character (which can be an escaped character).
 
-### Expressions
+## Expressions
 
 The syntax for expressions is very similar to expressions in C, with the following exceptions:
 - Expression lists are currently not implemented.
@@ -180,7 +180,7 @@ For convenience, the precedence and associativity are summarized in the followin
 | 3  | right | `?` in conjunction with `:` or `then` in conjunction with `else` | Conditional expression |
 | 2  | right | `=` <br> `+=` <br> `-=` <br> `*=` <br> `/=` <br> `%=` | Assignment |
 
-### Types
+## Types
 
 ```ebnf
             type = [const] unqualified-type
@@ -192,7 +192,7 @@ unqualified-type = named-type
       array-type = "array" "[" expression "]" { "[" expression "]" } "of" type
 ```
 
-### Structure of an ABC Program
+## Structure of an ABC Program
 
 ```ebnf
 input-sequence        = {top-level-declaration} EOI
