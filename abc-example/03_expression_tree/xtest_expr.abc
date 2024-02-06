@@ -8,5 +8,6 @@ fn main()
     local two: -> Expr = createLiteralExpr(2);
     local sum: -> Expr = createBinaryExpr(EXPR_ADD, one, two);
 
+    printExpr(one);
     printExpr(sum);
 }

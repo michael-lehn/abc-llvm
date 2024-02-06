@@ -1003,7 +1003,19 @@ loadValue(const Binary &binary)
 			//param[i] = gen::cast(param[i], fromType, toType);
 			param[i] = tmp->loadValue();
 		    } else {
-			param[i] = r[i]->loadValue();
+			auto loc = r[i]->getLoc();
+			auto fromType = r[i]->getType();
+			auto toType
+			    = Type::convertArrayOrFunctionToPointer(fromType);
+			if (toType != fromType) {
+			    auto tmp
+				= Expr::createCast(
+					Expr::createProxy(r[i].get()),
+					toType, loc);
+			    param[i] = tmp->loadValue();
+			} else {
+			    param[i] = r[i]->loadValue();
+			}
 		    }
 		}
 
