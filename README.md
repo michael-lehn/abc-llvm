@@ -139,7 +139,9 @@ The EBNF grammar for expressions is:
 ```ebnf
                expression = assignment-expression
     assignment-expression = conditional-expression { ("=" | "+=" | "-=" | "*=" | "/=" | "%=") assignment-expression }
-   conditional-expression = logical-or-expression [ ("?" | "then") assignment-expression (":" | "else") conditional-expression ]
+   conditional-expression = logical-or-expression
+                                [ ("?" | "then") assignment-expression
+                                  (":" | "else") conditional-expression ]
     logical-or-expression = logical-and-expression [ "||" logical-and-expression ]
    logical-and-expression = equality-expression [ "&&" equality-expression ]
       equality-expression = relational-expression [ ("==" | "!=") relational-expression ]
@@ -202,6 +204,8 @@ top-level-declaration = function-declaration-or-definition
                       | enum-declaration
 ```
 
+#### Function Declarations and Definitions
+
 ```ebnf
 function-declaration-or-definition = function-type (";" | compound-statement)
                      function-type = "fn" [identifier] "(" function-parameter-list ")" [ ":" type ]
@@ -214,6 +218,8 @@ function-declaration = function-type
 variable-declaration = identifier ":" type
 ```
 
+#### Global Variable Declarations and Definitions
+
 ```ebnf
 global-variable-definition = "global" variable-declaration-list ";"
  variable-declaration-list = variable-declaration { "," variable-declaration }
@@ -223,9 +229,13 @@ global-variable-definition = "global" variable-declaration-list ";"
           initializer-list = [ initializer ] { "," initializer }
 ```
 
+#### Type Aliases
+
 ```ebnf
 type-declaration = "type" identifier ":" type ";"
 ```
+
+#### Structured Type Declaration
 
 ```ebnf
        struct-declaration = "struct" identifier (";" | struct-member-declaration )
@@ -233,10 +243,16 @@ struct-member-declaration = "{" { struct-member-list } "}" ";"
        struct-member-list = identifier { "," identifier } ":" ( type | struct-declaration ) ";"
 ```
 
+#### Enumeration Type Declaration and Enumeration Constants
+
 ```ebnf
   enum-declaration = "enum" identifier ":" integer-type "{" { enum-constant-list } "}" ";"
 enum-constant-list = identifier [ "=" expression] { "," identifier [ "=" expression] }
 ```
+
+### Statements
+
+#### Compound Statements
 
 ```ebnf
         compound-statement = "{" { statement-or-declaration } "}"
@@ -258,9 +274,21 @@ enum-constant-list = identifier [ "=" expression] { "," identifier [ "=" express
 local-variable-declaration = "local" variable-declaration-list
 ```
 
+#### Expression Statements
+
+```ebnf
+expression-statement = [expression] ";"
+```
+
+#### Control Structures
+
+##### If-then-(else) statements
+
 ```ebnf
 if-statement      = "if" "(" expression ")" compound-statement [ "else" compound-statement ]
 ```
+
+##### Switch statements
 
 ```ebnf
         switch-statement = "switch" "(" expression ")" "{" switch-case-or-statement "}"
@@ -269,15 +297,25 @@ switch-case-or-statement = "case" expression ":"
                          | statement
 ```
 
+##### Loops
+
+###### While Loops
+
 ```ebnf
 while-statement = "while" "(" expression ")" compound-statement
 ```
 
+###### For Loops
+
 ```ebnf
-for-statement = "for" "(" [expression-or-local-variable-definition] ";" [expression] ";" [expression] ")" compound-statement
+for-statement = "for" "(" [expression-or-local-variable-definition] ";"
+                          [expression] ";" [expression] ")"
+                          compound-statement
 expression-or-local-variable-definition = expression
                                         | local-variable-declaration
 ```
+
+###### Break and continue 
 
 ```ebnf
 return-statement = "return" [ expression ] ";"
@@ -288,6 +326,3 @@ break-statement = "break" ";"
 continue-statement = "continue" ";"
 ```
 
-```ebnf
-expression-statement = [expression] ";"
-```
