@@ -321,6 +321,7 @@ parseFnParamDeclOrType(std::vector<const Type *> &argType,
 	getToken();
 
 	// parse param type
+	auto typeLoc = token.loc;
 	auto type = parseType();
 	if (!type) {
 	    error::out() << token.loc << " type expected"
@@ -328,6 +329,9 @@ parseFnParamDeclOrType(std::vector<const Type *> &argType,
 	    error::fatal();
 	}
 	if (type->isArray()) {
+	    error::out() << typeLoc << ": warning: treating '" << type
+		<< "' as '" << Type::convertArrayOrFunctionToPointer(type)
+		<< std::endl;
 	    type = Type::convertArrayOrFunctionToPointer(type);
 	}
 	argType.push_back(type);

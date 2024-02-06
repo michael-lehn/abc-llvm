@@ -732,7 +732,7 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc,
 	return to;
     } else if (from->isNullPointer() && to->isPointer()) {
 	return from;
-    } else if (from->isArrayOrPointer() && to->isPointer()) {
+    } else if (from->isArrayOrPointer() && to->isArrayOrPointer()) {
 	auto fromRefTy = Type::getConstRemoved(from->getRefType());
 	auto toRefTy = Type::getConstRemoved(to->getRefType());
 
@@ -753,7 +753,8 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc,
 	}
 	return from;
     } else if (from->isFunction() && to->isPointer()) {
-	if (from != to->getRefType() && !to->getRefType()->isVoid()) {
+	if (!silent
+	 && from != to->getRefType() && !to->getRefType()->isVoid()) {
 	    error::out() << loc << ": warning: casting '" << from
 		<< "' to '" << to << "'" << std::endl;
 	    error::warning();

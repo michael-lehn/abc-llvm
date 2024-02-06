@@ -20,7 +20,7 @@ fatal(void)
 void
 warning(void)
 {
-    std::exit(1);
+    out() << std::endl << "WARNING" << std::endl << std::endl;
 }
 
 

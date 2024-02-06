@@ -1,10 +1,18 @@
-fn foo(a: int): int
-{}
+#include <stdio.hdr>
 
-fn bar(): int
-{}
+global
+    a: array[10] of int = {1, 2, 3, 4, },
+    b: array[10] of int;
+
+fn foo(a: array[10] of int)
+{
+    for (local i: int = 0; i < 10; ++i) {
+	printf("a[%d] = %d\n", i, a[i]);
+    }
+}
 
 fn main()
 {
-    foo(1) || bar();
+    foo(a);
+    // b = a;
 }

@@ -972,6 +972,13 @@ loadValue(const Binary &binary)
 		    if (i < fnType->getArgType().size()) {
 			auto fromType = r[i]->getType();
 			auto toType = fnType->getArgType()[i];
+			if (!Type::getTypeConversion(fromType, toType)) {
+			    error::out() << r[i]->getLoc()
+				<< "can not cast paramter of type '"
+				<< fromType << "' to type '" << toType
+				<< std::endl;
+			    error::fatal();
+			}
 			param[i] = gen::cast(param[i], fromType, toType);
 		    }
 		}

@@ -1,29 +1,35 @@
 #include <stdio.hdr>
 
-fn factorial(n: u64): u64
+fn foo(a: array[10] of int)
 {
-    return n ? n * factorial(n - 1) : 1;
+    printf("sizeof(a) = %zu\n", sizeof(a));
+    printf("a[0] = %d\n", a[0]);
+    printf("a[1] = %d\n", a[1]);
+    printf("a[2] = %d\n", a[2]);
+    a[0] = 5;
+    a[1] = 6;
+    a[2] = 7;
+}
+
+fn bar(b: -> int)
+{
 }
 
 fn main()
 {
-    local n: u64;
+    local b: array[10] of int = {1, 2, 3, },
+	  b2: array[10] of int;
+    foo(b);
+    printf("b[0] = %d\n", b[0]);
+    printf("b[1] = %d\n", b[1]);
+    printf("b[2] = %d\n", b[2]);
+    /*
+    b2 = b;
+    printf("b2[0] = %d\n", b2[0]);
+    printf("b2[1] = %d\n", b2[1]);
+    printf("b2[2] = %d\n", b2[2]);
+    */
 
-    while (1) {
-	printf("Gib eine nicht-negative ganze Zahl ein:\n");
-	local a: i64;
-	if (!scanf("%lld", &a)) {
-	    printf("Das hat gar nicht leider nicht geklappt\n");
-	    // clear all input 
-	    for (local ch: u8; scanf("%c", &ch);) {
-	    }
-	} else if (a < 0) {
-	    printf("Fast, aber das ist eine negative Zahl\n");
-	} else {
-	    n = a;
-	    break;
-	}
-    }
-
-    printf("%lld = %lld\n", n, factorial(n));
+    local a: int;
+    bar(&a);
 }
