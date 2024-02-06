@@ -77,8 +77,6 @@ declares a function pointer `foo` to a function with two integer parameters whic
 
 
 
-Certainly, I'll help you with the corrections. Here's the revised version:
-
 ## Language Description
 
 ### Lexical Elements
