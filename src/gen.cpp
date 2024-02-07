@@ -701,6 +701,8 @@ cast(Reg reg, const Type *fromType, const Type *toType)
     } else if (fromType->isArray() && toType->isPointer()) {
 	assert(0 && "cast of array to pointer");
 	return nullptr;
+    } else if (fromType->isArray() && toType->isArray()) {
+	return reg;
     } else if (fromType->isPointer() && toType->isArray()) {
 	return reg;
     } else if (fromType->isPointer() && toType->isPointer()) {
@@ -766,6 +768,13 @@ loadZero(const Type *type)
 {
     auto ty = TypeMap::get(type);
     return llvm::Constant::getNullValue(ty);
+}
+
+ConstVal
+loadConstString(const char *str)
+{
+    std::cerr << "loadConstString: str = '" << str << "'\n";
+    return llvm::ConstantDataArray::getString(*llvmContext, str, false);
 }
 
 ConstVal

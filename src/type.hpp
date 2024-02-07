@@ -121,6 +121,7 @@ class Type
 	static const Type *getConstRemoved(const Type *type);
 	static const Type *getVoid();
 	static const Type *getChar();
+	static const Type *getString(std::size_t len);
 	static const Type *getBool();
 	static const Type *getUnsignedInteger(std::size_t numBits);
 	static const Type *getSignedInteger(std::size_t numBits);

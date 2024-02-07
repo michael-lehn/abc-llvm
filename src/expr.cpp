@@ -18,12 +18,26 @@ ExprDeleter::operator()(const Expr *expr) const
 //------------------------------------------------------------------------------
 
 /*
- * Class Literal
+ * Class IntegerLiteral
  */
 
-Literal::Literal(UStr val, const Type *type, std::uint8_t radix,
-		 Token::Loc loc)
+IntegerLiteral::IntegerLiteral(UStr val, const Type *type, std::uint8_t radix,
+			       Token::Loc loc)
     : val{val}, type{type}, radix{radix}, loc{loc}
+{}
+
+/*
+ * Class StringLiteral
+ */
+
+StringLiteral::StringLiteral(UStr val, UStr ident, Token::Loc loc)
+    : val{val}, data{ident}, type{Type::getString(val.length())}, loc{loc}
+{}
+    
+StringLiteral::StringLiteral(UStr val, std::size_t zeroPadding, Token::Loc loc)
+    : val{val}, data{zeroPadding}
+    , type{Type::getString(val.length() + zeroPadding)}
+    , loc{loc}
 {}
     
 /*
@@ -31,7 +45,7 @@ Literal::Literal(UStr val, const Type *type, std::uint8_t radix,
  */
 
 Identifier::Identifier(UStr ident, const Type *type, Token::Loc loc)
-    : val{ident.c_str()}, type{type}, loc{loc}
+    : ident{ident}, type{type}, loc{loc}
 {}
 
 //-- handling type conversions and casts ---------------------------------------
@@ -141,7 +155,6 @@ Binary::setType(void)
 	    return;
 	case Binary::Kind::ASSIGN:
 	    if (l->isFunction() || l->hasConstFlag()) {
-	    //if (l->isArray() || l->isFunction() || l->hasConstFlag()) {
 		error::out() << opLoc
 		    << " cannot assign to variable with type '"
 		    << l << "'" << std::endl;
@@ -361,18 +374,30 @@ Expr::createNull(const Type *type, Token::Loc loc)
     if (type->isPointer()) {
 	type = Type::getNullPointer();
     }
-    return ExprPtr{new Expr{Literal{UStr{"0"}.c_str(), type, 10, loc}}};
+    return ExprPtr{new Expr{IntegerLiteral{UStr{"0"}.c_str(), type, 10, loc}}};
 }
 
 ExprPtr
-Expr::createLiteral(UStr val, std::uint8_t radix, const Type *type,
-		    Token::Loc loc)
+Expr::createIntegerLiteral(UStr val, std::uint8_t radix, const Type *type,
+			   Token::Loc loc)
 {
     if (!type)  {
 	auto cstr = val.c_str();
 	type = getIntType(cstr, cstr + strlen(cstr), radix, loc);
     }
-    return ExprPtr{new Expr{Literal{val, type, radix, loc}}};
+    return ExprPtr{new Expr{IntegerLiteral{val, type, radix, loc}}};
+}
+
+ExprPtr
+Expr::createStringLiteral(UStr val, UStr ident, Token::Loc loc)
+{
+    return ExprPtr{new Expr{StringLiteral{val, ident, loc}}};
+}
+
+ExprPtr
+Expr::createStringLiteral(UStr val, std::size_t zeroPadding, Token::Loc loc)
+{
+    return ExprPtr{new Expr{StringLiteral{val, zeroPadding, loc}}};
 }
 
 ExprPtr
@@ -430,27 +455,36 @@ Expr::createDeref(ExprPtr &&expr, Token::Loc opLoc)
     return ExprPtr{dref};
 }
 
-
 ExprPtr
-Expr::createCast(ExprPtr &&child, const Type *toType, Token::Loc opLoc)
+Expr::createCast(ExprPtr &&child, const Type *toType, Token::Loc loc)
 {
-    if (!Type::getTypeConversion(child->getType(), toType, opLoc, true)) {
-	error::out() << opLoc << ": can not cast '" << child->getType()
+    if (std::holds_alternative<StringLiteral>(child->variant)
+	    && toType->isArray()
+	    && toType->getDim() > child->getType()->getDim()
+	    && gen::getSizeOf(child->getType()->getRefType())
+		    == gen::getSizeOf(toType->getRefType()))
+    {
+	const auto strLit = std::get<StringLiteral>(child->variant);
+	auto zeroPadding = toType->getDim() - child->getType()->getDim();
+	child = Expr::createStringLiteral(strLit.val, zeroPadding, loc);
+    }
+    if (!Type::getTypeConversion(child->getType(), toType, loc, true)) {
+	error::out() << loc << ": can not cast '" << child->getType()
 	    << "' to '" << toType << std::endl;
 	error::fatal();
     }
     if (child->getType()->isArray() && toType->isPointer()) {
-	if (!child->isLValue()) {
-	    error::out() << opLoc
+	if (!child->hasAddr()) {
+	    error::out() << loc
 		<< ": only an lvalue array can be casted to a pointer"
 		<< std::endl;
 	    error::out() << child->getLoc() << ": not an lvalue" << std::endl;
 	    error::fatal();
 	}
-	child = createAddr(std::move(child), opLoc);
+	child = createAddr(std::move(child), loc);
     }
     auto expr = new Expr{Unary{Unary::Kind::CAST, std::move(child), toType,
-			       opLoc}};
+			       loc}};
     return ExprPtr{expr};
 }
 
@@ -595,8 +629,10 @@ Expr::getType(void) const
 {
     if (std::holds_alternative<Proxy>(variant)) {
 	return std::get<Proxy>(variant).expr->getType();
-    } else if (std::holds_alternative<Literal>(variant)) {
-	return std::get<Literal>(variant).type;
+    } else if (std::holds_alternative<IntegerLiteral>(variant)) {
+	return std::get<IntegerLiteral>(variant).type;
+    } else if (std::holds_alternative<StringLiteral>(variant)) {
+	return std::get<StringLiteral>(variant).type;
     } else if (std::holds_alternative<Identifier>(variant)) {
 	return std::get<Identifier>(variant).type;
     } else if (std::holds_alternative<Unary>(variant)) {
@@ -614,7 +650,19 @@ Expr::getType(void) const
 }
 
 bool
-Expr::isLValue(void) const
+Expr::hasAddr() const
+{
+    if (std::holds_alternative<StringLiteral>(variant)) {
+	const auto strLit = std::get<StringLiteral>(variant);
+	return std::holds_alternative<UStr>(strLit.data);
+    } else if (std::holds_alternative<Proxy>(variant)) {
+	return std::get<Proxy>(variant).expr->hasAddr();
+    }
+    return isLValue();
+}
+
+bool
+Expr::isLValue() const
 {
     if (std::holds_alternative<Proxy>(variant)) {
 	return std::get<Proxy>(variant).expr->isLValue();
@@ -664,14 +712,13 @@ Expr::isConst(void) const
 {
     if (std::holds_alternative<Proxy>(variant)) {
 	return std::get<Proxy>(variant).expr->isConst();
-    } else if (std::holds_alternative<Literal>(variant)) {
+    } else if (std::holds_alternative<IntegerLiteral>(variant)) {
+	return true;
+    } else if (std::holds_alternative<StringLiteral>(variant)) {
 	return true;
     } else if (std::holds_alternative<Identifier>(variant)) {
 	const auto &ident = std::get<Identifier>(variant);
 	if (ident.type->isFunction()) {
-	    return true;
-	}
-	if (ident.type->isArray()) {
 	    return true;
 	}
 	return false;
@@ -795,8 +842,10 @@ Expr::getLoc(void) const
 {
     if (std::holds_alternative<Proxy>(variant)) {
 	return std::get<Proxy>(variant).expr->getLoc();
-    } else if (std::holds_alternative<Literal>(variant)) {
-	return std::get<Literal>(variant).loc;
+    } else if (std::holds_alternative<IntegerLiteral>(variant)) {
+	return std::get<IntegerLiteral>(variant).loc;
+    } else if (std::holds_alternative<StringLiteral>(variant)) {
+	return std::get<StringLiteral>(variant).loc;
     } else if (std::holds_alternative<Identifier>(variant)) {
 	return std::get<Identifier>(variant).loc;
     } else if (std::holds_alternative<Unary>(variant)) {
@@ -823,13 +872,17 @@ Expr::print(int indent) const
 
     if (std::holds_alternative<Proxy>(variant)) {
 	std::get<Proxy>(variant).expr->print(indent);
-    } else if (std::holds_alternative<Literal>(variant)) {
-	const auto &lit = std::get<Literal>(variant);
-	std::printf("Literal: %s ", lit.val.c_str());
+    } else if (std::holds_alternative<IntegerLiteral>(variant)) {
+	const auto &lit = std::get<IntegerLiteral>(variant);
+	std::printf("IntegerLiteral: %s ", lit.val.c_str());
+	std::cout << getType() << std::endl;
+    } else if (std::holds_alternative<StringLiteral>(variant)) {
+	const auto &lit = std::get<StringLiteral>(variant);
+	std::printf("StringLiteral: %s ", lit.val.c_str());
 	std::cout << getType() << std::endl;
     } else if (std::holds_alternative<Identifier>(variant)) {
-	const auto &ident = std::get<Identifier>(variant);
-	std::printf("Identifier: %s ", ident.val);
+	const auto &id = std::get<Identifier>(variant);
+	std::printf("Identifier: %s ", id.ident.c_str());
 	std::cout << getType() << std::endl;
     } else if (std::holds_alternative<Unary>(variant)) {
 	const auto &unary = std::get<Unary>(variant);
@@ -865,7 +918,7 @@ Expr::print(int indent) const
 //-- code generation -----------------------------------------------------------
 
 static gen::Reg
-loadValue(const Literal &l)
+loadValue(const IntegerLiteral &l)
 {
     if (!l.type->isInteger() && !l.type->isNullPointer()) {
 	error::out() << l.loc << ": literal has type '"
@@ -881,14 +934,32 @@ loadValue(const Literal &l)
 }
 
 static gen::Reg
-loadValue(const Identifier &ident)
+loadValue(const StringLiteral &l)
+{
+    std::vector<gen::ConstVal> str;
+    for (std::size_t i = 0; i < l.val.length(); ++i) {
+	auto ch = l.val.c_str()[i];
+	str.push_back(gen::loadIntConst(ch, Type::getChar()));
+    }
+    if (std::holds_alternative<std::size_t>(l.data)) {
+	auto padding = std::get<std::size_t>(l.data);
+	for (std::size_t i = 0; i < padding; ++i) {
+	    str.push_back(gen::loadIntConst(0, Type::getChar()));
+	}
+    }
+    str.push_back(gen::loadIntConst(0, Type::getChar()));
+    return gen::loadConstArray(str, Type::getString(l.val.length()));
+}
+
+static gen::Reg
+loadValue(const Identifier &id)
 {
     //if (ident.type->isFunction() || ident.type->isArray()) {
-    if (ident.type->isFunction()) {
-	return gen::loadAddr(ident.val);
+    if (id.type->isFunction()) {
+	return gen::loadAddr(id.ident.c_str());
     }
 
-    return gen::fetch(ident.val, ident.type);
+    return gen::fetch(id.ident.c_str(), id.type);
 }
 
 static void condJmp(const Unary &, gen::Label, gen::Label);
@@ -930,10 +1001,10 @@ loadValue(const Unary &unary)
 	case Unary::Kind::ADDRESS:
 	    {
 		auto lValue = unary.child.get();
-		assert(lValue->isLValue());
+		assert(lValue->hasAddr());
 		if (std::holds_alternative<Identifier>(lValue->variant)) {
 		    auto ident = std::get<Identifier>(lValue->variant);
-		    return gen::loadAddr(ident.val);
+		    return gen::loadAddr(ident.ident.c_str());
 		} else if (std::holds_alternative<Unary>(lValue->variant)) {
 		    const auto &unary = std::get<Unary>(lValue->variant);
 		    if (unary.kind == Unary::Kind::DEREF) {
@@ -947,6 +1018,10 @@ loadValue(const Unary &unary)
 		} else if (std::holds_alternative<Proxy>(lValue->variant)) {
 		    const auto &proxy = std::get<Proxy>(lValue->variant);
 		    return proxy.expr->loadAddr();
+		} else if (std::holds_alternative
+					    <StringLiteral>(lValue->variant)) {
+		    const auto &str = std::get<StringLiteral>(lValue->variant);
+		    return gen::loadAddr(std::get<UStr>(str.data).c_str());
 		} else {
 		    assert(0); // not implemented
 		    return nullptr;
@@ -1021,7 +1096,7 @@ loadValue(const Binary &binary)
 
 		if (std::holds_alternative<Identifier>(left->variant)) {
 		    auto l = std::get<Identifier>(left->variant);
-		    return gen::call(l.val, param);
+		    return gen::call(l.ident.c_str(), param);
 		}
 		auto fnPtr = left->loadValue();
 		return gen::call(fnPtr, fnType, param);
@@ -1190,8 +1265,10 @@ Expr::loadValue(void) const
 {
     if (std::holds_alternative<Proxy>(variant)) {
 	return std::get<Proxy>(variant).expr->loadValue();
-    } else if (std::holds_alternative<Literal>(variant)) {
-	return ::loadValue(std::get<Literal>(variant));
+    } else if (std::holds_alternative<IntegerLiteral>(variant)) {
+	return ::loadValue(std::get<IntegerLiteral>(variant));
+    } else if (std::holds_alternative<StringLiteral>(variant)) {
+	return ::loadValue(std::get<StringLiteral>(variant));
     } else if (std::holds_alternative<Identifier>(variant)) {
 	return ::loadValue(std::get<Identifier>(variant));
     } else if (std::holds_alternative<Unary>(variant)) {
@@ -1216,23 +1293,26 @@ loadAddr(const Binary &binary)
     auto baseType = binary.left->getType();
 
     const auto &member = std::get<Identifier>(binary.right->variant);
-    auto index = baseType->getMemberIndex(member.val);
+    auto index = baseType->getMemberIndex(member.ident);
     return gen::ptrMember(baseType, baseAddr, index);
 }
 
 gen::Reg
 Expr::loadAddr(void) const
 {
-    if (!isLValue()) {
-	error::out() << getLoc() << ": not a lvalue" << std::endl;
+    if (!hasAddr()) {
+	error::out() << getLoc() << ": expression has no address" << std::endl;
 	error::fatal();
     }
 
     if (std::holds_alternative<Proxy>(variant)) {
 	return std::get<Proxy>(variant).expr->loadAddr();
+    } else if (std::holds_alternative<StringLiteral>(variant)) {
+	const auto &strLit = std::get<StringLiteral>(variant);
+	return gen::loadAddr(std::get<UStr>(strLit.data).c_str());
     } else if (std::holds_alternative<Identifier>(variant)) {
-	const auto &ident = std::get<Identifier>(variant);
-	return gen::loadAddr(ident.val);
+	const auto &id = std::get<Identifier>(variant);
+	return gen::loadAddr(id.ident.c_str());
     } else if (std::holds_alternative<Unary>(variant)) {
 	const auto &unary = std::get<Unary>(variant);
 	if (unary.kind == Unary::Kind::DEREF) {

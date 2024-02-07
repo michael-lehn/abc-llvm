@@ -161,7 +161,7 @@ parseEnumDef(void)
 	std::stringstream ss;
 	ss << i;
 	UStr val{ss.str()};
-	auto expr = Expr::createLiteral(val, 10, enumTy, token.loc);
+	auto expr = Expr::createIntegerLiteral(val, 10, enumTy, token.loc);
 	Symtab::addConstant(identTok.loc, identTok.val, std::move(expr));
 	if (token.kind != TokenKind::COMMA) {
 	    break;
@@ -258,16 +258,18 @@ parseGlobalDef(void)
 			<< " compile-time constant" << std::endl;
 		    error::fatal();
 		}
-		initList.add(std::move(expr));
+		gen::defGlobal(s->ident.c_str(), ty, expr->loadConst());
 	    } else if (parseInitializerList(initList, true)) {
+		gen::defGlobal(s->ident.c_str(), ty, initList.loadConst());
 	    } else {
 		error::out() << opLoc
 		    << " expected initializer or expression"
 		    << std::endl;
 		error::fatal();
 	    }
+	} else {
+	    gen::defGlobal(s->ident.c_str(), ty);
 	}
-	gen::defGlobal(s->ident.c_str(), ty, initList.loadConst());
 
 	if (token.kind != TokenKind::COMMA) {
 	    break;
@@ -785,7 +787,7 @@ parseLocalDef(void)
 			<< " expected non-empty expression" << std::endl;
 		    error::fatal();
 		}
-		init = Expr::createCast(std::move(init), type, initLoc);
+		init = Expr::createCast(std::move(init), var->getType(), initLoc);
 		auto val = init->loadValue();
 		gen::store(val, addr, type);
 	    }
@@ -977,7 +979,7 @@ parseForStmt(void)
     // parse 'cond' expr
     auto cond = parseExpr();
     if (!cond) {
-	cond = Expr::createLiteral("1", 10, nullptr);
+	cond = Expr::createIntegerLiteral("1", 10, nullptr);
     }
     error::expected(TokenKind::SEMICOLON);
     getToken();
@@ -1309,7 +1311,7 @@ parseFn(void)
 		error::fatal();
 	    } else if (ty->isInteger()) {
 		auto ret = Expr::createIdentifier(UStr{".retVal"});
-		auto zero = Expr::createLiteral("0", 10);
+		auto zero = Expr::createIntegerLiteral("0", 10);
 		ret = Expr::createBinary(Binary::Kind::ASSIGN, std::move(ret),
 					  std::move(zero));
 		ret->loadValue();

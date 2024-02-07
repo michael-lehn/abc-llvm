@@ -43,7 +43,7 @@ main(void)
      * Create some code from an expression
      */
 
-    auto lit42 = Expr::createLiteral("42", 10, nullptr);
+    auto lit42 = Expr::createIntegerLiteral("42", 10, nullptr);
     auto a = Expr::createIdentifier("a");
     auto b = Expr::createIdentifier("b");
     auto binary = Expr::createBinary(

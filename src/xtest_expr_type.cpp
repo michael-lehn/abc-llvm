@@ -6,8 +6,8 @@
 int
 main(void)
 {
-    auto zero = Expr::createLiteral("0", 10);
-    auto larger = Expr::createLiteral("1234", 10);
+    auto zero = Expr::createIntegerLiteral("0", 10);
+    auto larger = Expr::createIntegerLiteral("1234", 10);
 
 
     std::cout << "typeof(zero) = " << zero->getType() << std::endl;

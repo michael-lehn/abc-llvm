@@ -24,19 +24,32 @@ using ExprPtr = std::unique_ptr<const Expr, ExprDeleter>;
 using ExprVector = std::vector<ExprPtr>;
 using ExprVectorPtr = std::unique_ptr<ExprVector>;
 
-struct Literal
+struct IntegerLiteral
 {
     UStr val;
     const Type *type;
     std::uint8_t radix;
     Token::Loc loc;
 
-    Literal(UStr val, const Type *type, std::uint8_t radix, Token::Loc loc);
+    IntegerLiteral(UStr val, const Type *type, std::uint8_t radix,
+		   Token::Loc loc);
 };
+
+struct StringLiteral
+{
+    UStr val;
+    std::variant<UStr, std::size_t> data;
+    const Type *type;
+    Token::Loc loc;
+
+    StringLiteral(UStr val, UStr ident, Token::Loc loc);
+    StringLiteral(UStr val, std::size_t zeroPadding, Token::Loc loc);
+};
+
 
 struct Identifier
 {
-    const char *val;
+    UStr ident;
     const Type *type;
     Token::Loc loc;
 
@@ -143,11 +156,12 @@ struct Conditional
 class Expr
 {
     public:
-	std::variant<Literal, Identifier, Proxy,  Unary, Binary, Conditional,
-		     ExprVector> variant;
+	std::variant<IntegerLiteral, StringLiteral, Identifier, Proxy,  Unary,
+		     Binary, Conditional, ExprVector> variant;
 
     private:
-	Expr(Literal &&val) : variant{std::move(val)} {}
+	Expr(IntegerLiteral &&val) : variant{std::move(val)} {}
+	Expr(StringLiteral &&val) : variant{std::move(val)} {}
 	Expr(Identifier &&ident) : variant{std::move(ident)} {}
 	Expr(Proxy &&proxy) : variant{std::move(proxy)} {}
 	Expr(Unary &&unary) : variant{std::move(unary)} {}
@@ -155,12 +169,19 @@ class Expr
 	Expr(Conditional &&con) : variant{std::move(con)} {}
 	Expr(ExprVector &&vec) : variant{std::move(vec)} {}
 
+
     public:
 	static ExprPtr createNull(const Type *type,
 				  Token::Loc loc = Token::Loc{});
-	static ExprPtr createLiteral(UStr val, std::uint8_t radix = 10,
-				     const Type *type = nullptr,
-				     Token::Loc loc = Token::Loc{});
+	static ExprPtr createIntegerLiteral(UStr val, std::uint8_t radix = 10,
+					    const Type *type = nullptr,
+					    Token::Loc loc = Token::Loc{});
+	static ExprPtr createStringLiteral(UStr val, UStr ident,
+					   Token::Loc loc = Token::Loc{});
+    private:
+	static ExprPtr createStringLiteral(UStr val, std::size_t zeroPadding,
+					   Token::Loc loc = Token::Loc{});
+    public:
 	static ExprPtr createIdentifier(UStr ident,
 					Token::Loc loc = Token::Loc{});
 	static ExprPtr createProxy(const Expr *expr);
@@ -188,6 +209,7 @@ class Expr
 	static ExprPtr createExprVector(ExprVector &&expr);
 
 	const Type *getType(void) const;
+	bool hasAddr(void) const;
 	bool isLValue(void) const;
 	bool isConst(void) const;
 	Token::Loc getLoc(void) const;

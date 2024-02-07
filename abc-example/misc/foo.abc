@@ -1,35 +1,25 @@
 #include <stdio.hdr>
 
-fn foo(a: array[10] of int)
-{
-    printf("sizeof(a) = %zu\n", sizeof(a));
-    printf("a[0] = %d\n", a[0]);
-    printf("a[1] = %d\n", a[1]);
-    printf("a[2] = %d\n", a[2]);
-    a[0] = 5;
-    a[1] = 6;
-    a[2] = 7;
-}
+global str: array[2][4] of char = { "A", "B" };
+global a: array[5] of u64 = {1, 2, 3};
 
-fn bar(b: -> int)
-{
-}
 
-fn main()
+fn main(): int
 {
-    local b: array[10] of int = {1, 2, 3, },
-	  b2: array[10] of int;
-    foo(b);
-    printf("b[0] = %d\n", b[0]);
-    printf("b[1] = %d\n", b[1]);
-    printf("b[2] = %d\n", b[2]);
-    /*
-    b2 = b;
-    printf("b2[0] = %d\n", b2[0]);
-    printf("b2[1] = %d\n", b2[1]);
-    printf("b2[2] = %d\n", b2[2]);
-    */
+    printf("a = %p\n", a);
 
-    local a: int;
-    bar(&a);
+    local str: array[4] of char  = "AB";
+
+    printf("%s\n", str);
+    for (local i: int = 0; i < 3; ++i) {
+	str[i] = 'A' + i;
+    }
+    printf("%s\n", str);
+
+    local p: -> char;
+    p = "abc";
+
+    printf("hello, world! %d\n", 42);
+
+    return str[0];
 }

@@ -363,14 +363,20 @@ fixCurrentLocatation(std::size_t line)
     curr.line = line;
 }
 
+constexpr std::size_t tabSize = 8;
+
 static char
 nextCh()
 {
+	
     ch = std::fgetc(fp);
-    ++curr.col;
-    if (ch == '\n') {
+    if (ch == '\t') {
+	curr.col += tabSize - curr.col % tabSize;
+    } else if (ch == '\n') {
 	++curr.line;
 	curr.col = 0;
+    } else {
+	++curr.col;
     }
     return ch;
 }
@@ -1054,7 +1060,26 @@ combineLoc(Token::Loc fromLoc, Token::Loc toLoc)
     return Token::Loc{fromLoc.from, toLoc.to, fromLoc.path};
 }
 
-std::size_t
+static std::string
+expandTabs(const std::string &str)
+{
+    std::string result;
+    std::size_t pos = 0;
+
+    for(char c: str) {
+        if(c == '\t') {
+            result.append(tabSize - pos % tabSize, ' ');
+            pos = 0;
+        } else {
+            result += c;
+            pos = (c == '\n') ? 0 : pos + 1;
+        }
+    }
+    return result;
+}
+
+
+std::pair <std::size_t, std::size_t>
 printLine(std::ostream &out, const char *path, std::size_t lineNumber)
 {
     std::fstream file{path};
@@ -1065,8 +1090,9 @@ printLine(std::ostream &out, const char *path, std::size_t lineNumber)
     }
     std::string line;
     std::getline(file, line);
+    line = expandTabs(line);
     out << line << std::endl;
-    return line.length();
+    return {line.find_first_not_of(' '), line.length()};
 }	
 
 std::ostream &
@@ -1074,8 +1100,8 @@ operator<<(std::ostream &out, const Token::Loc &loc)
 {
     out << std::endl;
     for (std::size_t line = loc.from.line; line <= loc.to.line; ++line) {
-	auto len = printLine(out, loc.path.c_str(), line);
-	std::size_t fromCol = line == loc.from.line ? loc.from.col : 1;
+	auto [from, len] = printLine(out, loc.path.c_str(), line);
+	std::size_t fromCol = line == loc.from.line ? loc.from.col : from + 1;
 	std::size_t toCol = line == loc.to.line ? loc.to.col : len;
 	for (size_t i = 1; i <= toCol; ++i) {
 	    if (i < fromCol) {

@@ -275,7 +275,7 @@ parsePrefix(void)
 			Expr::createBinary(
 			    getBinaryExprKind(opTok.kind),
 			    Expr::createProxy(expr.get()),
-			    Expr::createLiteral("1", 10),
+			    Expr::createIntegerLiteral("1", 10),
 			    opTok.loc),
 			opTok.loc);
 	    break;
@@ -391,7 +391,7 @@ parsePostfix(ExprPtr &&expr)
 		    ? Binary::POSTFIX_INC
 		    : Binary::POSTFIX_DEC;
 		auto oneTy = Type::getSignedInteger(8);
-		auto one = Expr::createLiteral("1", 10, oneTy);
+		auto one = Expr::createIntegerLiteral("1", 10, oneTy);
 		return Expr::createBinary(binaryOp, std::move(expr),
 					  std::move(one), opTok.loc);
 	    }
@@ -552,30 +552,30 @@ parsePrimary(void)
 	// TODO: Type 'ty' should be 'size_t'
 	auto ty = Type::getUnsignedInteger(64);
 	auto val = UStr{ss.str()}.c_str();
-	auto expr = Expr::createLiteral(val, 10, ty, opTok.loc);
+	auto expr = Expr::createIntegerLiteral(val, 10, ty, opTok.loc);
         return expr;
     } else if (token.kind == TokenKind::NULLPTR) {
         getToken();
 	auto ty = Type::getNullPointer();
-	auto expr = Expr::createLiteral("0", 10, ty, opTok.loc);
+	auto expr = Expr::createIntegerLiteral("0", 10, ty, opTok.loc);
         return expr;
     } else if (token.kind == TokenKind::DECIMAL_LITERAL) {
 	auto val = token.val.c_str();
         getToken();
 	auto ty = parseIntType(); // parse suffix
-	auto expr = Expr::createLiteral(val, 10, ty, opTok.loc);
+	auto expr = Expr::createIntegerLiteral(val, 10, ty, opTok.loc);
         return expr;
     } else if (token.kind == TokenKind::HEXADECIMAL_LITERAL) {
 	auto val = token.val.c_str();
         getToken();
 	auto ty = parseIntType(); // parse suffix
-	auto expr = Expr::createLiteral(val, 16, ty, opTok.loc);
+	auto expr = Expr::createIntegerLiteral(val, 16, ty, opTok.loc);
         return expr;
     } else if (token.kind == TokenKind::OCTAL_LITERAL) {
 	auto val = token.val.c_str();
         getToken();
 	auto ty = parseIntType(); // parse suffix
-	auto expr = Expr::createLiteral(val, 8, ty, opTok.loc);
+	auto expr = Expr::createIntegerLiteral(val, 8, ty, opTok.loc);
         return expr;
     } else if (token.kind == TokenKind::STRING_LITERAL) {
 	std::string str{};
@@ -584,7 +584,7 @@ parsePrimary(void)
 	    getToken();
 	} while (token.kind == TokenKind::STRING_LITERAL);
 	auto ident = Symtab::addStringLiteral(UStr{str}).c_str();
-	auto expr = Expr::createIdentifier(ident, opTok.loc);	
+	auto expr = Expr::createStringLiteral(str.c_str(), ident, opTok.loc);	
 	return expr;	
     } else if (token.kind == TokenKind::CHARACTER_LITERAL) {
 	std::stringstream ss;
@@ -592,7 +592,7 @@ parsePrimary(void)
 	UStr val{ss.str()};
         getToken();
 	auto ty = Type::getSignedInteger(16);
-	auto expr = Expr::createLiteral(val.c_str(), 10, ty, opTok.loc);
+	auto expr = Expr::createIntegerLiteral(val.c_str(), 10, ty, opTok.loc);
         return expr;
     } else if (token.kind == TokenKind::LPAREN) {
         getToken();

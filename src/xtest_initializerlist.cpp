@@ -11,9 +11,9 @@ main(void)
     //InitializerList initList(aTy);
     InitializerList initList;
 
-    initList.add(Expr::createLiteral("1"));
-    initList.add(Expr::createLiteral("2"));
-    initList.add(Expr::createLiteral("3"));
+    initList.add(Expr::createIntegerLiteral("1"));
+    initList.add(Expr::createIntegerLiteral("2"));
+    initList.add(Expr::createIntegerLiteral("3"));
 
     initList.print();
     initList.setType(aTy);
@@ -30,8 +30,8 @@ main(void)
     bTy->complete({"first", "second"}, {b1Ty, b2Ty});
 
     InitializerList initList2(bTy);
-    initList2.add(Expr::createLiteral("11"));
-    initList2.add(Expr::createLiteral("21"));
+    initList2.add(Expr::createIntegerLiteral("11"));
+    initList2.add(Expr::createIntegerLiteral("21"));
 
     initList2.print();
     auto bVal = initList2.loadConst();

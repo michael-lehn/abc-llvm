@@ -18,8 +18,15 @@ class UStr
 	    return c_str_;
 	}
 
+	std::size_t
+	length() const
+	{
+	    return len;
+	}
+
     private:
 	const char *c_str_;
+	std::size_t len;
 };
 
 inline bool

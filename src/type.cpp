@@ -564,6 +564,13 @@ Type::getChar()
 }
 
 const Type *
+Type::getString(std::size_t len)
+{
+    return getArray(getChar(), len + 1);
+}
+
+
+const Type *
 Type::getBool()
 {
     if (!intTypeSet) {
@@ -733,14 +740,28 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc,
     } else if (from->isNullPointer() && to->isPointer()) {
 	return from;
     } else if (from->isArray() && to->isPointer()) {
-	/*
-	error::out() << loc << ": warning: cast '" << from << "' to '" << to
-	    << std::endl;
-	*/
+	auto fromRefTy = Type::getConstRemoved(from->getRefType());
+	auto toRefTy = Type::getConstRemoved(to->getRefType());
+
+	if (!silent && fromRefTy != toRefTy && !toRefTy->isVoid())
+	{
+	    error::out() << loc << ": warning: casting '" << from
+		<< "' to '" << to << "'" << std::endl;
+	    error::warning();
+	}
 	return to;
     } else if (from->isPointer() && to->isArray()) {
 	return nullptr;
-    } else if (from->isArrayOrPointer() && to->isArrayOrPointer()) {
+    } else if (from->isArray() && to->isArray()) {
+	auto fromRefTy = Type::getConstRemoved(from->getRefType());
+	auto toRefTy = Type::getConstRemoved(to->getRefType());
+	bool refTyCheck = getTypeConversion(fromRefTy, toRefTy, loc, false);
+
+	if (!refTyCheck || from->getDim() != to->getDim()) {
+	    return nullptr;
+	}
+	return from;
+    } else if (from->isPointer() && to->isPointer()) {
 	auto fromRefTy = Type::getConstRemoved(from->getRefType());
 	auto toRefTy = Type::getConstRemoved(to->getRefType());
 

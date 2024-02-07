@@ -95,6 +95,7 @@ ConstVal loadIntConst(const char *val, const Type *type, std::uint8_t radix);
 ConstVal loadIntConst(std::uint64_t val, const Type *type);
 ConstVal loadZero(const Type *type);
 
+ConstVal loadConstString(const char *str);
 ConstVal loadConstArray(const std::vector<ConstVal> &val, const Type *type);
 ConstVal loadConstStruct(const std::vector<ConstVal> &val, const Type *type);
 
