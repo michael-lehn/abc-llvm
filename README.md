@@ -78,7 +78,7 @@ declares a function pointer `foo` to a function with two integer parameters whic
 # Examples
 
 ```c
-#include <stdio.h>
+#include <stdio.hdr>
 
 fn main()
 {
@@ -88,7 +88,7 @@ fn main()
 
 Currently, the C preprocessor (CPP) is used for macro processing and including headers. To be precise, the CPP integrated into C compilers like `gcc` or `clang` is used. This requires invoking the C compiler with the flags `-E` and, to ensure correct line and column numbers in error messages, with the flag `-traditional`. However, the `-traditional` flag has serious limitations. For example, it does not support stringification, which makes macros like `assert` much less useful. So in the near future, the preprocessor has to be integrated into the compiler.
 
-Of course, the header file `stdio.h` does not contain the implementation of `printf` but just a declaration for it:
+Of course, the header file `stdio.hdr` does not contain the implementation of `printf` but just a declaration for it:
 
 ```c
 extern fn printf(fmt: -> char, ...);
