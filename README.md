@@ -75,7 +75,31 @@ foo: -> fn(sel: int, value: int): -> fn(value: int): -> int;
 ```
 declares a function pointer `foo` to a function with two integer parameters which returns a pointer to a function that has one integer parameter and returns a pointer to an integer. Now declare this in C without typedefs ;-)
 
+# Examples
 
+```c
+#include <stdio.h>
+
+fn main()
+{
+    printf("hello, world!\n");
+}
+```
+
+Currently, the C preprocessor (CPP) is used for macro processing and including headers. To be precise, the CPP integrated into C compilers like `gcc` or `clang` is used. This requires invoking the C compiler with the flags `-E` and, to ensure correct line and column numbers in error messages, with the flag `-traditional`. However, the `-traditional` flag has serious limitations. For example, it does not support stringification, which makes macros like `assert` much less useful. So in the near future, the preprocessor has to be integrated into the compiler.
+
+Of course, the header file `stdio.h` does not contain the implementation of `printf` but just a declaration for it:
+
+```c
+extern fn printf(fmt: -> char, ...);
+
+fn main()
+{
+    printf("hello, world!\n");
+}
+```
+
+Any C function can be called from within an ABC function and vice versa. It just requires providing an `extern` declaration and linking against the C library or object file.
 
 # Language Description
 
