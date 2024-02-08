@@ -62,6 +62,8 @@ enum CondOp {
 };
 
 Cond cond(CondOp op, Reg a, Reg b);
+ConstVal cond(CondOp op, ConstVal a, ConstVal b);
+
 Label getLabel(const char *name = "");
 void labelDef(Label label);
 Label jmp(Label &label); // needed for phi: returns label of current block
@@ -74,8 +76,8 @@ Reg phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type);
 Reg loadAddr(const char *ident);
 Reg fetch(const char *ident, const Type *type);
 Reg fetch(Reg addr, const Type *type);
-void store(Reg val, const char *ident, const Type *type);
-void store(Reg val, Reg addr, const Type *type);
+Reg store(Reg val, const char *ident, const Type *type);
+Reg store(Reg val, Reg addr, const Type *type);
 
 // ALU
 enum AluOp {
@@ -92,7 +94,8 @@ Reg cast(Reg reg, const Type *fromType, const Type *toType);
 ConstVal cast(ConstVal constVal, const Type *fromType, const Type *toType);
 
 ConstVal loadIntConst(const char *val, const Type *type, std::uint8_t radix);
-ConstVal loadIntConst(std::uint64_t val, const Type *type);
+ConstVal loadIntConst(std::uint64_t val, const Type *type,
+		      bool isSigned = false);
 ConstVal loadZero(const Type *type);
 
 ConstVal loadConstString(const char *str);

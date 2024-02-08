@@ -47,6 +47,19 @@ $(bin.dir)/%: $(obj.dir)/%.o
 $(bin.dir)/%: $(obj.dir)/%.o $(obj) | $(bin.dir)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $< $(obj) $(llvm.link) -o $@
 
+$(bin.dir)/xtest_expr3 : $(obj.dir)/xtest_expr3.o
+$(bin.dir)/xtest_expr3 : $(obj.dir)/xtest_expr3.o $(obj.dir)/expr.o	\
+			$(obj.dir)/integerliteral.o $(obj.dir)/gen.o \
+			$(obj.dir)/type.o  $(obj.dir)/ustr.o  \
+			$(obj.dir)/error.o  $(obj.dir)/lexer.o  \
+			$(obj.dir)/symtab.o $(obj.dir)/identifier.o \
+			$(obj.dir)/binaryexpr.o $(obj.dir)/castexpr.o \
+			$(obj.dir)/proxyexpr.o $(obj.dir)/unaryexpr.o \
+			$(obj.dir)/stringliteral.o $(obj.dir)/promotion.o \
+			| $(bin.dir)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(llvm.link) -o $@
+
+
 $(obj.dir): ; mkdir -p $@
 $(dep.dir): ; mkdir -p $@
 $(bin.dir): ; mkdir -p $@

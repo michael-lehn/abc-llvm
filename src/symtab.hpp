@@ -55,7 +55,7 @@ class Symtab
 			return std::get<const Type *>(data);
 		    } else if (std::holds_alternative<ExprPtr>(data)) {
 			const auto &e = std::get<ExprPtr>(data);
-			return e->getType();
+			return e->type;
 		    }
 		    assert(0);
 		    return nullptr;

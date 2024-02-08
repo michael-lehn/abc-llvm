@@ -532,6 +532,14 @@ cond(CondOp op, Reg a, Reg b)
     return nullptr; // never reached
 }
 
+ConstVal
+cond(CondOp op, ConstVal a, ConstVal b)
+{
+    auto regA = llvm::dyn_cast<llvm::Value>(a);
+    auto regB = llvm::dyn_cast<llvm::Value>(b);
+    return llvm::dyn_cast<llvm::Constant>(cond(op, regA, regB));
+}
+
 Label
 getLabel(const char *name)
 {
@@ -648,7 +656,7 @@ fetch(Reg addr, const Type *type)
     return llvmBuilder->CreateLoad(ty, addr);
 }
 
-void
+Reg
 store(Reg val, const char *ident, const Type *type)
 {
     assureOpenBuildingBlock();
@@ -662,13 +670,15 @@ store(Reg val, const char *ident, const Type *type)
 	? llvm::dyn_cast<llvm::Value>(local[ident])
 	: llvm::dyn_cast<llvm::Value>(global[ident]);
     llvmBuilder->CreateStore(val, addr);
+    return val;
 }
 
-void
+Reg
 store(Reg val, Reg addr, const Type *type)
 {
     assureOpenBuildingBlock();
     llvmBuilder->CreateStore(val, addr);
+    return val;
 }
 
 //------------------------------------------------------------------------------
@@ -746,7 +756,7 @@ loadIntConst(const char *val, const Type *type, std::uint8_t radix)
 }
 
 ConstVal
-loadIntConst(std::uint64_t val, const Type *type)
+loadIntConst(std::uint64_t val, const Type *type, bool isSigned)
 {
     assert(type->isInteger() || (type->isPointer() && val == 0));
     if (type->isPointer() && val == 0) {
@@ -754,7 +764,6 @@ loadIntConst(std::uint64_t val, const Type *type)
 	return llvm::ConstantPointerNull::get(ty);
     } else if (type->isInteger()) {
 	auto ty = llvm::dyn_cast<llvm::IntegerType>(TypeMap::get(type));
-	auto isSigned = type->getIntegerKind() ==  Type::SIGNED;
 	return llvm::ConstantInt::get(ty, val, isSigned);
     }
     error::out() << "loadConst '" << val << "' of type '" << type << "'"

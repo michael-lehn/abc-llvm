@@ -21,5 +21,7 @@ fn main(): int
 
     printf("hello, world! %d\n", 42);
 
-    return str[0];
+    local i: int = -1u8;
+
+    printf("i = %d\n", i);
 }
