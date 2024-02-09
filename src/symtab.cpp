@@ -109,7 +109,7 @@ Symtab::add(Token::Loc loc, UStr ident, Entry::Data &&data, ScopeNode *sn)
 
     if (found) {
 	if (std::holds_alternative<const Type *>(data)) {
-	    const auto &tyOld = *found->getType();
+	    const auto &tyOld = *found->type();
 	    const auto &tyNew = *std::get<const Type *>(data);
 	    if (tyOld != tyNew) {
 		error::out() << loc
@@ -237,8 +237,8 @@ print(std::ostream &out, ScopeNode *sn)
 	out << std::setfill(' ') << std::setw(indent * 4) << " "
 	    << sym.second.ident.c_str() << ": "
 	    << sym.second.getLoc() << ", "
-	    << sym.second.getType() << " ["
-	    << (void *)sym.second.getType() << "], "
+	    << sym.second.type() << " ["
+	    << (void *)sym.second.type() << "], "
 	    << sym.second.getInternalIdent().c_str()
 	    << std::endl;
     }

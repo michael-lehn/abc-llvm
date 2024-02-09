@@ -5,13 +5,18 @@
 #include <optional>
 #include <sstream>
 
-#include "initializerlist.hpp"
+#include "binaryexpr.hpp"
+#include "castexpr.hpp"
 #include "error.hpp"
 #include "gen.hpp"
+#include "identifier.hpp"
+#include "initializerlist.hpp"
+#include "integerliteral.hpp"
 #include "lexer.hpp"
 #include "parseexpr.hpp"
 #include "parser.hpp"
 #include "symtab.hpp"
+#include "unaryexpr.hpp"
 #include "ustr.hpp"
 
 struct ControlStruct
@@ -151,17 +156,20 @@ parseEnumDef(void)
 	    getToken();
 	    auto valTok = token;
 	    auto val = parseExpr();
-	    if (!val && !val->isConst() && !val->getType()->isInteger()) {
+	    if (!val && !val->isConst() && !val->type->isInteger()) {
 		error::out() << valTok.loc << ": integer constant expected"
 		    << std::endl;
 		error::fatal();
 	    }
-	    i = val->loadConstInt()->getSExtValue();
+	    using T = std::remove_pointer_t<gen::ConstIntVal>;
+	    auto check = llvm::dyn_cast<T>(val->loadConstValue());
+	    assert(check);
+	    i = check->getSExtValue();
 	}
 	std::stringstream ss;
 	ss << i;
 	UStr val{ss.str()};
-	auto expr = Expr::createIntegerLiteral(val, 10, enumTy, token.loc);
+	auto expr = IntegerLiteral::create(val, 10, enumTy, token.loc);
 	Symtab::addConstant(identTok.loc, identTok.val, std::move(expr));
 	if (token.kind != TokenKind::COMMA) {
 	    break;
@@ -184,7 +192,7 @@ parseInitializerList(InitializerList &initList, bool global)
     }
     getToken();
 
-    auto type = initList.getType();
+    auto type = initList.type();
     for (std::size_t pos = 0; type ? pos < type->getNumMembers(): true; ++pos) {
 	auto loc = token.loc;
 	if (auto expr = parseExpr()) {
@@ -245,7 +253,7 @@ parseGlobalDef(void)
 
 	//auto s = Symtab::addDeclToRootScope(loc, ident.c_str(), type);
 	auto s = Symtab::addDecl(loc, ident.c_str(), type);
-	auto ty = s->getType();
+	auto ty = s->type();
 
 	// parse initalizer
 	InitializerList initList(type);
@@ -258,9 +266,9 @@ parseGlobalDef(void)
 			<< " compile-time constant" << std::endl;
 		    error::fatal();
 		}
-		gen::defGlobal(s->ident.c_str(), ty, expr->loadConst());
+		gen::defGlobal(s->ident.c_str(), ty, expr->loadConstValue());
 	    } else if (parseInitializerList(initList, true)) {
-		gen::defGlobal(s->ident.c_str(), ty, initList.loadConst());
+		gen::defGlobal(s->ident.c_str(), ty, initList.loadConstValue());
 	    } else {
 		error::out() << opLoc
 		    << " expected initializer or expression"
@@ -431,7 +439,7 @@ parseFnDeclOrType(std::vector<const Type *> &argType, const Type *&retType,
     
     if (fnDecl) {
 	*fnDecl = Symtab::addDeclToRootScope(fnLoc, fnIdent.c_str(), fnType);
-	assert((*fnDecl)->getType() == fnType);
+	assert((*fnDecl)->type() == fnType);
     }
 
     return fnType;
@@ -488,13 +496,13 @@ parseArrayDimAndType(void)
     }
     getToken();
     auto dim = parseExpr();
-    if (!dim || !dim->isConst() || !dim->getType()->isInteger()) {
+    if (!dim || !dim->isConst() || !dim->type->isInteger()) {
 	error::out() << token.loc
 	    << " dimension has to be a constant integer expression"
 	    << std::endl;
 	error::fatal();
     }
-    auto dimVal = llvm::dyn_cast<llvm::ConstantInt>(dim->loadConst());
+    auto dimVal = llvm::dyn_cast<llvm::ConstantInt>(dim->loadConstValue());
 
     if (dimVal->isNegative()) {
 	error::out() << token.loc
@@ -701,13 +709,13 @@ parseInitializer(gen::Reg addr, const Type *type)
 	}
 	auto exprLoc = token.loc;
 	if (auto expr = parseExpr()) {
-	    if (!Type::getTypeConversion(expr->getType(), memTy, exprLoc)) {
+	    if (!Type::getTypeConversion(expr->type, memTy, exprLoc)) {
 		error::out() << exprLoc
-		    << ": can not cast '" << expr->getType() << "' to '"
+		    << ": can not cast '" << expr->type << "' to '"
 		    << memTy << "'" << std::endl;
 		error::fatal();
 	    }
-	    expr = Expr::createCast(std::move(expr), memTy, exprLoc);
+	    expr = CastExpr::create(std::move(expr), memTy, exprLoc);
 	    auto val = expr->loadValue();
 	    gen::store(val, dest, memTy);
 	} else if (parseInitializer(dest, memTy)) {
@@ -767,19 +775,19 @@ parseLocalDef(void)
 	}
 
 	auto s = Symtab::addDecl(loc, ident.c_str(), type);
-	gen::defLocal(s->ident.c_str(), s->getType());
+	gen::defLocal(s->ident.c_str(), s->type());
 
 	// parse initalizer
 	if (token.kind == TokenKind::EQUAL) {
 	    getToken();
 
 	    auto rcPtrTy = Type::getPointer(Type::getConstRemoved(type));
-	    auto var = Expr::createIdentifier(ident.c_str(), loc);
-	    var = Expr::createAddr(std::move(var), loc);
-	    var = Expr::createCast(std::move(var), rcPtrTy, loc);
-	    var = Expr::createDeref(std::move(var));
+	    auto var = Identifier::create(ident, loc);
+	    var = UnaryExpr::create(UnaryExpr::ADDRESS, std::move(var), loc);
+	    var = CastExpr::create(std::move(var), rcPtrTy, loc);
+	    var = UnaryExpr::create(UnaryExpr::DEREF, std::move(var));
 	    auto addr = var->loadAddr();
-	    if (!parseInitializer(addr, var->getType())) {
+	    if (!parseInitializer(addr, var->type)) {
 		auto initLoc = token.loc;
 		auto init = parseExpr();
 		if (!init) {
@@ -787,7 +795,7 @@ parseLocalDef(void)
 			<< " expected non-empty expression" << std::endl;
 		    error::fatal();
 		}
-		init = Expr::createCast(std::move(init), var->getType(), initLoc);
+		init = CastExpr::create(std::move(init), var->type, initLoc);
 		auto val = init->loadValue();
 		gen::store(val, addr, type);
 	    }
@@ -979,7 +987,7 @@ parseForStmt(void)
     // parse 'cond' expr
     auto cond = parseExpr();
     if (!cond) {
-	cond = Expr::createIntegerLiteral("1", 10, nullptr);
+	cond = IntegerLiteral::create("1");
     }
     error::expected(TokenKind::SEMICOLON);
     getToken();
@@ -1043,18 +1051,13 @@ parseReturnStmt(void)
     } else if (!expr && Symtab::get(UStr{".retVal"})) {
 	auto s = Symtab::get(UStr{".retVal"});
 	error::out() << exprTok.loc
-	    << "  function with return type '" << s->getType()
+	    << "  function with return type '" << s->type()
 	    << "' should return a value" << std::endl;
 	error::fatal();
     }
     if (expr) { 
-	/*
-	auto ret = Expr::createIdentifier(UStr{".retVal"}, exprTok.loc);
-	expr = Expr::createBinary(Binary::Kind::ASSIGN, std::move(ret),
-				  std::move(expr), exprTok.loc);
-				  */
-	auto retTy = Symtab::get(UStr{".retVal"})->getType();
-	expr = Expr::createCast(std::move(expr), retTy, exprTok.loc);
+	auto retTy = Symtab::get(UStr{".retVal"})->type();
+	expr = CastExpr::create(std::move(expr), retTy, exprTok.loc);
 	gen::ret(expr->loadValue());
     } else {
 	gen::ret();
@@ -1134,7 +1137,7 @@ parseSwitchStmt(void)
     getToken();
     auto condTok = token;
     auto cond = parseExpr();
-    if (!cond || !cond->getType()->isInteger()) {
+    if (!cond || !cond->type->isInteger()) {
 	error::out() << condTok.loc
 	    << ": integer expression expected" << std::endl;
 	error::fatal();
@@ -1161,24 +1164,27 @@ parseSwitchStmt(void)
 	    getToken();
 	    auto valTok = token;
 	    auto val = parseExpr();
-	    if (!val || !val->isConst() || !val->getType()->isInteger()) {
+	    if (!val || !val->isConst() || !val->type->isInteger()) {
 		error::out() << valTok.loc
 		    << ": constant integer expression required" << std::endl;
 		error::fatal();
 	    }
-	    val = Expr::createCast(std::move(val), cond->getType(), valTok.loc);
+	    val = CastExpr::create(std::move(val), cond->type, valTok.loc);
 	    error::expected(TokenKind::COLON);
 	    getToken();
 	    auto label = gen::getLabel("case");
-	    caseLabel.push_back({val->loadConstInt(), label});
-	    if (usedCaseVal.contains(val->loadConstInt()->getZExtValue())) {
+	    using T = std::remove_pointer_t<gen::ConstIntVal>;
+	    auto caseVal = llvm::dyn_cast<T>(val->loadConstValue());
+	    assert(caseVal);
+	    caseLabel.push_back({caseVal, label});
+	    if (usedCaseVal.contains(caseVal->getZExtValue())) {
 		error::out() << valTok.loc << ": duplicate case value '"
-		    << val->loadConstInt()->getZExtValue() << "'" << std::endl;
+		    << caseVal->getZExtValue() << "'" << std::endl;
 		error::fatal();
 	    } else {
 		gen::labelDef(label);
 	    }
-	    usedCaseVal.insert(val->loadConstInt()->getZExtValue());
+	    usedCaseVal.insert(caseVal->getZExtValue());
 	} else if (token.kind == TokenKind::DEFAULT) {
 	    getToken();
 	    error::expected(TokenKind::COLON);
@@ -1249,7 +1255,7 @@ parseExternDecl(void)
 
     if (fnDecl) {
 	fnDecl->setExternFlag();
-	gen::fnDecl(fnDecl->ident.c_str(), fnDecl->getType());
+	gen::fnDecl(fnDecl->ident.c_str(), fnDecl->type());
     } else {
 	error::expected(TokenKind::IDENTIFIER);
 	auto loc = token.loc;
@@ -1297,23 +1303,24 @@ parseFn(void)
 
     if (token.kind == TokenKind::SEMICOLON) {
 	getToken();
-	gen::fnDecl(fnDecl->ident.c_str(), fnDecl->getType());
+	gen::fnDecl(fnDecl->ident.c_str(), fnDecl->type());
     } else {
 	error::expected(TokenKind::LBRACE);
-	gen::fnDef(fnDecl->ident.c_str(), fnDecl->getType(), fnParamIdent);
+	gen::fnDef(fnDecl->ident.c_str(), fnDecl->type(), fnParamIdent);
 	Symtab::setPrefix(fnDecl->ident.c_str());
 	if (fnDecl->ident == UStr{"main"}) {
-	    auto ty = fnDecl->getType()->getRetType();
+	    auto ty = fnDecl->type()->getRetType();
 	    if (!ty->isInteger() && !ty->isVoid()) {
 		error::out() << fnTok.loc
 		    << ": function 'main' can only have an integer return type"
 		    << std::endl;
 		error::fatal();
 	    } else if (ty->isInteger()) {
-		auto ret = Expr::createIdentifier(UStr{".retVal"});
-		auto zero = Expr::createIntegerLiteral("0", 10);
-		ret = Expr::createBinary(Binary::Kind::ASSIGN, std::move(ret),
-					  std::move(zero));
+		auto ret = Identifier::create(UStr{".retVal"});
+		auto zero = IntegerLiteral::create("0");
+		ret = BinaryExpr::create(BinaryExpr::Kind::ASSIGN,
+					 std::move(ret),
+					 std::move(zero));
 		ret->loadValue();
 	    }
 	}

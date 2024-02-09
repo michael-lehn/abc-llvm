@@ -11,6 +11,8 @@ class Identifier : public Expr
     public:
 
 	static ExprPtr create(UStr ident, Token::Loc loc = Token::Loc{});
+	static ExprPtr create(UStr ident, const Type *type,
+			      Token::Loc loc = Token::Loc{});
 
 	UStr ident;
 

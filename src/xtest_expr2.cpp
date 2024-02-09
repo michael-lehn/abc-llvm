@@ -1,6 +1,8 @@
+#include "binaryexpr.hpp"
 #include "expr.hpp"
-#include "symtab.hpp"
 #include "gen.hpp"
+#include "identifier.hpp"
+#include "symtab.hpp"
 #include "type.hpp"
 
 const Type *
@@ -23,9 +25,9 @@ int
 main(void)
 {
     Symtab::addDecl(Token::Loc{}, UStr{"foo"}, makeSomeStructType());
-    auto foo = Expr::createIdentifier(UStr{"foo"}, Token::Loc{});
+    auto foo = Identifier::create(UStr{"foo"}, Token::Loc{});
 
-    auto foo_second = Expr::createMember(std::move(foo), UStr{"first"});
+    auto foo_second = BinaryExpr::createMember(std::move(foo), UStr{"first"});
 
     foo_second->print();
 

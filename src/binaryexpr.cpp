@@ -6,6 +6,7 @@
 #include "error.hpp"
 #include "identifier.hpp"
 #include "promotion.hpp"
+#include "proxyexpr.hpp"
 
 BinaryExpr::BinaryExpr(Kind kind, ExprPtr &&left, ExprPtr &&right,
 		       const Type *type, Token::Loc loc)
@@ -26,6 +27,36 @@ BinaryExpr::create(Kind kind, ExprPtr &&left, ExprPtr &&right, Token::Loc loc)
 			    loc};
     return std::unique_ptr<BinaryExpr>{p};
 }
+
+ExprPtr
+BinaryExpr::createOpAssign(Kind kind, ExprPtr &&left, ExprPtr &&right,
+			   Token::Loc loc)
+{
+    auto expr = ProxyExpr::create(left.get(), loc);
+    expr = BinaryExpr::create(kind, std::move(expr), std::move(right), loc);
+    return BinaryExpr::create(ASSIGN, std::move(left), std::move(expr), loc);
+}
+
+ExprPtr
+BinaryExpr::createMember(ExprPtr &&structExpr, UStr ident, Token::Loc loc)
+{
+    auto structType = structExpr->type;
+    if (!structType->isStruct() || !structType->hasMember(ident)) {
+	error::out() << loc << ": '" << structType << "' has no member '"
+	    << ident.c_str() << "'" << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    auto type = structType->getMemberType(ident); 
+    auto member = Identifier::create(ident, type, loc);
+    auto p = new BinaryExpr{MEMBER,
+			    std::move(structExpr),
+			    std::move(member),
+			    type,
+			    loc};
+    return std::unique_ptr<BinaryExpr>{p};
+}
+
 
 bool
 BinaryExpr::hasAddr() const
@@ -166,6 +197,7 @@ BinaryExpr::loadAddr() const
 {
     assert(hasAddr());
     assert(kind == MEMBER);
+    assert(dynamic_cast<const Identifier *>(right.get()));
     auto ident = dynamic_cast<const Identifier *>(right.get())->ident;
     return gen::ptrMember(left->type,
 			  left->loadAddr(),

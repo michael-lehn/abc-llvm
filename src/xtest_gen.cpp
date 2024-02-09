@@ -3,7 +3,7 @@
 #include "llvm/IR/Constants.h"
 
 #include "gen.hpp"
-#include "expr.hpp"
+#include "integerliteral.hpp"
 #include "type.hpp"
 
 int
@@ -51,9 +51,9 @@ main(void)
     gen::ret(r);
     gen::fnDefEnd();
 
-    auto someConst = Expr::createIntegerLiteral("42", 10, nullptr);
+    auto someConst = IntegerLiteral::create("42");
     gen::defGlobal("globalFoo", Type::getUnsignedInteger(64),
-		   someConst->loadConst()); 
+		   someConst->loadConstValue()); 
 
     auto arrayTy = Type::getArray(Type::getUnsignedInteger(64), 42);
     std::cerr << "arrayTy = " << arrayTy << std::endl;

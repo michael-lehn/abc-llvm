@@ -43,13 +43,13 @@ class Symtab
 		    return std::holds_alternative<ExprPtr>(data);
 		}
 
-		const Expr *getExpr() const
+		const Expr *expr() const
 		{
 		    assert(std::holds_alternative<ExprPtr>(data));
 		    return std::get<ExprPtr>(data).get();
 		}
 
-		const Type *getType() const
+		const Type *type() const
 		{
 		    if (std::holds_alternative<const Type *>(data)) {
 			return std::get<const Type *>(data);

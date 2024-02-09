@@ -22,9 +22,16 @@ Identifier::create(UStr ident, Token::Loc loc)
 	    << ident.c_str() << "'" << std::endl;
 	error::fatal();
     } else if (symEntry->holdsExpr()) {
-	return ProxyExpr::create(symEntry->getExpr(), loc);
+	return ProxyExpr::create(symEntry->expr(), loc);
     }
-    auto type = symEntry->getType();
+    auto type = symEntry->type();
+    auto p = new Identifier{ident, type, loc};
+    return std::unique_ptr<Identifier>{p};
+}
+
+ExprPtr
+Identifier::create(UStr ident, const Type *type, Token::Loc loc)
+{
     auto p = new Identifier{ident, type, loc};
     return std::unique_ptr<Identifier>{p};
 }

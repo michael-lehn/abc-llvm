@@ -34,6 +34,13 @@ class BinaryExpr : public Expr
 	static ExprPtr create(Kind kind, ExprPtr &&left, ExprPtr &&right,
 			      Token::Loc loc = Token::Loc{});
 
+	static ExprPtr createOpAssign(Kind kind, ExprPtr &&left,
+				      ExprPtr &&right,
+				      Token::Loc loc = Token::Loc{});
+
+	static ExprPtr createMember(ExprPtr &&structExpr, UStr ident,
+				    Token::Loc loc = Token::Loc{});
+
 	const Kind kind;
 	const ExprPtr left, right;
 

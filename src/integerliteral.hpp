@@ -10,7 +10,7 @@ class IntegerLiteral : public Expr
 		       Token::Loc loc);
 
     public:
-	static ExprPtr create(UStr val, std::uint8_t  radix,
+	static ExprPtr create(UStr val, std::uint8_t  radix = 10,
 			      const Type *type = nullptr,
 			      Token::Loc loc = Token::Loc{});
 

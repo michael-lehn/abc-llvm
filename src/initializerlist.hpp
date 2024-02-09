@@ -14,7 +14,7 @@ class InitializerList
     public:
 	InitializerList(const Type *type = nullptr);
 
-	const Type *getType() const;
+	const Type *type() const;
 	bool isConst() const;
 
 	// only use: if type was not already set in constructor
@@ -26,13 +26,13 @@ class InitializerList
 	void store(gen::Reg addr) const;
 	void store(size_t index, gen::Reg addr) const;
 
-	gen::ConstVal loadConst() const;
-	gen::ConstVal loadConst(size_t index) const;
+	gen::ConstVal loadConstValue() const;
+	gen::ConstVal loadConstValue(size_t index) const;
 
 	void print(int indent = 0) const;
 
     private:
-	const Type *type;
+	const Type *type_;
 	std::size_t pos;
 	std::vector<std::variant<ExprPtr, InitializerList>> value;
 	std::vector<const Type *> valueType;

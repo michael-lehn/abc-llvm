@@ -46,7 +46,7 @@ main(void)
     }
 
     // generate definition (fnParamId just needed for expressive code) 
-    gen::fnDef(fnDecl->ident.c_str(), fnDecl->getType(), fnParamId);
+    gen::fnDef(fnDecl->ident.c_str(), fnDecl->type(), fnParamId);
  
     /*
      * Create some code from an expression
