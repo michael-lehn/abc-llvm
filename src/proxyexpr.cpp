@@ -43,7 +43,7 @@ ProxyExpr::loadConstValue() const
 gen::Reg
 ProxyExpr::loadValue() const
 {
-    return expr->loadConstValue();
+    return expr->loadValue();
 }
 
 

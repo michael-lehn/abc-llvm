@@ -1,27 +1,10 @@
-#include <stdio.hdr>
 
-global str: array[2][4] of char = { "A", "B" };
-global a: array[5] of u64 = {1, 2, 3};
-
-
-fn main(): int
+fn main(argc: int, argv: ->-> char): int
 {
-    printf("a = %p\n", a);
-
-    local str: array[4] of char  = "AB";
-
-    printf("%s\n", str);
-    for (local i: int = 0; i < 3; ++i) {
-	str[i] = 'A' + i;
+    local res: int = 1;
+    for (local i: int = 1; i <= argc; ++i) {
+	res = res * i;
     }
-    printf("%s\n", str);
 
-    local p: -> char;
-    p = "abc";
-
-    printf("hello, world! %d\n", 42);
-
-    local i: int = -1u8;
-
-    printf("i = %d\n", i);
+    return res;
 }

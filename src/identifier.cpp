@@ -58,7 +58,7 @@ Identifier::isConst() const
 gen::ConstVal
 Identifier::loadConstValue() const
 {
-    assert(0);
+    assert(isConst());
     return nullptr;
 }
 
