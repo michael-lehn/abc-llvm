@@ -1,7 +1,16 @@
+#include <iostream>
+
+#include "binaryexpr.hpp"
+#include "castexpr.hpp"
 #include "expr.hpp"
-#include "symtab.hpp"
 #include "gen.hpp"
+#include "identifier.hpp"
+#include "integerliteral.hpp"
+#include "proxyexpr.hpp"
+#include "stringliteral.hpp"
+#include "symtab.hpp"
 #include "type.hpp"
+#include "unaryexpr.hpp"
 
 int
 main(void)
@@ -43,16 +52,17 @@ main(void)
      * Create some code from an expression
      */
 
-    auto lit42 = Expr::createIntegerLiteral("42", 10, nullptr);
-    auto a = Expr::createIdentifier("a");
-    auto b = Expr::createIdentifier("b");
-    auto binary = Expr::createBinary(
-			Binary::Kind::ADD,
-			Expr::createBinary(
-			    Binary::Kind::SUB,
+    auto lit42 = IntegerLiteral::create("42", 10, nullptr);
+    auto a = Identifier::create("a");
+    auto b = Identifier::create("b");
+    auto binary = BinaryExpr::create(
+			BinaryExpr::Kind::ADD,
+			BinaryExpr::create(
+			    BinaryExpr::Kind::SUB,
 			    std::move(lit42),
 			    std::move(a)),
-			Expr::createUnaryMinus(
+			UnaryExpr::create(
+			    UnaryExpr::MINUS,
 			    std::move(b)));
 
     // for us to see what the expression represents
