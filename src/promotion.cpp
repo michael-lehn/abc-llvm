@@ -1,8 +1,57 @@
+#include <iostream>
+
+#include "callexpr.hpp"
 #include "castexpr.hpp"
 #include "error.hpp"
 #include "promotion.hpp"
 
 namespace promotion {
+
+/*
+ * Rules for call expressions
+ */
+
+CallResult
+call(ExprPtr &&fn, std::vector<ExprPtr> &&param, Token::Loc *loc)
+{
+    auto fnType = fn->type->isPointer() ? fn->type->getRefType() : fn->type;
+    if (!fnType->isFunction()) {
+	if (loc) {
+	    error::out() << fn->loc << ": Not a function or function ppointer."
+		<< " Operand has type '" << fn->type << "'" << std::endl;
+	    error::fatal();
+	}
+	return std::make_tuple(std::move(fn), std::move(param), nullptr);
+    }
+    bool hasVarg = fnType->hasVarg();
+    const auto &argType = fnType->getArgType();
+
+    if (param.size() < argType.size()) {
+	if (loc) {
+	    error::out() << fn->loc
+		<< ": too few arguments to function" << std::endl;
+	    error::fatal();
+	}
+    } else if (!hasVarg && param.size() > argType.size()) {
+	if (loc) {
+	    error::out() << fn->loc
+		<< ": too many arguments to function" << std::endl;
+	    error::fatal();
+	}
+    }
+
+    for (std::size_t i = 0; i < param.size(); ++i) {
+	auto loc = param[i]->loc;
+	if (i < argType.size()) {
+	    param[i] = CastExpr::create(std::move(param[i]), argType[i], loc);
+	} else {
+	    auto ty = Type::convertArrayOrFunctionToPointer(param[i]->type);
+	    param[i] = CastExpr::create(std::move(param[i]), ty, loc);
+	}
+    }
+    return std::make_tuple(std::move(fn), std::move(param),
+			   fnType->getRetType());
+}
 
 /*
  * Rules for unary expressions
@@ -108,8 +157,9 @@ binary(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right, Token::Loc *loc)
 	return binaryArr(kind, std::move(left), std::move(right), loc);
     } else if (left->type->isInteger() || right->type->isInteger()) {
 	return binaryInt(kind, std::move(left), std::move(right), loc);
+    } else {
+	return binaryErr(kind, std::move(left), std::move(right), loc);
     }
-    return binaryErr(kind, std::move(left), std::move(right), loc);
 }
 
 static BinaryResult

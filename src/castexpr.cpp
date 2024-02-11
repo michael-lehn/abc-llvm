@@ -11,6 +11,9 @@ CastExpr::CastExpr(ExprPtr &&expr, const Type *toType, Token::Loc loc)
 ExprPtr
 CastExpr::create(ExprPtr &&expr, const Type *toType, Token::Loc loc)
 {
+    if (*expr->type == *toType) {
+	return expr;
+    }
     auto p = new CastExpr{std::move(expr), toType, loc};
     return std::unique_ptr<CastExpr>{p};
 }

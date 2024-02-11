@@ -14,8 +14,8 @@ ExprVector::ExprVector(std::vector<ExprPtr> &&exprVec, const Type *type,
 ExprPtr
 ExprVector::create(std::vector<ExprPtr> &&exprVec, Token::Loc loc)
 {
-    assert(exprVec.size());
-    auto p = new ExprVector{std::move(exprVec), exprVec.back()->type, loc};
+    auto type = exprVec.size() ? exprVec.back()->type : Type::getVoid();
+    auto p = new ExprVector{std::move(exprVec), type, loc};
     return std::unique_ptr<ExprVector>{p};
 }
 
@@ -84,6 +84,6 @@ ExprVector::print(int indent) const
     }
     std::cerr << "expr vector [ " << type << " ] " << std::endl;
     for (const auto &e : exprVec) {
-	e->print(indent = 4);
+	e->print(indent + 4);
     }
 }

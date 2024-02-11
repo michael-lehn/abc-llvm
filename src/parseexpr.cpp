@@ -3,6 +3,7 @@
 #include <unordered_map>
 
 #include "binaryexpr.hpp"
+#include "callexpr.hpp"
 #include "castexpr.hpp"
 #include "conditionalexpr.hpp"
 #include "error.hpp"
@@ -358,13 +359,9 @@ parsePostfix(ExprPtr &&expr)
 		}
 		error::expected(TokenKind::RPAREN);
 		getToken();
-		auto paramExpr = ExprVector::create(std::move(param), loc);
 
 		loc = combineLoc(expr->loc, token.loc);
-		expr = BinaryExpr::create(BinaryExpr::CALL,
-					  std::move(expr),
-					  std::move(paramExpr),
-					  loc);
+		expr = CallExpr::create(std::move(expr), std::move(param), loc);
 		return parsePostfix(std::move(expr));
 	    }
 	case TokenKind::LBRACKET:

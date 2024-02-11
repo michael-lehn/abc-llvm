@@ -8,6 +8,8 @@
 #include "promotion.hpp"
 #include "proxyexpr.hpp"
 
+static const char *kindStr(BinaryExpr::Kind kind);
+
 BinaryExpr::BinaryExpr(Kind kind, ExprPtr &&left, ExprPtr &&right,
 		       const Type *type, Token::Loc loc)
     : Expr{loc, type}, kind{kind}, left{std::move(left)}
