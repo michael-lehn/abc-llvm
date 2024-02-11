@@ -370,20 +370,8 @@ parsePostfix(ExprPtr &&expr)
 		getToken();
 		expr = BinaryExpr::create(BinaryExpr::ADD, std::move(expr),
 					  std::move(index), opTok.loc);
-		if (!expr->type->isPointer()){
-		    error::out() << opTok.loc <<
-			": subscripted value is neither array nor pointer"
-			<< std::endl;
-		    error::fatal();
-		}
-		if (expr->type->getRefType()->isFunction()){
-		    error::out() << opTok.loc <<
-			": subscript of pointer to function. "
-			" Subscript can not be used for type '"
-			<< expr->type << "'" << std::endl;
-		    error::fatal();
-		}
-		expr = UnaryExpr::create(UnaryExpr::DEREF, std::move(expr));
+		expr = UnaryExpr::create(UnaryExpr::DEREF, std::move(expr),
+					 opTok.loc);
 		return parsePostfix(std::move(expr));
 	    } else {
 		error::out() << token.loc << " expected non-empty expression"

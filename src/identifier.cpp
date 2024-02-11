@@ -32,6 +32,7 @@ Identifier::create(UStr ident, Token::Loc loc)
 ExprPtr
 Identifier::create(UStr ident, const Type *type, Token::Loc loc)
 {
+    assert(type);
     auto p = new Identifier{ident, type, loc};
     return std::unique_ptr<Identifier>{p};
 }

@@ -77,6 +77,7 @@ BinaryExpr::isLValue() const
 bool
 BinaryExpr::isIntegerConstExpr() const
 {
+    assert(type);
     return type->isInteger()
 	&& left->type->isInteger() && left->isConst()
 	&& right->type->isInteger() && right->isConst();
@@ -91,6 +92,7 @@ BinaryExpr::isArithmeticConstExpr() const
 bool
 BinaryExpr::isAddressConstant() const
 {
+    assert(type);
     return type->isPointer() && left->isConst() && right->isConst();
 }
 
@@ -121,6 +123,7 @@ static gen::CondOp getGenCondOp(BinaryExpr::Kind kind, const Type *type);
 gen::Reg
 BinaryExpr::loadValue() const
 {
+    assert(type);
     switch (kind) {
 	case MEMBER:
 	    return gen::fetch(loadAddr(), type);
@@ -273,6 +276,7 @@ BinaryExpr::print(int indent) const
 static gen::AluOp
 getGenAluOp(BinaryExpr::Kind kind, const Type *type)
 {
+    assert(type);
     bool isSignedInt = type->isInteger()
 		    && type->getIntegerKind() == Type::SIGNED;
     switch (kind) {
@@ -294,6 +298,7 @@ getGenAluOp(BinaryExpr::Kind kind, const Type *type)
 static gen::CondOp
 getGenCondOp(BinaryExpr::Kind kind, const Type *type)
 {
+    assert(type);
     bool isSignedInt = type->isInteger()
 		    && type->getIntegerKind() == Type::SIGNED;
     switch (kind) {

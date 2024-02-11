@@ -63,6 +63,10 @@ static UnaryResult unaryErr(UnaryExpr::Kind kind, ExprPtr &&child,
 UnaryResult
 unary(UnaryExpr::Kind kind, ExprPtr &&child, Token::Loc *loc)
 {
+    if (!child->type) {
+	return unaryErr(kind, std::move(child), loc);
+    }
+
     const Type *type = nullptr;
     const Type *childType = nullptr;
 
@@ -109,8 +113,8 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, Token::Loc *loc)
 	default:
 	    ;
     }
-    if (!type || !childType) {
-	unaryErr(kind, std::move(child), loc);
+    if (!type) {
+	return unaryErr(kind, std::move(child), loc);
     }
     if (*child->type != *childType) {
 	child = CastExpr::create(std::move(child), childType);
@@ -122,9 +126,9 @@ static UnaryResult
 unaryErr(UnaryExpr::Kind kind, ExprPtr &&child, Token::Loc *loc)
 {
     if (loc) {
-	error::out() << *loc << ": operator can not be applied to"
-	    << child->loc << " operand of type '" << child->type
-	    << "'" << std::endl;
+	error::out() << *loc
+	    << ": operator can not be applied to operand of type '" 
+	    << child->type << "'" << std::endl;
 	error::fatal();
     }
     return std::make_pair(std::move(child), nullptr);

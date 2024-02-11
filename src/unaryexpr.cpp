@@ -69,6 +69,8 @@ UnaryExpr::loadConstValue() const
 gen::Reg
 UnaryExpr::loadValue() const
 {
+    assert(type);
+
     switch (kind) {
 	case LOGICAL_NOT:
 	    return gen::cond(gen::EQ,

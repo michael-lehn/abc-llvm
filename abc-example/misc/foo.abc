@@ -11,6 +11,11 @@ fn main(argc: int, argv: ->-> char): int
     for (local i: int = 1; i <= argc; i += 1) {
 	res = res * i;
     }
+
+    local x: array[10] of int;
+
+    x[2] = 42;
+
     res += foo();
 
     return res;
