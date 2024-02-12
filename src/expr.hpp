@@ -33,7 +33,7 @@ class Expr
 			     gen::Label falseLabel) const = 0;
 
 	// for debugging and educational purposes
-	virtual void print(int indent = 0) const = 0;
+	virtual void print(int indent = 1) const = 0;
 };
 
 using ExprPtr = std::unique_ptr<const Expr>;

@@ -84,16 +84,18 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, Token::Loc *loc)
 	    }
 	    break;
 	case UnaryExpr::LOGICAL_NOT:
-	    type = Type::getBool();
-	    if (child->type->isInteger()) {
+	    if (child->type->isInteger() || child->type->isPointer()) {
+		type = Type::getBool();
 		childType = child->type;
 	    } else if (loc && child->type->isArray()) {
+		type = Type::getBool();
 		childType = Type::getPointer(child->type);
 		error::out() << *loc
 		    << ": Warning: Address of array will "
 		    << "always evaluate to 'true'" << std::endl;
 		error::warning();
 	    } else if (loc && child->type->isFunction()) {
+		type = Type::getBool();
 		childType = Type::getPointer(child->type);
 		error::out() << *loc
 		    << ": Warning: Address of function will "
@@ -110,6 +112,7 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, Token::Loc *loc)
 	    if (child->type->isInteger()) {
 		type = childType = child->type;
 	    }
+	    break;
 	default:
 	    ;
     }
@@ -141,13 +144,19 @@ unaryErr(UnaryExpr::Kind kind, ExprPtr &&child, Token::Loc *loc)
 static BinaryResult binaryErr(BinaryExpr::Kind kind, ExprPtr &&left,
 			      ExprPtr &&right, Token::Loc *loc);
 
+static BinaryResult binaryFn(BinaryExpr::Kind kind, ExprPtr &&left,
+			     ExprPtr &&right, Token::Loc *loc);
+
 static BinaryResult binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left,
 			      ExprPtr &&right, Token::Loc *loc);
 
-static BinaryResult binaryInt(BinaryExpr::Kind kind, ExprPtr &&left,
-			      ExprPtr &&right, Token::Loc *loc);
+static BinaryResult binaryArray(BinaryExpr::Kind kind, ExprPtr &&left,
+			        ExprPtr &&right, Token::Loc *loc);
 
-static BinaryResult binaryArr(BinaryExpr::Kind kind, ExprPtr &&left,
+static BinaryResult binaryStruct(BinaryExpr::Kind kind, ExprPtr &&left,
+				 ExprPtr &&right, Token::Loc *loc);
+
+static BinaryResult binaryInt(BinaryExpr::Kind kind, ExprPtr &&left,
 			      ExprPtr &&right, Token::Loc *loc);
 
 BinaryResult
@@ -155,10 +164,14 @@ binary(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right, Token::Loc *loc)
 {
     if (!left->type || !right->type) {
 	return binaryErr(kind, std::move(left), std::move(right), loc);
+    } else if (left->type->isFunction() || right->type->isFunction()) {
+	return binaryFn(kind, std::move(left), std::move(right), loc);
     } else if (left->type->isPointer() || right->type->isPointer()) {
 	return binaryPtr(kind, std::move(left), std::move(right), loc);
     } else if (left->type->isArray() || right->type->isArray()) {
-	return binaryArr(kind, std::move(left), std::move(right), loc);
+	return binaryArray(kind, std::move(left), std::move(right), loc);
+    } else if (left->type->isStruct() || right->type->isStruct()) {
+	return binaryStruct(kind, std::move(left), std::move(right), loc);
     } else if (left->type->isInteger() || right->type->isInteger()) {
 	return binaryInt(kind, std::move(left), std::move(right), loc);
     } else {
@@ -182,6 +195,21 @@ binaryErr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 }
 
 static BinaryResult
+binaryFn(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
+	 Token::Loc *loc)
+{
+    if (left->type->isFunction()) {
+	left = CastExpr::create(std::move(left),
+				Type::getPointer(left->type));
+    }
+    if (right->type->isFunction()) {
+	right = CastExpr::create(std::move(right),
+				 Type::getPointer(right->type));
+    }
+    return binary(kind, std::move(left), std::move(right), loc);
+}
+ 
+static BinaryResult
 binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	  Token::Loc *loc)
 {
@@ -190,6 +218,10 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
     }
     const Type *type = nullptr;
     switch (kind) {
+	case BinaryExpr::ASSIGN:
+	    type = left->type;
+	    right = CastExpr::create(std::move(right), type);
+	    break;
 	case BinaryExpr::ADD:
 	    type = right->type->isInteger()
 		? left->type
@@ -202,6 +234,9 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	    break;
 	default:
 	    break;
+    }
+    if (!type) {
+	return binaryErr(kind, std::move(left), std::move(right), loc);
     }
     return std::make_tuple(std::move(left), std::move(right), type);
 }
@@ -264,13 +299,9 @@ binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 }
 
 static BinaryResult
-binaryArr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
-	  Token::Loc *loc)
+binaryArray(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
+	    Token::Loc *loc)
 {
-    std::cerr << "binaryArr\n";
-    left->print();
-    right->print();
-
     const Type *leftType = nullptr;
     const Type *rightType = nullptr;
 
@@ -282,7 +313,7 @@ binaryArr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 				     loc);
 		}
 		return std::make_tuple(std::move(left), std::move(right),
-				       leftType);	
+				       left->type);	
 	    } else if (left->type->isPointer()) {
 		leftType = Type::getPointer(left->type->getRefType());
 		rightType = right->type;
@@ -299,21 +330,35 @@ binaryArr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	default:
 	    ;
     }
-    std::cerr << "binaryArr after switch\n";
-    left->print();
-    right->print();
     if (leftType && rightType) {
-	std::cerr << "leftType = " << leftType << "\n";
-	std::cerr << "rightType = " << rightType << "\n";
 	if (*left->type != *leftType) {
 	    left = CastExpr::create(std::move(left), leftType);
 	}
 	if (*right->type != *rightType) {
 	    right = CastExpr::create(std::move(right), rightType);
 	}
-	left->print();
-	right->print();
 	return binary(kind, std::move(left), std::move(right), loc);
+    }
+    return binaryErr(kind, std::move(left), std::move(right), loc);
+}
+
+static BinaryResult
+binaryStruct(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
+	     Token::Loc *loc)
+{
+    switch (kind) {
+	case BinaryExpr::Kind::ASSIGN:
+	    if (*left->type == *Type::getConstRemoved(right->type)) {
+		return std::make_tuple(std::move(left), std::move(right),
+				       left->type);
+	    }
+	    break;
+
+	case BinaryExpr::Kind::MEMBER:
+	    assert(0 && "case should be handled in BinaryExpr::createMember");
+	    break;
+	default:
+	    ;
     }
     return binaryErr(kind, std::move(left), std::move(right), loc);
 }

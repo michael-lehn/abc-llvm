@@ -236,6 +236,7 @@ makeFnDecl(const char *ident, const Type *fnType)
 	? llvm::Function::ExternalLinkage
 	: llvm::Function::InternalLinkage;
     auto llvmType = TypeMap::get<llvm::FunctionType>(fnType);
+
     return llvm::Function::Create(llvmType, linkage, ident, llvmModule.get());
 }
 
@@ -615,13 +616,27 @@ Reg
 loadAddr(const char *ident)
 {
     assureOpenBuildingBlock();
-    if (auto s = Symtab::get(ident)) {
-	ident = s->getInternalIdent().c_str();
+    auto sym = Symtab::get(ident);
+
+    if (auto sym = Symtab::get(ident)) {
+	ident = sym->getInternalIdent().c_str();
     } else {
 	error::out() << "internal error: symbol '" << ident
 	    << "' not found in symbol table" << std::endl;
 	Symtab::print(error::out());
 	assert(0 && "symbol for not declared in any scope");
+    }
+
+    if (sym->type()->isFunction()) {
+	return llvmModule->getFunction(ident);
+    }
+
+    if (!local.contains(ident) && !global.contains(ident)) {
+	error::out() << "in gen::loadAddr(" << ident << "): ident '"
+	    << ident << "' is neither a global nor local variable"
+	    << std::endl;
+	Symtab::print(error::out());
+	assert(0 && "symbol neither a global or local variable");
     }
 
     auto addr = local.contains(ident)

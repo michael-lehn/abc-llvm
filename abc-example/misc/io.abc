@@ -14,7 +14,6 @@ fn main(argc: int, argv: -> -> char)
 
     local g: -> FILE = cast(123: -> FILE);
 
-
     local f: -> FILE = fopen("file", "w");
     if (!f) {
 	printf("can not open file\n");

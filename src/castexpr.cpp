@@ -6,6 +6,10 @@
 CastExpr::CastExpr(ExprPtr &&expr, const Type *toType, Token::Loc loc)
     : Expr{loc, toType}, expr{std::move(expr)}
 {
+    assert(this->expr && this->expr->type);
+    assert(toType);
+    // generate warning/error if cast is not possible
+    Type::getTypeConversion(this->expr->type, toType, loc, false);
 }
 
 ExprPtr
@@ -91,4 +95,3 @@ CastExpr::print(int indent) const
     std::cerr << "cast" << " [ " << type << " ] " << std::endl;
     expr->print(indent + 4);
 }
-

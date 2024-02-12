@@ -60,8 +60,8 @@ UnaryExpr::isConst() const
 gen::ConstVal
 UnaryExpr::loadConstValue() const
 {
-    assert(0);
-    return nullptr;
+    using T = std::remove_pointer_t<gen::ConstVal>;
+    return llvm::dyn_cast<T>(loadValue());
 }
 
 // for code generation
@@ -123,6 +123,7 @@ UnaryExpr::loadAddr() const
 void
 UnaryExpr::condJmp(gen::Label trueLabel, gen::Label falseLabel) const
 {
+    assert(type);
     switch (kind) {
 	case LOGICAL_NOT:
 	    {

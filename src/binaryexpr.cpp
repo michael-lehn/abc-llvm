@@ -110,8 +110,8 @@ BinaryExpr::isConst() const
 gen::ConstVal
 BinaryExpr::loadConstValue() const
 {
-    assert(0);
-    return nullptr;
+    using T = std::remove_pointer_t<gen::ConstVal>;
+    return llvm::dyn_cast<T>(loadValue());
 }
 
 // for code generation

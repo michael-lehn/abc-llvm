@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "castexpr.hpp"
 #include "error.hpp"
 #include "expr.hpp"
@@ -42,7 +44,8 @@ InitializerList::setType(const Type *ty)
 {
     assert(!type() && "InitializerList::setType(): type alredy set");
     assert(ty && "InitializerList::setType(): ty is nullptr");
-    setType(ty);
+    std::cerr  << "InitializerList, ty = " << ty << std::endl;
+    type_ = ty;
 
     if (value.size() > type()->getNumMembers()) {
 	error::out() << valueLoc[type()->getNumMembers()]

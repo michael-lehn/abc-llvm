@@ -6,7 +6,7 @@
 
 StringLiteral::StringLiteral(UStr val, const char *ident, std::size_t padding,
 			     Token::Loc loc)
-    : Expr{loc, Type::getString(val.length() + 1)}, val{val}, ident{ident}
+    : Expr{loc, Type::getString(val.length())}, val{val}, ident{ident}
     , padding{padding}
 {
 }

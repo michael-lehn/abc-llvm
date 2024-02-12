@@ -436,12 +436,13 @@ parsePrimary(void)
 	if (parseInitializerList(initList, false)) {
 	    static std::size_t tmpId;
 	    std::stringstream ss;
-	    ss << ".compound" << tmpId++;
+	    ss << ".compound_colon" << tmpId++;
 	    UStr ident{ss.str()};
 	    auto s = Symtab::addDecl(opTok.loc, ident.c_str(), type);
 	    gen::defLocal(s->ident.c_str(), s->type());
 
 	    auto tmp = Identifier::create(ident, opTok.loc);
+	    tmp->print();
 	    auto addr = tmp->loadAddr();
 	    initList.store(addr);
 
@@ -491,7 +492,7 @@ parsePrimary(void)
 
 	    static std::size_t tmpId;
 	    std::stringstream ss;
-	    ss << ".compound" << tmpId++;
+	    ss << ".compound_cast" << tmpId++;
 	    UStr ident{ss.str()};
 	    auto s = Symtab::addDecl(loc, ident, type);
 	    gen::defLocal(s->ident.c_str(), s->type());
