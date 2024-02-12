@@ -8,9 +8,12 @@ enum Foo: i32 {
 fn main(): int
 {
     local p: -> int = nullptr;
+    local q: array[10] of int;
     local f: const Foo;
 
-    assert(p);
+    if (p == f) {
+    }
+
 
     switch (f) {
 	case FOO:

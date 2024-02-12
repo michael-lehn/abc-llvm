@@ -1,7 +1,14 @@
-fn printf(fmt: -> char, ...): int;
+#include <stdio.hdr>
 
+global a: array[3] of int =  { 1, 2, 3};
 
 fn main(argc: int, argv: ->-> char): int
 {
-    printf("hello, world! n = %d, s = %s\n", 42, "Hallo Welt!");
+
+    local b: -> array[3] of int;
+    b = &a;
+
+    for (local i: int = 0; i < 3; ++i) {
+	printf("b[%d] = %d\n", i, b[i]);
+    }
 }

@@ -7,6 +7,10 @@
 
 namespace promotion {
 
+static const Type *getCommonType(const Type *left, const Type *right,
+				 Token::Loc *loc);
+
+
 /*
  * Rules for call expressions
  */
@@ -166,10 +170,10 @@ binary(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right, Token::Loc *loc)
 	return binaryErr(kind, std::move(left), std::move(right), loc);
     } else if (left->type->isFunction() || right->type->isFunction()) {
 	return binaryFn(kind, std::move(left), std::move(right), loc);
-    } else if (left->type->isPointer() || right->type->isPointer()) {
-	return binaryPtr(kind, std::move(left), std::move(right), loc);
     } else if (left->type->isArray() || right->type->isArray()) {
 	return binaryArray(kind, std::move(left), std::move(right), loc);
+    } else if (left->type->isPointer() || right->type->isPointer()) {
+	return binaryPtr(kind, std::move(left), std::move(right), loc);
     } else if (left->type->isStruct() || right->type->isStruct()) {
 	return binaryStruct(kind, std::move(left), std::move(right), loc);
     } else if (left->type->isInteger() || right->type->isInteger()) {
@@ -232,11 +236,20 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		? Type::getSignedInteger(64)
 		: nullptr;
 	    break;
+	case BinaryExpr::Kind::EQUAL:
+	case BinaryExpr::Kind::NOT_EQUAL:
+	case BinaryExpr::Kind::GREATER:
+	case BinaryExpr::Kind::GREATER_EQUAL:
+	case BinaryExpr::Kind::LESS:
+	case BinaryExpr::Kind::LESS_EQUAL:
 	case BinaryExpr::Kind::LOGICAL_AND:
 	case BinaryExpr::Kind::LOGICAL_OR:
-	    type = Type::getBool();
-	    left = CastExpr::create(std::move(left), type);
-	    right = CastExpr::create(std::move(right), type);
+	    {
+		type = Type::getBool();
+		auto common = getCommonType(left->type, right->type, loc);
+		left = CastExpr::create(std::move(left), common);
+		right = CastExpr::create(std::move(right), common);
+	    }
 	    break;
 	default:
 	    ;
@@ -266,7 +279,9 @@ binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 
     switch (kind) {
 	case BinaryExpr::Kind::ASSIGN:
-	    type = leftType = rightType = left->type;
+	    if (left->isLValue()) {
+		type = leftType = rightType = left->type;
+	    }
 	    break;
 	case BinaryExpr::Kind::ADD:
 	case BinaryExpr::Kind::SUB:
@@ -330,6 +345,14 @@ binaryArray(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	case BinaryExpr::Kind::MUL:
 	case BinaryExpr::Kind::DIV:
 	case BinaryExpr::Kind::MOD:
+	case BinaryExpr::Kind::EQUAL:
+	case BinaryExpr::Kind::NOT_EQUAL:
+	case BinaryExpr::Kind::GREATER:
+	case BinaryExpr::Kind::GREATER_EQUAL:
+	case BinaryExpr::Kind::LESS:
+	case BinaryExpr::Kind::LESS_EQUAL:
+	case BinaryExpr::Kind::LOGICAL_AND:
+	case BinaryExpr::Kind::LOGICAL_OR:
 	    leftType = Type::convertArrayOrFunctionToPointer(left->type);
 	    rightType = Type::convertArrayOrFunctionToPointer(right->type);
 	    break;
@@ -372,9 +395,6 @@ binaryStruct(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 /*
  * Rules for conditional expressions
  */
-
-static const Type *getCommonType(const Type *left, const Type *right,
-				 Token::Loc *loc);
 
 ConditionalResult
 conditional(ExprPtr &&cond, ExprPtr &&thenExpr, ExprPtr &&elseExpr,

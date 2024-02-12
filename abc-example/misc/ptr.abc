@@ -11,12 +11,15 @@ fn printBytes(s: -> char, n: u64)
     }
 }
 
+global x: int;
+global y: int;
+
 fn main(): u8
 {
 
     local
-	a: array[10] of -> int,
-	b: -> array[10] of int,
+	a: array[10] of -> int,	    // int *a[10]
+	b: -> array[10] of int,	    // int (*b)[10];
 	c: array[10] of -> const int,
 	d: array[10] of const -> int,
 	e: array[10] of const -> const int;
