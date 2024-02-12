@@ -232,8 +232,14 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		? Type::getSignedInteger(64)
 		: nullptr;
 	    break;
-	default:
+	case BinaryExpr::Kind::LOGICAL_AND:
+	case BinaryExpr::Kind::LOGICAL_OR:
+	    type = Type::getBool();
+	    left = CastExpr::create(std::move(left), type);
+	    right = CastExpr::create(std::move(right), type);
 	    break;
+	default:
+	    ;
     }
     if (!type) {
 	return binaryErr(kind, std::move(left), std::move(right), loc);

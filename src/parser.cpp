@@ -169,7 +169,8 @@ parseEnumDef(void)
 	std::stringstream ss;
 	ss << i;
 	UStr val{ss.str()};
-	auto expr = IntegerLiteral::create(val, 10, enumTy, token.loc);
+	auto expr = IntegerLiteral::create(val, 10, Type::getConst(enumTy),
+					   token.loc);
 	Symtab::addConstant(identTok.loc, identTok.val, std::move(expr));
 	if (token.kind != TokenKind::COMMA) {
 	    break;

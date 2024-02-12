@@ -1,53 +1,20 @@
+#include <assert.hdr>
 #include <stdio.hdr>
 
-global
-    a: array[10] of int = {1, 2, 3, 4, },
-    b: array[10] of int,
-    p: -> int;
-
-fn foo(a: array[10] of int): array[10] of int
-{
-    for (local i: int = 0; i < 10; ++i) {
-	printf("a[%d] = %d\n", i, a[i]);
-	a[i] = 42 + i;
-    }
-    return a;
-}
-
-fn bar(n: int): int
-{
-    return n then n * bar(n-1) else 1;
-}
-
-global str0: array[4] of char;
-global str: array[4] of char = "abc";
-global i : int;
+enum Foo: i32 {
+    FOO,
+};
 
 fn main(): int
 {
-    b = a; // copy a to b
-    p = a; // treated as p = &a[0].  I.e. p points to a[0]
-    //a = p; // error
-    //a = foo(b);
-    foo(b);
-    printf("p = %p\n", p);
-    printf("p[0] = %d\n", p[0]);
+    local p: -> int = nullptr;
+    local f: const Foo;
 
-    printf("str = '%s'\n", str);
-    str = "abc";
-    i = 42;
-    printf("str = '%s'\n", str);
+    assert(p);
 
-    local str: array[4] of char = "AF";
-    printf("local str = '%s'\n", str);
-
-    local fmt: -> char = "Hallo %d\n";
-    printf("b[0] = %d\n", b[0]);
-    printf("bar(10) = %d\n", bar(10));
-    printf("p[0] = %d\n", p[0]);
-    printf("p[1] = %d\n", p[1]);
-    printf("p[2] = %d\n", p[2]);
-
-    //printf("b[0] = %d\n", b[0]);
-    return a[0];
+    switch (f) {
+	case FOO:
+	    printf("FOO\n");
+	    break;
+    }
 }
