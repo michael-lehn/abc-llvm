@@ -8,7 +8,6 @@ class BinaryExpr : public Expr
    public:
 	enum Kind
 	{
-	    CALL,
 	    ADD,
 	    ASSIGN,
 	    EQUAL,

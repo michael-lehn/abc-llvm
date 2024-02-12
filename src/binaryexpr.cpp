@@ -100,7 +100,6 @@ bool
 BinaryExpr::isConst() const
 {
     switch (kind) {
-	case CALL:
 	case ASSIGN:
 	    return false;
 	default:
@@ -189,7 +188,6 @@ BinaryExpr::loadValue() const
 		return gen::phi(one, trueLabel, zero, falseLabel, type);
 	    }
 	    
-	case CALL:
 	default:
 	    error::out() << "kind = " << int(kind) << std::endl;
 	    assert(0);
@@ -329,7 +327,6 @@ static const char *
 kindStr(BinaryExpr::Kind kind)
 {
     switch (kind) {
-	case BinaryExpr::CALL: return "call";
 	case BinaryExpr::ADD: return "+";
 	case BinaryExpr::ASSIGN: return "=";
 	case BinaryExpr::EQUAL: return "==";

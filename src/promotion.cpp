@@ -267,24 +267,55 @@ static BinaryResult
 binaryArr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	  Token::Loc *loc)
 {
-    const Type *type = nullptr;
-    /*
+    std::cerr << "binaryArr\n";
+    left->print();
+    right->print();
+
     const Type *leftType = nullptr;
     const Type *rightType = nullptr;
 
     switch (kind) {
 	case BinaryExpr::Kind::ASSIGN:
 	    if (left->type->isArray() && right->type->isArray()) {
-		// ...
-		return 
+		if (*left->type != *right->type) {
+		    return binaryErr(kind, std::move(left), std::move(right),
+				     loc);
+		}
+		return std::make_tuple(std::move(left), std::move(right),
+				       leftType);	
+	    } else if (left->type->isPointer()) {
+		leftType = Type::getPointer(left->type->getRefType());
+		rightType = right->type;
 	    }
-
+	    break;
 	case BinaryExpr::Kind::ADD:
 	case BinaryExpr::Kind::SUB:
+	case BinaryExpr::Kind::MUL:
+	case BinaryExpr::Kind::DIV:
+	case BinaryExpr::Kind::MOD:
+	    leftType = Type::convertArrayOrFunctionToPointer(left->type);
+	    rightType = Type::convertArrayOrFunctionToPointer(right->type);
+	    break;
 	default:
+	    ;
     }
-    */
-    return std::make_tuple(std::move(left), std::move(right), type);
+    std::cerr << "binaryArr after switch\n";
+    left->print();
+    right->print();
+    if (leftType && rightType) {
+	std::cerr << "leftType = " << leftType << "\n";
+	std::cerr << "rightType = " << rightType << "\n";
+	if (*left->type != *leftType) {
+	    left = CastExpr::create(std::move(left), leftType);
+	}
+	if (*right->type != *rightType) {
+	    right = CastExpr::create(std::move(right), rightType);
+	}
+	left->print();
+	right->print();
+	return binary(kind, std::move(left), std::move(right), loc);
+    }
+    return binaryErr(kind, std::move(left), std::move(right), loc);
 }
 
 /*

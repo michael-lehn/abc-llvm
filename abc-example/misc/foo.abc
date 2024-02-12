@@ -18,5 +18,5 @@ fn main(argc: int, argv: ->-> char): int
 
     res += foo();
 
-    return res;
+    return x[2] + res;
 }

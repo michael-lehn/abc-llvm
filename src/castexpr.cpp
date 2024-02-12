@@ -61,6 +61,8 @@ CastExpr::loadValue() const
     if (type->isBool()) {
 	auto zero = gen::loadZero(expr->type);
 	return gen::cond(gen::NE, expr->loadValue(), zero);
+    } else if (expr->type->isArray() && type->isPointer()) {
+	return expr->loadAddr();
     }
     return gen::cast(expr->loadValue(), expr->type, type);
 }
@@ -69,7 +71,7 @@ CastExpr::loadValue() const
 gen::Reg
 CastExpr::loadAddr() const
 {
-    assert(0 && "IntegerLiteral has no address");
+    assert(0 && "Cast expression has no address");
     return nullptr;
 }
 
