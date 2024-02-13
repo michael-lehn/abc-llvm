@@ -20,7 +20,7 @@ class InitializerList
 	// only use: if type was not already set in constructor
 	void setType(const Type *ty);
 
-	void add(ExprPtr &&expr, Token::Loc loc = Token::Loc{});
+	void add(ExprPtr &&expr);
 	void add(InitializerList &&initList, Token::Loc loc = Token::Loc{});
 
 	void store(gen::Reg addr) const;

@@ -1,6 +1,8 @@
 #ifndef INTEGERLITERAL
 #define INTEGERLITERAL
 
+#include <cstdint>
+
 #include "expr.hpp"
 
 class IntegerLiteral : public Expr
@@ -13,6 +15,12 @@ class IntegerLiteral : public Expr
 	static ExprPtr create(UStr val, std::uint8_t  radix = 10,
 			      const Type *type = nullptr,
 			      Token::Loc loc = Token::Loc{});
+
+	static ExprPtr create(std::int64_t val,
+			      const Type *type = nullptr,
+			      Token::Loc loc = Token::Loc{});
+
+
 
 	UStr		    val;
 	const std::uint8_t  radix;

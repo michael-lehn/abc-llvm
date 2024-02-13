@@ -13,6 +13,6 @@ void parser(void);
 const Type *parseType(void);
 // usefull for parsing literal suffix
 const Type *parseIntType(void);
-bool parseInitializerList(InitializerList &initList, bool global);
+bool parseInitializerList(InitializerList &initList);
 
 #endif // PARSER_HPP

@@ -1,14 +1,24 @@
 #include <stdio.hdr>
 
-global a: array[3] of int =  { 1, 2, 3};
 
-fn main(argc: int, argv: ->-> char): int
+global s: array[5] of char = "ab";
+
+struct Foo {
+    s: array[5] of char;
+    i: int;
+    s2: array[7] of char;
+};
+
+global f: Foo = {"ab", 32, "abc"};
+
+fn main(): int
 {
+    local s: array[15] of char;
 
-    local b: -> array[3] of int;
-    b = &a;
+    s = "abc\n";
+    printf(s);
 
-    for (local i: int = 0; i < 3; ++i) {
-	printf("b[%d] = %d\n", i, b[i]);
-    }
+    local p: -> int = s + 5;
+
+    p = s + 1;
 }

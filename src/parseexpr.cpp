@@ -433,7 +433,7 @@ parsePrimary(void)
 	error::expected(TokenKind::LPAREN);
 	getToken();
 	InitializerList initList(type);
-	if (parseInitializerList(initList, false)) {
+	if (parseInitializerList(initList)) {
 	    static std::size_t tmpId;
 	    std::stringstream ss;
 	    ss << ".compound_colon" << tmpId++;
@@ -465,7 +465,7 @@ parsePrimary(void)
 	error::expected(TokenKind::LPAREN);
 	getToken();
 	InitializerList initList;
-	if (parseInitializerList(initList, false)) {
+	if (parseInitializerList(initList)) {
 	    error::expected(TokenKind::COLON);
 	    getToken();
 

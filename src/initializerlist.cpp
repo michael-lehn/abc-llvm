@@ -3,6 +3,7 @@
 #include "castexpr.hpp"
 #include "error.hpp"
 #include "expr.hpp"
+#include "integerliteral.hpp"
 #include "initializerlist.hpp"
 
 
@@ -66,7 +67,7 @@ InitializerList::setType(const Type *ty)
 }
 
 void
-InitializerList::add(ExprPtr &&expr, Token::Loc loc)
+InitializerList::add(ExprPtr &&expr)
 {
     if (!type()) {
 	valueLoc.resize(valueLoc.size()  + 1);
@@ -74,8 +75,9 @@ InitializerList::add(ExprPtr &&expr, Token::Loc loc)
     } else {
 	auto ty = type()->getMemberType(pos);
 	expr = CastExpr::create(std::move(expr), ty, expr->loc);
+	assert(pos < type()->getNumMembers());
     }
-    valueLoc[pos] = loc;
+    valueLoc[pos] = expr->loc;
     value[pos++] = std::move(expr);
 }
 
@@ -129,7 +131,6 @@ InitializerList::store(std::size_t index, gen::Reg addr) const
 gen::ConstVal
 InitializerList::loadConstValue() const
 {
-    assert(isConst() && "InitializerList::load(): not const");
     assert(type() && "InitializerList::load(): type is nullptr");
 
     if (type()->isArray() || type()->isStruct()) {
@@ -158,6 +159,10 @@ InitializerList::loadConstValue(size_t index) const
     if (std::holds_alternative<ExprPtr>(v)) {
 	const auto &e = std::get<ExprPtr>(v);
 	if (e) {
+	    if (!e->isConst()) {
+		error::out() << e->loc << ": error: not const" << std::endl;
+		error::fatal();
+	    }
 	    return gen::cast(e->loadConstValue(), e->type, ty);
 	} else {
 	    return gen::loadZero(ty);

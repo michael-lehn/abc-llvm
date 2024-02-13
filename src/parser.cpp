@@ -12,6 +12,7 @@
 #include "identifier.hpp"
 #include "initializerlist.hpp"
 #include "integerliteral.hpp"
+#include "stringliteral.hpp"
 #include "lexer.hpp"
 #include "parseexpr.hpp"
 #include "parser.hpp"
@@ -186,7 +187,7 @@ parseEnumDef(void)
 }
 
 bool
-parseInitializerList(InitializerList &initList, bool global)
+parseInitializerList(InitializerList &initList)
 {
     if (token.kind != TokenKind::LBRACE) {
 	return false;
@@ -195,19 +196,26 @@ parseInitializerList(InitializerList &initList, bool global)
 
     auto type = initList.type();
     for (std::size_t pos = 0; type ? pos < type->getNumMembers(): true; ++pos) {
-	auto loc = token.loc;
 	if (auto expr = parseExpr()) {
-	    if (global && !expr->isConst()) {
-		error::out() << loc
-		    << ": initializer element is not constant" << std::endl;
-		error::fatal();
+	    if (auto strLit = dynamic_cast<const StringLiteral *>(expr.get())) {
+		auto ty = type ? type->getMemberType(pos) : nullptr;
+		InitializerList subInitList(ty);
+		for (std::size_t i = 0; i < strLit->val.length(); ++i) {
+		    auto ch = strLit->val.c_str()[i];
+		    auto chLit = IntegerLiteral::create(ch,
+							Type::getChar(),
+							expr->loc);
+		    subInitList.add(std::move(chLit));
+		}
+		initList.add(std::move(subInitList));
+	    } else {
+		initList.add(std::move(expr));
 	    }
-	    initList.add(std::move(expr));
 	} else {
 	    auto ty = type ? type->getMemberType(pos) : nullptr;
-	    InitializerList constMemberExpr(ty);
-	    if (parseInitializerList(constMemberExpr, global)) {
-		initList.add(std::move(constMemberExpr));
+	    InitializerList subInitList(ty);
+	    if (parseInitializerList(subInitList)) {
+		initList.add(std::move(subInitList));
 	    } else {
 		break;
 	    }
@@ -262,20 +270,25 @@ parseGlobalDef(void)
 	    getToken();
 	    auto opLoc = token.loc;
 	    if (auto expr = parseExpr()) {
-		if (!expr->isConst()) {
-		    error::out() << opLoc << ": initializer element is not a"
-			<< " compile-time constant" << std::endl;
-		    error::fatal();
+		if (auto strLit = dynamic_cast<const StringLiteral *>(expr.get())) {
+		    for (std::size_t i = 0; i < strLit->val.length(); ++i) {
+			auto ch = strLit->val.c_str()[i];
+			auto chLit = IntegerLiteral::create(ch,
+							    Type::getChar(),
+							    expr->loc);
+			initList.add(std::move(chLit));
+		    }
+		} else {
+		    initList.add(std::move(expr));
 		}
-		gen::defGlobal(s->ident.c_str(), ty, expr->loadConstValue());
-	    } else if (parseInitializerList(initList, true)) {
-		gen::defGlobal(s->ident.c_str(), ty, initList.loadConstValue());
+	    } else if (parseInitializerList(initList)) {
 	    } else {
 		error::out() << opLoc
 		    << " expected initializer or expression"
 		    << std::endl;
 		error::fatal();
 	    }
+	    gen::defGlobal(s->ident.c_str(), ty, initList.loadConstValue());
 	} else {
 	    gen::defGlobal(s->ident.c_str(), ty);
 	}

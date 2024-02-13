@@ -1,6 +1,7 @@
 #include <charconv>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 
 #include "error.hpp"
 #include "gen.hpp"
@@ -23,6 +24,18 @@ IntegerLiteral::create(UStr val, std::uint8_t  radix, const Type *type,
 	type = getIntType(val.c_str(), val.c_str() + val.length(), radix, loc);
     }
     auto p = new IntegerLiteral{val, radix, type, loc};
+    return std::unique_ptr<IntegerLiteral>{p};
+}
+
+ExprPtr
+IntegerLiteral::create(std::int64_t val, const Type *type, Token::Loc loc)
+{
+    if (!type) {
+	type = Type::getSignedInteger(64);
+    }
+    std::stringstream ss;
+    ss << val;
+    auto p = new IntegerLiteral{ss.str(), 10, type, loc};
     return std::unique_ptr<IntegerLiteral>{p};
 }
 

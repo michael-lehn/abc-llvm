@@ -724,87 +724,70 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc,
     } else if (getConstRemoved(from) == getConstRemoved(to)) {
 	if (to->hasConstFlag() && !from->hasConstFlag()) {
 	    if (!silent) {
-		error::out() << loc << ": warning: casting '" << from
+		error::out() << loc << ": error: casting '" << from
 		    << "' to '" << to << "' discards const qualifier"
 		    << std::endl;
-		error::warning();
+		error::fatal();
 	    }
-	    from = getConstRemoved(from);
-	    to = getConstRemoved(to);
-	    return getTypeConversion(from, to);
+	    return nullptr;
 	}
 	return to;
     } else if (from->isInteger() && to->isInteger()) {
-	// TODO: -Wconversion generate warning if sizeof(to) < sizeof(from)
 	return to;
     } else if (from->isNullPointer() && to->isPointer()) {
 	return from;
     } else if (from->isArray() && to->isPointer()) {
 	auto fromRefTy = Type::getConstRemoved(from->getRefType());
 	auto toRefTy = Type::getConstRemoved(to->getRefType());
+	bool refTyCheck = *fromRefTy == *toRefTy;
 
-	if (!silent && fromRefTy != toRefTy && !toRefTy->isVoid())
-	{
-	    error::out() << loc << ": warning: casting '" << from
-		<< "' to '" << to << "'" << std::endl;
-	    error::warning();
+	if (!refTyCheck && !toRefTy->isVoid()) {
+	    if (!silent) {
+		error::out() << loc << ": error: casting '" << from
+		    << "' to '" << to << "'" << std::endl;
+		error::fatal();
+	    }
+	    return nullptr;
 	}
+	return to;
+    } else if (from->isPointer() && to->isBool()) {
 	return to;
     } else if (from->isPointer() && to->isArray()) {
 	return nullptr;
     } else if (from->isArray() && to->isArray()) {
 	auto fromRefTy = Type::getConstRemoved(from->getRefType());
 	auto toRefTy = Type::getConstRemoved(to->getRefType());
-	bool refTyCheck = getTypeConversion(fromRefTy, toRefTy, loc, false);
+	bool refTyCheck = *fromRefTy == *toRefTy;
 
-	if (!refTyCheck || from->getDim() != to->getDim()) {
+	if (!refTyCheck || from->getDim() > to->getDim()) {
 	    return nullptr;
 	}
 	return from;
     } else if (from->isPointer() && to->isPointer()) {
 	auto fromRefTy = Type::getConstRemoved(from->getRefType());
 	auto toRefTy = Type::getConstRemoved(to->getRefType());
+	bool refTyCheck = *fromRefTy == *toRefTy;
+	bool constCheck = to->getRefType()->hasConstFlag()
+			    || !from->getRefType()->hasConstFlag();
 
-	if (!silent
-	 && fromRefTy != toRefTy && !fromRefTy->isVoid() && !toRefTy->isVoid())
-	{
-	    error::out() << loc << ": warning: casting '" << from
-		<< "' to '" << to << "'" << std::endl;
-	    error::warning();
+	if (!refTyCheck && !fromRefTy->isVoid() && !toRefTy->isVoid()) {
+	    if (!silent) {
+		error::out() << loc << ": error: casting '" << from
+		    << "' to '" << to << "'" << std::endl;
+		error::fatal();
+	    }
 	}
-	if (!silent
-	 && !to->getRefType()->hasConstFlag()
-	 && from->getRefType()->hasConstFlag())
-	{
-	    error::out() << loc << ": warning: casting '" << from
-		<< "' to '" << to << "' discards const qualifier" << std::endl;
-	    error::warning();
+	if (!constCheck) {
+	    if (!silent) {
+		error::out() << loc << ": warning: casting '" << from
+		    << "' to '" << to << "' discards const qualifier"
+		    << std::endl;
+		error::fatal();
+	    }
 	}
 	return from;
     } else if (from->isFunction() && to->isPointer()) {
-	if (!silent
-	 && from != to->getRefType() && !to->getRefType()->isVoid()) {
-	    error::out() << loc << ": warning: casting '" << from
-		<< "' to '" << to << "'" << std::endl;
-	    error::warning();
-	}
-	return from; // no cast required
-    } else if (convertArrayOrFunctionToPointer(from)->isPointer()
-	    && to->isInteger()) {
-	if (!silent) {
-	    error::out() << loc << ": warning: casting '" << from
-		<< "' to '" << to << "'" << std::endl;
-	    error::warning();
-	}
-	return to;
-    } else if (from->isInteger()
-	    && convertArrayOrFunctionToPointer(to)->isPointer()) {
-	if (!silent) {
-	    error::out() << loc << ": warning: casting '" << from
-		<< "' to '" << to << "'" << std::endl;
-	    error::warning();
-	}
-	return to;
+	return from;
     }
     return nullptr;
 }

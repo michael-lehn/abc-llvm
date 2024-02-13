@@ -242,13 +242,19 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	case BinaryExpr::Kind::GREATER_EQUAL:
 	case BinaryExpr::Kind::LESS:
 	case BinaryExpr::Kind::LESS_EQUAL:
-	case BinaryExpr::Kind::LOGICAL_AND:
-	case BinaryExpr::Kind::LOGICAL_OR:
 	    {
 		type = Type::getBool();
 		auto common = getCommonType(left->type, right->type, loc);
 		left = CastExpr::create(std::move(left), common);
 		right = CastExpr::create(std::move(right), common);
+	    }
+	    break;
+	case BinaryExpr::Kind::LOGICAL_AND:
+	case BinaryExpr::Kind::LOGICAL_OR:
+	    {
+		type = Type::getBool();
+		left = CastExpr::create(std::move(left), type);
+		right = CastExpr::create(std::move(right), type);
 	    }
 	    break;
 	default:
@@ -329,7 +335,9 @@ binaryArray(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
     switch (kind) {
 	case BinaryExpr::Kind::ASSIGN:
 	    if (left->type->isArray() && right->type->isArray()) {
-		if (*left->type != *right->type) {
+		if (*left->type->getRefType() != *right->type->getRefType()
+			|| left->type->getDim() < right->type->getDim())
+		{
 		    return binaryErr(kind, std::move(left), std::move(right),
 				     loc);
 		}
@@ -443,27 +451,9 @@ getCommonType(const Type *left, const Type *right, Token::Loc *loc)
 	    : Type::getSignedInteger(size);
     } else if (left->isNullPointer() || right->isNullPointer()) {
 	return nullptr;
-    } else if (left->isPointer() && right->isInteger()) {
-	auto ty = Type::getUnsignedInteger(64); // TODO: some size_t type?
-	if (loc) {
-	    error::out() << loc
-		<< ": Warning: Cast of '" << left
-		<< "' to '" << ty << "'" << std::endl;
-	    error::warning();
-	}
-	return ty;
-    } else if (left->isInteger() && right->isPointer()) {
-	auto ty = Type::getUnsignedInteger(64); // TODO: some size_t type?
-	if (loc) {
-	    error::out() << loc
-		<< ": Warning: Cast of '" << right
-		<< "' to '" << ty << "'" << std::endl;
-	    error::warning();
-	}
-	return ty;
     } else {
 	if (loc) {
-	    error::out() << loc
+	    error::out() << *loc
 		<< ": Error: no common type for type '" << left
 		<< "' and type '" << right << "'" << std::endl;
 	    error::fatal();

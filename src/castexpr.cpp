@@ -2,14 +2,18 @@
 #include <iostream>
 
 #include "castexpr.hpp"
+#include "error.hpp"
 
 CastExpr::CastExpr(ExprPtr &&expr, const Type *toType, Token::Loc loc)
     : Expr{loc, toType}, expr{std::move(expr)}
 {
     assert(this->expr && this->expr->type);
     assert(toType);
-    // generate warning/error if cast is not possible
-    Type::getTypeConversion(this->expr->type, toType, loc, false);
+    if (!Type::getTypeConversion(this->expr->type, toType, loc, true)) {
+	error::out() << loc << ": error: can not cast " << this->expr->type
+	    << " to " << toType << std::endl;
+	error::fatal();
+    }
 }
 
 ExprPtr
