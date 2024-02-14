@@ -1,15 +1,15 @@
 extern fn printf(fmt: -> const char, ...): int;
 
-global
-    a: int,
-    b: int;
 
 fn main(argc: int) : i8
 {
+    local
+	a: int,
+	b: int;
     printf("hello, world! %d %s\n", 42, "Hallo");
     b = argc;
     if (b > 2) {
-	return a;
+	return 42;
     }
     return b;
 }

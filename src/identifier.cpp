@@ -16,16 +16,15 @@ Identifier::Identifier(UStr ident, const Type *type, Token::Loc loc)
 ExprPtr
 Identifier::create(UStr ident, Token::Loc loc)
 {
-    auto symEntry = Symtab::get(ident);
-    if (!symEntry) {
+    auto sym = Symtab::get(ident);
+    if (!sym) {
 	error::out() << loc << " undeclared identifier '"
 	    << ident.c_str() << "'" << std::endl;
 	error::fatal();
-    } else if (symEntry->holdsExpr()) {
-	return ProxyExpr::create(symEntry->expr(), loc);
+    } else if (sym->holdsExpr()) {
+	return ProxyExpr::create(sym->expr(), loc);
     }
-    auto type = symEntry->type();
-    auto p = new Identifier{ident, type, loc};
+    auto p = new Identifier{sym->getInternalIdent(), sym->type(), loc};
     return std::unique_ptr<Identifier>{p};
 }
 
@@ -33,7 +32,7 @@ ExprPtr
 Identifier::create(UStr ident, const Type *type, Token::Loc loc)
 {
     assert(type);
-    auto p = new Identifier{ident, type, loc};
+    auto p = new Identifier{UStr{}, type, loc};
     return std::unique_ptr<Identifier>{p};
 }
 
@@ -69,14 +68,15 @@ Identifier::loadValue() const
     if (type->isFunction()) {
 	return loadAddr();
     }
+    assert(ident.c_str());
     return gen::fetch(ident.c_str(), type);
 }
 
 gen::Reg
 Identifier::loadAddr() const
 {
-    auto sym = Symtab::get(ident);
-    return gen::loadAddr(sym->getInternalIdent().c_str());
+    assert(ident.c_str());
+    return gen::loadAddr(ident.c_str());
 }
 
 void

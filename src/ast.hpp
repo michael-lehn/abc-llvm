@@ -233,12 +233,12 @@ class AstFuncDecl : public Ast
 {
     public:
 	AstFuncDecl(Token fnIdent, const Type *type,
-		    std::vector<Token> paramIdent,
+		    std::vector<Token> paramToken,
 		    bool externFlag = false);
 
 	const Token fnIdent;
 	const Type * const type;
-	const std::vector<Token> paramIdent;
+	const std::vector<Token> paramToken;
 	const bool externFlag;
 
 	void print(int indent) const override;
@@ -251,12 +251,13 @@ class AstFuncDef : public Ast
 {
     public:
 	AstFuncDef(Token fnIdent, const Type *type,
-		   std::vector<Token> paramIdent, bool externFlag = false);
+		   std::vector<Token> paramToken, bool externFlag = false);
 	~AstFuncDef();
 
 	const Token fnIdent;
 	const Type * const type;
-	const std::vector<Token> paramIdent;
+	const std::vector<Token> paramToken;
+	std::vector<const char *> paramIdent;
 	AstPtr body;
 	const bool externFlag;
 

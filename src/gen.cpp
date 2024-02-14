@@ -46,7 +46,6 @@
 
 #include "error.hpp"
 #include "gen.hpp"
-#include "symtab.hpp"
 
 namespace gen {
 
@@ -343,6 +342,8 @@ defLocal(const char *ident, const Type *type)
     assert(currFn.llvmFn);
     assureOpenBuildingBlock();
 
+    std::cerr << "defLocal, ident = " << ident << std::endl;
+
     if (type->isFunction()) {
 	error::out() << "Function can not be defined as local variable"
 	    << std::endl;
@@ -575,27 +576,12 @@ Reg
 loadAddr(const char *ident)
 {
     assureOpenBuildingBlock();
-    auto sym = Symtab::get(ident);
 
-    if (auto sym = Symtab::get(ident)) {
-	ident = sym->getInternalIdent().c_str();
-    } else {
-	error::out() << "internal error: symbol '" << ident
-	    << "' not found in symbol table" << std::endl;
-	Symtab::print(error::out());
-	assert(0 && "symbol for not declared in any scope");
-    }
-
-    if (sym->type()->isFunction()) {
-	return llvmModule->getFunction(ident);
-    }
-
+    std::cerr << "gen::loadAddr ident = " << ident << std::endl;
     if (!local.contains(ident) && !global.contains(ident)) {
-	error::out() << "in gen::loadAddr(" << ident << "): ident '"
-	    << ident << "' is neither a global nor local variable"
+	std::cerr << "gen::loadAddr load addr of function " << ident
 	    << std::endl;
-	Symtab::print(error::out());
-	assert(0 && "symbol neither a global or local variable");
+	return llvmModule->getFunction(ident);
     }
 
     auto addr = local.contains(ident)
@@ -609,6 +595,9 @@ Reg
 fetch(const char *ident, const Type *type)
 {
     assureOpenBuildingBlock();
+
+
+    std::cerr << "gen::fetch ident = " << ident << std::endl;
 
     assert(local.contains(ident) || global.contains(ident));
 

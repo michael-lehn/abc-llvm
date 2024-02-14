@@ -437,7 +437,7 @@ AstLocalVar::AstLocalVar(AstListPtr &&decl)
 void
 AstLocalVar::print(int indent) const
 {
-    error::out(indent) << "global ";
+    error::out(indent) << "local ";
     if (decl.size() > 1) {
 	error::out() << std::endl;
 	for (std::size_t i = 0; const auto &item : decl.list) {
@@ -464,6 +464,8 @@ AstLocalVar::codegen()
     for (const auto &item : decl.list) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
+	std::cerr << "define local variable " << var->genIdent.c_str()
+	    << std::endl;
 	gen::defLocal(var->genIdent.c_str(), var->type);
     }
 }
@@ -472,9 +474,9 @@ AstLocalVar::codegen()
  * AstFunctionDecl
  */
 AstFuncDecl::AstFuncDecl(Token fnIdent, const Type *type,
-			 std::vector<Token> paramIdent,
+			 std::vector<Token> paramToken,
 			 bool externFlag)
-    : fnIdent{fnIdent}, type{type}, paramIdent{paramIdent}
+    : fnIdent{fnIdent}, type{type}, paramToken{paramToken}
     , externFlag{externFlag}
 {
     auto sym = Symtab::addDecl(fnIdent.loc, fnIdent.val, type);
@@ -490,8 +492,8 @@ AstFuncDecl::print(int indent) const
 	<< (externFlag ? "extern " : "")
 	<< "fn " << fnIdent.val.c_str() << "(";
     for (std::size_t i = 0; i < type->getArgType().size(); ++i) {
-	if (paramIdent[i].val.c_str()) {
-	    error::out() << paramIdent[i].val.c_str();
+	if (paramToken[i].val.c_str()) {
+	    error::out() << paramToken[i].val.c_str();
 	}
 	error::out() << ": " << type->getArgType()[i];
 	if (i + 1 < type->getArgType().size()) {
@@ -518,8 +520,8 @@ AstFuncDecl::codegen()
  * AstFunctionDef
  */
 AstFuncDef::AstFuncDef(Token fnIdent, const Type *type,
-		       std::vector<Token> paramIdent, bool externFlag)
-    : fnIdent{fnIdent}, type{type}, paramIdent{paramIdent}, body{}
+		       std::vector<Token> paramToken, bool externFlag)
+    : fnIdent{fnIdent}, type{type}, paramToken{paramToken}, body{}
     , externFlag{externFlag}
 {
     auto sym = Symtab::addDecl(fnIdent.loc, fnIdent.val, type);
@@ -527,12 +529,13 @@ AstFuncDef::AstFuncDef(Token fnIdent, const Type *type,
 
     Symtab::openScope();
     const auto paramType = type->getArgType();
-    assert(paramIdent.size() == paramType.size());
-    for (std::size_t i = 0; i < paramIdent.size(); ++i) {
-	if (paramIdent[i].val.c_str()) {
-	    auto sym = Symtab::addDecl(paramIdent[i].loc, paramIdent[i].val,
+    assert(paramToken.size() == paramType.size());
+    for (std::size_t i = 0; i < paramToken.size(); ++i) {
+	if (paramToken[i].val.c_str()) {
+	    auto sym = Symtab::addDecl(paramToken[i].loc, paramToken[i].val,
 				       paramType[i]);
 	    sym->setDefinitionFlag();
+	    paramIdent.push_back(sym->getInternalIdent().c_str());
 	}
     }
 }
@@ -565,8 +568,8 @@ AstFuncDef::print(int indent) const
 {
     error::out(indent) << "fn " << fnIdent.val.c_str() << "(";
     for (std::size_t i = 0; i < type->getArgType().size(); ++i) {
-	if (paramIdent[i].val.c_str()) {
-	    error::out() << paramIdent[i].val.c_str();
+	if (paramToken[i].val.c_str()) {
+	    error::out() << paramToken[i].val.c_str();
 	}
 	error::out() << ": " << type->getArgType()[i];
 	if (i + 1 < type->getArgType().size()) {
@@ -588,13 +591,7 @@ AstFuncDef::print(int indent) const
 void
 AstFuncDef::codegen()
 {
-    std::vector<const char *> param;
-    for (const auto &p: paramIdent) {
-	param.push_back(p.val.c_str());
-    }
-
-
-    gen::fnDef(fnIdent.val.c_str(), type, param, externFlag);
+    gen::fnDef(fnIdent.val.c_str(), type, paramIdent, externFlag);
     body->codegen();
     gen::fnDefEnd();
 }
