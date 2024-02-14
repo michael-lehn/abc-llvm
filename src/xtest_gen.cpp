@@ -18,7 +18,7 @@ main(void)
     std::vector<const char *>	param{2};
     param[0] = "a";
     param[1] = "b";
-    gen::fnDef("foo", fn, param);
+    gen::fnDef("foo", fn, param, false);
 
     auto thenLabel = gen::getLabel("then");
     auto elseLabel = gen::getLabel("else");

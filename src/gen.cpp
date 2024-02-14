@@ -221,18 +221,13 @@ static std::unordered_map<std::string, llvm::AllocaInst *> local;
 static std::unordered_map<std::string, llvm::GlobalValue *> global;
 
 static llvm::Function *
-makeFnDecl(const char *ident, const Type *fnType)
+makeFnDecl(const char *ident, const Type *fnType, bool external)
 {
     if (auto fn = llvmModule->getFunction(ident)) {
 	return fn;
     }
 
-    auto s = Symtab::get(ident, Symtab::RootScope);
-    if (!s) {
-	assert(0 && "symbol for function not declared in root scope");
-    }
-
-    auto linkage = s->hasExternFlag() || !strcmp(ident, "main")
+    auto linkage = external || !strcmp(ident, "main")
 	? llvm::Function::ExternalLinkage
 	: llvm::Function::InternalLinkage;
     auto llvmType = TypeMap::get<llvm::FunctionType>(fnType);
@@ -241,9 +236,9 @@ makeFnDecl(const char *ident, const Type *fnType)
 }
 
 void
-fnDecl(const char *ident, const Type *fnType)
+fnDecl(const char *ident, const Type *fnType, bool external)
 {
-    makeFnDecl(ident, fnType);
+    makeFnDecl(ident, fnType, external);
 }
 
 static struct {
@@ -273,11 +268,12 @@ assureOpenBuildingBlock()
 
 void
 fnDef(const char *ident, const Type *fnType,
-      const std::vector<const char *> &param)
+      const std::vector<const char *> &param,
+      bool external)
 {
     local.clear();
 
-    auto fn = makeFnDecl(ident, fnType);
+    auto fn = makeFnDecl(ident, fnType, external);
     fn->setDoesNotThrow();
     llvmBB = llvm::BasicBlock::Create(*llvmContext, "entry", fn);
     llvmBuilder->SetInsertPoint(llvmBB);
@@ -361,21 +357,14 @@ defLocal(const char *ident, const Type *type)
 }
 
 void
-declGlobal(const char *ident, const Type *type)
+declGlobal(const char *ident, const Type *type, bool external)
 {
     if (type->isFunction()) {
-	fnDecl(ident, type);
+	fnDecl(ident, type, external);
 	return;
     }
 
-    auto s = Symtab::get(ident, Symtab::RootScope);
-    if (s) {
-	ident = s->getInternalIdent().c_str();
-    } else {
-	assert(0 && "symbol for global variable not declared in root scope");
-    }
-
-    auto linkage = s->hasExternFlag()
+    auto linkage = external
 	? llvm::GlobalValue::ExternalLinkage
 	: llvm::GlobalValue::InternalLinkage;
 
@@ -394,7 +383,7 @@ void
 defGlobal(const char *ident, const Type *type, bool external, ConstVal val)
 {
     if (type->isFunction()) {
-	fnDecl(ident, type);
+	fnDecl(ident, type, external);
 	return;
     }
 
@@ -451,11 +440,6 @@ Reg
 call(const char *ident, const std::vector<Reg> &param)
 {
     assureOpenBuildingBlock();
-    if (auto s = Symtab::get(ident, Symtab::RootScope)) {
-	ident = s->getInternalIdent().c_str();
-    } else {
-	assert(0 && "symbol for function not declared in root scope");
-    }
 
     auto fn = llvmModule->getFunction(ident);
     assert(fn && "function not declared");

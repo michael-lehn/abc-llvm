@@ -22,9 +22,10 @@ void setOpt(bool);
 void setTarget(int codeGenOptLevel);
 
 // functions definition
-void fnDecl(const char *ident, const Type *fn);
+void fnDecl(const char *ident, const Type *fn, bool external);
 void fnDef(const char *ident, const Type *fn,
-	   const std::vector<const char *> &param);
+	   const std::vector<const char *> &param,
+	   bool external);
 void fnDefEnd(void);
 void ret(Reg reg = nullptr);
 

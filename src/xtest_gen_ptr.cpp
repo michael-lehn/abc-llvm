@@ -22,7 +22,7 @@ main(void)
 
     std::vector<const char *>	param{1};
     param[0] = "a";
-    gen::fnDef("foo", fn, param);
+    gen::fnDef("foo", fn, param, false);
 
 
     auto ptr = gen::loadAddr("msg0");

@@ -8,19 +8,13 @@
 class StringLiteral : public Expr
 {
     protected:
-	StringLiteral(UStr val, const char *ident, std::size_t padding,
-		      Token::Loc loc);
+	StringLiteral(UStr val, Token::Loc loc);
 
     public:
-	static ExprPtr create(UStr val, UStr ident,
-			      Token::Loc loc = Token::Loc{});
-
-	static ExprPtr create(UStr val, std::size_t padding,
-			      Token::Loc loc = Token::Loc{});
+	static ExprPtr create(UStr val, Token::Loc loc = Token::Loc{});
 
 	UStr		    val;
-	const char	    *ident;
-	std::size_t	    padding;
+	UStr		    ident;
 
 	bool hasAddr() const override;
 	bool isLValue() const override;
@@ -31,7 +25,7 @@ class StringLiteral : public Expr
 	gen::Reg loadValue() const override;
 	gen::Reg loadAddr() const override;
 	void condJmp(gen::Label trueLabel,
-			     gen::Label falseLabel) const override;
+		     gen::Label falseLabel) const override;
 
 	// for debugging and educational purposes
 	void print(int indent) const override;

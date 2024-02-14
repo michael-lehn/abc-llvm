@@ -40,7 +40,7 @@ parser()
 
 //------------------------------------------------------------------------------
 static AstPtr parseFunctionDeclarationOrDefinition();
-static bool parseExternDeclaration();
+static AstPtr parseExternDeclaration();
 static AstPtr parseGlobalVariableDefinition();
 static bool parseTypeDeclaration();
 static bool parseStructDeclaration();
@@ -61,7 +61,7 @@ parseTopLevelDeclaration()
     if (auto ast = parseFunctionDeclarationOrDefinition()) {
 	return ast;
     } else if (auto ast = parseExternDeclaration()) {
-	std::cerr << "extern\n";
+	return ast;
     } else if (auto ast = parseGlobalVariableDefinition()) {
 	return ast;
     } else if (parseTypeDeclaration()) {
@@ -211,39 +211,48 @@ parseFunctionParameterList(std::vector<const Type *> &type,
 }
 
 //------------------------------------------------------------------------------
-static bool parseFunctionDeclaration();
+static const Type *parseFunctionDeclaration(Token &fnIdent,
+					    std::vector<Token> &param);
 static bool parseExternVariableDeclaration();
 
 /*
  * extern-declaration
  *	= "extern" ( function-declaration | extern-variable-declaration ) ";"
  */
-static bool
+static AstPtr
 parseExternDeclaration()
 {
     if (token.kind != TokenKind::EXTERN) {
-	return false;
+	return nullptr;
     }
     getToken();
-    if (!parseFunctionDeclaration() && !parseExternVariableDeclaration()) {
-	return false;
+
+    Token fnIdent;
+    std::vector<Token> fnParam;
+    const Type *fnType = parseFunctionDeclaration(fnIdent, fnParam);
+
+    if (!fnType && !parseExternVariableDeclaration()) {
+	return nullptr;
     }
     if (!error::expected(TokenKind::SEMICOLON)) {
-	return false;
+	return nullptr;
     }
     getToken();
-    return true;
+    if (fnType) {
+	return std::make_unique<AstFuncDecl>(fnIdent, fnType, fnParam, true);
+    }
+    std::cerr << "parseExternVariableDeclaration() is a TODO\n";
+    assert(0);
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------
 /*
  * function-declaration = function-type
  */
-static bool
-parseFunctionDeclaration()
+static const Type *
+parseFunctionDeclaration(Token &fnIdent, std::vector<Token> &param)
 {
-    Token fnIdent;
-    std::vector<Token> param;
     return parseFunctionType(&fnIdent, &param);
 }
 

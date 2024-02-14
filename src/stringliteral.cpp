@@ -3,32 +3,25 @@
 
 #include "gen.hpp"
 #include "stringliteral.hpp"
+#include "symtab.hpp"
 
-StringLiteral::StringLiteral(UStr val, const char *ident, std::size_t padding,
-			     Token::Loc loc)
-    : Expr{loc, Type::getString(val.length())}, val{val}, ident{ident}
-    , padding{padding}
+StringLiteral::StringLiteral(UStr val, Token::Loc loc)
+    : Expr{loc, Type::getString(val.length())}, val{val}
+    , ident{Symtab::addStringLiteral(val)}
 {
 }
 
 ExprPtr
-StringLiteral::create(UStr val, UStr ident, Token::Loc loc)
+StringLiteral::create(UStr val, Token::Loc loc)
 {
-    auto p = new StringLiteral{val, ident.c_str(), 0, loc};
-    return std::unique_ptr<StringLiteral>{p};
-}
-
-ExprPtr
-StringLiteral::create(UStr val, std::size_t padding, Token::Loc loc)
-{
-    auto p = new StringLiteral{val, nullptr, padding, loc};
+    auto p = new StringLiteral{val, loc};
     return std::unique_ptr<StringLiteral>{p};
 }
 
 bool
 StringLiteral::hasAddr() const
 {
-    return ident;
+    return true;
 }
 
 bool
@@ -52,9 +45,6 @@ StringLiteral::loadConstValue() const
 	auto ch = val.c_str()[i];
 	str.push_back(gen::loadIntConst(ch, Type::getChar()));
     }
-    for (std::size_t i = 0; i < padding; ++i) {
-	str.push_back(gen::loadIntConst(0, Type::getChar()));
-    }
     str.push_back(gen::loadIntConst(0, Type::getChar()));
     return gen::loadConstArray(str, Type::getString(val.length()));
 }
@@ -69,7 +59,7 @@ gen::Reg
 StringLiteral::loadAddr() const
 {
     assert(hasAddr());
-    return gen::loadAddr(ident);
+    return gen::loadAddr(ident.c_str());
 }
 
 void

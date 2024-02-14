@@ -75,7 +75,8 @@ Identifier::loadValue() const
 gen::Reg
 Identifier::loadAddr() const
 {
-    return gen::loadAddr(ident.c_str());
+    auto sym = Symtab::get(ident);
+    return gen::loadAddr(sym->getInternalIdent().c_str());
 }
 
 void

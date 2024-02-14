@@ -534,8 +534,7 @@ parsePrimary(void)
 	    str += token.val.c_str();
 	    getToken();
 	} while (token.kind == TokenKind::STRING_LITERAL);
-	auto ident = Symtab::addStringLiteral(UStr{str}).c_str();
-	auto expr = StringLiteral::create(str.c_str(), ident, opTok.loc);	
+	auto expr = StringLiteral::create(str.c_str(), opTok.loc);	
 	return expr;	
     } else if (token.kind == TokenKind::CHARACTER_LITERAL) {
 	std::stringstream ss;
