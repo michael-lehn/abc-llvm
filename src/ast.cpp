@@ -3,6 +3,7 @@
 #include "ast.hpp"
 #include "castexpr.hpp"
 #include "gen.hpp"
+#include "integerliteral.hpp"
 #include "error.hpp"
 #include "symtab.hpp"
 
@@ -213,13 +214,35 @@ AstWhile::print(int indent) const
 void
 AstWhile::codegen()
 {
+    auto condLabel = gen::getLabel("cond");
+    auto loopLabel = gen::getLabel("loop");
+    auto endLabel = gen::getLabel("end");
+
+    gen::labelDef(condLabel);
+    cond->condJmp(loopLabel, endLabel);
+
+    gen::labelDef(loopLabel);
+    body->codegen();
+    gen::jmp(condLabel);
+
+    gen::labelDef(endLabel);
+}
+
+void
+AstWhile::apply(std::function<bool(Ast *)> op)
+{
+    if (op(this)) {
+	body->apply(op);
+    }
 }
 
 /*
  * AstFor
  */
 AstFor::AstFor(ExprPtr &&init, ExprPtr &&cond, ExprPtr &&update)
-    : init{std::move(init)}, cond{std::move(cond)}, update{std::move(update)}
+    : init{init ? std::move(init) : IntegerLiteral::create(1)}
+    , cond{cond ? std::move(cond) : IntegerLiteral::create(1)}
+    , update{update ? std::move(update) : IntegerLiteral::create(1)}
 {
     Symtab::openScope();
 }
@@ -232,9 +255,9 @@ AstFor::~AstFor()
 }
 
 void
-AstFor::appendBody(AstPtr &&body)
+AstFor::appendBody(AstPtr &&body_)
 {
-    this->body = std::move(body);
+    body = std::move(body_);
     Symtab::closeScope();
 }
 
@@ -260,7 +283,31 @@ AstFor::print(int indent) const
 void
 AstFor::codegen()
 {
+    auto condLabel = gen::getLabel("cond");
+    auto loopLabel = gen::getLabel("loop");
+    auto endLabel = gen::getLabel("end");
+
+    init->loadValue();
+
+    gen::labelDef(condLabel);
+    cond->condJmp(loopLabel, endLabel);
+
+    gen::labelDef(loopLabel);
+    body->codegen();
+    update->loadValue();
+    gen::jmp(condLabel);
+
+    gen::labelDef(endLabel);
 }
+
+void
+AstFor::apply(std::function<bool(Ast *)> op)
+{
+    if (op(this)) {
+	body->apply(op);
+    }
+}
+
 
 /*
  * AstReturn
@@ -464,8 +511,6 @@ AstLocalVar::codegen()
     for (const auto &item : decl.list) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
-	std::cerr << "define local variable " << var->genIdent.c_str()
-	    << std::endl;
 	gen::defLocal(var->genIdent.c_str(), var->type);
     }
 }

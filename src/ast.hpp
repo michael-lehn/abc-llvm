@@ -110,6 +110,7 @@ class AstWhile : public Ast
 
 	void print(int indent) const override;
 	void codegen() override;
+	void apply(std::function<bool(Ast *)> op) override;
 };
 
 //------------------------------------------------------------------------------
@@ -129,6 +130,7 @@ class AstFor : public Ast
 
 	void print(int indent) const override;
 	void codegen() override;
+	void apply(std::function<bool(Ast *)> op) override;
 };
 
 //------------------------------------------------------------------------------

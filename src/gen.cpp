@@ -342,8 +342,6 @@ defLocal(const char *ident, const Type *type)
     assert(currFn.llvmFn);
     assureOpenBuildingBlock();
 
-    std::cerr << "defLocal, ident = " << ident << std::endl;
-
     if (type->isFunction()) {
 	error::out() << "Function can not be defined as local variable"
 	    << std::endl;
@@ -577,10 +575,7 @@ loadAddr(const char *ident)
 {
     assureOpenBuildingBlock();
 
-    std::cerr << "gen::loadAddr ident = " << ident << std::endl;
     if (!local.contains(ident) && !global.contains(ident)) {
-	std::cerr << "gen::loadAddr load addr of function " << ident
-	    << std::endl;
 	return llvmModule->getFunction(ident);
     }
 
@@ -595,10 +590,6 @@ Reg
 fetch(const char *ident, const Type *type)
 {
     assureOpenBuildingBlock();
-
-
-    std::cerr << "gen::fetch ident = " << ident << std::endl;
-
     assert(local.contains(ident) || global.contains(ident));
 
     auto ty = TypeMap::get(type);
