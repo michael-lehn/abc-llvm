@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -208,6 +209,8 @@ const char *
 tokenCStr(TokenKind kind)
 {
     switch (kind) {
+	case TokenKind::EOI:
+	    return "end of input";
 	case TokenKind::IDENTIFIER:
 	    return "identifier";
 	case TokenKind::CONST:
@@ -455,19 +458,6 @@ static std::unordered_map<UStr, TokenKind> kw = {
     { "enum", TokenKind::ENUM },
 };
 
-
-// TODO: proper implementation and support of escape sequences
-static std::string
-processString(const char *s)
-{
-    std::string str = "";
-    ++s;
-    for (; *s && *s != '"'; ++s) {
-	str += *s;
-    }
-    return str;
-}
-
 static std::string token_str;
 
 static void
@@ -492,7 +482,6 @@ tokenSet(TokenKind kind)
 {
     token.kind = kind;
     token.val = UStr{token_str};
-    token.valProcessed = processString(token.val.c_str());
     if (kind == TokenKind::IDENTIFIER && kw.contains(token.val)) {
 	token.kind = kw[token.val];
     }
@@ -1122,4 +1111,13 @@ operator<<(std::ostream &out, const Token::Loc &loc)
 	out << "[internally created location]";
     }
     return out;
+}
+
+std::string
+tokenLocStr(const Token::Loc &loc)
+{
+    std::stringstream ss;
+    ss << loc.from.line << '.' << loc.from.col << '-'
+	<< loc.to.line << '.' << loc.to.col;
+    return ss.str();
 }

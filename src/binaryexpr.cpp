@@ -267,6 +267,60 @@ BinaryExpr::print(int indent) const
     right->print(indent + 4);
 }
 
+void
+BinaryExpr::printFlat(std::ostream &out, bool isFactor) const
+{
+    switch (kind) {
+	case ADD:
+	    out << "(" << left << " + " << right << ")";
+	    break;
+	case ASSIGN:
+	    out << "(" << left << " = " << right << ")";
+	    break;
+	case EQUAL:
+	    out << "(" << left << " == " << right << ")";
+	    break;
+	case NOT_EQUAL:
+	    out << "(" << left << " != " << right << ")";
+	    break;
+	case GREATER:
+	    out << "(" << left << " > " << right << ")";
+	    break;
+	case GREATER_EQUAL:
+	    out << "(" << left << " >= " << right << ")";
+	    break;
+	case LESS:
+	    out << "(" << left << " < " << right << ")";
+	    break;
+	case LESS_EQUAL:
+	    out << "(" << left << " <= " << right << ")";
+	    break;
+	case LOGICAL_AND:
+	    out << "(" << left << " && " << right << ")";
+	    break;
+	case LOGICAL_OR:
+	    out << "(" << left << " || " << right << ")";
+	    break;
+	case SUB:
+	    out << "(" << left << " - " << right << ")";
+	    break;
+	case MUL:
+	    out << "(" << left << " * " << right << ")";
+	    break;
+	case DIV:
+	    out << "(" << left << " / " << right << ")";
+	    break;
+	case MOD:
+	    out << "(" << left << " % " << right << ")";
+	    break;
+	case MEMBER:
+	    out << "(" << left << " + " << right << ")";
+	    break;
+	default:
+	    out << " <binary kind " << kind << ">";
+    }
+}
+
 /*
  * Auxiliary functions
  */

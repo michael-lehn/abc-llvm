@@ -64,6 +64,18 @@ getBinaryExprKind(TokenKind kind)
 
 //------------------------------------------------------------------------------
 
+static const Type *
+parseIntType()
+{
+    auto type = parseType();
+    if (type && !type->isInteger()) {
+	return nullptr;
+    }
+    return type;
+}
+
+//------------------------------------------------------------------------------
+
 static ExprPtr parseAssignment(void);
 static ExprPtr parseConditional(void);
 static ExprPtr parseBinary(int prec);
@@ -73,7 +85,7 @@ static ExprPtr parsePrimary(void);
 
 
 ExprPtr
-parseExpr(void)
+parseExpression(void)
 {
     return parseAssignment();
 }
@@ -82,7 +94,7 @@ ExprPtr
 parseConstExpr(void)
 {
     auto loc = token.loc;
-    auto expr = parseExpr();
+    auto expr = parseExpression();
     if (!expr || !expr->isConst()) {
 	error::out() << loc
 	    << " constant expression required" << std::endl;
@@ -350,7 +362,7 @@ parsePostfix(ExprPtr &&expr)
 		// parse parameter list
 		auto loc = token.loc;
 		std::vector<ExprPtr> param;
-		while (auto p = parseExpr()) {
+		while (auto p = parseExpression()) {
 		    param.push_back(std::move(p));
 		    if (token.kind != TokenKind::COMMA) {
 			break;
@@ -365,7 +377,7 @@ parsePostfix(ExprPtr &&expr)
 		return parsePostfix(std::move(expr));
 	    }
 	case TokenKind::LBRACKET:
-	    if (auto index = parseExpr()) {
+	    if (auto index = parseExpression()) {
 		error::expected(TokenKind::RBRACKET);
 		getToken();
 		expr = BinaryExpr::create(BinaryExpr::ADD, std::move(expr),
@@ -450,7 +462,7 @@ parsePrimary(void)
 	    getToken();
 	    return tmp;
 	} else {
-	    auto expr = parseExpr();
+	    auto expr = parseExpression();
 	    if (!expr) {
 		error::out() << token.loc << " expected non-empty expression"
 		    << std::endl;
@@ -459,68 +471,6 @@ parsePrimary(void)
 	    error::expected(TokenKind::RPAREN);
 	    getToken();
 	    return CastExpr::create(std::move(expr), type, opTok.loc);
-	}
-    } else if (token.kind == TokenKind::CAST) {
-	getToken();
-	error::expected(TokenKind::LPAREN);
-	getToken();
-	InitializerList initList;
-	if (parseInitializerList(initList)) {
-	    error::expected(TokenKind::COLON);
-	    getToken();
-
-	    auto loc = token.loc;
-	    auto type = parseType();
-	    if (!type) {
-		error::out() << token.loc << " type expected"
-		    << std::endl;
-		error::fatal();
-	    } else if (!type->hasSize()) {
-		error::out() << token.loc
-		    << ": incomplete type '" << type << "'" << std::endl;
-		error::fatal();
-	    } else if (type->isFunction()) {
-		error::out() << loc
-		    << ": Function can not be defined as local variable. "
-		    << std::endl
-		    << "\tIf this is supposed to be a function pointer "
-		    << "use type '" << Type::getPointer(type) << "'"
-		    << std::endl;
-		error::fatal();
-	    }
-	    initList.setType(type);
-
-	    static std::size_t tmpId;
-	    std::stringstream ss;
-	    ss << ".compound_cast" << tmpId++;
-	    UStr ident{ss.str()};
-	    auto s = Symtab::addDecl(loc, ident, type);
-	    gen::defLocal(s->ident.c_str(), s->type());
-
-	    auto tmp = Identifier::create(ident, loc);
-	    auto addr = tmp->loadAddr();
-	    initList.store(addr);
-
-	    error::expected(TokenKind::RPAREN);
-	    getToken();
-	    return tmp;
-	} else {
-	    auto expr = parseExpr();
-	    if (!expr) {
-		error::out() << token.loc << " expected non-empty expression"
-		    << std::endl;
-		error::fatal();
-	    }
-	    error::expected(TokenKind::COLON);
-	    getToken();
-	    auto ty = parseType();
-	    if (!ty) {
-		error::out() << token.loc << " type expected" << std::endl;
-		error::fatal();
-	    }
-	    error::expected(TokenKind::RPAREN);
-	    getToken();
-	    return CastExpr::create(std::move(expr), ty, opTok.loc);
 	}
     } else if (token.kind == TokenKind::SIZEOF) {
 	getToken();
@@ -537,7 +487,7 @@ parsePrimary(void)
 	    }
 	    size = gen::getSizeOf(ty);
 	} else {
-	    auto expr = parseExpr();
+	    auto expr = parseExpression();
 	    if (!expr) {
 		error::out() << token.loc << " expected non-empty expression"
 		    << std::endl;
@@ -597,7 +547,7 @@ parsePrimary(void)
         return expr;
     } else if (token.kind == TokenKind::LPAREN) {
         getToken();
-	auto expr = parseExpr();
+	auto expr = parseExpression();
         if (!expr) {
 	    error::out() << token.loc << " expected non-empty expression"
 		<< std::endl;

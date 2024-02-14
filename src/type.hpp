@@ -87,7 +87,7 @@ class Type
 
 	struct FunctionData {
 	    const Type *retType;
-	    std::vector<const Type *> argType;
+	    std::vector<const Type *> paramType;
 	    bool hasVarg;
 	};
 
@@ -129,7 +129,7 @@ class Type
 	static const Type *getNullPointer();
 	static const Type *getArray(const Type *refType, std::size_t dim);
 	static const Type *getFunction(const Type *retType,
-				       std::vector<const Type *> argType,
+				       std::vector<const Type *> paramType,
 				       bool hasVarg = false);
 	static Type *createIncompleteStruct(UStr name);
 	static void remove(const Type *ty);

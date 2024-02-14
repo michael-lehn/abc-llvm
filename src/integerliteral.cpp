@@ -99,6 +99,19 @@ IntegerLiteral::print(int indent) const
     std::cerr << val.c_str() << " [ " << type << " ] " << std::endl;
 }
 
+void
+IntegerLiteral::printFlat(std::ostream &out, bool isFactor) const
+{
+    if (radix == 8) {
+	out << "0";
+    } else if (radix == 16) {
+	out << "0x";
+    } else if (radix != 10) {
+	out << radix << "'";
+    }
+    out << val.c_str();
+}
+
 /*
  * auxiliary functions
  */

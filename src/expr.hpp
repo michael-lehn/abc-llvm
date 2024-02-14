@@ -34,8 +34,15 @@ class Expr
 
 	// for debugging and educational purposes
 	virtual void print(int indent = 1) const = 0;
+
+	// for printing error messages
+	virtual void printFlat(std::ostream &out, bool isFactor) const = 0;
 };
 
 using ExprPtr = std::unique_ptr<const Expr>;
+
+std::ostream &operator<<(std::ostream &out, const ExprPtr &expr);
+std::ostream &operator<<(std::ostream &out, const Expr *expr);
+
 
 #endif // EXPR_HPP

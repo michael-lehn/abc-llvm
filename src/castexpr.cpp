@@ -99,3 +99,9 @@ CastExpr::print(int indent) const
     std::cerr << "cast" << " [ " << type << " ] " << std::endl;
     expr->print(indent + 4);
 }
+
+void
+CastExpr::printFlat(std::ostream &out, bool isFactor) const
+{
+    out << "cast<" << type << ">(" << expr << ")";
+}

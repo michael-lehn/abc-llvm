@@ -275,13 +275,6 @@ void
 fnDef(const char *ident, const Type *fnType,
       const std::vector<const char *> &param)
 {
-    if (auto s = Symtab::get(ident, Symtab::RootScope)) {
-	s->setDefinitionFlag();
-	ident = s->getInternalIdent().c_str();
-    } else {
-	assert(0 && "symbol for function not declared in root scope");
-    }
-
     local.clear();
 
     auto fn = makeFnDecl(ident, fnType);
@@ -354,16 +347,6 @@ defLocal(const char *ident, const Type *type)
     assert(currFn.llvmFn);
     assureOpenBuildingBlock();
 
-    if (auto s = Symtab::get(ident, Symtab::CurrentScope)) {
-	s->setDefinitionFlag();
-	ident = s->getInternalIdent().c_str();
-    } else {
-	error::out() << "internal error: Symbol '" << ident
-	    << "' not found in current scope" << std::endl;
-	Symtab::print(error::out());
-	assert(0 && "symbol for local variable not declared in current scope");
-    }
-
     if (type->isFunction()) {
 	error::out() << "Function can not be defined as local variable"
 	    << std::endl;
@@ -408,22 +391,14 @@ declGlobal(const char *ident, const Type *type)
 }
 
 void
-defGlobal(const char *ident, const Type *type, ConstVal val)
+defGlobal(const char *ident, const Type *type, bool external, ConstVal val)
 {
     if (type->isFunction()) {
 	fnDecl(ident, type);
 	return;
     }
 
-    auto s = Symtab::get(ident);
-    if (s) {
-	s->setDefinitionFlag();
-	ident = s->getInternalIdent().c_str();
-    } else {
-	assert(0 && "symbol for global variable not declared in root scope");
-    }
-
-    auto linkage = s->hasExternFlag()
+    auto linkage = external
 	? llvm::GlobalValue::ExternalLinkage
 	: llvm::GlobalValue::InternalLinkage;
 
@@ -650,11 +625,8 @@ Reg
 fetch(const char *ident, const Type *type)
 {
     assureOpenBuildingBlock();
-    if (auto s = Symtab::get(ident)) {
-	ident = s->getInternalIdent().c_str();
-    } else {
-	assert(0 && "symbol for not declared in any scope");
-    }
+
+    assert(local.contains(ident) || global.contains(ident));
 
     auto ty = TypeMap::get(type);
     auto addr = local.contains(ident)
@@ -675,11 +647,8 @@ Reg
 store(Reg val, const char *ident, const Type *type)
 {
     assureOpenBuildingBlock();
-    if (auto s = Symtab::get(ident)) {
-	ident = s->getInternalIdent().c_str();
-    } else {
-	assert(0 && "symbol for not declared in any scope");
-    }
+
+    assert(local.contains(ident) || global.contains(ident));
 
     auto addr = local.contains(ident)
 	? llvm::dyn_cast<llvm::Value>(local[ident])
@@ -797,7 +766,6 @@ loadZero(const Type *type)
 ConstVal
 loadConstString(const char *str)
 {
-    std::cerr << "loadConstString: str = '" << str << "'\n";
     return llvm::ConstantDataArray::getString(*llvmContext, str, false);
 }
 

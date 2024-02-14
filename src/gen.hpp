@@ -30,7 +30,8 @@ void ret(Reg reg = nullptr);
 
 // variables
 void defLocal(const char *ident, const Type *type);
-void defGlobal(const char *ident, const Type *type, ConstVal val = nullptr);
+void defGlobal(const char *ident, const Type *type, bool external,
+	       ConstVal val = nullptr);
 void declGlobal(const char *ident, const Type *type);
 void defStatic(const char *ident, const Type *type, ConstVal constVal);
 void defStringLiteral(const char *ident, const char *val, bool isConst);

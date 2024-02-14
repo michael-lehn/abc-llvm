@@ -12,13 +12,12 @@
 class InitializerList
 {
     public:
-	InitializerList(const Type *type = nullptr);
+	InitializerList(const Type *type);
 
 	const Type *type() const;
 	bool isConst() const;
 
-	// only use: if type was not already set in constructor
-	void setType(const Type *ty);
+	const Type *typeToAdd() const;
 
 	void add(ExprPtr &&expr);
 	void add(InitializerList &&initList, Token::Loc loc = Token::Loc{});

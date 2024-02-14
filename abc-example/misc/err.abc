@@ -1,23 +1,15 @@
-#include <assert.hdr>
-#include <stdio.hdr>
+fn printf(fmt: -> const char, ...): int;
 
-enum Foo: i32 {
-    FOO,
-};
+global
+    a: int,
+    b: int;
 
-fn main(): int
+fn main(argc: int) : i8
 {
-    local p: -> int = nullptr;
-    local q: array[10] of int;
-    local f: const Foo;
-
-    if (p == f) {
+    printf("hello, world! %d %s\n", 42, "Hallo");
+    b = argc;
+    if (b > 2) {
+	return a;
     }
-
-
-    switch (f) {
-	case FOO:
-	    printf("FOO\n");
-	    break;
-    }
+    return b;
 }

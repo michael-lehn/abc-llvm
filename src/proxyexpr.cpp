@@ -46,7 +46,6 @@ ProxyExpr::loadValue() const
     return expr->loadValue();
 }
 
-
 gen::Reg
 ProxyExpr::loadAddr() const
 {
@@ -68,3 +67,8 @@ ProxyExpr::print(int indent) const
     expr->print(indent + 4);
 }
 
+void
+ProxyExpr::printFlat(std::ostream &out, bool isFactor) const
+{
+    expr->printFlat(out, isFactor);
+}

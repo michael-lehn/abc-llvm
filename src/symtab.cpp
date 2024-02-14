@@ -35,7 +35,7 @@ static ScopeNode *root = curr.get();
 //------------------------------------------------------------------------------
 
 bool
-Symtab::Entry::setDefinitionFlag(void)
+Symtab::Entry::setDefinitionFlag()
 {
     if (definition) {
 	error::out() << lastDeclLoc << ": '" << ident.c_str()
@@ -59,7 +59,7 @@ Symtab::setPrefix(UStr prefix)
 }
 
 void
-Symtab::openScope(void)
+Symtab::openScope()
 {
     static std::size_t id;
 
@@ -71,11 +71,10 @@ Symtab::openScope(void)
     s->up = std::move(curr);
     s->id = ++id;
     curr = std::move(s);
-
 }
 
 void
-Symtab::closeScope(void)
+Symtab::closeScope()
 {
     assert(curr->up);
 
@@ -137,11 +136,7 @@ Symtab::add(Token::Loc loc, UStr ident, Entry::Data &&data, ScopeNode *sn)
 
     auto entry = Entry{loc, std::move(data), ident, internalIdent};
     sn->symtab.emplace(ident.c_str(), std::move(entry));
-    //return &sn->symtab.at(ident.c_str());
-
-
-    auto ret = &sn->symtab.at(ident.c_str());
-    return ret;
+    return &sn->symtab.at(ident.c_str());
 }
 
 Symtab::Entry *
@@ -236,7 +231,7 @@ print(std::ostream &out, ScopeNode *sn)
     for (const auto &sym: sn->symtab) {
 	out << std::setfill(' ') << std::setw(indent * 4) << " "
 	    << sym.second.ident.c_str() << ": "
-	    << sym.second.getLoc() << ", "
+	    << tokenLocStr(sym.second.getLoc()) << ", "
 	    << sym.second.type() << " ["
 	    << (void *)sym.second.type() << "], "
 	    << sym.second.getInternalIdent().c_str()

@@ -14,7 +14,7 @@ class Identifier : public Expr
 	static ExprPtr create(UStr ident, const Type *type,
 			      Token::Loc loc = Token::Loc{});
 
-	UStr ident;
+	const UStr ident;
 
 	bool hasAddr() const override;
 	bool isLValue() const override;
@@ -29,6 +29,9 @@ class Identifier : public Expr
 
 	// for debugging and educational purposes
 	void print(int indent) const override;
+
+	// for printing error messages
+	virtual void printFlat(std::ostream &out, bool isFactor) const override;
 };
 
 #endif // IDENTIFIER_HPP

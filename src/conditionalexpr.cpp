@@ -126,3 +126,8 @@ ConditionalExpr::print(int indent) const
 }
     
 
+void
+ConditionalExpr::printFlat(std::ostream &out, bool isFactor) const
+{
+    out << cond << " ? " << thenExpr << " : " << elseExpr;
+}

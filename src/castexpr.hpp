@@ -30,6 +30,9 @@ class CastExpr : public Expr
 
 	// for debugging and educational purposes
 	void print(int indent) const override;
+
+	// for printing error messages
+	virtual void printFlat(std::ostream &out, bool isFactor) const override;
 };
 
 

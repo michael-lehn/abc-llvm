@@ -96,4 +96,9 @@ Identifier::print(int indent) const
     std::cerr << ident.c_str() << " [ " << type << " ] " << std::endl;
 }
     
+void
+Identifier::printFlat(std::ostream &out, bool isFactor) const
+{
+    out << ident.c_str();
+}
 

@@ -52,12 +52,12 @@ main(void)
     gen::fnDefEnd();
 
     auto someConst = IntegerLiteral::create("42");
-    gen::defGlobal("globalFoo", Type::getUnsignedInteger(64),
-		   someConst->loadConstValue()); 
+    gen::defGlobal("globalFoo", Type::getUnsignedInteger(64), true,
+		   someConst->loadConstValue());
 
     auto arrayTy = Type::getArray(Type::getUnsignedInteger(64), 42);
     std::cerr << "arrayTy = " << arrayTy << std::endl;
-    gen::defGlobal("globalArrayFoo", arrayTy);
+    gen::defGlobal("globalArrayFoo", arrayTy, true);
 
     std::cerr << "writing to 'ex_gen.bc'" << std::endl;
     gen::dump_bc("ex_gen");

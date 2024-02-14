@@ -31,7 +31,7 @@ enum class TokenKind {
     WHILE,
     IF,
     ELSE,
-THEN,
+    THEN,
     ARRAY,
     OF,
     SIZEOF,
@@ -91,7 +91,7 @@ THEN,
 
 extern struct Token {
     TokenKind kind;
-    struct Loc{
+    struct Loc {
 	struct Pos {
 	    Pos() : line{0}, col{0} {}
 	    Pos(std::size_t line, std::size_t col) : line{line}, col{col} {}
@@ -100,7 +100,6 @@ extern struct Token {
 	UStr path;
     } loc;
     UStr val;
-    UStr valProcessed; // string literal with escaped characters processed
 } token;
 
 bool setLexerInputfile(const char *path);
@@ -110,5 +109,6 @@ TokenKind getToken();
 Token::Loc combineLoc(Token::Loc fromLoc, Token::Loc toLoc);
 
 std::ostream &operator<<(std::ostream &out, const Token::Loc &loc);
+std::string tokenLocStr(const Token::Loc &loc);
 
 #endif // LEXER_HPP

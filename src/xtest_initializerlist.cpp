@@ -9,15 +9,13 @@ main(void)
     auto aTy = Type::getUnsignedInteger(64);
     aTy = Type::getArray(aTy, 5);
 
-    //InitializerList initList(aTy);
-    InitializerList initList;
+    InitializerList initList(aTy);
 
     initList.add(IntegerLiteral::create("1"));
     initList.add(IntegerLiteral::create("2"));
     initList.add(IntegerLiteral::create("3"));
 
     initList.print();
-    initList.setType(aTy);
     auto aVal = initList.loadConstValue();
 
     Symtab::addDecl(Token::Loc{}, "a", aTy);

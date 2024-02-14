@@ -22,7 +22,7 @@ class IntegerLiteral : public Expr
 
 
 
-	UStr		    val;
+	const UStr	    val;
 	const std::uint8_t  radix;
 
 	bool hasAddr() const override;
@@ -38,6 +38,9 @@ class IntegerLiteral : public Expr
 
 	// for debugging and educational purposes
 	void print(int indent) const override;
+
+	// for printing error messages
+	virtual void printFlat(std::ostream &out, bool isFactor) const override;
 };
 
 #endif // INTEGERLITERAL

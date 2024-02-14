@@ -9,8 +9,11 @@ class UStr
 {
     public:
 	UStr();
+	UStr(const UStr &) = default;
 	UStr(const char *s);
 	UStr(const std::string &s);
+
+	UStr &operator=(const UStr &) = default;
 
 	const char *
 	c_str(void) const

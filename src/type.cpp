@@ -123,9 +123,9 @@ operator<(const Array &x, const Array &y)
 
 struct Function : public Type
 {
-    Function(const Type *retType, std::vector<const Type *> argType,
+    Function(const Type *retType, std::vector<const Type *> paramType,
 	     bool hasVarg = false)
-	: Type{Type::FUNCTION, FunctionData{retType, argType, hasVarg}}
+	: Type{Type::FUNCTION, FunctionData{retType, paramType, hasVarg}}
     {}
 };
 
@@ -365,7 +365,7 @@ const std::vector<const Type *> &
 Type::getArgType() const
 {
     assert(std::holds_alternative<FunctionData>(data));
-    return std::get<FunctionData>(data).argType;
+    return std::get<FunctionData>(data).paramType;
 }
 
 // for struct (sub-)types
@@ -634,13 +634,13 @@ Type::getArray(const Type *refType, std::size_t dim)
 // Create function type or return existing type
 
 const Type *
-Type::getFunction(const Type *retType, std::vector<const Type *> argType,
+Type::getFunction(const Type *retType, std::vector<const Type *> paramType,
 		  bool hasVarg)
 {
     if (!fnTypeSet) {
 	fnTypeSet = new std::set<Function>;
     }
-    return &*fnTypeSet->insert(Function{retType, argType, hasVarg}).first;
+    return &*fnTypeSet->insert(Function{retType, paramType, hasVarg}).first;
 }
 
 // create strcutured types

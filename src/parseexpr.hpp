@@ -3,7 +3,6 @@
 
 #include "expr.hpp"
 
-ExprPtr parseExpr(void);
-ExprPtr parseConstExpr(void);
+ExprPtr parseExpression(void);
 
 #endif // PARSEEXPR_HPP

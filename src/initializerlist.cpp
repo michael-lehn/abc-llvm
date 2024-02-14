@@ -8,8 +8,8 @@
 
 
 InitializerList::InitializerList(const Type *type)
-    : type_{type}, pos{0}, value{type ? type->getNumMembers() : 0}
-    , valueLoc{type ? type->getNumMembers() : 0}
+    : type_{type}, pos{0}, value{type->getNumMembers()}
+    , valueLoc{type->getNumMembers()}
 {
 }
 
@@ -22,8 +22,6 @@ InitializerList::type() const
 bool
 InitializerList::isConst() const
 {
-    assert(type() && "InitializerList::isConst() requires type");
-
     for (std::size_t i = 0; i < value.size(); ++i) {
 	const auto &v = value[i];
 	if (std::holds_alternative<ExprPtr>(v)) {
@@ -40,43 +38,18 @@ InitializerList::isConst() const
     return true;
 }
 
-void
-InitializerList::setType(const Type *ty)
+const Type *
+InitializerList::typeToAdd() const
 {
-    assert(!type() && "InitializerList::setType(): type alredy set");
-    assert(ty && "InitializerList::setType(): ty is nullptr");
-    std::cerr  << "InitializerList, ty = " << ty << std::endl;
-    type_ = ty;
-
-    if (value.size() > type()->getNumMembers()) {
-	error::out() << valueLoc[type()->getNumMembers()]
-	    << ": excess elements in struct initializer" << std::endl;
-	error::fatal();
-    }
-
-    valueType.resize(type()->getNumMembers());
-    valueLoc.resize(valueType.size());
-
-    for (std::size_t i = 0; i < type()->getNumMembers(); ++i) {
-	valueType[i] = type()->getMemberType(pos);
-	auto &v = value[i];
-	if (std::holds_alternative<InitializerList>(v)) {
-	    std::get<InitializerList>(v).setType(valueType[i]);
-	}
-    }
+    return type()->getMemberType(pos);
 }
 
 void
 InitializerList::add(ExprPtr &&expr)
 {
-    if (!type()) {
-	valueLoc.resize(valueLoc.size()  + 1);
-	value.resize(value.size()  + 1);
-    } else {
-	auto ty = type()->getMemberType(pos);
-	expr = CastExpr::create(std::move(expr), ty, expr->loc);
-	assert(pos < type()->getNumMembers());
-    }
+    auto ty = type()->getMemberType(pos);
+    expr = CastExpr::create(std::move(expr), ty, expr->loc);
+    assert(pos < type()->getNumMembers());
     valueLoc[pos] = expr->loc;
     value[pos++] = std::move(expr);
 }
@@ -84,11 +57,6 @@ InitializerList::add(ExprPtr &&expr)
 void
 InitializerList::add(InitializerList &&initList, Token::Loc loc)
 {
-    if (!type()) {
-	valueLoc.resize(valueLoc.size()  + 1);
-	value.resize(value.size()  + 1);
-    }
-
     valueLoc[pos] = loc;
     value[pos++] = std::move(initList);
 }
@@ -96,8 +64,6 @@ InitializerList::add(InitializerList &&initList, Token::Loc loc)
 void
 InitializerList::store(gen::Reg addr) const
 {
-    assert(type() && "InitializerList::store(addr): no type");
-
     if (type()->isStruct() || type()->isArray()) {
 	std::vector<gen::ConstVal> val{value.size()};
 	for (size_t i = 0; i < value.size(); ++i) {
@@ -113,8 +79,6 @@ InitializerList::store(gen::Reg addr) const
 void
 InitializerList::store(std::size_t index, gen::Reg addr) const
 {
-    assert(type() && "InitializerList::store(index, addr): no type");
-
     auto &v = value[index];
     auto ty = type()->getMemberType(index);
     if (std::holds_alternative<ExprPtr>(v)) {
@@ -131,8 +95,6 @@ InitializerList::store(std::size_t index, gen::Reg addr) const
 gen::ConstVal
 InitializerList::loadConstValue() const
 {
-    assert(type() && "InitializerList::load(): type is nullptr");
-
     if (type()->isArray() || type()->isStruct()) {
 	std::vector<gen::ConstVal> val{value.size()};
 	for (size_t i = 0; i < value.size(); ++i) {
@@ -152,8 +114,6 @@ InitializerList::loadConstValue() const
 gen::ConstVal
 InitializerList::loadConstValue(size_t index) const
 {
-    assert(type());
-
     auto &v = value[index];
     auto ty = type()->getMemberType(index);
     if (std::holds_alternative<ExprPtr>(v)) {
@@ -185,7 +145,7 @@ InitializerList::print(int indent) const
 	    if (e) {
 		e->print(indent + 4);
 	    } else {
-		std::printf("%*sZER0\n", indent + 4, "");
+		std::printf("%*sZERO\n", indent + 4, "");
 	    }
 	} else if (std::holds_alternative<InitializerList>(v)) {
 	    std::get<InitializerList>(v).print(indent + 4);

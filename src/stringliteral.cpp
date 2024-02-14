@@ -91,3 +91,8 @@ StringLiteral::print(int indent) const
 	<< std::endl;
 }
 
+void
+StringLiteral::printFlat(std::ostream &out, bool isFactor) const
+{
+    out << "\"" << val.c_str() << "\"";
+}

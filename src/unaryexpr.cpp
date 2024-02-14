@@ -152,6 +152,33 @@ UnaryExpr::print(int indent) const
     child->print(indent + 4);
 }
 
+void
+UnaryExpr::printFlat(std::ostream &out, bool isFactor) const
+{
+    switch (kind) {
+	case UnaryExpr::DEREF:
+	    out << "*" << child;
+	    break;
+	case UnaryExpr::LOGICAL_NOT:
+	    out << "!" << child;
+	    break;
+	case UnaryExpr::ADDRESS:
+	    out << "&" << child;
+	    break;
+	case UnaryExpr::POSTFIX_INC:
+	    out << child << "++";
+	    break;
+	case UnaryExpr::POSTFIX_DEC:
+	    out << child << "--";
+	    break;
+	case UnaryExpr::MINUS:
+	    out << "-" << child;
+	    break;
+	default:
+	    out << " <unary kind " << kind << ">";
+    }
+}
+
 static const char *
 kindStr(UnaryExpr::Kind kind)
 {

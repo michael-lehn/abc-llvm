@@ -1,7 +1,7 @@
 #ifndef SYMTAB_HPP
 #define SYMTAB_HPP
 
-#include <ostream>
+#include <iostream>
 #include <variant>
 
 #include "expr.hpp"
@@ -33,7 +33,7 @@ class Symtab
 	    public:
 		const UStr ident;
 
-		Token::Loc getLoc(void) const
+		Token::Loc getLoc() const
 		{
 		    return hasDefinitionFlag() ? loc : firstDeclLoc;
 		}
@@ -78,10 +78,10 @@ class Symtab
 		}
 
 		// returns 'false' iff symbol was alreay defined.
-		bool setDefinitionFlag(void);
+		bool setDefinitionFlag();
 
 		// returns an identifier that can be used for code generation
-		UStr getInternalIdent(void) const
+		UStr getInternalIdent() const
 		{
 		    return internalIdent;
 		}
@@ -99,9 +99,11 @@ class Symtab
 		Entry(Token::Loc loc, Data &&data, UStr ident,
 		      UStr internalIdent)
 		    : ident{ident}, loc{loc}, firstDeclLoc{loc}
-		    , data{std::move(data)} , internalIdent{internalIdent}
-		    , definition{false} , externFlag{false}
-		{}
+		    , lastDeclLoc{loc} , data{std::move(data)}
+		    , internalIdent{internalIdent} , definition{false}
+		    , externFlag{false}
+		{
+		}
 
 		Token::Loc loc, firstDeclLoc, lastDeclLoc;
 		Data data;
@@ -113,8 +115,8 @@ class Symtab
 	// Used to create unique identifieriers within functions scope.
 	static void setPrefix(UStr prefix);
 
-	static void openScope(void);
-	static void closeScope(void);
+	static void openScope();
+	static void closeScope();
 
 	static Entry *get(UStr ident, Scope scope = AnyScope);
 
@@ -124,14 +126,14 @@ class Symtab
 			  ScopeNode *sn);
 
     public:
-	// Add a new symbol to current scope. Returns nullptr if symbol already
-	// exists, otherwise returns a pointer to the created entry.
+	// Add a new symbol to current scope. Returns pointer to existing
+	// or created entry
 	static Entry *addDecl(Token::Loc loc, UStr ident, const Type *type);
 
 	static Entry *addConstant(Token::Loc loc, UStr ident, ExprPtr &&val);
 
-	// Add a new symbol to root scope. Returns nullptr if symbol already
-	// exists, otherwise a pointer to the created entry.
+	// Add a new symbol to current scope. Returns pointer to existing
+	// or created entry
 	static Entry *addDeclToRootScope(Token::Loc loc, UStr ident,
 					 const Type *type);
 
