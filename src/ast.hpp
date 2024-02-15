@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <memory>
+#include <variant>
 #include <vector>
 
 #include "initializerlist.hpp"
@@ -18,6 +19,7 @@ class Ast
 	virtual void print(int indent = 0) const = 0;
 	virtual void codegen() = 0;
 	virtual void apply(std::function<bool(Ast *)> op);
+	virtual const Type *getType() const;
 };
 
 using AstPtr = std::unique_ptr<Ast>;
@@ -289,5 +291,31 @@ class AstTypeDecl : public Ast
 	void codegen() override;
 };
 
+//------------------------------------------------------------------------------
+
+class AstStructDecl : public Ast
+{
+    private:
+	Type *createIncompleteStruct(Token ident);
+
+    public:
+	using AstOrType = std::variant<AstPtr, const Type *>;
+
+	AstStructDecl(Token ident);
+	AstStructDecl(Token ident,
+		      std::vector<const char *> &&member,
+		      std::vector<AstOrType> &&memberAstOrType);
+
+	const Token ident;
+	Type *type;
+	bool hasSize = false;
+	AstList astList;
+
+	void print(int indent) const override;
+	void codegen() override;
+	const Type *getType() const override;
+};
+
+using AstStructDeclPtr = std::unique_ptr<AstStructDecl>;
 
 #endif // AST_HPP

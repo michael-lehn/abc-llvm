@@ -7,8 +7,9 @@
 #include "proxyexpr.hpp"
 #include "symtab.hpp"
 
-Identifier::Identifier(UStr ident, const Type *type, Token::Loc loc)
-    : Expr{loc, type}, ident{ident}
+Identifier::Identifier(UStr ident, const Type *type, Token::Loc loc,
+		       bool misusedAsMember)
+    : Expr{loc, type}, ident{ident}, misusedAsMember{misusedAsMember}
 {
 }
 
@@ -32,19 +33,21 @@ ExprPtr
 Identifier::create(UStr ident, const Type *type, Token::Loc loc)
 {
     assert(type);
-    auto p = new Identifier{UStr{}, type, loc};
+    auto p = new Identifier{ident, type, loc, true};
     return std::unique_ptr<Identifier>{p};
 }
 
 bool
 Identifier::hasAddr() const
 {
+    assert(!misusedAsMember);
     return true;
 }
 
 bool
 Identifier::isLValue() const
 {
+    assert(!misusedAsMember);
     return true;
 }
 
@@ -59,12 +62,14 @@ gen::ConstVal
 Identifier::loadConstValue() const
 {
     assert(isConst());
+    assert(!misusedAsMember);
     return nullptr;
 }
 
 gen::Reg
 Identifier::loadValue() const
 {
+    assert(!misusedAsMember);
     if (type->isFunction()) {
 	return loadAddr();
     }
@@ -75,7 +80,7 @@ Identifier::loadValue() const
 gen::Reg
 Identifier::loadAddr() const
 {
-    assert(ident.c_str());
+    assert(!misusedAsMember);
     return gen::loadAddr(ident.c_str());
 }
 

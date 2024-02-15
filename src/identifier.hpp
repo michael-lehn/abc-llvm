@@ -6,7 +6,8 @@
 class Identifier : public Expr
 {
     protected:
-	Identifier(UStr ident, const Type *type, Token::Loc loc);
+	Identifier(UStr ident, const Type *type, Token::Loc loc,
+		   bool misusedAsMember = false);
 
     public:
 
@@ -15,6 +16,7 @@ class Identifier : public Expr
 			      Token::Loc loc = Token::Loc{});
 
 	const UStr ident;
+	const bool misusedAsMember;
 
 	bool hasAddr() const override;
 	bool isLValue() const override;

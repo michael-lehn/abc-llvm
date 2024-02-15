@@ -69,7 +69,7 @@ BinaryExpr::hasAddr() const
 bool
 BinaryExpr::isLValue() const
 {
-    return kind == MEMBER && right->isLValue();
+    return kind == MEMBER && left->isLValue();
 }
 
 //-- for checking constness 
@@ -314,7 +314,7 @@ BinaryExpr::printFlat(std::ostream &out, bool isFactor) const
 	    out << "(" << left << " % " << right << ")";
 	    break;
 	case MEMBER:
-	    out << "(" << left << " + " << right << ")";
+	    out << "(" << left << "." << right << ")";
 	    break;
 	default:
 	    out << " <binary kind " << kind << ">";

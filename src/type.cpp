@@ -869,6 +869,8 @@ operator<<(std::ostream &out, const Type *type)
 	}
 	out << "): " << type->getRetType();
     } else if (type->isStruct()) {
+	out << type->getName().c_str();
+	/*
 	type = Type::getConstRemoved(type);
 	auto memType = type->getMemberType();
 	auto memIdent = type->getMemberIdent();
@@ -883,6 +885,7 @@ operator<<(std::ostream &out, const Type *type)
 	    }
 	    out << "}";
 	}
+	*/
     } else {
 	out << "unknown type: id = " << type->id
 	    << ", address = " << (int *)type

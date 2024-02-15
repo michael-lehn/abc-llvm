@@ -58,6 +58,12 @@ Ast::apply(std::function<bool(Ast *)> op)
     op(this);
 }
 
+const Type *
+Ast::getType() const
+{
+    return nullptr;
+}
+
 /*
  * AstTopLevel
  */
@@ -763,4 +769,97 @@ AstTypeDecl::print(int indent) const
 void
 AstTypeDecl::codegen()
 {
+}
+
+/*
+ * AstStructDecl
+ */
+AstStructDecl::AstStructDecl(Token ident)
+    : ident{ident}, type{createIncompleteStruct(ident)}
+{
+    createIncompleteStruct(ident);
+}
+
+AstStructDecl::AstStructDecl(Token ident,
+			     std::vector<const char *> &&member,
+			     std::vector<AstOrType> &&astOrType)
+    : ident{ident}, type{createIncompleteStruct(ident)}
+{
+    if (type) {
+	std::vector<const Type *> memberType;
+	for (auto &item: astOrType) {
+	    if (std::holds_alternative<const Type *>(item)) {
+		memberType.push_back(std::get<const Type *>(item));
+	    } else {
+		auto ast = std::move(std::get<AstPtr>(item));
+		memberType.push_back(ast->getType());
+		astList.append(std::move(ast));
+	    }
+	}
+	type->complete(std::move(member), std::move(memberType));
+    }
+    if (!type->hasSize()) {
+	error::out() << ident.loc
+	    << ": error: type '" << ident.val.c_str()
+	    << "' has zero size" << std::endl;
+	error::fatal();
+    } else {
+	hasSize = true;
+    }
+}
+
+Type *
+AstStructDecl::createIncompleteStruct(Token ident)
+{
+    auto type = Type::createIncompleteStruct(ident.val);
+    if (!type) {
+	if (auto ty = Symtab::getNamedType(ident.val, Symtab::CurrentScope)) {
+	    error::out() << ident.loc
+		<< ": error: '" << ident.val.c_str()
+		<< "' already defined as " << ty << std::endl;
+	    error::fatal();
+	} else if (auto sym = Symtab::get(ident.val)) {
+	    error::out() << ident.loc
+		<< ": error: '" << ident.val.c_str()
+		<< "' already defined " << sym->getLoc() << std::endl;
+	    error::fatal();
+	} else {
+	    assert(0);
+	}
+	return nullptr;
+    }
+    return type;
+}
+
+void
+AstStructDecl::print(int indent) const
+{
+    if (!type) {
+	return;
+    }
+    astList.print(indent);
+    if (!hasSize) {
+	error::out(indent) << "struct " << ident.val.c_str() << ";"
+	    << std::endl << std::endl;
+    } else {
+	error::out(indent) << "struct " << ident.val.c_str() << "{"
+	    << std::endl;
+	for (std::size_t i = 0; i < type->getNumMembers(); ++i) {
+	    error::out(indent + 4) << type->getMemberIdent()[i]
+		<< ": " << type->getMemberType(i) << ";"
+		<< std::endl;
+	}
+	error::out(indent) << "};" << std::endl << std::endl;
+    }
+}
+
+void
+AstStructDecl::codegen()
+{
+}
+
+const Type *
+AstStructDecl::getType() const
+{
+    return type;
 }
