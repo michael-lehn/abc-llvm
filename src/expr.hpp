@@ -27,6 +27,7 @@ class Expr
 	virtual bool isConst() const = 0;
 
 	// get value from const expressions
+	gen::ConstIntVal getConstIntValue() const;
 	std::int64_t getSignedIntValue() const;
 	std::uint64_t getUnsignedIntValue() const;
 

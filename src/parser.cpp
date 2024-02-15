@@ -1050,12 +1050,13 @@ parseBreakStatement()
     if (token.kind != TokenKind::BREAK) {
 	return nullptr;
     }
+    Token::Loc loc = token.loc;
     getToken();
     if (!error::expected(TokenKind::SEMICOLON)) {
 	return nullptr;
     }
     getToken();
-    return std::make_unique<AstBreak>();
+    return std::make_unique<AstBreak>(loc);
 }
 
 /*

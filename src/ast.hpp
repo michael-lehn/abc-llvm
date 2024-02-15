@@ -152,7 +152,10 @@ class AstReturn : public Ast
 class AstBreak : public Ast
 {
     public:
-	AstBreak();
+	AstBreak(Token::Loc loc);
+
+	const Token::Loc loc;
+	gen::Label label = nullptr;
 
 	void print(int indent) const override;
 	void codegen() override;

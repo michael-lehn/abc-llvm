@@ -151,6 +151,12 @@ AstSwitch::AstSwitch(ExprPtr &&expr)
 void
 AstSwitch::appendCase(ExprPtr &&expr)
 {
+    if (!expr || !expr->isConst() || !expr->type->isInteger()) {
+	error::out() << expr->loc
+	    << ": error: case expression has "
+	    << "to be a constant integer expression" << std::endl;
+	error::fatal();
+    }
     casePos.push_back(body.size());
     caseExpr.push_back(std::move(expr));
 }
@@ -195,6 +201,49 @@ AstSwitch::print(int indent) const
 void
 AstSwitch::codegen()
 {
+    auto defaultLabel = gen::getLabel("default");
+    auto breakLabel = gen::getLabel("break");
+
+    auto setBreakLabel = [=](Ast *ast) -> bool {
+	if (auto astBreak = dynamic_cast<AstBreak *>(ast)) {
+	    if (!astBreak->label) {
+		astBreak->label = breakLabel;
+	    }
+	}
+	return true;
+    };
+    body.apply(setBreakLabel);
+
+
+    std::vector<std::pair<gen::ConstIntVal, gen::Label>> caseLabel;
+    std::set<std::uint64_t> usedCaseVal;
+
+    for (const auto &e: caseExpr) {
+	caseLabel.push_back({ e->getConstIntValue(), gen::getLabel("case") });
+	auto val = e->getUnsignedIntValue();
+	if (usedCaseVal.contains(val)) {
+	    error::out() << e->loc << ": duplicate case value '"
+		<< e << "'" << std::endl;
+	    error::fatal();
+	}
+	usedCaseVal.insert(val);
+    }
+
+    gen::jmp(expr->loadValue(), defaultLabel, caseLabel);
+
+    for (std::size_t i = 0, casePosIndex = 0; i < body.size(); ++i) {
+	if (casePosIndex < casePos.size() && i == casePos[casePosIndex]) {
+	    gen::labelDef(caseLabel[casePosIndex++].second);
+	}
+	if (hasDefault && i == defaultPos) {
+	    gen::labelDef(defaultLabel);
+	}
+	body.list[i]->codegen();
+    }
+    if (!hasDefault) {
+	gen::labelDef(defaultLabel);
+    }
+    gen::labelDef(breakLabel);
 }
 
 /*
@@ -345,7 +394,8 @@ AstReturn::codegen()
 /*
  * AstBreak
  */
-AstBreak::AstBreak()
+AstBreak::AstBreak(Token::Loc loc)
+    : loc{loc}
 {}
 
 void
@@ -357,6 +407,14 @@ AstBreak::print(int indent) const
 void
 AstBreak::codegen()
 {
+    if (!label) {
+	error::out() << loc
+	    << ": error: break statement not within loop or switch"
+	    << std::endl;
+	error::fatal();
+	return;
+    }
+    gen::jmp(label);
 }
 
 /*

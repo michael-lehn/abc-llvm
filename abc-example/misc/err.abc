@@ -30,8 +30,17 @@ fn main()
     scanf("%d", &n);
 
     switch (n) {
+	default:
+	    printf("default\n");
+	    break;
 	case 0:
-	    printf("note that 0! = 1\n");
+	    printf("case 0\n");
+	    break;
+	case 1:
+	    printf("case 1\n");
+	    break;
+	case 2:
+	    printf("case 2\n");
 	    break;
     }
 
