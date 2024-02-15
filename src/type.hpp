@@ -132,7 +132,6 @@ class Type
 				       std::vector<const Type *> paramType,
 				       bool hasVarg = false);
 	static Type *createIncompleteStruct(UStr name);
-	static void remove(const Type *ty);
 
 	// type casts
 	static const Type *getTypeConversion(const Type *from, const Type *to,

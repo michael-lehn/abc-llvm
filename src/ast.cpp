@@ -737,3 +737,30 @@ AstFuncDef::codegen()
     body->codegen();
     gen::fnDefEnd();
 }
+
+/*
+ * AstTypeDecl
+ */
+AstTypeDecl::AstTypeDecl(Token tyIdent, const Type *type)
+    : tyIdent{tyIdent}, type{type}
+{
+    auto aliasType = Type::createAlias(tyIdent.val.c_str(), type);
+    if (!Symtab::addTypeAlias(tyIdent.val.c_str(), aliasType)) {
+	error::out() << tyIdent.loc
+	    << ": error: '" << tyIdent.val.c_str()
+	    << "' already defined in this scope" << std::endl;
+	error::fatal();
+    }
+}
+
+void
+AstTypeDecl::print(int indent) const
+{
+    error::out(indent) << "type " << tyIdent.val.c_str() << ":" << type
+	<< std::endl;
+}
+
+void
+AstTypeDecl::codegen()
+{
+}

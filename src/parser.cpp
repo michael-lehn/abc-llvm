@@ -42,7 +42,7 @@ parser()
 static AstPtr parseFunctionDeclarationOrDefinition();
 static AstPtr parseExternDeclaration();
 static AstPtr parseGlobalVariableDefinition();
-static bool parseTypeDeclaration();
+static AstPtr parseTypeDeclaration();
 static bool parseStructDeclaration();
 static bool parseEnumDeclaration();
 
@@ -64,7 +64,8 @@ parseTopLevelDeclaration()
 	return ast;
     } else if (auto ast = parseGlobalVariableDefinition()) {
 	return ast;
-    } else if (parseTypeDeclaration()) {
+    } else if (auto ast = parseTypeDeclaration()) {
+	return ast;
     } else if (parseStructDeclaration()) {
     } else if (parseEnumDeclaration()) {
     } else {
@@ -458,32 +459,36 @@ parseInitializerList(InitializerList &initList)
 /*
  * type-declaration = "type" identifier ":" type ";"
  */
-static bool
+static AstPtr
 parseTypeDeclaration()
 {
     if (token.kind != TokenKind::TYPE) {
-	return false;
+	return nullptr;
     }
     getToken();
     if (token.kind != TokenKind::IDENTIFIER) {
 	error::out() << token.loc << ": identifier for type expected"
 	    << std::endl;
 	error::fatal();
-	return false;
+	return nullptr;
     }
+    auto ident = token;
     getToken();
     if (!error::expected(TokenKind::COLON)) {
-	return false;
+	return nullptr;
     }
-    if (!parseType()) {
+    getToken();
+    auto type = parseType();
+    if (!type) {
 	error::out() << token.loc << ": type expected"
 	    << std::endl;
 	error::fatal();
     }
     if (!error::expected(TokenKind::SEMICOLON)) {
-	return false;
+	return nullptr;
     }
-    return true;
+    getToken();
+    return std::make_unique<AstTypeDecl>(ident, type);
 }
 
 //------------------------------------------------------------------------------
@@ -768,15 +773,16 @@ parseDeclaration()
 {
     AstPtr ast;
 
-    if (parseTypeDeclaration()
-	|| parseEnumDeclaration()
+    if (parseEnumDeclaration()
 	|| parseStructDeclaration()
 	) {
 	std::cerr << "no ast generated\n";
     }
 
     (ast = parseGlobalVariableDefinition())
-	|| (ast = parseLocalVariableDefinition());
+	|| (ast = parseLocalVariableDefinition())
+	|| (ast = parseTypeDeclaration())
+	;
     return ast;
 }
 

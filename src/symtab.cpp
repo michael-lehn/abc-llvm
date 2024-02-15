@@ -23,9 +23,6 @@ struct ScopeNode
 	for (auto &s: symtab) {
 	    s.second.invalidate();
 	}
-	for (const auto &ty: nametab) {
-	    Type::remove(ty);
-	}
     }
 };
 
@@ -206,7 +203,7 @@ Symtab::addTypeAlias(UStr ident, const Type *type)
     assert(curr.get());
     auto *found = getNamedType(ident, CurrentScope);
 
-    if (found) {
+    if (found || get(ident, CurrentScope)) {
 	return nullptr;
     }
 

@@ -675,40 +675,6 @@ Type::createIncompleteStruct(UStr name)
     return ty;
 }
 
-void
-Type::remove(const Type *ty)
-{
-    if (ty->isInteger()) {
-	assert(intTypeSet
-		&& "Type::remove() called before any int type was created");
-
-	auto intTy = static_cast<const Integer *>(ty);
-	auto numErased = intTypeSet->erase(*intTy);
-	assert(numErased == 1 && "Type::remove(): no int type deleted");
-    } else if (ty->isPointer()) {
-	assert(ptrTypeSet
-		&& "Type::remove() called before any pointer type was created");
-
-	auto ptrTy = static_cast<const Pointer *>(ty);
-	auto numErased = ptrTypeSet->erase(*ptrTy);
-	assert(numErased == 1 && "Type::remove(): no pointer type deleted");
-    } else if (ty->isArray()) {
-	assert(arrayTypeSet
-		&& "Type::remove() called before any array type was created");
-
-	auto arrayTy = static_cast<const Array *>(ty);
-	auto numErased = arrayTypeSet->erase(*arrayTy);
-	assert(numErased == 1 && "Type::remove(): no array type deleted");
-    } else if (ty->isStruct()) {
-	assert(structMap
-		&& "Type::remove() called before any struct was created");
-    
-	const auto &structData = std::get<StructData>(ty->data);
-	auto numErased = structMap->erase(structData.id);
-	assert(numErased == 1 && "Type::remove(): no struct type deleted");
-    }
-}
-
 /*
  * Type casts
  */

@@ -275,4 +275,19 @@ class AstFuncDef : public Ast
 	void codegen() override;
 };
 
+//------------------------------------------------------------------------------
+
+class AstTypeDecl : public Ast
+{
+    public:
+	AstTypeDecl(Token tyIdent, const Type *type);
+
+	const Token tyIdent;
+	const Type * const type;
+
+	void print(int indent) const override;
+	void codegen() override;
+};
+
+
 #endif // AST_HPP
