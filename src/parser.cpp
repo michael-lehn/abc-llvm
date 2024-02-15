@@ -1170,8 +1170,10 @@ parsePointerType()
 }
 
 //------------------------------------------------------------------------------
+static const Type * parseArrayDimAndType();
+
 /*
- * array-type = "array" "[" expression "]" { "[" expression "]" } "of" type
+ * array-type = "array" array-dim-and-type
  */
 static const Type *
 parseArrayType()
@@ -1180,32 +1182,53 @@ parseArrayType()
 	return nullptr;
     }
     getToken();
-    do {
-	if (!error::expected(TokenKind::LBRACKET)) {
-	    return nullptr;
-	}
-	getToken();
-	if (!parseExpression()) {
-	    error::out() << token.loc << ": constant expression expected"
-		<< std::endl;
-	    error::fatal();
-	    return nullptr;
-	}
-	if (!error::expected(TokenKind::RBRACKET)) {
-	    return nullptr;
-	}
-	getToken();
-    } while (token.kind == TokenKind::LBRACKET);
-    if (!error::expected(TokenKind::OF)) {
+    auto type = parseArrayDimAndType();
+    if (!type) {
+	error::out() << token.loc << ": array dimension expected" << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    return type;
+}
+
+//------------------------------------------------------------------------------
+/*
+ * array-dim-and-type = "[" expression "]" { "[" expression "]" } "of" type
+ */
+static const Type *
+parseArrayDimAndType()
+{
+    if (token.kind != TokenKind::LBRACKET) {
 	return nullptr;
     }
     getToken();
-    if (!parseType()) {
-	error::out() << token.loc << ": element type expected"
+    auto dimExpr = parseExpression();
+    if (!dimExpr || !dimExpr->isConst() || !dimExpr->type->isInteger()) {
+	error::out() << token.loc
+	    << ": constant integer expression expected for array dimension"
 	    << std::endl;
 	error::fatal();
 	return nullptr;
     }
-    std::cerr << "parseArrayType() always returns nullptr\n";
-    return nullptr;
+    auto dim = dimExpr->getSignedIntValue();
+    if (dim < 0) {
+	error::out() << token.loc << ": dimension can not be negative"
+	    << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    if (!error::expected(TokenKind::RBRACKET)) {
+	return nullptr;
+    }
+    getToken();
+    if (token.kind == TokenKind::OF) {
+	getToken();
+	auto type = parseType();
+	if (!type) {
+	    error::out() << token.loc << ": type expected" << std::endl;
+	    error::fatal();
+	}
+	return Type::getArray(type, dim);
+    }
+    return Type::getArray(parseArrayDimAndType(), dim);
 }

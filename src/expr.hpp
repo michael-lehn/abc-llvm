@@ -1,6 +1,7 @@
 #ifndef EXPR_HPP
 #define EXPR_HPP
 
+#include <cstdint>
 #include <memory>
 
 #include "gen.hpp"
@@ -24,6 +25,10 @@ class Expr
 	virtual bool hasAddr() const = 0;
 	virtual bool isLValue() const = 0;
 	virtual bool isConst() const = 0;
+
+	// get value from const expressions
+	std::int64_t getSignedIntValue() const;
+	std::uint64_t getUnsignedIntValue() const;
 
 	// for code generation
 	virtual gen::ConstVal loadConstValue() const = 0;
