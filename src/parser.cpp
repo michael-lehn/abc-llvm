@@ -1050,7 +1050,7 @@ parseBreakStatement()
     if (token.kind != TokenKind::BREAK) {
 	return nullptr;
     }
-    Token::Loc loc = token.loc;
+    auto loc = token.loc;
     getToken();
     if (!error::expected(TokenKind::SEMICOLON)) {
 	return nullptr;
@@ -1068,12 +1068,13 @@ parseContinueStatement()
     if (token.kind != TokenKind::CONTINUE) {
 	return nullptr;
     }
+    auto loc = token.loc;
     getToken();
     if (!error::expected(TokenKind::SEMICOLON)) {
 	return nullptr;
     }
     getToken();
-    return std::make_unique<AstContinue>();
+    return std::make_unique<AstContinue>(loc);
 }
 
 //------------------------------------------------------------------------------

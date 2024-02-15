@@ -7,6 +7,48 @@
 #include "error.hpp"
 #include "symtab.hpp"
 
+static std::function<bool(Ast *)>
+createSetBreakLabel(gen::Label breakLabel)
+{
+    return [=](Ast *ast) -> bool
+    {
+	if (auto astBreak = dynamic_cast<AstBreak *>(ast)) {
+	    if (!astBreak->label) {
+		astBreak->label = breakLabel;
+	    }
+	}
+	return true;
+    };
+}
+
+static std::function<bool(Ast *)>
+createSetContinueLabel(gen::Label continueLabel)
+{
+    return [=](Ast *ast) -> bool
+    {
+	if (auto astContinue = dynamic_cast<AstContinue *>(ast)) {
+	    if (!astContinue->label) {
+		astContinue->label = continueLabel;
+	    }
+	}
+	return true;
+    };
+}
+
+static std::function<bool(Ast *)>
+createSetReturnType(const Type *retType)
+{
+    return [=](Ast *ast) -> bool
+    {
+	if (auto astReturn = dynamic_cast<AstReturn *>(ast)) {
+	    astReturn->retType = retType;
+	}
+	return true;
+    };
+}
+
+//------------------------------------------------------------------------------
+
 /*
  * Ast
  */
@@ -203,17 +245,7 @@ AstSwitch::codegen()
 {
     auto defaultLabel = gen::getLabel("default");
     auto breakLabel = gen::getLabel("break");
-
-    auto setBreakLabel = [=](Ast *ast) -> bool {
-	if (auto astBreak = dynamic_cast<AstBreak *>(ast)) {
-	    if (!astBreak->label) {
-		astBreak->label = breakLabel;
-	    }
-	}
-	return true;
-    };
-    body.apply(setBreakLabel);
-
+    body.apply(createSetBreakLabel(breakLabel));
 
     std::vector<std::pair<gen::ConstIntVal, gen::Label>> caseLabel;
     std::set<std::uint64_t> usedCaseVal;
@@ -266,6 +298,9 @@ AstWhile::codegen()
     auto condLabel = gen::getLabel("cond");
     auto loopLabel = gen::getLabel("loop");
     auto endLabel = gen::getLabel("end");
+
+    body->apply(createSetBreakLabel(endLabel));
+    body->apply(createSetContinueLabel(condLabel));
 
     gen::labelDef(condLabel);
     cond->condJmp(loopLabel, endLabel);
@@ -335,6 +370,9 @@ AstFor::codegen()
     auto condLabel = gen::getLabel("cond");
     auto loopLabel = gen::getLabel("loop");
     auto endLabel = gen::getLabel("end");
+
+    body->apply(createSetBreakLabel(endLabel));
+    body->apply(createSetContinueLabel(condLabel));
 
     init->loadValue();
 
@@ -420,7 +458,8 @@ AstBreak::codegen()
 /*
  * AstContinue
  */
-AstContinue::AstContinue()
+AstContinue::AstContinue(Token::Loc loc)
+    : loc{loc}
 {}
 
 void
@@ -432,6 +471,14 @@ AstContinue::print(int indent) const
 void
 AstContinue::codegen()
 {
+    if (!label) {
+	error::out() << loc
+	    << ": error: continue statement not within loop"
+	    << std::endl;
+	error::fatal();
+	return;
+    }
+    gen::jmp(label);
 }
 
 /*
@@ -654,16 +701,8 @@ void
 AstFuncDef::appendBody(AstPtr &&body_)
 {
     body = std::move(body_);
+    body->apply(createSetReturnType(type->getRetType()));
     Symtab::closeScope();
-
-    auto retType = type->getRetType();
-    auto setReturnType = [=](Ast *ast) -> bool {
-	if (auto astReturn = dynamic_cast<AstReturn *>(ast)) {
-	    astReturn->retType = retType;
-	}
-	return true;
-    };
-    body->apply(setReturnType);
 }
 
 void

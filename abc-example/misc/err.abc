@@ -43,6 +43,7 @@ fn main()
 	    printf("case 2\n");
 	    break;
     }
+    printf("Computing %d!\n", n);
 
     printf("%d! = %d\n", n, factorial_for(n));
     printf("%d! = %d\n", n, factorial_while(n));

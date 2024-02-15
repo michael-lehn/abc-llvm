@@ -166,7 +166,10 @@ class AstBreak : public Ast
 class AstContinue : public Ast
 {
     public:
-	AstContinue();
+	AstContinue(Token::Loc loc);
+
+	const Token::Loc loc;
+	gen::Label label = nullptr;
 
 	void print(int indent) const override;
 	void codegen() override;
