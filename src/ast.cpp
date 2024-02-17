@@ -543,7 +543,7 @@ AstExternVar::AstExternVar(AstListPtr &&decl)
     for (auto &node : this->decl.list) {
 	auto var = dynamic_cast<AstVar *>(node.get());
 	assert(var);
-	auto sym = Symtab::addDecl(var->loc, var->ident, var->type);
+	auto sym = Symtab::addDeclToRootScope(var->loc, var->ident, var->type);
 	sym->setExternFlag();
 	var->genIdent = sym->getInternalIdent();
 	var->externFlag = sym->hasExternFlag();
@@ -692,7 +692,9 @@ AstFuncDecl::AstFuncDecl(Token fnIdent, const Type *type,
     : fnIdent{fnIdent}, type{type}, paramToken{paramToken}
     , externFlag{externFlag}
 {
-    auto sym = Symtab::addDecl(fnIdent.loc, fnIdent.val, type);
+    auto sym = externFlag
+	? Symtab::addDeclToRootScope(fnIdent.loc, fnIdent.val, type)
+	: Symtab::addDecl(fnIdent.loc, fnIdent.val, type);
     if (externFlag) {
 	sym->setExternFlag();
     }

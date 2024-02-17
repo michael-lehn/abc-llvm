@@ -1,5 +1,3 @@
-#include <stdio.hdr>
-
 enum Foo;
 
 enum Foo {
@@ -10,16 +8,10 @@ enum Foo {
 
 type Foo : int;
 
-extern i: int;
-global i: int;
-
-global j: int;
-
-fn foo()
-{
-}
+struct Bar {
+    a: int;
+};
 
 fn main()
 {
-    printf("hello, world!\n");
 }
