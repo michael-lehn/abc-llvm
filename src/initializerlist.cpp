@@ -6,10 +6,8 @@
 #include "integerliteral.hpp"
 #include "initializerlist.hpp"
 
-
 InitializerList::InitializerList(const Type *type)
-    : type_{type}, pos{0}, value{type->getNumMembers()}
-    , valueLoc{type->getNumMembers()}
+    : type_{type}, value{type->getNumMembers()}, valueLoc{type->getNumMembers()}
 {
 }
 

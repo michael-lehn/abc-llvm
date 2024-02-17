@@ -99,17 +99,16 @@ class Symtab
 		Entry(Token::Loc loc, Data &&data, UStr ident,
 		      UStr internalIdent)
 		    : ident{ident}, loc{loc}, firstDeclLoc{loc}
-		    , lastDeclLoc{loc} , data{std::move(data)}
-		    , internalIdent{internalIdent} , definition{false}
-		    , externFlag{false}
+		    , lastDeclLoc{loc}, data{std::move(data)}
+		    , internalIdent{internalIdent}
 		{
 		}
 
 		Token::Loc loc, firstDeclLoc, lastDeclLoc;
 		Data data;
 		UStr internalIdent;
-		bool definition;
-		bool externFlag;
+		bool definition = false;
+		bool externFlag = false;
 	};
 
 	// Used to create unique identifieriers within functions scope.

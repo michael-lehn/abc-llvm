@@ -12,6 +12,7 @@
 class InitializerList
 {
     public:
+	InitializerList() = default;
 	InitializerList(const Type *type);
 
 	const Type *type() const;
@@ -31,8 +32,8 @@ class InitializerList
 	void print(int indent = 0) const;
 
     private:
-	const Type *type_;
-	std::size_t pos;
+	const Type *type_ = nullptr;
+	std::size_t pos = 0;
 	std::vector<std::variant<ExprPtr, InitializerList>> value;
 	std::vector<const Type *> valueType;
 	std::vector<Token::Loc> valueLoc;

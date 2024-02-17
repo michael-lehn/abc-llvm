@@ -209,7 +209,7 @@ parseFunctionParameterList(std::vector<const Type *> &type,
 //------------------------------------------------------------------------------
 static const Type *parseFunctionDeclaration(Token &fnIdent,
 					    std::vector<Token> &param);
-static bool parseExternVariableDeclaration();
+static AstListPtr parseExternVariableDeclaration();
 
 /*
  * extern-declaration
@@ -225,9 +225,14 @@ parseExternDeclaration()
 
     Token fnIdent;
     std::vector<Token> fnParam;
-    const Type *fnType = parseFunctionDeclaration(fnIdent, fnParam);
+    auto fnType = parseFunctionDeclaration(fnIdent, fnParam);
+    auto varDecl = parseExternVariableDeclaration();
 
-    if (!fnType && !parseExternVariableDeclaration()) {
+    if (!fnType && !varDecl) {
+	error::out() << token.loc
+	    << ": error: expected extern function or variable declaration"
+	    << std::endl;
+	error::fatal();
 	return nullptr;
     }
     if (!error::expected(TokenKind::SEMICOLON)) {
@@ -236,8 +241,9 @@ parseExternDeclaration()
     getToken();
     if (fnType) {
 	return std::make_unique<AstFuncDecl>(fnIdent, fnType, fnParam, true);
+    } else if (varDecl) {
+	return std::make_unique<AstExternVar>(std::move(varDecl));
     }
-    std::cerr << "parseExternVariableDeclaration() is a TODO\n";
     assert(0);
     return nullptr;
 }
@@ -254,26 +260,38 @@ parseFunctionDeclaration(Token &fnIdent, std::vector<Token> &param)
 
 //------------------------------------------------------------------------------
 /*
- * extern-variable-declaration = identifier ":" type
+ * extern-variable-declaration = identifier ":" type { "," identifier ":" type }
  */
-static bool
+static AstListPtr
 parseExternVariableDeclaration()
 {
     if (token.kind != TokenKind::IDENTIFIER) {
-	return false;
+	return nullptr;
     }
-    getToken();
-    if (!error::expected(TokenKind::COLON)) {
-	return false;
+    
+    auto astList = std::make_unique<AstList>();
+
+    while (token.kind == TokenKind::IDENTIFIER) {
+	auto ident = token;
+	getToken();
+	if (!error::expected(TokenKind::COLON)) {
+	    return nullptr;
+	}
+	getToken();
+	auto type = parseType();
+	if (!type) {
+	    error::out() << token.loc << ": expected variable type"
+		<< std::endl;
+	    error::fatal();
+	    return nullptr;
+	}
+	astList->append(std::make_unique<AstVar>(ident.val, type, ident.loc));
+	if (token.kind != TokenKind::COMMA) {
+	    break;
+	}
+	getToken();
     }
-    getToken();
-    if (!parseType()) {
-	error::out() << token.loc << ": expected variable type"
-	    << std::endl;
-	error::fatal();
-	return false;
-    }
-    return true;
+    return astList;
 }
 
 //------------------------------------------------------------------------------
@@ -374,16 +392,18 @@ parseVariableDeclaration()
 	error::fatal();
 	return nullptr;
     }
-    InitializerList init(type);
+    auto astVar = std::make_unique<AstVar>(ident, type, loc);
     if (token.kind == TokenKind::EQUAL) {
 	getToken();
+	InitializerList init(type);
 	if (!parseInitializer(init)) {
 	    error::out() << token.loc << ": initializer expected" << std::endl;
 	    error::fatal();
 	    return nullptr;
 	}
+	astVar->addInitializer(std::move(init));
     }
-    return std::make_unique<AstVar>(ident, type, loc, std::move(init));
+    return astVar;
 }
 
 //------------------------------------------------------------------------------

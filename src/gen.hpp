@@ -33,7 +33,7 @@ void ret(Reg reg = nullptr);
 void defLocal(const char *ident, const Type *type);
 void defGlobal(const char *ident, const Type *type, bool external,
 	       ConstVal val = nullptr);
-void declGlobal(const char *ident, const Type *type);
+void declGlobal(const char *ident, const Type *type, bool external);
 void defStatic(const char *ident, const Type *type, ConstVal constVal);
 void defStringLiteral(const char *ident, const char *val, bool isConst);
 

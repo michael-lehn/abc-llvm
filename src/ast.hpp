@@ -195,14 +195,15 @@ class AstExpr : public Ast
 class AstVar : public Ast
 {
     public:
-	AstVar(UStr ident, const Type *type, Token::Loc loc,
-	       InitializerList &&init);
+	AstVar(UStr ident, const Type *type, Token::Loc loc);
+
+	void addInitializer(InitializerList &&init);
 
 	const UStr ident;
 	UStr genIdent; // used for code generation, set when defined
 	const Type * const type;
 	Token::Loc loc;
-	const InitializerList init;
+	InitializerList init;
 	bool externFlag = false;
 
 	void print(int indent) const override;
@@ -210,6 +211,19 @@ class AstVar : public Ast
 };
 
 using AstVarPtr = std::unique_ptr<AstVar>;
+
+//------------------------------------------------------------------------------
+
+class AstExternVar : public Ast
+{
+    public:
+	AstExternVar(AstListPtr &&decl);
+
+	const AstList decl;
+
+	void print(int indent) const override;
+	void codegen() override;
+};
 
 //------------------------------------------------------------------------------
 

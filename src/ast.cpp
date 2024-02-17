@@ -510,22 +510,78 @@ AstExpr::codegen()
 /*
  * AstVar
  */
-AstVar::AstVar(UStr ident, const Type *type, Token::Loc loc,
-			   InitializerList &&init)
-    : ident{ident}, type{type}, loc{loc}, init{std::move(init)}
+AstVar::AstVar(UStr ident, const Type *type, Token::Loc loc)
+    : ident{ident}, type{type}, loc{loc}
 {
+}
+
+void
+AstVar::addInitializer(InitializerList &&init)
+{
+    this->init = std::move(init);
 }
 
 void
 AstVar::print(int indent) const
 {
     error::out(indent) << ident.c_str() << ":" << type;
+
     error::out() << " = [initializer]";
 }
 
 void
 AstVar::codegen()
 {
+}
+
+/*
+ * AstExternVar
+ */
+AstExternVar::AstExternVar(AstListPtr &&decl)
+    : decl{std::move(*decl)}
+{
+    for (auto &node : this->decl.list) {
+	auto var = dynamic_cast<AstVar *>(node.get());
+	assert(var);
+	auto sym = Symtab::addDecl(var->loc, var->ident, var->type);
+	sym->setExternFlag();
+	var->genIdent = sym->getInternalIdent();
+	var->externFlag = sym->hasExternFlag();
+    }
+}
+
+void
+AstExternVar::print(int indent) const
+{
+    error::out(indent) << "extern ";
+    if (decl.size() > 1) {
+	error::out() << std::endl;
+	for (std::size_t i = 0; const auto &item : decl.list) {
+	    auto var = dynamic_cast<const AstVar *>(item.get());
+	    var->print(indent + 4);
+	    if (i + 1< decl.size()) {
+		error::out() << ", ";
+	    } else {
+		error::out() << "; ";
+	    }
+	    error::out() << "//" << var->genIdent.c_str() << std::endl;
+	    ++i;
+	}
+    } else {
+	auto var = dynamic_cast<const AstVar *>(decl.list[0].get());
+	var->print(indent + 4);
+	error::out() << "//" << var->genIdent.c_str() << ";" << std::endl;
+    }
+}
+
+void
+AstExternVar::codegen()
+{
+    for (const auto &item : decl.list) {
+	auto var = dynamic_cast<const AstVar *>(item.get());
+	assert(var);
+	gen::declGlobal(var->genIdent.c_str(), var->type, true);
+    }
 }
 
 /*
@@ -574,7 +630,7 @@ AstGlobalVar::codegen()
     for (const auto &item : decl.list) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
-	gen::defGlobal(var->genIdent.c_str(), var->type, true);
+	gen::defGlobal(var->genIdent.c_str(), var->type, var->externFlag);
     }
 }
 
