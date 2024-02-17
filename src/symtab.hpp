@@ -130,7 +130,6 @@ class Symtab
 	// or created entry
 	static Entry *addDecl(Token::Loc loc, UStr ident, const Type *type);
 
-	static Entry *addConstant(Token::Loc loc, UStr ident);
 	static Entry *addConstant(Token::Loc loc, UStr ident, ExprPtr &&val);
 
 	// Add a new symbol to current scope. Returns pointer to existing

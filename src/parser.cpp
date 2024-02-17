@@ -614,8 +614,7 @@ parseStructMemberList(std::vector<const char *> &ident,
 }
 
 //------------------------------------------------------------------------------
-static bool parseEnumConstantDeclaration(
-		    std::vector<AstEnumConstDeclPtr> &enumConst);
+static bool parseEnumConstantDeclaration(AstEnumDeclPtr &enumDecl);
 
 /*
  * enum-declaration
@@ -644,37 +643,34 @@ parseEnumDeclaration()
 	    return nullptr;
 	}
     }
-
-    std::vector<AstEnumConstDeclPtr> enumConst;
+    auto enumDecl = std::make_unique<AstEnumDecl>(ident, type);
 
     if (token.kind == TokenKind::SEMICOLON) {
 	getToken();
-	return std::make_unique<AstEnumDecl>(ident, type);
-    } else if (parseEnumConstantDeclaration(enumConst)) {
-	return std::make_unique<AstEnumDecl>(ident, type,
-					     std::move(enumConst));
+    } else if (parseEnumConstantDeclaration(enumDecl)) {
     } else {
 	error::out() << token.loc
 	    << ": ';' or declaration of enum constants expected" << std::endl;
 	error::fatal();
 	return nullptr;
     }
+    return enumDecl;
 }
  
 //------------------------------------------------------------------------------
-static bool parseEnumConstantList(std::vector<AstEnumConstDeclPtr> &enumConst);
+static bool parseEnumConstantList(AstEnumDeclPtr &enumDecl);
 
 /*
  * enum-constant-declaration = "{" enum-constant-list "}" ";"
  */
 static bool
-parseEnumConstantDeclaration(std::vector<AstEnumConstDeclPtr> &enumConst)
+parseEnumConstantDeclaration(AstEnumDeclPtr &enumDecl)
 {
     if (token.kind != TokenKind::LBRACE) {
 	return false;
     }
     getToken();
-    if (!parseEnumConstantList(enumConst)) {
+    if (!parseEnumConstantList(enumDecl)) {
 	error::out() << token.loc
 	    << ": list of enum constants expected" << std::endl;
 	error::fatal();
@@ -697,7 +693,7 @@ parseEnumConstantDeclaration(std::vector<AstEnumConstDeclPtr> &enumConst)
  *
  */
 static bool
-parseEnumConstantList(std::vector<AstEnumConstDeclPtr> &enumConst)
+parseEnumConstantList(AstEnumDeclPtr &enumDecl)
 {
     if (token.kind != TokenKind::IDENTIFIER) {
 	return false;
@@ -714,11 +710,9 @@ parseEnumConstantList(std::vector<AstEnumConstDeclPtr> &enumConst)
 		error::fatal();
 		return false;
 	    }
-	    auto item = std::make_unique<AstEnumConstDecl>(ident,
-							   std::move(expr));
-	    enumConst.push_back(std::move(item));
+	    enumDecl->add(ident, std::move(expr));
 	} else {
-	    enumConst.push_back(std::make_unique<AstEnumConstDecl>(ident));
+	    enumDecl->add(ident);
 	}
 	if (token.kind != TokenKind::COMMA) {
 	    break;
@@ -816,12 +810,8 @@ parseDeclaration()
 {
     AstPtr ast;
 
-    if (parseEnumDeclaration()
-	) {
-	std::cerr << "no ast generated\n";
-    }
-
     (ast = parseTypeDeclaration())
+	|| (ast = parseEnumDeclaration())
 	|| (ast = parseStructDeclaration())
 	|| (ast = parseGlobalVariableDefinition())
 	|| (ast = parseLocalVariableDefinition())

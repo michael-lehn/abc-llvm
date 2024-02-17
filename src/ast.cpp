@@ -866,71 +866,42 @@ AstStructDecl::getType() const
 }
 
 /*
- * AstEnumConstDecl
- */
-AstEnumConstDecl::AstEnumConstDecl(Token ident)
-    : ident{ident}
-{
-}
-
-AstEnumConstDecl::AstEnumConstDecl(Token ident, ExprPtr &&expr)
-    : ident{ident}, expr{std::move(expr)}
-{
-}
-
-void
-AstEnumConstDecl::print(int indent) const
-{
-    error::out(indent) << ident.val.c_str() << " = " << expr << ", "
-	<<  std::endl;
-}
-
-void
-AstEnumConstDecl::codegen()
-{
-}
-
-/*
  * AstEnumDecl
  */
 
 AstEnumDecl::AstEnumDecl(Token ident, const Type *type)
     : ident{ident}, type{type}
 {
-    auto aliasType = Type::createAlias(ident.val.c_str(), type);
-    this->type = Symtab::addTypeAlias(ident.val.c_str(), aliasType, ident.loc);
+    auto aliasType = Type::createAlias(ident.val, type);
+    this->type = Symtab::addTypeAlias(ident.val, aliasType, ident.loc);
 }
 
-AstEnumDecl::AstEnumDecl(Token ident, const Type *type,
-			 std::vector<AstEnumConstDeclPtr> &&enumConst)
-    : ident{ident}, type{type}, enumConst{std::move(enumConst)}
+void
+AstEnumDecl::add(Token enumIdent)
 {
-    auto aliasType = Type::createAlias(ident.val.c_str(), type);
-    this->type = Symtab::addTypeAlias(ident.val.c_str(), aliasType, ident.loc);
-
-    if (this->type) {
-	std::int64_t enumVal = 0;
-	for (auto &item : this->enumConst) {
-	    if (item->expr) {
-		if (!item->expr->isConst()) {
-		    error::out() << item->expr->loc
-			<< ": error:  '" << item->expr
-			<< "' is not an integer constant" << std::endl;
-		    error::fatal();
-		}
-		enumVal = item->expr->getSignedIntValue();
-	    } else {
-		item->expr = IntegerLiteral::create(enumVal, type,
-						    item->ident.loc);
-	    }
-	    item->expr = CastExpr::create(std::move(item->expr), this->type);
-	    Symtab::addConstant(item->ident.loc, item->ident.val,
-				ProxyExpr::create(item->expr.get()));
-	    ++enumVal;
-	}
-	hasSize = true;
-    }
+    auto  newEnumConst = IntegerLiteral::create(enumVal++, type, enumIdent.loc);
+    this->enumIdent.push_back(enumIdent);
+    this->enumConst.push_back(std::move(newEnumConst));
+    Symtab::addConstant(enumIdent.loc, enumIdent.val,
+			ProxyExpr::create(this->enumConst.back().get()));
 }
+
+void
+AstEnumDecl::add(Token enumIdent, ExprPtr &&enumConst)
+{
+    if (!enumConst->isConst() || !enumConst->type->isInteger()) {
+	error::out() << enumConst->loc << ": error: not an integer constant"
+	    << std::endl;
+	error::fatal();
+	return;
+    }
+    enumVal = 1 + enumConst->getSignedIntValue();
+    this->enumIdent.push_back(enumIdent);
+    this->enumConst.push_back(std::move(enumConst));
+    Symtab::addConstant(enumIdent.loc, enumIdent.val,
+			ProxyExpr::create(this->enumConst.back().get()));
+}
+
 
 void
 AstEnumDecl::print(int indent) const
@@ -938,14 +909,18 @@ AstEnumDecl::print(int indent) const
     if (!type) {
 	return;
     }
-    if (!hasSize) {
+    if (!enumIdent.size()) {
 	error::out(indent) << "enum " << ident.val.c_str() << ": " << type
 	    << ";" << std::endl << std::endl;
     } else {
 	error::out(indent) << "enum " << ident.val.c_str() << ": " << type
 	    << std::endl << "{" << std::endl;
-	for (std::size_t i = 0; i < enumConst.size(); ++i) {
-	    enumConst[i]->print(indent + 4);
+	for (std::size_t i = 0; i < enumIdent.size(); ++i) {
+	    error::out(indent + 4) << enumIdent[i].val.c_str();
+	    if (enumConst[i]) {
+		error::out() << " = " << enumConst[i];
+	    }
+	    error::out() << "," << std::endl;
 	}
 	error::out(indent) << "};" << std::endl << std::endl;
     }

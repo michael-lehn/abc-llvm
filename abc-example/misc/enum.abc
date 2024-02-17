@@ -1,9 +1,11 @@
+//#include <stdio.hdr>
+
 enum Foo;
 
 enum Foo {
     A = 1,
     B,
-    C = 5,
+    C = A + 5,
 };
 
 type Foo : int;

@@ -7,12 +7,17 @@
 #include "proxyexpr.hpp"
 #include "symtab.hpp"
 
+Identifier::Identifier(UStr ident, ExprPtr expr)
+    : Expr{expr->loc, expr->type}, expr{std::move(expr)}
+    , ident{ident}, misusedAsMember{false}
+{
+}
+
 Identifier::Identifier(UStr ident, const Type *type, Token::Loc loc,
 		       bool misusedAsMember)
     : Expr{loc, type}, ident{ident}, misusedAsMember{misusedAsMember}
 {
 }
-
 
 ExprPtr
 Identifier::create(UStr ident, Token::Loc loc)
@@ -22,11 +27,14 @@ Identifier::create(UStr ident, Token::Loc loc)
 	error::out() << loc << " undeclared identifier '"
 	    << ident.c_str() << "'" << std::endl;
 	error::fatal();
+	return nullptr;
     } else if (sym->holdsExpr()) {
-	return ProxyExpr::create(sym->expr(), loc);
+	auto p = new Identifier{ident, ProxyExpr::create(sym->expr(), loc)};
+	return std::unique_ptr<Identifier>{p};
+    } else {
+	auto p = new Identifier{sym->getInternalIdent(), sym->type(), loc};
+	return std::unique_ptr<Identifier>{p};
     }
-    auto p = new Identifier{sym->getInternalIdent(), sym->type(), loc};
-    return std::unique_ptr<Identifier>{p};
 }
 
 ExprPtr
@@ -41,20 +49,20 @@ bool
 Identifier::hasAddr() const
 {
     assert(!misusedAsMember);
-    return true;
+    return !expr;
 }
 
 bool
 Identifier::isLValue() const
 {
     assert(!misusedAsMember);
-    return true;
+    return !expr;
 }
 
 bool
 Identifier::isConst() const
 {
-    return false;
+    return !expr || expr->isConst();
 }
 
 // for code generation
@@ -70,6 +78,9 @@ gen::Reg
 Identifier::loadValue() const
 {
     assert(!misusedAsMember);
+    if (expr) {
+	return expr->loadValue();
+    }
     if (type->isFunction()) {
 	return loadAddr();
     }
@@ -81,6 +92,7 @@ gen::Reg
 Identifier::loadAddr() const
 {
     assert(!misusedAsMember);
+    assert(hasAddr());
     return gen::loadAddr(ident.c_str());
 }
 

@@ -6,8 +6,10 @@
 class Identifier : public Expr
 {
     protected:
+	Identifier(UStr ident, ExprPtr expr);
 	Identifier(UStr ident, const Type *type, Token::Loc loc,
 		   bool misusedAsMember = false);
+	ExprPtr expr;
 
     public:
 
