@@ -2,9 +2,10 @@
 
 #include "ast.hpp"
 #include "castexpr.hpp"
+#include "error.hpp"
 #include "gen.hpp"
 #include "integerliteral.hpp"
-#include "error.hpp"
+#include "proxyexpr.hpp"
 #include "symtab.hpp"
 
 static std::function<bool(Ast *)>
@@ -751,7 +752,7 @@ AstTypeDecl::AstTypeDecl(Token tyIdent, const Type *type)
     : tyIdent{tyIdent}, type{type}
 {
     auto aliasType = Type::createAlias(tyIdent.val.c_str(), type);
-    if (!Symtab::addTypeAlias(tyIdent.val.c_str(), aliasType)) {
+    if (!Symtab::addTypeAlias(tyIdent.val.c_str(), aliasType, tyIdent.loc)) {
 	error::out() << tyIdent.loc
 	    << ": error: '" << tyIdent.val.c_str()
 	    << "' already defined in this scope" << std::endl;
@@ -842,8 +843,8 @@ AstStructDecl::print(int indent) const
 	error::out(indent) << "struct " << ident.val.c_str() << ";"
 	    << std::endl << std::endl;
     } else {
-	error::out(indent) << "struct " << ident.val.c_str() << "{"
-	    << std::endl;
+	error::out(indent) << "struct " << ident.val.c_str()
+	    << std::endl << "{" << std::endl;
 	for (std::size_t i = 0; i < type->getNumMembers(); ++i) {
 	    error::out(indent + 4) << type->getMemberIdent()[i]
 		<< ": " << type->getMemberType(i) << ";"
@@ -860,6 +861,103 @@ AstStructDecl::codegen()
 
 const Type *
 AstStructDecl::getType() const
+{
+    return type;
+}
+
+/*
+ * AstEnumConstDecl
+ */
+AstEnumConstDecl::AstEnumConstDecl(Token ident)
+    : ident{ident}
+{
+}
+
+AstEnumConstDecl::AstEnumConstDecl(Token ident, ExprPtr &&expr)
+    : ident{ident}, expr{std::move(expr)}
+{
+}
+
+void
+AstEnumConstDecl::print(int indent) const
+{
+    error::out(indent) << ident.val.c_str() << " = " << expr << ", "
+	<<  std::endl;
+}
+
+void
+AstEnumConstDecl::codegen()
+{
+}
+
+/*
+ * AstEnumDecl
+ */
+
+AstEnumDecl::AstEnumDecl(Token ident, const Type *type)
+    : ident{ident}, type{type}
+{
+    auto aliasType = Type::createAlias(ident.val.c_str(), type);
+    this->type = Symtab::addTypeAlias(ident.val.c_str(), aliasType, ident.loc);
+}
+
+AstEnumDecl::AstEnumDecl(Token ident, const Type *type,
+			 std::vector<AstEnumConstDeclPtr> &&enumConst)
+    : ident{ident}, type{type}, enumConst{std::move(enumConst)}
+{
+    auto aliasType = Type::createAlias(ident.val.c_str(), type);
+    this->type = Symtab::addTypeAlias(ident.val.c_str(), aliasType, ident.loc);
+
+    if (this->type) {
+	std::int64_t enumVal = 0;
+	for (auto &item : this->enumConst) {
+	    if (item->expr) {
+		if (!item->expr->isConst()) {
+		    error::out() << item->expr->loc
+			<< ": error:  '" << item->expr
+			<< "' is not an integer constant" << std::endl;
+		    error::fatal();
+		}
+		enumVal = item->expr->getSignedIntValue();
+	    } else {
+		item->expr = IntegerLiteral::create(enumVal, type,
+						    item->ident.loc);
+	    }
+	    item->expr = CastExpr::create(std::move(item->expr), this->type);
+	    Symtab::addConstant(item->ident.loc, item->ident.val,
+				ProxyExpr::create(item->expr.get()));
+	    ++enumVal;
+	}
+	hasSize = true;
+    }
+}
+
+void
+AstEnumDecl::print(int indent) const
+{
+    if (!type) {
+	return;
+    }
+    if (!hasSize) {
+	error::out(indent) << "enum " << ident.val.c_str() << ": " << type
+	    << ";" << std::endl << std::endl;
+    } else {
+	error::out(indent) << "enum " << ident.val.c_str() << ": " << type
+	    << std::endl << "{" << std::endl;
+	for (std::size_t i = 0; i < enumConst.size(); ++i) {
+	    enumConst[i]->print(indent + 4);
+	}
+	error::out(indent) << "};" << std::endl << std::endl;
+    }
+}
+
+void
+AstEnumDecl::codegen()
+{
+}
+
+const Type *
+AstEnumDecl::getType() const
 {
     return type;
 }

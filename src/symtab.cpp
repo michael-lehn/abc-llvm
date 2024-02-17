@@ -7,6 +7,7 @@
 
 #include "error.hpp"
 #include "gen.hpp"
+#include "integerliteral.hpp"
 #include "symtab.hpp"
 
 struct ScopeNode
@@ -198,12 +199,21 @@ Symtab::getNamedType(UStr ident, Scope scope)
 }
 
 const Type *
-Symtab::addTypeAlias(UStr ident, const Type *type)
+Symtab::addTypeAlias(UStr ident, const Type *type, Token::Loc loc)
 {
     assert(curr.get());
     auto *found = getNamedType(ident, CurrentScope);
 
-    if (found || get(ident, CurrentScope)) {
+    if (found && found != type) {
+	error::out() << loc << ": error: '" << ident.c_str()
+	    << "' was previously defined as '" << found << std::endl;
+	error::fatal();
+	return nullptr;
+    } else if (auto sym = get(ident, CurrentScope)) {
+	error::out() << sym->getLoc() << ": error: '" << ident.c_str()
+	    << "' already defined" << std::endl;
+	error::out() << loc << ": error: previous definition'" << std::endl;
+	error::fatal();
 	return nullptr;
     }
 

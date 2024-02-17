@@ -39,6 +39,12 @@ operator==(const UStr &a, const UStr &b)
 }
 
 inline bool
+operator!=(const UStr &a, const UStr &b)
+{
+    return a.c_str() != b.c_str();
+}
+
+inline bool
 operator<(const UStr &a, const UStr &b)
 {
     return a.c_str() < b.c_str();

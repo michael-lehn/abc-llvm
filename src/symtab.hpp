@@ -130,6 +130,7 @@ class Symtab
 	// or created entry
 	static Entry *addDecl(Token::Loc loc, UStr ident, const Type *type);
 
+	static Entry *addConstant(Token::Loc loc, UStr ident);
 	static Entry *addConstant(Token::Loc loc, UStr ident, ExprPtr &&val);
 
 	// Add a new symbol to current scope. Returns pointer to existing
@@ -149,7 +150,8 @@ class Symtab
 
 	// returns nullptr if 'ident' was found in current type scope,
 	// otherwise returns 'type'.
-	static const Type *addTypeAlias(UStr ident, const Type *type);
+	static const Type *addTypeAlias(UStr ident, const Type *type,
+					Token::Loc loc = Token::Loc{});
 
 
 	static std::ostream &print(std::ostream &out);

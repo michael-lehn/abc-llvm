@@ -318,4 +318,43 @@ class AstStructDecl : public Ast
 
 using AstStructDeclPtr = std::unique_ptr<AstStructDecl>;
 
+//------------------------------------------------------------------------------
+
+class AstEnumConstDecl : public Ast
+{
+    public:
+	AstEnumConstDecl(Token ident);
+	AstEnumConstDecl(Token ident, ExprPtr &&expr);
+
+	const Token ident;
+	ExprPtr expr;
+
+	void print(int indent) const override;
+	void codegen() override;
+};
+
+using AstEnumConstDeclPtr = std::unique_ptr<AstEnumConstDecl>;
+
+//------------------------------------------------------------------------------
+
+class AstEnumDecl : public Ast
+{
+    private:
+	Type *createIncompleteEnum(Token ident);
+    public:
+	AstEnumDecl(Token ident, const Type *type);
+	AstEnumDecl(Token ident, const Type *type,
+		    std::vector<AstEnumConstDeclPtr> &&enumConst);
+
+	const Token ident;
+	const Type *type;
+	std::vector<AstEnumConstDeclPtr> enumConst;
+	bool hasSize = false;
+
+	void print(int indent) const override;
+	void codegen() override;
+	const Type *getType() const override;
+};
+
+
 #endif // AST_HPP

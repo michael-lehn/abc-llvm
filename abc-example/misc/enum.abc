@@ -1,23 +1,13 @@
-#include <stdio.hdr>
+enum Foo;
 
-enum Foo : i16
-{
-    A = 42,
+enum Foo {
+    A = 1,
     B,
-    C = 13,
+    C = 5,
 };
 
-global p: u8 = B + C;
+type Foo : int;
 
-fn main()
+fn foo()
 {
-    printf("A = %d\n", A);
-    printf("B = %d\n", B);
-    printf("C = %d\n", C);
-    printf("p = %d\n", p);
-
-    local err: -> i32;
-    err = cast(B: -> i32);
-
-    printf("err = %p\n", err);
 }

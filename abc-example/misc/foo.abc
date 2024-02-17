@@ -1,24 +1,30 @@
-#include <stdio.hdr>
+//#include <stdio.hdr>
+fn printf(fmt: -> char, ...): int;
 
-
-global s: array[5] of char = "ab";
-
-struct Foo {
-    s: array[5] of char;
-    i: int;
-    s2: array[7] of char;
-};
-
-global f: Foo = {"ab", 32, "abc"};
-
-fn main(): int
+fn foo(a: u64)
 {
-    local s: array[15] of char;
+    printf("I am 'foo' and a = %llu\n", a);
+}
 
-    s = "abc\n";
-    printf(s);
+fn foo_de(a: u64)
+{
+    printf("Ich bin 'foo' und a = %llu\n", a);
+}
 
-    local p: -> int = s + 5;
+fn sel(lang: int): -> fn(a: u64)
+{
+    return lang == 0 then foo else foo_de;
+}
 
-    p = s + 1;
+fn main(): u8
+{
+    local f: -> fn(:u64);
+    f = foo;
+    f(32);
+    f = foo_de;
+    f(32);
+    local s: -> fn(:int): -> fn(:u64);
+    s = sel;
+    s(0)(12);
+    s(1)(12);
 }
