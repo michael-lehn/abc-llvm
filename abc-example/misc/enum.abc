@@ -8,8 +8,7 @@ enum Foo {
 
 fn main(argc: int): int
 {
-    local a: int;
-    a = C;
+    local a: Foo;
+    a = 1;
 
-    return a;
 }

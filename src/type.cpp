@@ -140,13 +140,23 @@ struct Function : public Type
 	     bool hasVarg = false)
 	: Type{Type::FUNCTION, FunctionData{retType, paramType, hasVarg}}
     {}
+
+    Function(const FunctionData &data, UStr aliasIdent)
+	: Type{Type::FUNCTION, data, aliasIdent}
+    {}
+
+    friend bool operator<(const Function &x, const Function &y);
 };
 
 bool
 operator<(const Function &x, const Function &y)
 {
-    const auto &tx = std::tuple{x.getArgType(), x.getRetType()};
-    const auto &ty = std::tuple{y.getArgType(), y.getRetType()};
+    const auto &tx = std::tuple{x.aliasIdent.c_str(),
+				x.getArgType(),
+				x.getRetType()};
+    const auto &ty = std::tuple{y.aliasIdent.c_str(),
+				y.getArgType(),
+				y.getRetType()};
     return tx < ty;
 }
 
@@ -165,6 +175,7 @@ struct Struct : public Type
 
     bool isComplete()
     {
+	assert(std::holds_alternative<StructData>(data));
 	return std::get<StructData>(data).isComplete;
     }
 };
@@ -189,6 +200,7 @@ struct Enum : public Type
 
     bool isComplete()
     {
+	assert(std::holds_alternative<EnumData>(data));
 	return std::get<EnumData>(data).isComplete;
     }
 };
@@ -286,9 +298,9 @@ Type::hasSize() const
 {
     if (isVoid()) {
 	return false;
-    } else if (isStruct()) {
+    } else if (std::holds_alternative<StructData>(data)) {
 	return std::get<StructData>(data).isComplete;
-    } else if (isEnum()) {
+    } else if (std::holds_alternative<EnumData>(data)) {
 	return std::get<EnumData>(data).isComplete;
     } else if (isArray()) {
 	return getDim();
@@ -375,10 +387,10 @@ Type::isPointer() const
 bool
 Type::isNullPointer() const
 {
-    if (!std::holds_alternative<PointerData>(data)) {
-	return false;
+    if (std::holds_alternative<PointerData>(data)) {
+	return std::get<PointerData>(data).isNullptr;
     }
-    return std::get<PointerData>(data).isNullptr;
+    return false;
 }
 
 bool
@@ -448,9 +460,12 @@ Type::getName() const
     if (std::holds_alternative<StructData>(data)) {
 	const auto &structData = std::get<StructData>(data);
 	return structData.name;
-    } else {
+    } else if (std::holds_alternative<EnumData>(data)) {
 	const auto &enumData = std::get<EnumData>(data);
 	return enumData.name;
+    } else {
+	assert(0);
+	return UStr{};
     }
 }
 
@@ -621,41 +636,48 @@ Type::getEnumValue() const
 const Type *
 Type::createAlias(UStr aliasIdent, const Type *forType)
 {
-    if (forType->isInteger()) {
+    if (std::holds_alternative<IntegerData>(forType->data)) {
 	const auto &data = std::get<IntegerData>(forType->data);
 	return &*intTypeSet->insert(Integer{data, aliasIdent}).first;
-    } else if (forType->isPointer()) {
+    } else if (std::holds_alternative<PointerData>(forType->data)) {
 	const auto &data = std::get<PointerData>(forType->data);
 	return &*ptrTypeSet->insert(Pointer{data, aliasIdent}).first;
-    } else if (forType->isArray()) {
+    } else if (std::holds_alternative<ArrayData>(forType->data)) {
 	const auto &data = std::get<ArrayData>(forType->data);
 	return &*arrayTypeSet->insert(Array{data, aliasIdent}).first;
-    } else if (forType->isStruct()) {
+    } else if (std::holds_alternative<StructData>(forType->data)) {
 	auto ty = createIncompleteStruct(aliasIdent);
 	ty->data = std::get<StructData>(forType->data);
 	return ty;
-    } else if (forType->isEnum()) {
+    } else if (std::holds_alternative<EnumData>(forType->data)) {
 	auto ty = createIncompleteEnum(aliasIdent, forType);
 	ty->data = std::get<EnumData>(forType->data);
 	return ty;
+    } else if (std::holds_alternative<FunctionData>(forType->data)) {
+	const auto &data = std::get<FunctionData>(forType->data);
+	return &*fnTypeSet->insert(Function{data, aliasIdent}).first;
     }
+    assert(0);
     return nullptr;
 }
 
 const Type *
 Type::getConst(const Type *type)
 {
-    if (type->isInteger()) {
+    if (std::holds_alternative<IntegerData>(type->data)) {
 	const auto &data = std::get<IntegerData>(type->data);
 	return &*intTypeSet->insert(Integer{data, true}).first;
-    } else if (type->isPointer()) {
+    } else if (std::holds_alternative<PointerData>(type->data)) {
 	const auto &data = std::get<PointerData>(type->data);
 	return &*ptrTypeSet->insert(Pointer{data, true}).first;
     } else if (type->isArray()) {
 	return getArray(getConst(type->getRefType()), type->getDim());
-    } else if (type->isStruct()) {
+    } else if (std::holds_alternative<StructData>(type->data)) {
 	const auto &data = std::get<StructData>(type->data);
 	return &constStructMap->at(data.id);
+    } else if (std::holds_alternative<EnumData>(type->data)) {
+	const auto &data = std::get<EnumData>(type->data);
+	return &constEnumMap->at(data.id);
     }
     return nullptr;
 }
@@ -663,15 +685,18 @@ Type::getConst(const Type *type)
 const Type *
 Type::getConstRemoved(const Type *type)
 {
-    if (type->isInteger()) {
+    if (std::holds_alternative<IntegerData>(type->data)) {
 	const auto &data = std::get<IntegerData>(type->data);
 	return &*intTypeSet->insert(Integer{data, false}).first;
-    } else if (type->isPointer()) {
+    } else if (std::holds_alternative<PointerData>(type->data)) {
 	const auto &data = std::get<PointerData>(type->data);
 	return &*ptrTypeSet->insert(Pointer{data, false}).first;
-    } else if (type->isStruct()) {
+    } else if (std::holds_alternative<StructData>(type->data)) {
 	const auto &data = std::get<StructData>(type->data);
 	return &structMap->at(data.id);
+    } else if (std::holds_alternative<EnumData>(type->data)) {
+	const auto &data = std::get<EnumData>(type->data);
+	return &enumMap->at(data.id);
     }
     return type;
 }
@@ -790,6 +815,7 @@ Type::createIncompleteStruct(UStr name)
 	if (!ty->isStruct()) {
 	    return nullptr;
 	}
+	assert(std::holds_alternative<StructData>(ty->data));
 	auto &structData = std::get<StructData>(ty->data);
 	return &structMap->at(structData.id);
     }
@@ -822,6 +848,7 @@ Type::createIncompleteEnum(UStr name, const Type *intType)
 	if (!ty->isEnum()) {
 	    return nullptr;
 	}
+	assert(std::holds_alternative<EnumData>(ty->data));
 	auto &enumData = std::get<EnumData>(ty->data);
 	return &enumMap->at(enumData.id);
     }
