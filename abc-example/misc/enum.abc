@@ -6,9 +6,12 @@ enum Foo {
     C = A + 5,
 };
 
+struct Bar;
+
 fn main(argc: int): int
 {
     local a: Foo;
+    local b: Bar;
     a = 1;
 
 }

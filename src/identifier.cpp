@@ -49,7 +49,14 @@ bool
 Identifier::hasAddr() const
 {
     assert(!misusedAsMember);
-    return !expr;
+    assert(type);
+    if (expr) {
+	return false;
+    } else if (!type) {
+	return false;
+    } else {
+	return type->hasSize();
+    }
 }
 
 bool

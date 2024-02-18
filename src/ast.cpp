@@ -594,6 +594,12 @@ AstGlobalVar::AstGlobalVar(AstListPtr &&decl)
 	auto var = dynamic_cast<AstVar *>(node.get());
 	assert(var);
 	auto sym = Symtab::addDecl(var->loc, var->ident, var->type);
+	if (!var->type->hasSize()) {
+	    error::out() << var->loc
+		<< ": error: can not define a variable of type '" << var->type
+		<< "'" << std::endl;
+	    error::fatal();
+	}
 	sym->setDefinitionFlag();
 	var->genIdent = sym->getInternalIdent();
 	var->externFlag = sym->hasExternFlag();
@@ -644,6 +650,12 @@ AstLocalVar::AstLocalVar(AstListPtr &&decl)
 	auto var = dynamic_cast<AstVar *>(node.get());
 	assert(var);
 	auto sym = Symtab::addDecl(var->loc, var->ident, var->type);
+	if (!var->type->hasSize()) {
+	    error::out() << var->loc
+		<< ": error: can not define a variable of type '" << var->type
+		<< "'" << std::endl;
+	    error::fatal();
+	}
 	sym->setDefinitionFlag();
 	var->genIdent = sym->getInternalIdent();
     }

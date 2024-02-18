@@ -1030,7 +1030,10 @@ operator<<(std::ostream &out, const Type *type)
     } else if (type->isBool()) {
 	out << "bool";
     } else if (type->isEnum()) {
-	out << "enum " << type->getName().c_str();
+	out << type->getName().c_str();
+	if (!type->hasSize()) {
+	    out << " (incomplete enum)";
+	}
     } else if (type->isInteger()) {
 	out << (type->getIntegerKind() == Type::SIGNED ? "i" : "u")
 	    << type->getIntegerNumBits();
@@ -1064,6 +1067,9 @@ operator<<(std::ostream &out, const Type *type)
 	out << "): " << type->getRetType();
     } else if (type->isStruct()) {
 	out << type->getName().c_str();
+	if (!type->hasSize()) {
+	    out << " (incomplete struct)";
+	}
 	/*
 	type = Type::getConstRemoved(type);
 	auto memType = type->getMemberType();
