@@ -6,12 +6,10 @@ enum Foo {
     C = A + 5,
 };
 
-type Foo : int;
-
-struct Bar {
-    a: int;
-};
-
-fn main()
+fn main(argc: int): int
 {
+    local a: int;
+    a = C;
+
+    return a;
 }

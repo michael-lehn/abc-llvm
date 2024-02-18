@@ -927,11 +927,17 @@ AstStructDecl::getType() const
  * AstEnumDecl
  */
 
-AstEnumDecl::AstEnumDecl(Token ident, const Type *type)
-    : ident{ident}, type{type}
+AstEnumDecl::AstEnumDecl(Token ident, const Type *intType)
+    : ident{ident}, type{intType}
 {
-    auto aliasType = Type::createAlias(ident.val, type);
-    this->type = Symtab::addTypeAlias(ident.val, aliasType, ident.loc);
+    if (!intType->isInteger()) {
+	error::out() << ident.loc
+	    << ": error: enum type has to be an integer type"
+	    << std::endl;
+	error::fatal();
+    }
+    auto enumType = Type::createIncompleteEnum(ident.val, type);
+    this->type = Symtab::addTypeAlias(ident.val, enumType, ident.loc);
 }
 
 void

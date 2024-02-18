@@ -204,14 +204,10 @@ Symtab::addTypeAlias(UStr ident, const Type *type, Token::Loc loc)
     assert(curr.get());
     auto *found = getNamedType(ident, CurrentScope);
 
-    if (found) {
-	std::cerr << "found " << found << "addr = " << (void *)found << "\n";
-	std::cerr << "type " << type << "addr = " << (void *)type << "\n";
-    }
-
     if (found && found != type) {
-	error::out() << loc << ": error: '" << ident.c_str()
-	    << "' was previously defined as '" << found << std::endl;
+	error::out() << loc
+	    << ": error: redefinition with different type ('"
+	    << type << "' vs '" << found << "'" << std::endl;
 	error::fatal();
 	return nullptr;
     } else if (auto sym = get(ident, CurrentScope)) {

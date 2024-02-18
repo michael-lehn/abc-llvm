@@ -21,6 +21,7 @@ class Type
 	    ARRAY,
 	    FUNCTION,
 	    STRUCT,
+	    ENUM,
 	} id;
 
 	UStr getAliasIdent() const;
@@ -54,11 +55,13 @@ class Type
 	bool hasVarg() const;
 	const std::vector<const Type *> &getArgType() const;
 
+	// for named type (i.e. struct and enum types)
+	UStr getName() const;
+
 	// for struct (sub-)types
 	bool isStruct() const;
 	const Type *complete(std::vector<const char *> &&ident,
 			     std::vector<const Type *> &&type);
-	UStr getName() const;
 	std::size_t getNumMembers() const;
 	bool hasMember(UStr ident) const;
 	std::size_t getMemberIndex(UStr ident) const;
@@ -66,6 +69,13 @@ class Type
 	const Type *getMemberType(UStr ident) const;
 	const std::vector<const Type *> &getMemberType() const;
 	const std::vector<const char *> &getMemberIdent() const;
+
+	// for enum (sub-)types
+	bool isEnum() const;
+	const Type *complete(std::vector<UStr> &&enumIdent,
+			     std::vector<std::int64_t> &&enumValue);
+	const std::vector<UStr> &getEnumIdent() const;
+	const std::vector<std::int64_t> &getEnumValue() const;
 
     protected:
 	struct IntegerData {
@@ -106,8 +116,23 @@ class Type
 	    StructData(const StructData &data, bool constFlag);
 	};
 
+	struct EnumData {
+	    std::size_t id;
+	    UStr name; // needed for getting non-const type and printing type
+	    const Type *intType;
+	    bool isComplete;
+	    bool constFlag;
+	  
+	    // for complete enum types:
+	    std::vector<UStr> enumIdent;
+	    std::vector<std::int64_t> enumValue;
+
+	    EnumData(std::size_t id, UStr name, const Type *intType);
+	    EnumData(const EnumData &data, bool constFlag);
+	};
+
 	std::variant<IntegerData, PointerData, ArrayData, FunctionData,
-		     StructData> data;
+		     StructData, EnumData> data;
 	UStr aliasIdent;
 
 	template <typename Data>
@@ -132,6 +157,7 @@ class Type
 				       std::vector<const Type *> paramType,
 				       bool hasVarg = false);
 	static Type *createIncompleteStruct(UStr name);
+	static Type *createIncompleteEnum(UStr name, const Type *intType);
 
 	// type casts
 	static const Type *getTypeConversion(const Type *from, const Type *to,
