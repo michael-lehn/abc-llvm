@@ -144,9 +144,13 @@ Symtab::addDecl(Token::Loc loc, UStr ident, const Type *type)
 }
 
 Symtab::Entry *
-Symtab::addConstant(Token::Loc loc, UStr ident, ExprPtr &&val)
+Symtab::addConstant(Token::Loc loc, UStr ident, const Type *type,
+		    std::int64_t val)
 {
-    return add(loc, ident, std::move(val), curr.get());
+    auto expr = IntegerLiteral::create(val, type, loc);
+    auto sym = add(loc, ident, std::move(expr), curr.get());
+    assert(sym);
+    return sym;
 }
 
 Symtab::Entry *

@@ -668,6 +668,7 @@ parseEnumDeclaration()
     if (token.kind == TokenKind::SEMICOLON) {
 	getToken();
     } else if (parseEnumConstantDeclaration(enumDecl)) {
+	enumDecl->complete();
     } else {
 	error::out() << token.loc
 	    << ": ';' or declaration of enum constants expected" << std::endl;

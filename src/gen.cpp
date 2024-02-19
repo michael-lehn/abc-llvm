@@ -576,7 +576,9 @@ loadAddr(const char *ident)
     assureOpenBuildingBlock();
 
     if (!local.contains(ident) && !global.contains(ident)) {
-	return llvmModule->getFunction(ident);
+	auto fn = llvmModule->getFunction(ident);
+	assert(fn && "function not declared");
+	return fn;
     }
 
     auto addr = local.contains(ident)
@@ -688,7 +690,7 @@ cast(ConstVal constVal, const Type *fromType, const Type *toType)
 ConstVal
 loadIntConst(const char *val, const Type *type, std::uint8_t radix)
 {
-    //assureOpenBuildingBlock();
+    assert(type);
 
     if (type->isInteger()) {
 	auto ty = llvm::APInt(type->getIntegerNumBits(), val, radix);

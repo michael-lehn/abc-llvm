@@ -78,13 +78,15 @@ Identifier::loadConstValue() const
 {
     assert(isConst());
     assert(!misusedAsMember);
-    return nullptr;
+    assert(expr);
+    return expr->loadConstValue();
 }
 
 gen::Reg
 Identifier::loadValue() const
 {
     assert(!misusedAsMember);
+    assert(type);
     if (expr) {
 	return expr->loadValue();
     }
@@ -100,6 +102,7 @@ Identifier::loadAddr() const
 {
     assert(!misusedAsMember);
     assert(hasAddr());
+    assert(ident.c_str());
     return gen::loadAddr(ident.c_str());
 }
 

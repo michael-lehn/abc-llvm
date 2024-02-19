@@ -1,17 +1,23 @@
 enum Foo;
 
-enum Foo {
+fn foo() {}
+
+enum Foo : int {
     A = 1,
     B,
     C = A + 5,
 };
 
-struct Bar;
+struct Bar
+{
+    a: int;
+};
+
+enum FooBar;
 
 fn main(argc: int): int
 {
     local a: Foo;
-    local b: Bar;
-    a = 1;
+    a = A;
 
 }

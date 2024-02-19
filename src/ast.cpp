@@ -867,7 +867,7 @@ AstStructDecl::AstStructDecl(Token ident,
 		astList.append(std::move(ast));
 	    }
 	}
-	type->complete(std::move(member), std::move(memberType));
+	type->complete(member, memberType);
     }
     if (!type->hasSize()) {
 	error::out() << ident.loc
@@ -940,7 +940,7 @@ AstStructDecl::getType() const
  */
 
 AstEnumDecl::AstEnumDecl(Token ident, const Type *intType)
-    : ident{ident}, type{intType}
+    : ident{ident}, intType{intType}
 {
     if (!intType->isInteger()) {
 	error::out() << ident.loc
@@ -948,36 +948,52 @@ AstEnumDecl::AstEnumDecl(Token ident, const Type *intType)
 	    << std::endl;
 	error::fatal();
     }
-    auto enumType = Type::createIncompleteEnum(ident.val, type);
-    this->type = Symtab::addTypeAlias(ident.val, enumType, ident.loc);
+    this->type = Type::createIncompleteEnum(ident.val, intType);
 }
 
 void
 AstEnumDecl::add(Token enumIdent)
 {
-    auto  newEnumConst = IntegerLiteral::create(enumVal++, type, enumIdent.loc);
-    this->enumIdent.push_back(enumIdent);
-    this->enumConst.push_back(std::move(newEnumConst));
-    Symtab::addConstant(enumIdent.loc, enumIdent.val,
-			ProxyExpr::create(this->enumConst.back().get()));
+    assert(type);
+    auto  newConstExpr = IntegerLiteral::create(enumVal, type, enumIdent.loc);
+    this->enumIdent.push_back(enumIdent.val);
+    this->enumIdentLoc.push_back(enumIdent.loc);
+    this->enumConstExpr.push_back(std::move(newConstExpr));
+    this->enumConstValue.push_back(enumVal);
+    Symtab::addConstant(enumIdent.loc, enumIdent.val, type, enumVal);
+    ++enumVal;
 }
 
 void
-AstEnumDecl::add(Token enumIdent, ExprPtr &&enumConst)
+AstEnumDecl::add(Token enumIdent, ExprPtr &&enumConstExpr)
 {
-    if (!enumConst->isConst() || !enumConst->type->isInteger()) {
-	error::out() << enumConst->loc << ": error: not an integer constant"
-	    << std::endl;
+    assert(type);
+    assert(enumConstExpr);
+    if (!enumConstExpr->isConst() || !enumConstExpr->type->isInteger()) {
+	error::out() << enumConstExpr->loc
+	    << ": error: not an integer constant" << std::endl;
 	error::fatal();
 	return;
     }
-    enumVal = 1 + enumConst->getSignedIntValue();
-    this->enumIdent.push_back(enumIdent);
-    this->enumConst.push_back(std::move(enumConst));
-    Symtab::addConstant(enumIdent.loc, enumIdent.val,
-			ProxyExpr::create(this->enumConst.back().get()));
+    enumVal = enumConstExpr->getSignedIntValue();
+    this->enumIdent.push_back(enumIdent.val);
+    this->enumIdentLoc.push_back(enumIdent.loc);
+    this->enumConstExpr.push_back(std::move(enumConstExpr));
+    this->enumConstValue.push_back(enumVal);
+    Symtab::addConstant(enumIdent.loc, enumIdent.val, type, enumVal);
+    ++enumVal;
 }
 
+void
+AstEnumDecl::complete()
+{
+    auto ty = type->complete(enumIdent, enumConstValue);
+    if (!ty || !Symtab::addTypeAlias(ident.val, type, ident.loc)) {
+	error::out() << ident.loc
+	    << ": error: enum type already defined" << std::endl;
+	error::fatal();
+    }
+}
 
 void
 AstEnumDecl::print(int indent) const
@@ -986,15 +1002,15 @@ AstEnumDecl::print(int indent) const
 	return;
     }
     if (!enumIdent.size()) {
-	error::out(indent) << "enum " << ident.val.c_str() << ": " << type
+	error::out(indent) << "enum " << ident.val.c_str() << ": " << intType
 	    << ";" << std::endl << std::endl;
     } else {
-	error::out(indent) << "enum " << ident.val.c_str() << ": " << type
+	error::out(indent) << "enum " << ident.val.c_str() << ": " << intType
 	    << std::endl << "{" << std::endl;
 	for (std::size_t i = 0; i < enumIdent.size(); ++i) {
-	    error::out(indent + 4) << enumIdent[i].val.c_str();
-	    if (enumConst[i]) {
-		error::out() << " = " << enumConst[i];
+	    error::out(indent + 4) << enumIdent[i].c_str();
+	    if (enumConstExpr[i]) {
+		error::out() << " = " << enumConstExpr[i];
 	    }
 	    error::out() << "," << std::endl;
 	}

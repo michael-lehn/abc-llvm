@@ -338,16 +338,20 @@ class AstEnumDecl : public Ast
 {
     private:
 	Token ident;
-	const Type *type;
+	const Type *intType;
+	Type *type;
 	std::int64_t enumVal = 0;
-	std::vector<Token> enumIdent;
-	std::vector<ExprPtr> enumConst;
+	std::vector<UStr> enumIdent;
+	std::vector<Token::Loc> enumIdentLoc;
+	std::vector<ExprPtr> enumConstExpr;
+	std::vector<std::int64_t> enumConstValue;
 
     public:
-	AstEnumDecl(Token ident, const Type *type);
+	AstEnumDecl(Token ident, const Type *intType);
 
 	void add(Token enumIdent);
-	void add(Token enumIdent, ExprPtr &&enumConst);
+	void add(Token enumIdent, ExprPtr &&enumConstExpr);
+	void complete();
 
 	void print(int indent) const override;
 	void codegen() override;

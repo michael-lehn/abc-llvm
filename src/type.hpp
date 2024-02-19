@@ -60,8 +60,8 @@ class Type
 
 	// for struct (sub-)types
 	bool isStruct() const;
-	const Type *complete(std::vector<const char *> &&ident,
-			     std::vector<const Type *> &&type);
+	const Type *complete(const std::vector<const char *> &ident,
+			     const std::vector<const Type *> &type);
 	std::size_t getNumMembers() const;
 	bool hasMember(UStr ident) const;
 	std::size_t getMemberIndex(UStr ident) const;
@@ -72,8 +72,8 @@ class Type
 
 	// for enum (sub-)types
 	bool isEnum() const;
-	const Type *complete(std::vector<UStr> &&enumIdent,
-			     std::vector<std::int64_t> &&enumValue);
+	const Type *complete(const std::vector<UStr> &enumIdent,
+			     const std::vector<std::int64_t> &enumValue);
 	const std::vector<UStr> &getEnumIdent() const;
 	const std::vector<std::int64_t> &getEnumValue() const;
 

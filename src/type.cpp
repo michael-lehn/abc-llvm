@@ -27,12 +27,16 @@ Type::StructData::StructData(const StructData &data, bool constFlag)
 
 Type::EnumData::EnumData(std::size_t id, UStr name, const Type *intType)
     : id{id}, name{name}, intType{intType}, isComplete{false}, constFlag{false}
-{}
+{
+    assert(intType);
+}
 
 Type::EnumData::EnumData(const EnumData &data, bool constFlag)
     : id{data.id}, name{data.name}, intType{data.intType}
     , isComplete{data.isComplete}, constFlag{constFlag}
-{}
+{
+    assert(intType);
+}
 
 /*
  * Hidden types: Integer, Pointer, Array, Function, Struct 
@@ -369,6 +373,7 @@ Type::getIntegerNumBits() const
     if (std::holds_alternative<IntegerData>(data)) {
 	return std::get<IntegerData>(data).numBits;
     } else if (std::holds_alternative<EnumData>(data)) {
+	assert(std::get<EnumData>(data).intType);
 	return std::get<EnumData>(data).intType->getIntegerNumBits();
     } else {
 	assert(0);
@@ -477,8 +482,8 @@ Type::isStruct() const
 }
 
 const Type *
-Type::complete(std::vector<const char *> &&ident,
-	       std::vector<const Type *> &&type)
+Type::complete(const std::vector<const char *> &ident,
+	       const std::vector<const Type *> &type)
 {
     assert(std::holds_alternative<StructData>(data));
     assert(ident.size() == type.size());
@@ -490,8 +495,8 @@ Type::complete(std::vector<const char *> &&ident,
     }
 
     structData.isComplete = true;	
-    structData.ident = std::move(ident);	
-    structData.type = std::move(type);
+    structData.ident = ident;	
+    structData.type = type;
     for (std::size_t i = 0; i < structData.ident.size(); ++i) {
 	structData.index[structData.ident[i]] = i;
     }
@@ -587,8 +592,8 @@ Type::isEnum() const
 }
 
 const Type *
-Type::complete(std::vector<UStr> &&enumIdent,
-	       std::vector<std::int64_t> &&enumValue)
+Type::complete(const std::vector<UStr> &enumIdent,
+	       const std::vector<std::int64_t> &enumValue)
 {
     assert(std::holds_alternative<EnumData>(data));
     assert(enumIdent.size() == enumValue.size());
