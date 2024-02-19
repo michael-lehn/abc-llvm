@@ -710,9 +710,12 @@ AstGlobalVar::codegen()
     for (const auto &item : decl.node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
-	auto init = var->initializer->createInitializerList();
-	gen::defGlobal(var->genIdent.c_str(), var->type, var->externFlag,
-		       init.loadConstValue());
+	gen::ConstVal val = nullptr;
+	if (var->initializer) {
+	    auto init = var->initializer->createInitializerList();
+	    val = init.loadConstValue();
+	}
+	gen::defGlobal(var->genIdent.c_str(), var->type, var->externFlag, val);
     }
 }
 
@@ -767,8 +770,10 @@ AstLocalVar::codegen()
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
 	gen::defLocal(var->genIdent.c_str(), var->type);
-	auto init = var->initializer->createInitializerList();
-	init.store(gen::loadAddr(var->genIdent.c_str()));
+	if (var->initializer) {
+	    auto init = var->initializer->createInitializerList();
+	    init.store(gen::loadAddr(var->genIdent.c_str()));
+	}
     }
 }
 

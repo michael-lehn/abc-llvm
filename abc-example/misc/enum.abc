@@ -1,26 +1,23 @@
-enum Foo;
+#include <stdio.hdr>
 
-fn foo() {}
-
-enum Foo : int {
+enum Foo {
     A = 1,
     B,
     C = A + 5,
 };
 
-struct Bar
-{
-    a: int;
-    b: -> Bar;
-    c: int;
-};
-
-global a: array[3] of int = {1, 2};
-global b: Bar = {1, nullptr};
+global i: int;
 
 fn main(argc: int): int
 {
     local a: Foo = C;
+
+    printf("a = %d\n", a);
+
+    local i: int;
+    for (i = 1; i < 5; ++i) {
+	printf("i = %d\n", i);
+    }
 
     return a;
 }
