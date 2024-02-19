@@ -60,7 +60,7 @@ class Type
 
 	// for struct (sub-)types
 	bool isStruct() const;
-	const Type *complete(const std::vector<const char *> &ident,
+	const Type *complete(const std::vector<UStr> &ident,
 			     const std::vector<const Type *> &type);
 	std::size_t getNumMembers() const;
 	bool hasMember(UStr ident) const;
@@ -68,7 +68,7 @@ class Type
 	const Type *getMemberType(std::size_t index) const;
 	const Type *getMemberType(UStr ident) const;
 	const std::vector<const Type *> &getMemberType() const;
-	const std::vector<const char *> &getMemberIdent() const;
+	const std::vector<UStr> &getMemberIdent() const;
 
 	// for enum (sub-)types
 	bool isEnum() const;
@@ -108,9 +108,9 @@ class Type
 	    bool constFlag;
 	  
 	    // for complete struct types:
-	    std::unordered_map<const char *, std::size_t> index;
+	    std::unordered_map<UStr, std::size_t> index;
 	    std::vector<const Type *> type;
-	    std::vector<const char *> ident;
+	    std::vector<UStr> ident;
 
 	    StructData(std::size_t id, UStr name);
 	    StructData(const StructData &data, bool constFlag);

@@ -12,13 +12,10 @@
 class InitializerList
 {
     public:
-	InitializerList() = default;
 	InitializerList(const Type *type);
 
 	const Type *type() const;
 	bool isConst() const;
-
-	const Type *typeToAdd() const;
 
 	void add(ExprPtr &&expr);
 	void add(InitializerList &&initList, Token::Loc loc = Token::Loc{});

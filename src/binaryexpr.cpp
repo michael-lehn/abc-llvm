@@ -34,7 +34,7 @@ ExprPtr
 BinaryExpr::createOpAssign(Kind kind, ExprPtr &&left, ExprPtr &&right,
 			   Token::Loc loc)
 {
-    auto expr = ProxyExpr::create(left.get(), loc);
+    auto expr = ProxyExpr::create(left.get());
     expr = BinaryExpr::create(kind, std::move(expr), std::move(right), loc);
     return BinaryExpr::create(ASSIGN, std::move(left), std::move(expr), loc);
 }

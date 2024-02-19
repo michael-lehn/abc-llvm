@@ -59,6 +59,11 @@ Ast::apply(std::function<bool(Ast *)> op)
     op(this);
 }
 
+void
+Ast::codegen()
+{
+}
+
 const Type *
 Ast::getType() const
 {
@@ -71,28 +76,28 @@ Ast::getType() const
 std::size_t
 AstList::size() const
 {
-    return list.size();
+    return node.size();
 }
 
 void
 AstList::append(AstPtr &&ast)
 {
-    list.push_back(std::move(ast));
+    node.push_back(std::move(ast));
 }
 
 void
 AstList::print(int indent) const
 {
-    for (const auto &node: list) {
-	node->print(indent);
+    for (const auto &n: node) {
+	n->print(indent);
     }
 }
 
 void
 AstList::codegen()
 {
-    for (const auto &node: list) {
-	node->codegen();
+    for (const auto &n: node) {
+	n->codegen();
     }
 }
 
@@ -100,8 +105,8 @@ void
 AstList::apply(std::function<bool(Ast *)> op)
 {
     if (op(this)) {
-	for (const auto &node: list) {
-	    node->apply(op);
+	for (const auto &n: node) {
+	    n->apply(op);
 	}
     }
 }
@@ -242,7 +247,7 @@ AstSwitch::print(int indent) const
 	if (hasDefault && i == defaultPos) {
 	    error::out(indent + 4) << "default:" << std::endl;
 	}
-	body.list[i]->print(indent + 8);
+	body.node[i]->print(indent + 8);
     }
     error::out(indent) << "}" << std::endl;
 }
@@ -277,7 +282,7 @@ AstSwitch::codegen()
 	if (hasDefault && i == defaultPos) {
 	    gen::labelDef(defaultLabel);
 	}
-	body.list[i]->codegen();
+	body.node[i]->codegen();
     }
     if (!hasDefault) {
 	gen::labelDef(defaultLabel);
@@ -508,6 +513,73 @@ AstExpr::codegen()
 }
 
 /*
+ * AstInitializerList
+ */
+
+AstInitializerList::AstInitializerList(const Type *type)
+    : type{type}, initializer{AstList{}}
+{
+    assert(type);
+}
+
+AstInitializerList::AstInitializerList(const Type *type, ExprPtr &&expr)
+    : type{type}, initializer{std::move(expr)}
+{
+    assert(type);
+}
+
+void
+AstInitializerList::append(AstInitializerListPtr &&initializerItem)
+{
+    assert(std::holds_alternative<AstList>(initializer));
+
+    std::get<AstList>(initializer).append(std::move(initializerItem));
+}
+
+void
+AstInitializerList::print(int indent) const
+{
+    error::out(indent) << "\n[" << type << "]";
+    if (std::holds_alternative<ExprPtr>(initializer)) {
+	error::out() << std::get<ExprPtr>(initializer);
+    } else if (std::holds_alternative<AstList>(initializer)) {
+	const auto &astList = std::get<AstList>(initializer);
+
+	error::out() << "{";
+	for (std::size_t i = 0; i < astList.size(); ++i) {
+	    auto node = astList.node[i].get();
+	    const auto initList = dynamic_cast<AstInitializerList *>(node);
+	    initList->print(0);
+	    if (i + 1 < astList.size()) {
+		error::out() << ",";
+	    }
+	}
+	error::out() << "}";
+    } else {
+	assert(0);
+    }
+}
+
+InitializerList
+AstInitializerList::createInitializerList() const
+{
+    assert(type);
+    InitializerList initList(type);
+
+    if (std::holds_alternative<ExprPtr>(initializer)) {
+	initList.add(ProxyExpr::create(std::get<ExprPtr>(initializer).get()));
+    } else if (std::holds_alternative<AstList>(initializer)) {
+	const auto &astList = std::get<AstList>(initializer);
+	for (std::size_t i = 0; i < astList.size(); ++i) {
+	    auto node = astList.node[i].get();
+	    const auto initializer = dynamic_cast<AstInitializerList *>(node);
+	    initList.add(initializer->createInitializerList());
+	}
+    }
+    return initList;
+}
+
+/*
  * AstVar
  */
 AstVar::AstVar(UStr ident, const Type *type, Token::Loc loc)
@@ -516,9 +588,9 @@ AstVar::AstVar(UStr ident, const Type *type, Token::Loc loc)
 }
 
 void
-AstVar::addInitializer(InitializerList &&init)
+AstVar::addInitializer(AstInitializerListPtr &&initializer)
 {
-    this->init = std::move(init);
+    this->initializer = std::move(initializer);
 }
 
 void
@@ -526,7 +598,11 @@ AstVar::print(int indent) const
 {
     error::out(indent) << ident.c_str() << ":" << type;
 
-    error::out() << " = [initializer]";
+    if (initializer) {
+	error::out() << " = ";
+	initializer->print(0);
+	error::out() << ";" << std::endl;
+    }
 }
 
 void
@@ -540,8 +616,8 @@ AstVar::codegen()
 AstExternVar::AstExternVar(AstListPtr &&decl)
     : decl{std::move(*decl)}
 {
-    for (auto &node : this->decl.list) {
-	auto var = dynamic_cast<AstVar *>(node.get());
+    for (auto &n : this->decl.node) {
+	auto var = dynamic_cast<AstVar *>(n.get());
 	assert(var);
 	auto sym = Symtab::addDeclToRootScope(var->loc, var->ident, var->type);
 	sym->setExternFlag();
@@ -556,7 +632,7 @@ AstExternVar::print(int indent) const
     error::out(indent) << "extern ";
     if (decl.size() > 1) {
 	error::out() << std::endl;
-	for (std::size_t i = 0; const auto &item : decl.list) {
+	for (std::size_t i = 0; const auto &item : decl.node) {
 	    auto var = dynamic_cast<const AstVar *>(item.get());
 	    var->print(indent + 4);
 	    if (i + 1< decl.size()) {
@@ -564,20 +640,19 @@ AstExternVar::print(int indent) const
 	    } else {
 		error::out() << "; ";
 	    }
-	    error::out() << "//" << var->genIdent.c_str() << std::endl;
 	    ++i;
 	}
     } else {
-	auto var = dynamic_cast<const AstVar *>(decl.list[0].get());
-	var->print(indent + 4);
-	error::out() << "//" << var->genIdent.c_str() << ";" << std::endl;
+	auto var = dynamic_cast<const AstVar *>(decl.node[0].get());
+	var->print(0);
     }
+    error::out() << std::endl;
 }
 
 void
 AstExternVar::codegen()
 {
-    for (const auto &item : decl.list) {
+    for (const auto &item : decl.node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
 	gen::declGlobal(var->genIdent.c_str(), var->type, true);
@@ -590,8 +665,8 @@ AstExternVar::codegen()
 AstGlobalVar::AstGlobalVar(AstListPtr &&decl)
     : decl{std::move(*decl)}
 {
-    for (auto &node : this->decl.list) {
-	auto var = dynamic_cast<AstVar *>(node.get());
+    for (auto &n : this->decl.node) {
+	auto var = dynamic_cast<AstVar *>(n.get());
 	assert(var);
 	auto sym = Symtab::addDecl(var->loc, var->ident, var->type);
 	if (!var->type->hasSize()) {
@@ -612,7 +687,7 @@ AstGlobalVar::print(int indent) const
     error::out(indent) << "global ";
     if (decl.size() > 1) {
 	error::out() << std::endl;
-	for (std::size_t i = 0; const auto &item : decl.list) {
+	for (std::size_t i = 0; const auto &item : decl.node) {
 	    auto var = dynamic_cast<const AstVar *>(item.get());
 	    var->print(indent + 4);
 	    if (i + 1< decl.size()) {
@@ -620,23 +695,24 @@ AstGlobalVar::print(int indent) const
 	    } else {
 		error::out() << "; ";
 	    }
-	    error::out() << "//" << var->genIdent.c_str() << std::endl;
 	    ++i;
 	}
     } else {
-	auto var = dynamic_cast<const AstVar *>(decl.list[0].get());
-	var->print(indent + 4);
-	error::out() << "//" << var->genIdent.c_str() << ";" << std::endl;
+	auto var = dynamic_cast<const AstVar *>(decl.node[0].get());
+	var->print(0);
     }
+    error::out() << std::endl;
 }
 
 void
 AstGlobalVar::codegen()
 {
-    for (const auto &item : decl.list) {
+    for (const auto &item : decl.node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
-	gen::defGlobal(var->genIdent.c_str(), var->type, var->externFlag);
+	auto init = var->initializer->createInitializerList();
+	gen::defGlobal(var->genIdent.c_str(), var->type, var->externFlag,
+		       init.loadConstValue());
     }
 }
 
@@ -646,8 +722,8 @@ AstGlobalVar::codegen()
 AstLocalVar::AstLocalVar(AstListPtr &&decl)
     : decl{std::move(*decl)}
 {
-    for (auto &node : this->decl.list) {
-	auto var = dynamic_cast<AstVar *>(node.get());
+    for (auto &n : this->decl.node) {
+	auto var = dynamic_cast<AstVar *>(n.get());
 	assert(var);
 	auto sym = Symtab::addDecl(var->loc, var->ident, var->type);
 	if (!var->type->hasSize()) {
@@ -667,7 +743,7 @@ AstLocalVar::print(int indent) const
     error::out(indent) << "local ";
     if (decl.size() > 1) {
 	error::out() << std::endl;
-	for (std::size_t i = 0; const auto &item : decl.list) {
+	for (std::size_t i = 0; const auto &item : decl.node) {
 	    auto var = dynamic_cast<const AstVar *>(item.get());
 	    var->print(indent + 4);
 	    if (i + 1< decl.size()) {
@@ -675,23 +751,24 @@ AstLocalVar::print(int indent) const
 	    } else {
 		error::out() << "; ";
 	    }
-	    error::out() << "//" << var->genIdent.c_str() << std::endl;
 	    ++i;
 	}
     } else {
-	auto var = dynamic_cast<const AstVar *>(decl.list[0].get());
-	var->print(indent + 4);
-	error::out() << "//" << var->genIdent.c_str() << ";" << std::endl;
+	auto var = dynamic_cast<const AstVar *>(decl.node[0].get());
+	var->print(0);
     }
+    error::out() << std::endl;
 }
 
 void
 AstLocalVar::codegen()
 {
-    for (const auto &item : decl.list) {
+    for (const auto &item : decl.node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
 	gen::defLocal(var->genIdent.c_str(), var->type);
+	auto init = var->initializer->createInitializerList();
+	init.store(gen::loadAddr(var->genIdent.c_str()));
     }
 }
 
@@ -846,29 +923,54 @@ AstTypeDecl::codegen()
  * AstStructDecl
  */
 AstStructDecl::AstStructDecl(Token ident)
-    : ident{ident}, type{createIncompleteStruct(ident)}
+    : ident{ident}, type{Type::createIncompleteStruct(ident.val)}
 {
-    createIncompleteStruct(ident);
+    if (!type) {
+	if (auto ty = Symtab::getNamedType(ident.val, Symtab::CurrentScope)) {
+	    error::out() << ident.loc
+		<< ": error: '" << ident.val.c_str()
+		<< "' already defined as " << ty << std::endl;
+	    error::fatal();
+	} else if (auto sym = Symtab::get(ident.val)) {
+	    error::out() << ident.loc
+		<< ": error: '" << ident.val.c_str()
+		<< "' already defined " << sym->getLoc() << std::endl;
+	    error::fatal();
+	} else {
+	    assert(0);
+	}
+    }
 }
 
-AstStructDecl::AstStructDecl(Token ident,
-			     std::vector<const char *> &&member,
-			     std::vector<AstOrType> &&astOrType)
-    : ident{ident}, type{createIncompleteStruct(ident)}
+void
+AstStructDecl::complete(std::vector<Token> &&member,
+			std::vector<AstOrType> &&astOrType)
 {
-    if (type) {
-	std::vector<const Type *> memberType;
-	for (auto &item: astOrType) {
-	    if (std::holds_alternative<const Type *>(item)) {
-		memberType.push_back(std::get<const Type *>(item));
-	    } else {
-		auto ast = std::move(std::get<AstPtr>(item));
-		memberType.push_back(ast->getType());
-		astList.append(std::move(ast));
-	    }
-	}
-	type->complete(member, memberType);
+    if (!type) {
+	return;
     }
+
+    std::vector<UStr> memberIdent;
+    std::vector<const Type *> memberType;
+    for (std::size_t i = 0; i < member.size(); ++i) {
+	memberIdent.push_back(member[i].val);
+	auto &item = astOrType[i];
+	if (std::holds_alternative<const Type *>(item)) {
+	    auto ty = std::get<const Type *>(item);
+	    memberType.push_back(ty);
+	} else {
+	    auto ast = std::move(std::get<AstPtr>(item));
+	    memberType.push_back(ast->getType());
+	    astList.append(std::move(ast));
+	}
+	if (!memberType.back()->hasSize()) {
+	    error::out() << member[i].loc
+		<< ": error: can not define a member of type '"
+		<< memberType.back() << "'" << std::endl;
+	    error::fatal();
+	}
+    }
+    type->complete(memberIdent, memberType);
     if (!type->hasSize()) {
 	error::out() << ident.loc
 	    << ": error: type '" << ident.val.c_str()
@@ -916,7 +1018,7 @@ AstStructDecl::print(int indent) const
 	error::out(indent) << "struct " << ident.val.c_str()
 	    << std::endl << "{" << std::endl;
 	for (std::size_t i = 0; i < type->getNumMembers(); ++i) {
-	    error::out(indent + 4) << type->getMemberIdent()[i]
+	    error::out(indent + 4) << type->getMemberIdent()[i].c_str()
 		<< ": " << type->getMemberType(i) << ";"
 		<< std::endl;
 	}

@@ -482,7 +482,7 @@ Type::isStruct() const
 }
 
 const Type *
-Type::complete(const std::vector<const char *> &ident,
+Type::complete(const std::vector<UStr> &ident,
 	       const std::vector<const Type *> &type)
 {
     assert(std::holds_alternative<StructData>(data));
@@ -554,8 +554,10 @@ Type::getMemberType(std::size_t index) const
     } else if (std::holds_alternative<ArrayData>(data)) {
 	auto type = getRefType();
 	return index < getDim() ? type : nullptr;
-    } else {
+    } else if (index == 0) {
 	return this;
+    } else {
+	return nullptr;
     }
 }
 
@@ -576,7 +578,7 @@ Type::getMemberType() const
     return structData.type;
 }
 
-const std::vector<const char *> &
+const std::vector<UStr> &
 Type::getMemberIdent() const
 {
     assert(std::holds_alternative<StructData>(data));

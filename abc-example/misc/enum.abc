@@ -11,13 +11,16 @@ enum Foo : int {
 struct Bar
 {
     a: int;
+    b: -> Bar;
+    c: int;
 };
 
-enum FooBar;
+global a: array[3] of int = {1, 2};
+global b: Bar = {1, nullptr};
 
 fn main(argc: int): int
 {
-    local a: Foo;
-    a = A;
+    local a: Foo = C;
 
+    return a;
 }

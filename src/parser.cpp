@@ -368,7 +368,7 @@ parseVariableDeclarationList()
 }
 
 //------------------------------------------------------------------------------
-static bool parseInitializer(InitializerList &initList);
+static AstInitializerListPtr parseInitializer(const Type *type);
 
 /*
  * variable-declaration = identifier ":" type [ "=" initializer ]
@@ -395,40 +395,43 @@ parseVariableDeclaration()
     auto astVar = std::make_unique<AstVar>(ident, type, loc);
     if (token.kind == TokenKind::EQUAL) {
 	getToken();
-	InitializerList init(type);
-	if (!parseInitializer(init)) {
+	auto initializer = parseInitializer(type);
+	if (!initializer) {
 	    error::out() << token.loc << ": initializer expected" << std::endl;
 	    error::fatal();
 	    return nullptr;
 	}
-	astVar->addInitializer(std::move(init));
+	astVar->addInitializer(std::move(initializer));
     }
     return astVar;
 }
 
 //------------------------------------------------------------------------------
 //static bool parseStringLiteral();
+static AstInitializerListPtr parseInitializerList(const Type *type);
 
 /*
  * initializer = expression
  *             | string-literal
  *             | initializer-list
  */
-static bool
-parseInitializer(InitializerList &init)
+static AstInitializerListPtr
+parseInitializer(const Type *type)
 {
+    if (!type) {
+	return nullptr;
+    }
     if (auto expr = parseExpression()) {
-	init.add(std::move(expr));
-	return true;
-    } else if (parseInitializerList(init)) {
-	return true;
+	return std::make_unique<AstInitializerList>(type, std::move(expr));
+    } else if (auto list = parseInitializerList(type)) {
+	return list;
     }
     /*
     return parseExpression()
 	|| parseStringLiteral()
-	|| parseInitializerList(initList);
+	|| parseInitializerList();
     */
-    return false;
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -449,25 +452,39 @@ parseStringLiteral()
  * initializer-list = "{" initializer-sequence "}"
  * initializer-sequence = [ initializer ["," [initializer-sequence] ] 
  */
-bool
-parseInitializerList(InitializerList &initList)
+static AstInitializerListPtr
+parseInitializerList(const Type *type)
 {
     if (token.kind != TokenKind::LBRACE) {
-	return false;
+	return nullptr;
     }
     getToken();
+
+    auto list = std::make_unique<AstInitializerList>(type);
+
     // parseInitializerSequence:
-    while (parseInitializer(initList)) {
+    for (std::size_t index = 0; auto ty = type->getMemberType(index); ++index) {
+	auto item = parseInitializer(type->getMemberType(index));
+	if (!item) {
+	    break;
+	}
+	list->append(std::move(item));
 	if (token.kind != TokenKind::COMMA) {
 	    break;
 	}
 	getToken();
     }
     if (!error::expected(TokenKind::RBRACE)) {
-	return false;
+	return nullptr;
     }
     getToken();
-    return true;
+    return list;
+}
+
+bool
+parseInitializerList(InitializerList &initList)
+{
+    assert(0 && "TODO");
 }
 
 //------------------------------------------------------------------------------
@@ -508,7 +525,7 @@ parseTypeDeclaration()
 
 //------------------------------------------------------------------------------
 static bool parseStructMemberDeclaration(
-		    std::vector<const char *> &member,
+		    std::vector<Token> &member,
 		    std::vector<AstStructDecl::AstOrType> &memberType);
 
 /*
@@ -532,13 +549,13 @@ parseStructDeclaration()
 	return std::make_unique<AstStructDecl>(ident);
     }
 
-    std::vector<const char *> member;
+    std::vector<Token> member;
     std::vector<AstStructDecl::AstOrType> memberType;
 
+    auto decl = std::make_unique<AstStructDecl>(ident);
     if (parseStructMemberDeclaration(member, memberType)) {
-	return std::make_unique<AstStructDecl>(ident,
-					       std::move(member),
-					       std::move(memberType));
+	decl->complete(std::move(member), std::move(memberType));
+	return decl;
     }
     error::out() << token.loc
 	<< ": ';' or struct member declaration expected" << std::endl;
@@ -547,14 +564,14 @@ parseStructDeclaration()
 }
 
 //------------------------------------------------------------------------------
-static bool parseStructMemberList(std::vector<const char *> &ident,
+static bool parseStructMemberList(std::vector<Token> &ident,
 				  AstStructDecl::AstOrType &astOrType);
 
 /*
  * struct-member-declaration = "{" { struct-member-list } "}" ";"
  */
 static bool
-parseStructMemberDeclaration(std::vector<const char *> &member,
+parseStructMemberDeclaration(std::vector<Token> &member,
 			     std::vector<AstStructDecl::AstOrType> &memberType)
 {
     if (token.kind != TokenKind::LBRACE) {
@@ -563,7 +580,7 @@ parseStructMemberDeclaration(std::vector<const char *> &member,
     getToken();
 
     while (true) {
-	std::vector<const char *> ident;
+	std::vector<Token> ident;
 	AstStructDecl::AstOrType astOrType;
 	if (!parseStructMemberList(ident, astOrType)) {
 	    break;
@@ -590,7 +607,7 @@ parseStructMemberDeclaration(std::vector<const char *> &member,
  *	= identifier { "," identifier } ":" ( type | struct-declaration ) ";"
  */
 static bool
-parseStructMemberList(std::vector<const char *> &ident,
+parseStructMemberList(std::vector<Token> &ident,
 		      AstStructDecl::AstOrType &astOrType)
 {
     if (token.kind != TokenKind::IDENTIFIER) {
@@ -603,7 +620,7 @@ parseStructMemberList(std::vector<const char *> &ident,
 	    error::fatal();
 	    return false;
 	}
-	ident.push_back(token.val.c_str());
+	ident.push_back(token);
 	getToken();
 	if (token.kind != TokenKind::COMMA) {
 	    break;
@@ -1037,11 +1054,12 @@ parseWhileStatement()
 }
 
 /*
- * for-statement = "for" "(" [expression-or-local-variable-definition] ";"
+ * for-statement = "for" "(" [expression-or-variable-definition] ";"
  *			[expression] ";" [expression] ")"
  *			compound-statement
- *  expression-or-local-variable-definition = expression
- *					    | local-variable-declaration
+ *  expression-or-variable-definition = expression
+ *				      | local-variable-declaration
+ *				      | global-variable-declaration
  */
 static AstPtr
 parseForStatement()
@@ -1291,6 +1309,14 @@ parseArrayDimAndType()
 	    error::fatal();
 	}
 	return Type::getArray(type, dim);
+    } else {
+	auto type = parseArrayDimAndType();
+	if (!type) {
+	    error::out() << token.loc
+		<< ": expected 'of' or array dimension" << std::endl;
+	    error::fatal();
+	    return nullptr;
+	}
+	return Type::getArray(type, dim);
     }
-    return Type::getArray(parseArrayDimAndType(), dim);
 }

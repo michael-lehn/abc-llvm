@@ -36,12 +36,6 @@ InitializerList::isConst() const
     return true;
 }
 
-const Type *
-InitializerList::typeToAdd() const
-{
-    return type()->getMemberType(pos);
-}
-
 void
 InitializerList::add(ExprPtr &&expr)
 {
@@ -120,6 +114,7 @@ InitializerList::loadConstValue(size_t index) const
 	    if (!e->isConst()) {
 		error::out() << e->loc << ": error: not const" << std::endl;
 		error::fatal();
+		return gen::loadZero(e->type);
 	    }
 	    return gen::cast(e->loadConstValue(), e->type, ty);
 	} else {
@@ -136,6 +131,7 @@ InitializerList::loadConstValue(size_t index) const
 void
 InitializerList::print(int indent) const
 {
+    error::out(indent) << "InitializerList {" << std::endl;
     for (std::size_t i = 0; i < value.size(); ++i) {
 	const auto &v = value[i];
 	if (std::holds_alternative<ExprPtr>(v)) {
@@ -149,5 +145,6 @@ InitializerList::print(int indent) const
 	    std::get<InitializerList>(v).print(indent + 4);
 	}
     }
+    error::out(indent) << "}" << std::endl;
 }
 

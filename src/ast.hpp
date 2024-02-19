@@ -17,7 +17,7 @@ class Ast
 	virtual ~Ast() = default;
 
 	virtual void print(int indent = 0) const = 0;
-	virtual void codegen() = 0;
+	virtual void codegen();
 	virtual void apply(std::function<bool(Ast *)> op);
 	virtual const Type *getType() const;
 };
@@ -29,7 +29,7 @@ using AstPtr = std::unique_ptr<Ast>;
 class AstList : public Ast
 {
     public:
-	std::vector<AstPtr> list;
+	std::vector<AstPtr> node;
 
 	AstList() = default;
 
@@ -192,18 +192,38 @@ class AstExpr : public Ast
 
 //------------------------------------------------------------------------------
 
+class AstInitializerList : public Ast
+{
+    public:
+	AstInitializerList(const Type *type);
+	AstInitializerList(const Type *type, ExprPtr &&expr);
+
+	const Type *type;
+	std::variant<AstList, ExprPtr> initializer;
+
+	using AstInitializerListPtr = std::unique_ptr<AstInitializerList>;
+	void append(AstInitializerListPtr &&initializerItem);
+
+	void print(int indent) const override;
+	InitializerList createInitializerList() const;
+};
+
+using AstInitializerListPtr = AstInitializerList::AstInitializerListPtr;
+
+//------------------------------------------------------------------------------
+
 class AstVar : public Ast
 {
     public:
 	AstVar(UStr ident, const Type *type, Token::Loc loc);
 
-	void addInitializer(InitializerList &&init);
+	void addInitializer(AstInitializerListPtr &&initializer);
 
 	const UStr ident;
 	UStr genIdent; // used for code generation, set when defined
 	const Type * const type;
 	Token::Loc loc;
-	InitializerList init;
+	AstInitializerListPtr initializer;
 	bool externFlag = false;
 
 	void print(int indent) const override;
@@ -316,8 +336,7 @@ class AstStructDecl : public Ast
 	using AstOrType = std::variant<AstPtr, const Type *>;
 
 	AstStructDecl(Token ident);
-	AstStructDecl(Token ident,
-		      std::vector<const char *> &&member,
+	void complete(std::vector<Token> &&member,
 		      std::vector<AstOrType> &&memberAstOrType);
 
 	const Token ident;

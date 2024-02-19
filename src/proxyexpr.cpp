@@ -3,15 +3,15 @@
 
 #include "proxyexpr.hpp"
 
-ProxyExpr::ProxyExpr(const Expr *expr, Token::Loc loc)
-    : Expr{loc, expr->type}, expr{expr}
+ProxyExpr::ProxyExpr(const Expr *expr)
+    : Expr{expr->loc, expr->type}, expr{expr}
 {
 }
 
 ExprPtr
-ProxyExpr::create(const Expr *expr, Token::Loc loc)
+ProxyExpr::create(const Expr *expr)
 {
-    auto p = new ProxyExpr{expr, loc};
+    auto p = new ProxyExpr{expr};
     return std::unique_ptr<ProxyExpr>{p};
 }
 
@@ -62,8 +62,8 @@ ProxyExpr::condJmp(gen::Label trueLabel, gen::Label falseLabel) const
 void
 ProxyExpr::print(int indent) const
 {
-    std::cerr << std::setfill(' ') << std::setw(indent) << ' ';
-    std::cerr << "proxy" << " [ " << type << " ] " << std::endl;
+    //std::cerr << std::setfill(' ') << std::setw(indent) << ' ';
+    //std::cerr << "proxy" << " [ " << type << " ] " << std::endl;
     expr->print(indent + 4);
 }
 

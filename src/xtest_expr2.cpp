@@ -8,13 +8,13 @@
 const Type *
 makeSomeStructType(void)
 {
-    std::vector<const char *> memIdent;
+    std::vector<UStr> memIdent;
     std::vector<const Type *> memType;
     
-    memIdent.push_back(UStr{"first"}.c_str());
+    memIdent.push_back(UStr{"first"});
     memType.push_back(Type::getUnsignedInteger(16));
 
-    memIdent.push_back(UStr{"second"}.c_str());
+    memIdent.push_back(UStr{"second"});
     memType.push_back(Type::getUnsignedInteger(64));
 
     auto ty = Type::createIncompleteStruct("Foo");

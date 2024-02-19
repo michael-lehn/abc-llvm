@@ -11,8 +11,8 @@ void semanticError(Token::Loc loc, const char *s);
 
 AstPtr parser(void);
 
-const Type *parseType(void);
 // usefull for parsing literal suffix
+const Type *parseType(void);
 bool parseInitializerList(InitializerList &initList);
 
 #endif // PARSER_HPP

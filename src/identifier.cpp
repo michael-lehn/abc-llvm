@@ -29,7 +29,7 @@ Identifier::create(UStr ident, Token::Loc loc)
 	error::fatal();
 	return nullptr;
     } else if (sym->holdsExpr()) {
-	auto p = new Identifier{ident, ProxyExpr::create(sym->expr(), loc)};
+	auto p = new Identifier{ident, ProxyExpr::create(sym->expr())};
 	return std::unique_ptr<Identifier>{p};
     } else {
 	auto p = new Identifier{sym->getInternalIdent(), sym->type(), loc};

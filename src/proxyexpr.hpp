@@ -6,10 +6,10 @@
 class ProxyExpr : public Expr
 {
     protected:
-	ProxyExpr(const Expr *expr, Token::Loc loc);
+	ProxyExpr(const Expr *expr);
 
     public:
-	static ExprPtr create(const Expr *expr, Token::Loc loc = Token::Loc{});
+	static ExprPtr create(const Expr *expr);
 
 	const Expr * const expr;
 
