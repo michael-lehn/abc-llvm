@@ -481,10 +481,16 @@ parseInitializerList(const Type *type)
     return list;
 }
 
-bool
-parseInitializerList(InitializerList &initList)
+AstPtr
+parseCompoundLiteral(const Type *type)
 {
-    assert(0 && "TODO");
+    auto loc = token.loc;
+    if (auto list = parseInitializerList(type)) {
+	AstListPtr declTmp = std::make_unique<AstList>();
+	declTmp->append(std::make_unique<AstVar>("tmp", type, loc));
+	return std::make_unique<AstLocalVar>(std::move(declTmp));
+    }
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -901,7 +907,7 @@ parseLocalVariableDeclaration()
 //------------------------------------------------------------------------------
 /*
  * if-statement = "if" "(" expression ")" compound-statement
- *		    [ "else" compound-statement ]
+ *		    [ "else" if-statement | compound-statement ]
  */
 static AstPtr
 parseIfStatement()
@@ -934,6 +940,9 @@ parseIfStatement()
     if (token.kind == TokenKind::ELSE) {
 	getToken();
 	auto elseBody = parseCompoundStatement();
+	if (!elseBody) {
+	    elseBody = parseIfStatement();
+	}
 	if (!elseBody) {
 	    error::out() << token.loc << ": compound statement expected"
 		<< std::endl;

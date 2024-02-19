@@ -193,7 +193,7 @@ struct Enum : public Type
     {}
 
     Enum(const EnumData &data, bool constFlag)
-	: Type{Type::STRUCT, EnumData{data, constFlag}}
+	: Type{Type::ENUM, EnumData{data, constFlag}}
     {
     }
 
@@ -887,7 +887,7 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc,
     } else if (from->isVoid() && !to->isVoid()) {
 	return nullptr;
     } else if (getConstRemoved(from) == getConstRemoved(to)) {
-	if (to->hasConstFlag() && !from->hasConstFlag()) {
+	if (!to->hasConstFlag() && from->hasConstFlag()) {
 	    if (!silent) {
 		error::out() << loc << ": error: casting '" << from
 		    << "' to '" << to << "' discards const qualifier"

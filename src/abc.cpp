@@ -127,7 +127,7 @@ main(int argc, char *argv[])
 
     gen::setTarget(optLevel);
     if (auto ast = parser()) {
-	ast->print();
+	// ast->print();
 	ast->codegen();
     }
 

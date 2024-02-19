@@ -13,6 +13,6 @@ AstPtr parser(void);
 
 // usefull for parsing literal suffix
 const Type *parseType(void);
-bool parseInitializerList(InitializerList &initList);
+AstPtr parseCompoundLiteral(const Type *type);
 
 #endif // PARSER_HPP

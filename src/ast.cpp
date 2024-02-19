@@ -290,6 +290,12 @@ AstSwitch::codegen()
     gen::labelDef(breakLabel);
 }
 
+void
+AstSwitch::apply(std::function<bool(Ast *)> op)
+{
+    body.apply(op);
+}
+
 /*
  * AstWhile
  */
@@ -437,7 +443,7 @@ void
 AstReturn::codegen()
 {
     if (retType && !retType->isVoid()) {
-	expr = CastExpr::create(std::move(expr), retType);
+	expr = CastExpr::create(std::move(expr), Type::getConst(retType));
 	gen::ret(expr->loadValue());
     } else {
 	if (expr) {
@@ -593,6 +599,15 @@ AstInitializerList::createInitializerList() const
 AstVar::AstVar(UStr ident, const Type *type, Token::Loc loc)
     : ident{ident}, type{type}, loc{loc}
 {
+    auto sym = Symtab::addDecl(loc, ident, type);
+    assert(sym);
+    genIdent = sym->getInternalIdent();
+    if (!type->hasSize()) {
+	error::out() << loc
+	    << ": error: can not define a variable of type '" << type
+	    << "'" << std::endl;
+	error::fatal();
+    }
 }
 
 void
@@ -611,11 +626,6 @@ AstVar::print(int indent) const
 	initializer->print(0);
 	error::out() << ";" << std::endl;
     }
-}
-
-void
-AstVar::codegen()
-{
 }
 
 /*
@@ -676,15 +686,9 @@ AstGlobalVar::AstGlobalVar(AstListPtr &&decl)
     for (auto &n : this->decl.node) {
 	auto var = dynamic_cast<AstVar *>(n.get());
 	assert(var);
-	auto sym = Symtab::addDecl(var->loc, var->ident, var->type);
-	if (!var->type->hasSize()) {
-	    error::out() << var->loc
-		<< ": error: can not define a variable of type '" << var->type
-		<< "'" << std::endl;
-	    error::fatal();
-	}
+	auto sym = Symtab::get(var->ident);
+	assert(sym);
 	sym->setDefinitionFlag();
-	var->genIdent = sym->getInternalIdent();
 	var->externFlag = sym->hasExternFlag();
     }
 }
@@ -736,13 +740,7 @@ AstLocalVar::AstLocalVar(AstListPtr &&decl)
     for (auto &n : this->decl.node) {
 	auto var = dynamic_cast<AstVar *>(n.get());
 	assert(var);
-	auto sym = Symtab::addDecl(var->loc, var->ident, var->type);
-	if (!var->type->hasSize()) {
-	    error::out() << var->loc
-		<< ": error: can not define a variable of type '" << var->type
-		<< "'" << std::endl;
-	    error::fatal();
-	}
+	auto sym = Symtab::get(var->ident);
 	sym->setDefinitionFlag();
 	var->genIdent = sym->getInternalIdent();
     }

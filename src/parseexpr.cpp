@@ -422,6 +422,7 @@ parsePrimary(void)
         getToken();
 	auto expr = Identifier::create(opTok.val, opTok.loc);
         return expr;
+    /*
     } else if (token.kind == TokenKind::COLON) {
 	getToken();
 	auto type = parseType();
@@ -444,8 +445,7 @@ parsePrimary(void)
 	}
 	error::expected(TokenKind::LPAREN);
 	getToken();
-	InitializerList initList(type);
-	if (parseInitializerList(initList)) {
+	if (auto ast = parseCompoundLiteral(type)) {
 	    static std::size_t tmpId;
 	    std::stringstream ss;
 	    ss << ".compound_colon" << tmpId++;
@@ -472,6 +472,7 @@ parsePrimary(void)
 	    getToken();
 	    return CastExpr::create(std::move(expr), type, opTok.loc);
 	}
+    */
     } else if (token.kind == TokenKind::SIZEOF) {
 	getToken();
 	error::expected(TokenKind::LPAREN);

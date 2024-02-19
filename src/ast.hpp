@@ -98,6 +98,7 @@ class AstSwitch : public Ast
 
 	void print(int indent) const override;
 	void codegen() override;
+	void apply(std::function<bool(Ast *)> op) override;
 };
 
 //------------------------------------------------------------------------------
@@ -223,14 +224,13 @@ class AstVar : public Ast
 	void addInitializer(AstInitializerListPtr &&initializer);
 
 	const UStr ident;
-	UStr genIdent; // used for code generation, set when defined
 	const Type * const type;
 	Token::Loc loc;
+	UStr genIdent; // used for code generation, set when defined
 	AstInitializerListPtr initializer;
 	bool externFlag = false;
 
 	void print(int indent) const override;
-	void codegen() override;
 };
 
 using AstVarPtr = std::unique_ptr<AstVar>;

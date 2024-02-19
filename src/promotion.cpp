@@ -47,7 +47,9 @@ call(ExprPtr &&fn, std::vector<ExprPtr> &&param, Token::Loc *loc)
     for (std::size_t i = 0; i < param.size(); ++i) {
 	auto loc = param[i]->loc;
 	if (i < argType.size()) {
-	    param[i] = CastExpr::create(std::move(param[i]), argType[i], loc);
+	    param[i] = CastExpr::create(std::move(param[i]),
+					Type::getConst(argType[i]),
+					loc);
 	} else {
 	    auto ty = Type::convertArrayOrFunctionToPointer(param[i]->type);
 	    param[i] = CastExpr::create(std::move(param[i]), ty, loc);
@@ -278,6 +280,9 @@ binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		   || right->type->getIntegerKind() == Type::UNSIGNED
 	? Type::getUnsignedInteger(size)
 	: Type::getSignedInteger(size);
+    if (left->type->hasConstFlag() || right->type->hasConstFlag()) {
+	commonType = Type::getConst(commonType);
+    }
 
     const Type *type = nullptr;
     const Type *leftType = nullptr;
