@@ -1,3 +1,4 @@
+#include <unordered_map>
 #include <iostream>
 
 #include "ast.hpp"
@@ -963,7 +964,18 @@ AstStructDecl::complete(std::vector<Token> &&member,
 
     std::vector<UStr> memberIdent;
     std::vector<const Type *> memberType;
+    std::unordered_map<UStr, Token::Loc> checkMemberIdent;
     for (std::size_t i = 0; i < member.size(); ++i) {
+	if (checkMemberIdent.contains(member[i].val)) {
+	    error::out() << member[i].loc
+		<< ": error: redeclaration of member " << member[i].val.c_str()
+		<< std::endl;
+	    error::out() << checkMemberIdent[member[i].val]
+		<< "error: previous declaration" << std::endl;
+	    error::fatal();
+	} else {
+	    checkMemberIdent[member[i].val] = member[i].loc;
+	}
 	memberIdent.push_back(member[i].val);
 	auto &item = astOrType[i];
 	if (std::holds_alternative<const Type *>(item)) {

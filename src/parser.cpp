@@ -591,9 +591,13 @@ parseStructMemberDeclaration(std::vector<Token> &member,
 	if (!parseStructMemberList(ident, astOrType)) {
 	    break;
 	}
-	for (const auto &id: ident) {
-	    member.push_back(id);
-	    memberType.push_back(std::move(astOrType));
+	const Type *type = std::holds_alternative<const Type *>(astOrType)
+	    ? std::get<const Type *>(astOrType)
+	    : std::get<AstPtr>(astOrType)->getType();
+	for (std::size_t i = 0; i < ident.size(); ++i) {
+	    member.push_back(ident[i]);
+	    i == 0 ? memberType.push_back(std::move(astOrType))
+		   :  memberType.push_back(type);
 	}
     }
     if (!error::expected(TokenKind::RBRACE)) {

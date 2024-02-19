@@ -3,6 +3,14 @@ enum Foo {
     B = 1,
 };
 
+struct Bar
+{
+    b: int;
+    a, x: struct FooBar {
+	b : int;
+    };
+};
+
 global i: int = 4;
 
 fn main(argc: int): int
