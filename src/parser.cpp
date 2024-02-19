@@ -1072,32 +1072,48 @@ parseForStatement()
 	return nullptr;
     }
     getToken();
-    auto forInit = parseExpression();
-    if (!error::expected(TokenKind::SEMICOLON)) {
-	return nullptr;
+    AstPtr forInitDecl;
+    ExprPtr forInitExpr;
+    Symtab::openScope();
+    if (!(forInitDecl = parseLocalVariableDefinition())) {
+	if (!(forInitDecl = parseGlobalVariableDefinition())) {
+	    forInitExpr = parseExpression();
+	    if (!error::expected(TokenKind::SEMICOLON)) {
+		Symtab::closeScope();
+		return nullptr;
+	    }
+	    getToken();
+	}
     }
-    getToken();
     auto forCond = parseExpression();
     if (!error::expected(TokenKind::SEMICOLON)) {
+	Symtab::closeScope();
 	return nullptr;
     }
     getToken();
     auto forUpdate = parseExpression();
     if (!error::expected(TokenKind::RPAREN)) {
+	Symtab::closeScope();
 	return nullptr;
     }
     getToken();
-    auto forLoop = std::make_unique<AstFor>(std::move(forInit),
-					    std::move(forCond),
-					    std::move(forUpdate));
+    auto forLoop = forInitDecl
+	?  std::make_unique<AstFor>(std::move(forInitDecl),
+				    std::move(forCond),
+				    std::move(forUpdate))
+	: std::make_unique<AstFor>(std::move(forInitExpr),
+				   std::move(forCond),
+				   std::move(forUpdate));
     auto forBody = parseCompoundStatement(false);
     if (!forBody) {
 	error::out() << token.loc << ": compound statement expected"
 	    << std::endl;
 	error::fatal();
+	Symtab::closeScope();
 	return nullptr;
     }
     forLoop->appendBody(std::move(forBody));
+    Symtab::closeScope();
     return forLoop;
 }
 

@@ -124,9 +124,12 @@ class AstFor : public Ast
 
     public:
 	AstFor(ExprPtr &&init, ExprPtr &&cond, ExprPtr &&update);
-	~AstFor();
+	AstFor(AstPtr &&init, ExprPtr &&cond, ExprPtr &&update);
 
-	const ExprPtr init, cond, update;
+	using AstOrExpr = std::variant<AstPtr, ExprPtr>;
+
+	const AstOrExpr init;
+	const ExprPtr cond, update;
 
 	void appendBody(AstPtr &&body);
 

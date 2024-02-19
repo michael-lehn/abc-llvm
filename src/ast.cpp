@@ -340,29 +340,32 @@ AstFor::AstFor(ExprPtr &&init, ExprPtr &&cond, ExprPtr &&update)
     , cond{cond ? std::move(cond) : IntegerLiteral::create(1)}
     , update{update ? std::move(update) : IntegerLiteral::create(1)}
 {
-    Symtab::openScope();
 }
 
-AstFor::~AstFor()
+AstFor::AstFor(AstPtr &&init, ExprPtr &&cond, ExprPtr &&update)
+    : init{std::move(init)}
+    , cond{cond ? std::move(cond) : IntegerLiteral::create(1)}
+    , update{update ? std::move(update) : IntegerLiteral::create(1)}
 {
-    if (!body) {
-	Symtab::closeScope();
-    }
 }
 
 void
 AstFor::appendBody(AstPtr &&body_)
 {
     body = std::move(body_);
-    Symtab::closeScope();
 }
 
 void
 AstFor::print(int indent) const
 {
     error::out(indent) << "for (";
-    if (init) {
-	error::out() << init;
+    if (std::holds_alternative<AstPtr>(init)) {
+	std::get<AstPtr>(init)->print(0);
+    } else {
+	assert(std::holds_alternative<ExprPtr>(init));
+	if (const auto &initExpr = std::get<ExprPtr>(init)) {
+	    error::out() << initExpr;
+	}
     }
     error::out() << "; ";
     if (cond) {
@@ -386,7 +389,12 @@ AstFor::codegen()
     body->apply(createSetBreakLabel(endLabel));
     body->apply(createSetContinueLabel(condLabel));
 
-    init->loadValue();
+    if (std::holds_alternative<AstPtr>(init)) {
+	std::get<AstPtr>(init)->codegen();
+    } else {
+	assert(std::holds_alternative<ExprPtr>(init));
+	std::get<ExprPtr>(init)->loadValue();
+    }
 
     gen::labelDef(condLabel);
     cond->condJmp(loopLabel, endLabel);
