@@ -983,6 +983,7 @@ AstStructDecl::complete(std::vector<Token> &&member,
 	    memberType.push_back(ty);
 	} else {
 	    auto ast = std::move(std::get<AstPtr>(item));
+	    assert(ast);
 	    memberType.push_back(ast->getType());
 	    astList.append(std::move(ast));
 	}

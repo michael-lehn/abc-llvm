@@ -408,7 +408,6 @@ parseVariableDeclaration()
 
 //------------------------------------------------------------------------------
 //static bool parseStringLiteral();
-static AstInitializerListPtr parseInitializerList(const Type *type);
 
 /*
  * initializer = expression
@@ -452,7 +451,7 @@ parseStringLiteral()
  * initializer-list = "{" initializer-sequence "}"
  * initializer-sequence = [ initializer ["," [initializer-sequence] ] 
  */
-static AstInitializerListPtr
+AstInitializerListPtr
 parseInitializerList(const Type *type)
 {
     if (token.kind != TokenKind::LBRACE) {

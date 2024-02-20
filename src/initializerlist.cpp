@@ -75,8 +75,9 @@ InitializerList::store(std::size_t index, gen::Reg addr) const
     auto ty = type()->getMemberType(index);
     if (std::holds_alternative<ExprPtr>(v)) {
 	const auto &e = std::get<ExprPtr>(v);
-	auto val = e ? e->loadValue() : gen::loadZero(ty);
-	val = gen::cast(val, e->type, ty);
+	auto val = e
+	    ? gen::cast(e->loadValue(), e->type, ty)
+	    : gen::loadZero(ty);
 	gen::store(val, addr, ty);
     } else if (std::holds_alternative<InitializerList>(v)) {
 	const auto &v = std::get<InitializerList>(value[index]);
@@ -148,3 +149,29 @@ InitializerList::print(int indent) const
     error::out(indent) << "}" << std::endl;
 }
 
+void
+InitializerList::printFlat(std::ostream &out, bool isFactor) const
+{
+    if (value.size() > 1) {
+	out << "{";
+    }
+    for (std::size_t i = 0; i < value.size(); ++i) {
+	const auto &v = value[i];
+	if (std::holds_alternative<ExprPtr>(v)) {
+	    const auto &e = std::get<ExprPtr>(v);
+	    if (e) {
+		e->printFlat(out, isFactor);
+	    } else {
+		out << "0";
+	    }
+	} else if (std::holds_alternative<InitializerList>(v)) {
+	    std::get<InitializerList>(v).printFlat(out, isFactor);
+	}
+	if (i + 1 < value.size()) {
+	    out << ", ";
+	}
+    }
+    if (value.size() > 1) {
+	out << "}";
+    }
+}

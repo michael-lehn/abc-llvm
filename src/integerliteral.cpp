@@ -103,11 +103,13 @@ void
 IntegerLiteral::printFlat(std::ostream &out, bool isFactor) const
 {
     if (radix == 8) {
-	out << "0";
+	if (val.c_str() != UStr{"0"}.c_str()) {
+	    out << "0";
+	}
     } else if (radix == 16) {
 	out << "0x";
     } else if (radix != 10) {
-	out << radix << "'";
+	out << int(radix) << "'";
     }
     out << val.c_str();
 }

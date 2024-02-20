@@ -9,6 +9,7 @@ llvm.link := `llvm-config --ldflags --system-libs --libs core`
 CXXFLAGS += $(llvm.comp)
 CXXFLAGS += -std=c++20 -Werror -Wall -Wextra -Wno-unused-parameter -pedantic \
 	    -Wuninitialized
+#CXXFLAGS += -O3
 
 src.dir := src
 bin.dir := bin

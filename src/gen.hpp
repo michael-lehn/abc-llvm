@@ -30,7 +30,7 @@ void fnDefEnd(void);
 void ret(Reg reg = nullptr);
 
 // variables
-void defLocal(const char *ident, const Type *type);
+bool defLocal(const char *ident, const Type *type);
 void defGlobal(const char *ident, const Type *type, bool external,
 	       ConstVal val = nullptr);
 void declGlobal(const char *ident, const Type *type, bool external);

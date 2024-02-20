@@ -1,21 +1,24 @@
-#ifndef CASTEXPR_HPP
-#define CASTEXPR_HPP
+#ifndef COMPOUNDLITERAL_HPP
+#define COMPOUNDLITERAL_HPP
 
+
+#include "ast.hpp"
 #include "expr.hpp"
 
-class CastExpr : public Expr
+class CompoundLiteral : public Expr
 {
     protected:
-	CastExpr(ExprPtr &&expr, const Type *toType, Token::Loc loc);
+	CompoundLiteral(AstInitializerListPtr &&ast, Token::Loc loc);
+
+	bool createTmp() const;
 
     public:
 
-	static ExprPtr create(ExprPtr &&expr, const Type *toType,
-			      Token::Loc loc);
+	static ExprPtr create(AstInitializerListPtr &&ast, Token::Loc loc);
 
-	static ExprPtr create(ExprPtr &&expr, const Type *toType);
-
-	const ExprPtr expr;
+	UStr genIdent;
+	const AstInitializerListPtr ast;
+	const InitializerList initializerList;
 
 	bool hasAddr() const override;
 	bool isLValue() const override;
@@ -35,4 +38,6 @@ class CastExpr : public Expr
 	virtual void printFlat(std::ostream &out, bool isFactor) const override;
 };
 
-#endif // CASTEXPR_HPP
+
+
+#endif // COMPOUNDLITERAL_HPP

@@ -6,6 +6,7 @@
 #include "callexpr.hpp"
 #include "castexpr.hpp"
 #include "conditionalexpr.hpp"
+#include "compoundliteral.hpp"
 #include "error.hpp"
 #include "exprvector.hpp"
 #include "identifier.hpp"
@@ -422,7 +423,6 @@ parsePrimary(void)
         getToken();
 	auto expr = Identifier::create(opTok.val, opTok.loc);
         return expr;
-    /*
     } else if (token.kind == TokenKind::COLON) {
 	getToken();
 	auto type = parseType();
@@ -443,25 +443,11 @@ parsePrimary(void)
 		<< std::endl;
 	    error::fatal();
 	}
-	error::expected(TokenKind::LPAREN);
-	getToken();
-	if (auto ast = parseCompoundLiteral(type)) {
-	    static std::size_t tmpId;
-	    std::stringstream ss;
-	    ss << ".compound_colon" << tmpId++;
-	    UStr ident{ss.str()};
-	    auto s = Symtab::addDecl(opTok.loc, ident.c_str(), type);
-	    gen::defLocal(s->ident.c_str(), s->type());
-
-	    auto tmp = Identifier::create(ident, opTok.loc);
-	    tmp->print();
-	    auto addr = tmp->loadAddr();
-	    initList.store(addr);
-
-	    error::expected(TokenKind::RPAREN);
-	    getToken();
-	    return tmp;
+	if (auto ast = parseInitializerList(type)) {
+	    return CompoundLiteral::create(std::move(ast), opTok.loc);
 	} else {
+	    error::expected(TokenKind::LPAREN);
+	    getToken();
 	    auto expr = parseExpression();
 	    if (!expr) {
 		error::out() << token.loc << " expected non-empty expression"
@@ -472,7 +458,6 @@ parsePrimary(void)
 	    getToken();
 	    return CastExpr::create(std::move(expr), type, opTok.loc);
 	}
-    */
     } else if (token.kind == TokenKind::SIZEOF) {
 	getToken();
 	error::expected(TokenKind::LPAREN);

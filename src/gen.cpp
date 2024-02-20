@@ -336,7 +336,7 @@ ret(Reg reg)
     jmp(currFn.leave);
 }
 
-void
+bool
 defLocal(const char *ident, const Type *type)
 {
     assert(currFn.llvmFn);
@@ -348,11 +348,16 @@ defLocal(const char *ident, const Type *type)
 	error::fatal();
     }
 
+    if (local.contains(ident)) {
+	return false;
+    }
+
     // always allocate memory at entry of function
     llvm::IRBuilder<> tmpBuilder(&currFn.llvmFn->getEntryBlock(),
 				 currFn.llvmFn->getEntryBlock().begin());
     auto ty = TypeMap::get(type);
     local[ident] = tmpBuilder.CreateAlloca(ty, nullptr, ident);
+    return true;
 }
 
 void
