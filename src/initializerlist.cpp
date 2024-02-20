@@ -1,24 +1,27 @@
+#include <iostream>
+
+#include "castexpr.hpp"
+#include "error.hpp"
 #include "expr.hpp"
+#include "integerliteral.hpp"
 #include "initializerlist.hpp"
 
-
 InitializerList::InitializerList(const Type *type)
-    : type{type}, pos{0}, value{type ? type->getNumMembers() : 0}
-    , valueLoc{type ? type->getNumMembers() : 0}
+    : type_{type}, value{type->getNumMembers()}
+    , valueType{type->getMemberType()}
+    , valueLoc{type->getNumMembers()}
 {
 }
 
 const Type *
-InitializerList::getType() const
+InitializerList::type() const
 {
-    return type;
+    return type_;
 }
 
 bool
 InitializerList::isConst() const
 {
-    assert(type && "InitializerList::isConst() requires type");
-
     for (std::size_t i = 0; i < value.size(); ++i) {
 	const auto &v = value[i];
 	if (std::holds_alternative<ExprPtr>(v)) {
@@ -36,52 +39,28 @@ InitializerList::isConst() const
 }
 
 void
-InitializerList::setType(const Type *ty)
+InitializerList::set(ExprPtr &&expr)
 {
-    assert(!type && "InitializerList::setType(): type alredy set");
-    assert(ty && "InitializerList::setType(): ty is nullptr");
-    type = ty;
-
-    if (value.size() > type->getNumMembers()) {
-	error::out() << valueLoc[type->getNumMembers()]
-	    << ": excess elements in struct initializer" << std::endl;
-	error::fatal();
-    }
-
-    valueType.resize(type->getNumMembers());
-    valueLoc.resize(valueType.size());
-
-    for (std::size_t i = 0; i < type->getNumMembers(); ++i) {
-	valueType[i] = type->getMemberType(pos);
-	auto &v = value[i];
-	if (std::holds_alternative<InitializerList>(v)) {
-	    std::get<InitializerList>(v).setType(valueType[i]);
-	}
-    }
+    value.resize(1);
+    valueType.resize(1);
+    expr = CastExpr::create(std::move(expr), type(), expr->loc);
+    value[0] = std::move(expr);
+    valueType[0] = type();
 }
 
 void
-InitializerList::add(ExprPtr &&expr, Token::Loc loc)
+InitializerList::add(ExprPtr &&expr)
 {
-    if (!type) {
-	valueLoc.resize(valueLoc.size()  + 1);
-	value.resize(value.size()  + 1);
-    } else {
-	auto ty = type->getMemberType(pos);
-	expr = Expr::createCast(std::move(expr), ty, expr->getLoc());
-    }
-    valueLoc[pos] = loc;
+    auto ty = type()->getMemberType(pos);
+    expr = CastExpr::create(std::move(expr), ty, expr->loc);
+    assert(pos < type()->getNumMembers());
+    valueLoc[pos] = expr->loc;
     value[pos++] = std::move(expr);
 }
 
 void
 InitializerList::add(InitializerList &&initList, Token::Loc loc)
 {
-    if (!type) {
-	valueLoc.resize(valueLoc.size()  + 1);
-	value.resize(value.size()  + 1);
-    }
-
     valueLoc[pos] = loc;
     value[pos++] = std::move(initList);
 }
@@ -89,12 +68,9 @@ InitializerList::add(InitializerList &&initList, Token::Loc loc)
 void
 InitializerList::store(gen::Reg addr) const
 {
-    assert(type && "InitializerList::store(addr): no type");
-
-    if (type->isStruct() || type->isArray()) {
-	std::vector<gen::ConstVal> val{value.size()};
+    if (value.size() > 1) {
 	for (size_t i = 0; i < value.size(); ++i) {
-	    auto memAddr = gen::ptrMember(type, addr, i);
+	    auto memAddr = gen::ptrMember(type(), addr, i);
 	    store(i, memAddr);
 	}
     } else {
@@ -106,60 +82,61 @@ InitializerList::store(gen::Reg addr) const
 void
 InitializerList::store(std::size_t index, gen::Reg addr) const
 {
-    assert(type && "InitializerList::store(index, addr): no type");
-
     auto &v = value[index];
-    auto ty = type->getMemberType(index);
+    auto ty = valueType[index];
     if (std::holds_alternative<ExprPtr>(v)) {
 	const auto &e = std::get<ExprPtr>(v);
-	auto val = e ? e->loadValue() : gen::loadZero(ty);
-	val = gen::cast(val, e->getType(), ty);
+	auto val = e
+	    ? gen::cast(e->loadValue(), e->type, ty)
+	    : gen::loadZero(ty);
 	gen::store(val, addr, ty);
     } else if (std::holds_alternative<InitializerList>(v)) {
 	const auto &v = std::get<InitializerList>(value[index]);
 	v.store(addr);
+    } else {
+	assert(0);
     }
 }
 
 gen::ConstVal
-InitializerList::loadConst() const
+InitializerList::loadConstValue() const
 {
-    assert(isConst() && "InitializerList::load(): not const");
-    assert(type && "InitializerList::load(): type is nullptr");
-
-    if (type->isArray() || type->isStruct()) {
+    if (type()->isArray() || type()->isStruct()) {
 	std::vector<gen::ConstVal> val{value.size()};
 	for (size_t i = 0; i < value.size(); ++i) {
-	    val[i] = loadConst(i);
+	    val[i] = loadConstValue(i);
 	}
-	if (type->isArray()) {
-	    return gen::loadConstArray(val, type);
+	if (type()->isArray()) {
+	    return gen::loadConstArray(val, type());
 	} else {
-	    return gen::loadConstStruct(val, type);
+	    return gen::loadConstStruct(val, type());
 	}
     } else {
 	assert(value.size() == 1);
-	return loadConst(0);
+	return loadConstValue(0);
     }
 }
 
 gen::ConstVal
-InitializerList::loadConst(size_t index) const
+InitializerList::loadConstValue(size_t index) const
 {
-    assert(type);
-
     auto &v = value[index];
-    auto ty = type->getMemberType(index);
+    auto ty = type()->getMemberType(index);
     if (std::holds_alternative<ExprPtr>(v)) {
 	const auto &e = std::get<ExprPtr>(v);
 	if (e) {
-	    return gen::cast(e->loadConst(), e->getType(), ty);
+	    if (!e->isConst()) {
+		error::out() << e->loc << ": error: not const" << std::endl;
+		error::fatal();
+		return gen::loadZero(e->type);
+	    }
+	    return gen::cast(e->loadConstValue(), e->type, ty);
 	} else {
 	    return gen::loadZero(ty);
 	}
     } else if (std::holds_alternative<InitializerList>(v)) {
 	const auto &v = std::get<InitializerList>(value[index]);
-	return v.loadConst();
+	return v.loadConstValue();
     }
     assert(0);
     return nullptr;
@@ -168,6 +145,7 @@ InitializerList::loadConst(size_t index) const
 void
 InitializerList::print(int indent) const
 {
+    error::out(indent) << "InitializerList {" << std::endl;
     for (std::size_t i = 0; i < value.size(); ++i) {
 	const auto &v = value[i];
 	if (std::holds_alternative<ExprPtr>(v)) {
@@ -175,11 +153,38 @@ InitializerList::print(int indent) const
 	    if (e) {
 		e->print(indent + 4);
 	    } else {
-		std::printf("%*sZER0\n", indent + 4, "");
+		std::printf("%*sZERO\n", indent + 4, "");
 	    }
 	} else if (std::holds_alternative<InitializerList>(v)) {
 	    std::get<InitializerList>(v).print(indent + 4);
 	}
     }
+    error::out(indent) << "}" << std::endl;
 }
 
+void
+InitializerList::printFlat(std::ostream &out, bool isFactor) const
+{
+    if (value.size() > 1) {
+	out << "{";
+    }
+    for (std::size_t i = 0; i < value.size(); ++i) {
+	const auto &v = value[i];
+	if (std::holds_alternative<ExprPtr>(v)) {
+	    const auto &e = std::get<ExprPtr>(v);
+	    if (e) {
+		e->printFlat(out, isFactor);
+	    } else {
+		out << "0";
+	    }
+	} else if (std::holds_alternative<InitializerList>(v)) {
+	    std::get<InitializerList>(v).printFlat(out, isFactor);
+	}
+	if (i + 1 < value.size()) {
+	    out << ", ";
+	}
+    }
+    if (value.size() > 1) {
+	out << "}";
+    }
+}

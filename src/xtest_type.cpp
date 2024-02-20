@@ -27,4 +27,10 @@ main(void)
     if (!Symtab::addTypeAlias("int", ty_i32)) {
 	assert(0 && "type already defined");
     }
+
+    if (ty_i32 == ty_int) {
+	std::cerr << "same type\n";
+    } else {
+	std::cerr << "different types\n";
+    }
 }

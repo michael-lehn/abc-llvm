@@ -43,9 +43,6 @@ all: $(target)
 $(cpp.dir)/%.abc_cpp : %.abc | $(cpp.dir)
 	$(CPP) $(CPPFLAGS) -o $@ $< 
 
-foo:
-	echo $(dep)
-
 $(asm.dir)/%.s :$(cpp.dir)/%.abc_cpp | $(asm.dir)
 	$(ABC) -S $(ABCFLAGS) $<
 	@mv $(@F) $@

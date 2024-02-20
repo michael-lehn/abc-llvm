@@ -1,18 +1,50 @@
-#include <stdio.hdr>
+extern fn printf(fmt: -> const char, ...): int;
+extern fn scanf(fmt: -> char, ...): int;
 
-global
-    a: array[10] of int = {1, 2, 3, 4, },
-    b: array[10] of int;
-
-fn foo(a: array[10] of int)
+fn factorial_for(n: int): u64
 {
-    for (local i: int = 0; i < 10; ++i) {
-	printf("a[%d] = %d\n", i, a[i]);
+    local res: u64;
+    local i: int;
+    res = 1;
+    for (i = 2; i <= n; ++i) {
+	res *= i;
     }
+    return res;
+}
+
+fn factorial_while(n: int): u64
+{
+    local res: u64;
+    res = 1;
+    while (n) {
+	res *= n--;
+    }
+    return res;
 }
 
 fn main()
 {
-    foo(a);
-    // b = a;
+    local n: int;
+
+    printf("n = ");
+    scanf("%d", &n);
+
+    switch (n) {
+	default:
+	    printf("default\n");
+	    break;
+	case 0:
+	    printf("case 0\n");
+	    break;
+	case 1:
+	    printf("case 1\n");
+	    break;
+	case 2:
+	    printf("case 2\n");
+	    break;
+    }
+    printf("Computing %d!\n", n);
+
+    printf("%d! = %d\n", n, factorial_for(n));
+    printf("%d! = %d\n", n, factorial_while(n));
 }

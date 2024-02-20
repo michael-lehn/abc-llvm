@@ -9,8 +9,11 @@ class UStr
 {
     public:
 	UStr();
+	UStr(const UStr &) = default;
 	UStr(const char *s);
 	UStr(const std::string &s);
+
+	UStr &operator=(const UStr &) = default;
 
 	const char *
 	c_str(void) const
@@ -18,14 +21,27 @@ class UStr
 	    return c_str_;
 	}
 
+	std::size_t
+	length() const
+	{
+	    return len;
+	}
+
     private:
 	const char *c_str_;
+	std::size_t len;
 };
 
 inline bool
 operator==(const UStr &a, const UStr &b)
 {
     return a.c_str() == b.c_str();
+}
+
+inline bool
+operator!=(const UStr &a, const UStr &b)
+{
+    return a.c_str() != b.c_str();
 }
 
 inline bool

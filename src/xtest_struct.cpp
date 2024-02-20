@@ -10,13 +10,13 @@ makeStruct1(UStr name)
 {
     auto incompleteStructTy = Type::createIncompleteStruct(name.c_str());
 
-    std::vector<const char *> ident;
+    std::vector<UStr> ident;
     std::vector<const Type *> type;
 
-    ident.push_back(UStr{"first"}.c_str());
+    ident.push_back(UStr{"first"});
     type.push_back(Type::getUnsignedInteger(8));
 
-    ident.push_back(UStr{"second"}.c_str());
+    ident.push_back(UStr{"second"});
     type.push_back(Type::getArray(Type::getConst(Type::getUnsignedInteger(16)), 4));
 
     auto ty = incompleteStructTy->complete(std::move(ident), std::move(type));
@@ -39,16 +39,16 @@ makeStruct3(UStr name, const Type *tm1, const Type *tm3)
 {
     auto incompleteStructTy = Type::createIncompleteStruct(name.c_str());
 
-    std::vector<const char *> ident;
+    std::vector<UStr> ident;
     std::vector<const Type *> type;
 
-    ident.push_back(UStr{"first"}.c_str());
+    ident.push_back(UStr{"first"});
     type.push_back(tm1);
 
-    ident.push_back(UStr{"second"}.c_str());
+    ident.push_back(UStr{"second"});
     type.push_back(Type::getUnsignedInteger(16));
 
-    ident.push_back(UStr{"third"}.c_str());
+    ident.push_back(UStr{"third"});
     type.push_back(tm3);
 
     auto ty = incompleteStructTy->complete(std::move(ident), std::move(type));

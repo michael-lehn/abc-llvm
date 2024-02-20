@@ -1,18 +1,20 @@
+#include "binaryexpr.hpp"
 #include "expr.hpp"
-#include "symtab.hpp"
 #include "gen.hpp"
+#include "identifier.hpp"
+#include "symtab.hpp"
 #include "type.hpp"
 
 const Type *
 makeSomeStructType(void)
 {
-    std::vector<const char *> memIdent;
+    std::vector<UStr> memIdent;
     std::vector<const Type *> memType;
     
-    memIdent.push_back(UStr{"first"}.c_str());
+    memIdent.push_back(UStr{"first"});
     memType.push_back(Type::getUnsignedInteger(16));
 
-    memIdent.push_back(UStr{"second"}.c_str());
+    memIdent.push_back(UStr{"second"});
     memType.push_back(Type::getUnsignedInteger(64));
 
     auto ty = Type::createIncompleteStruct("Foo");
@@ -23,9 +25,9 @@ int
 main(void)
 {
     Symtab::addDecl(Token::Loc{}, UStr{"foo"}, makeSomeStructType());
-    auto foo = Expr::createIdentifier(UStr{"foo"}, Token::Loc{});
+    auto foo = Identifier::create(UStr{"foo"}, Token::Loc{});
 
-    auto foo_second = Expr::createMember(std::move(foo), UStr{"first"});
+    auto foo_second = BinaryExpr::createMember(std::move(foo), UStr{"first"});
 
     foo_second->print();
 

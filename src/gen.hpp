@@ -22,16 +22,18 @@ void setOpt(bool);
 void setTarget(int codeGenOptLevel);
 
 // functions definition
-void fnDecl(const char *ident, const Type *fn);
+void fnDecl(const char *ident, const Type *fn, bool external);
 void fnDef(const char *ident, const Type *fn,
-	   const std::vector<const char *> &param);
+	   const std::vector<const char *> &param,
+	   bool external);
 void fnDefEnd(void);
 void ret(Reg reg = nullptr);
 
 // variables
-void defLocal(const char *ident, const Type *type);
-void defGlobal(const char *ident, const Type *type, ConstVal val = nullptr);
-void declGlobal(const char *ident, const Type *type);
+bool defLocal(const char *ident, const Type *type);
+void defGlobal(const char *ident, const Type *type, bool external,
+	       ConstVal val = nullptr);
+void declGlobal(const char *ident, const Type *type, bool external);
 void defStatic(const char *ident, const Type *type, ConstVal constVal);
 void defStringLiteral(const char *ident, const char *val, bool isConst);
 
@@ -62,6 +64,8 @@ enum CondOp {
 };
 
 Cond cond(CondOp op, Reg a, Reg b);
+ConstVal cond(CondOp op, ConstVal a, ConstVal b);
+
 Label getLabel(const char *name = "");
 void labelDef(Label label);
 Label jmp(Label &label); // needed for phi: returns label of current block
@@ -74,8 +78,8 @@ Reg phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type);
 Reg loadAddr(const char *ident);
 Reg fetch(const char *ident, const Type *type);
 Reg fetch(Reg addr, const Type *type);
-void store(Reg val, const char *ident, const Type *type);
-void store(Reg val, Reg addr, const Type *type);
+Reg store(Reg val, const char *ident, const Type *type);
+Reg store(Reg val, Reg addr, const Type *type);
 
 // ALU
 enum AluOp {
@@ -92,9 +96,11 @@ Reg cast(Reg reg, const Type *fromType, const Type *toType);
 ConstVal cast(ConstVal constVal, const Type *fromType, const Type *toType);
 
 ConstVal loadIntConst(const char *val, const Type *type, std::uint8_t radix);
-ConstVal loadIntConst(std::uint64_t val, const Type *type);
+ConstVal loadIntConst(std::uint64_t val, const Type *type,
+		      bool isSigned = false);
 ConstVal loadZero(const Type *type);
 
+ConstVal loadConstString(const char *str);
 ConstVal loadConstArray(const std::vector<ConstVal> &val, const Type *type);
 ConstVal loadConstStruct(const std::vector<ConstVal> &val, const Type *type);
 

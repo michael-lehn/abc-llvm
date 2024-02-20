@@ -1,0 +1,8 @@
+fn main(): int
+{
+    local i: int = 42;
+    local cp: -> const int = &i;
+    // local p: -> int = cp; // error: casting '-> const i32'
+			     //	to '-> int (aka 'i32')' discards const qualifier
+
+}

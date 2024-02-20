@@ -7,11 +7,11 @@
 
 namespace error {
 
-std::ostream& out(void);
-void fatal(void);
-void warning(void);
+std::ostream& out(int indent = 0);
+void fatal();
+void warning();
 
-void expected(TokenKind kind);
+bool expected(TokenKind kind);
 
 } // namespace error
 

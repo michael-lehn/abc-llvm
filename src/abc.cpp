@@ -126,7 +126,10 @@ main(int argc, char *argv[])
     }
 
     gen::setTarget(optLevel);
-    parser();
+    if (auto ast = parser()) {
+	// ast->print();
+	ast->codegen();
+    }
 
     if (output == ASM) {
 	gen::dump_asm(std::filesystem::path(infile).stem().c_str(), optLevel);

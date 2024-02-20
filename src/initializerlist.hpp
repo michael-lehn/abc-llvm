@@ -12,28 +12,28 @@
 class InitializerList
 {
     public:
-	InitializerList(const Type *type = nullptr);
+	InitializerList() = default;
+	InitializerList(const Type *type);
 
-	const Type *getType() const;
+	const Type *type() const;
 	bool isConst() const;
 
-	// only use: if type was not already set in constructor
-	void setType(const Type *ty);
-
-	void add(ExprPtr &&expr, Token::Loc loc = Token::Loc{});
+	void set(ExprPtr &&expr);
+	void add(ExprPtr &&expr);
 	void add(InitializerList &&initList, Token::Loc loc = Token::Loc{});
 
 	void store(gen::Reg addr) const;
 	void store(size_t index, gen::Reg addr) const;
 
-	gen::ConstVal loadConst() const;
-	gen::ConstVal loadConst(size_t index) const;
+	gen::ConstVal loadConstValue() const;
+	gen::ConstVal loadConstValue(size_t index) const;
 
 	void print(int indent = 0) const;
+	void printFlat(std::ostream &out, bool isFactor) const;
 
     private:
-	const Type *type;
-	std::size_t pos;
+	const Type *type_ = nullptr;
+	std::size_t pos = 0;
 	std::vector<std::variant<ExprPtr, InitializerList>> value;
 	std::vector<const Type *> valueType;
 	std::vector<Token::Loc> valueLoc;

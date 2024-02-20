@@ -3,7 +3,7 @@
 #include "llvm/IR/Constants.h"
 
 #include "gen.hpp"
-#include "expr.hpp"
+#include "integerliteral.hpp"
 #include "type.hpp"
 
 int
@@ -18,7 +18,7 @@ main(void)
     std::vector<const char *>	param{2};
     param[0] = "a";
     param[1] = "b";
-    gen::fnDef("foo", fn, param);
+    gen::fnDef("foo", fn, param, false);
 
     auto thenLabel = gen::getLabel("then");
     auto elseLabel = gen::getLabel("else");
@@ -51,13 +51,13 @@ main(void)
     gen::ret(r);
     gen::fnDefEnd();
 
-    auto someConst = Expr::createLiteral("42", 10, nullptr);
-    gen::defGlobal("globalFoo", Type::getUnsignedInteger(64),
-		   someConst->loadConst()); 
+    auto someConst = IntegerLiteral::create("42");
+    gen::defGlobal("globalFoo", Type::getUnsignedInteger(64), true,
+		   someConst->loadConstValue());
 
     auto arrayTy = Type::getArray(Type::getUnsignedInteger(64), 42);
     std::cerr << "arrayTy = " << arrayTy << std::endl;
-    gen::defGlobal("globalArrayFoo", arrayTy);
+    gen::defGlobal("globalArrayFoo", arrayTy, true);
 
     std::cerr << "writing to 'ex_gen.bc'" << std::endl;
     gen::dump_bc("ex_gen");

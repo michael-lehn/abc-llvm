@@ -1,6 +1,6 @@
 #include <stdio.hdr>
 
-fn main(argc: int, argv: -> -> char)
+fn main(argc: int, argv: -> -> char): int
 {
     for (local i: int = 0; i < argc; ++i) {
 	printf("argv[%d] = %s\n", i, argv[i]);
@@ -11,9 +11,6 @@ fn main(argc: int, argv: -> -> char)
 	while (getchar() != '\n') {}
     }
     printf("got i = %d\n", i);
-
-    local g: -> FILE = cast(123: -> FILE);
-
 
     local f: -> FILE = fopen("file", "w");
     if (!f) {

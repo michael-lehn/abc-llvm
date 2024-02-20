@@ -1,36 +1,7 @@
-#include <stdio.hdr>
-
-struct Foo
-{
-    a: u8;
-    b: u16;
-};
-
-global
-    foo: const Foo = {42, 2};
+global a: array[10] of -> int;
+global b: -> array[10] of int;
+global c: -> array[10] of -> int;
 
 fn main()
 {
-    for (local i: u8 = 0; i < 10; ++i) {
-	printf("hello, world!\n");
-    }
-
-    // verbose cast
-    *cast(&foo.a: ->u8) = 123;
-
-    // slick cast
-    * :->u8( &foo.a ) = 123;
-
-    local
-	a: u8,
-	foo: Foo;
-
-    a = ++cast({1}: u8);
-    foo = cast({a, 123456789123456789}: Foo);
-
-    // This will give a warning literal does not fit into 64 bits
-    //foo = cast({a, 123456789123456789123}: Foo);
-
-    printf("foo.a = %d, foo.b = %lld\n", foo.a, foo.b);
-    printf("a = %d\n", a);
 }

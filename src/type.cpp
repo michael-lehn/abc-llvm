@@ -8,7 +8,7 @@
 #include "type.hpp"
 
 /*
- * Innder class: Type::StructData
+ * Inner class: Type::StructData
  */
 
 Type::StructData::StructData(std::size_t id, UStr name)
@@ -22,6 +22,23 @@ Type::StructData::StructData(const StructData &data, bool constFlag)
 }
 
 /*
+ * Inner class: Type::EnumData
+ */
+
+Type::EnumData::EnumData(std::size_t id, UStr name, const Type *intType)
+    : id{id}, name{name}, intType{intType}, isComplete{false}, constFlag{false}
+{
+    assert(intType);
+}
+
+Type::EnumData::EnumData(const EnumData &data, bool constFlag)
+    : id{data.id}, name{data.name}, intType{data.intType}
+    , isComplete{data.isComplete}, constFlag{constFlag}
+{
+    assert(intType);
+}
+
+/*
  * Hidden types: Integer, Pointer, Array, Function, Struct 
  */
 
@@ -30,7 +47,7 @@ Type::StructData::StructData(const StructData &data, bool constFlag)
 struct Integer : public Type
 {
     Integer()
-	: Type{Type::VOID, IntegerData{0, Type::IntegerKind::UNSIGNED, true}}
+	: Type{Type::VOID, IntegerData{0, Type::IntegerKind::UNSIGNED, false}}
     {}
 
     Integer(std::size_t numBits, IntegerKind kind = IntegerKind::UNSIGNED)
@@ -123,17 +140,27 @@ operator<(const Array &x, const Array &y)
 
 struct Function : public Type
 {
-    Function(const Type *retType, std::vector<const Type *> argType,
+    Function(const Type *retType, std::vector<const Type *> paramType,
 	     bool hasVarg = false)
-	: Type{Type::FUNCTION, FunctionData{retType, argType, hasVarg}}
+	: Type{Type::FUNCTION, FunctionData{retType, paramType, hasVarg}}
     {}
+
+    Function(const FunctionData &data, UStr aliasIdent)
+	: Type{Type::FUNCTION, data, aliasIdent}
+    {}
+
+    friend bool operator<(const Function &x, const Function &y);
 };
 
 bool
 operator<(const Function &x, const Function &y)
 {
-    const auto &tx = std::tuple{x.getArgType(), x.getRetType()};
-    const auto &ty = std::tuple{y.getArgType(), y.getRetType()};
+    const auto &tx = std::tuple{x.aliasIdent.c_str(),
+				x.getArgType(),
+				x.getRetType()};
+    const auto &ty = std::tuple{y.aliasIdent.c_str(),
+				y.getArgType(),
+				y.getRetType()};
     return tx < ty;
 }
 
@@ -150,14 +177,35 @@ struct Struct : public Type
     {
     }
 
-    Struct(const StructData &data, UStr aliasIdent)
-	: Type{Type::STRUCT, data, aliasIdent}
+    bool isComplete()
+    {
+	assert(std::holds_alternative<StructData>(data));
+	return std::get<StructData>(data).isComplete;
+    }
+};
+
+//--  Enum class -------------------------------------------------------------
+
+struct Enum : public Type
+{
+    Enum(std::size_t id, UStr name, const Type *intType)
+	: Type{Type::ENUM, EnumData{id, name, intType}}
+    {}
+
+    Enum(const EnumData &data, bool constFlag)
+	: Type{Type::ENUM, EnumData{data, constFlag}}
+    {
+    }
+
+    Enum(const EnumData &data, UStr aliasIdent)
+	: Type{Type::ENUM, data, aliasIdent}
     {
     }
 
     bool isComplete()
     {
-	return std::get<StructData>(data).isComplete;
+	assert(std::holds_alternative<EnumData>(data));
+	return std::get<EnumData>(data).isComplete;
     }
 };
 
@@ -169,6 +217,8 @@ static std::set<Array> *arrayTypeSet;
 static std::set<Function> *fnTypeSet;
 static std::unordered_map<std::size_t, Struct> *structMap;
 static std::unordered_map<std::size_t, Struct> *constStructMap;
+static std::unordered_map<std::size_t, Enum> *enumMap;
+static std::unordered_map<std::size_t, Enum> *constEnumMap;
 
 void
 printTypeSet()
@@ -217,6 +267,22 @@ printTypeSet()
 		<< std::endl;
 	}
     }
+    if (enumMap) {
+	std::cerr << "Enum map (size: " << enumMap->size() << ")"
+	    << std::endl;
+	for (const auto &ty: *enumMap) {
+	    std::cerr << " id: " << ty.first << ": " << (void *)&ty.second
+		<< std::endl;
+	}
+    }
+    if (constEnumMap) {
+	std::cerr << "Const enum map (size: " << constEnumMap->size() << ")"
+	    << std::endl;
+	for (const auto &ty: *constEnumMap) {
+	    std::cerr << " id: " << ty.first << ": " << (void *)&ty.second
+		<< std::endl;
+	}
+    }
 }
 
 /*
@@ -236,8 +302,10 @@ Type::hasSize() const
 {
     if (isVoid()) {
 	return false;
-    } else if (isStruct()) {
+    } else if (std::holds_alternative<StructData>(data)) {
 	return std::get<StructData>(data).isComplete;
+    } else if (std::holds_alternative<EnumData>(data)) {
+	return std::get<EnumData>(data).isComplete;
     } else if (isArray()) {
 	return getDim();
     } else {
@@ -262,12 +330,14 @@ Type::isBool() const
 bool
 Type::hasConstFlag() const
 {
-    if (isInteger()) {
+    if (std::holds_alternative<IntegerData>(data)) {
 	return std::get<IntegerData>(data).constFlag;
-    } else if (isPointer()) {
+    } else if (std::holds_alternative<PointerData>(data)) {
 	return std::get<PointerData>(data).constFlag;
-    } else if (isStruct()) {
+    } else if (std::holds_alternative<StructData>(data)) {
 	return std::get<StructData>(data).constFlag;
+    } else if (std::holds_alternative<EnumData>(data)) {
+	return std::get<EnumData>(data).constFlag;
     }
     return false;
 }
@@ -275,21 +345,40 @@ Type::hasConstFlag() const
 bool
 Type::isInteger() const
 {
-    return id == INTEGER;
+    return id == INTEGER || id == ENUM;
 }
 
 Type::IntegerKind
 Type::getIntegerKind() const
 {
-    assert(std::holds_alternative<IntegerData>(data));
-    return std::get<IntegerData>(data).kind;
+    assert(std::holds_alternative<IntegerData>(data)
+	    || std::holds_alternative<EnumData>(data));
+
+    if (std::holds_alternative<IntegerData>(data)) {
+	return std::get<IntegerData>(data).kind;
+    } else if (std::holds_alternative<EnumData>(data)) {
+	return std::get<EnumData>(data).intType->getIntegerKind();
+    } else {
+	assert(0);
+	return SIGNED;
+    }
 }
 
 std::size_t
 Type::getIntegerNumBits() const
 {
-    assert(std::holds_alternative<IntegerData>(data));
-    return std::get<IntegerData>(data).numBits;
+    assert(std::holds_alternative<IntegerData>(data)
+	    || std::holds_alternative<EnumData>(data));
+
+    if (std::holds_alternative<IntegerData>(data)) {
+	return std::get<IntegerData>(data).numBits;
+    } else if (std::holds_alternative<EnumData>(data)) {
+	assert(std::get<EnumData>(data).intType);
+	return std::get<EnumData>(data).intType->getIntegerNumBits();
+    } else {
+	assert(0);
+	return 0;
+    }
 }
 
 // for pointer and array (sub-)types
@@ -303,11 +392,10 @@ Type::isPointer() const
 bool
 Type::isNullPointer() const
 {
-    if (!isPointer()) {
-	return false;
+    if (std::holds_alternative<PointerData>(data)) {
+	return std::get<PointerData>(data).isNullptr;
     }
-    assert(std::holds_alternative<PointerData>(data));
-    return std::get<PointerData>(data).isNullptr;
+    return false;
 }
 
 bool
@@ -365,7 +453,25 @@ const std::vector<const Type *> &
 Type::getArgType() const
 {
     assert(std::holds_alternative<FunctionData>(data));
-    return std::get<FunctionData>(data).argType;
+    return std::get<FunctionData>(data).paramType;
+}
+
+// for named type (i.e. struct and enum types)
+
+UStr
+Type::getName() const
+{
+    assert(isStruct() || isEnum());
+    if (std::holds_alternative<StructData>(data)) {
+	const auto &structData = std::get<StructData>(data);
+	return structData.name;
+    } else if (std::holds_alternative<EnumData>(data)) {
+	const auto &enumData = std::get<EnumData>(data);
+	return enumData.name;
+    } else {
+	assert(0);
+	return UStr{};
+    }
 }
 
 // for struct (sub-)types
@@ -376,8 +482,8 @@ Type::isStruct() const
 }
 
 const Type *
-Type::complete(std::vector<const char *> &&ident,
-	       std::vector<const Type *> &&type)
+Type::complete(const std::vector<UStr> &ident,
+	       const std::vector<const Type *> &type)
 {
     assert(std::holds_alternative<StructData>(data));
     assert(ident.size() == type.size());
@@ -391,33 +497,24 @@ Type::complete(std::vector<const char *> &&ident,
     structData.isComplete = true;	
     structData.ident = ident;	
     structData.type = type;
-    for (std::size_t i = 0; i < ident.size(); ++i) {
-	structData.index[ident[i]] = i;
+    for (std::size_t i = 0; i < structData.ident.size(); ++i) {
+	structData.index[structData.ident[i]] = i;
     }
 
     // complete const version
     auto &constStruct = constStructMap->at(structData.id);
     auto &constStructData = std::get<StructData>(constStruct.data);
+    constStructData.name = structData.name;	
     constStructData.isComplete = true;	
-    constStructData.ident = ident;
+    constStructData.ident = structData.ident;
     constStructData.type.resize(structData.type.size());
     for (std::size_t i = 0; i < structData.type.size(); ++i) {
 	constStructData.type[i] = getConst(structData.type[i]);
     }
-    for (std::size_t i = 0; i < ident.size(); ++i) {
-	constStructData.index[ident[i]] = i;
+    for (std::size_t i = 0; i < structData.ident.size(); ++i) {
+	constStructData.index[structData.ident[i]] = i;
     }
-
-
     return this;
-}
-
-UStr
-Type::getName() const
-{
-    assert(std::holds_alternative<StructData>(data));
-    const auto &structData = std::get<StructData>(data);
-    return structData.name;
 }
 
 std::size_t
@@ -457,8 +554,10 @@ Type::getMemberType(std::size_t index) const
     } else if (std::holds_alternative<ArrayData>(data)) {
 	auto type = getRefType();
 	return index < getDim() ? type : nullptr;
-    } else {
+    } else if (index == 0) {
 	return this;
+    } else {
+	return nullptr;
     }
 }
 
@@ -471,15 +570,20 @@ Type::getMemberType(UStr ident) const
     return structData.type[getMemberIndex(ident)];
 }
 
-const std::vector<const Type *> &
+std::vector<const Type *>
 Type::getMemberType() const
 {
-    assert(std::holds_alternative<StructData>(data));
-    const auto &structData = std::get<StructData>(data);
-    return structData.type;
+    if (std::holds_alternative<StructData>(data)) {
+	const auto &structData = std::get<StructData>(data);
+	return structData.type;
+    } else if (std::holds_alternative<ArrayData>(data)) {
+	return std::vector<const Type *>(getDim(), getRefType());
+    } else {
+	return std::vector<const Type *>(1, this);
+    }
 }
 
-const std::vector<const char *> &
+const std::vector<UStr> &
 Type::getMemberIdent() const
 {
     assert(std::holds_alternative<StructData>(data));
@@ -487,42 +591,105 @@ Type::getMemberIdent() const
     return structData.ident;
 }
 
+// for enum (sub-)types
+bool
+Type::isEnum() const
+{
+    return id == ENUM;
+}
+
+const Type *
+Type::complete(const std::vector<UStr> &enumIdent,
+	       const std::vector<std::int64_t> &enumValue)
+{
+    assert(std::holds_alternative<EnumData>(data));
+    assert(enumIdent.size() == enumValue.size());
+    auto &enumData = std::get<EnumData>(data);
+
+    if (enumData.isComplete) {
+	// enum constants already defined
+	return nullptr;
+    }
+
+    enumData.isComplete = true;	
+    enumData.enumIdent = std::move(enumIdent);
+    enumData.enumValue = std::move(enumValue);
+
+    // complete const version
+    auto &constEnum = constEnumMap->at(enumData.id);
+    auto &constEnumData = std::get<EnumData>(constEnum.data);
+
+    constEnumData.name = enumData.name;
+    constEnumData.intType = getConst(enumData.intType);
+    constEnumData.isComplete = true;
+    constEnumData.enumIdent = enumData.enumIdent;
+    constEnumData.enumValue = enumData.enumValue;
+    return this;
+}
+
+const std::vector<UStr> &
+Type::getEnumIdent() const
+{
+    assert(std::holds_alternative<EnumData>(data));
+    const auto &enumData = std::get<EnumData>(data);
+    return enumData.enumIdent;
+}
+
+const std::vector<std::int64_t> &
+Type::getEnumValue() const
+{
+    assert(std::holds_alternative<EnumData>(data));
+    const auto &enumData = std::get<EnumData>(data);
+    return enumData.enumValue;
+}
+
 //-- Static functions ----------------------------------------------------------
 
 const Type *
 Type::createAlias(UStr aliasIdent, const Type *forType)
 {
-    if (forType->isInteger()) {
+    if (std::holds_alternative<IntegerData>(forType->data)) {
 	const auto &data = std::get<IntegerData>(forType->data);
 	return &*intTypeSet->insert(Integer{data, aliasIdent}).first;
-    } else if (forType->isPointer()) {
+    } else if (std::holds_alternative<PointerData>(forType->data)) {
 	const auto &data = std::get<PointerData>(forType->data);
 	return &*ptrTypeSet->insert(Pointer{data, aliasIdent}).first;
-    } else if (forType->isArray()) {
+    } else if (std::holds_alternative<ArrayData>(forType->data)) {
 	const auto &data = std::get<ArrayData>(forType->data);
 	return &*arrayTypeSet->insert(Array{data, aliasIdent}).first;
-    } else if (forType->isStruct()) {
+    } else if (std::holds_alternative<StructData>(forType->data)) {
 	auto ty = createIncompleteStruct(aliasIdent);
 	ty->data = std::get<StructData>(forType->data);
 	return ty;
+    } else if (std::holds_alternative<EnumData>(forType->data)) {
+	auto ty = createIncompleteEnum(aliasIdent, forType);
+	ty->data = std::get<EnumData>(forType->data);
+	return ty;
+    } else if (std::holds_alternative<FunctionData>(forType->data)) {
+	const auto &data = std::get<FunctionData>(forType->data);
+	return &*fnTypeSet->insert(Function{data, aliasIdent}).first;
     }
+    assert(0);
     return nullptr;
 }
 
 const Type *
 Type::getConst(const Type *type)
 {
-    if (type->isInteger()) {
+    if (std::holds_alternative<IntegerData>(type->data)) {
 	const auto &data = std::get<IntegerData>(type->data);
 	return &*intTypeSet->insert(Integer{data, true}).first;
-    } else if (type->isPointer()) {
+    } else if (std::holds_alternative<PointerData>(type->data)) {
 	const auto &data = std::get<PointerData>(type->data);
 	return &*ptrTypeSet->insert(Pointer{data, true}).first;
     } else if (type->isArray()) {
 	return getArray(getConst(type->getRefType()), type->getDim());
-    } else if (type->isStruct()) {
+    } else if (std::holds_alternative<StructData>(type->data)) {
 	const auto &data = std::get<StructData>(type->data);
 	return &constStructMap->at(data.id);
+    } else if (std::holds_alternative<EnumData>(type->data)) {
+	const auto &data = std::get<EnumData>(type->data);
+	return &constEnumMap->at(data.id);
     }
     return nullptr;
 }
@@ -530,15 +697,18 @@ Type::getConst(const Type *type)
 const Type *
 Type::getConstRemoved(const Type *type)
 {
-    if (type->isInteger()) {
+    if (std::holds_alternative<IntegerData>(type->data)) {
 	const auto &data = std::get<IntegerData>(type->data);
 	return &*intTypeSet->insert(Integer{data, false}).first;
-    } else if (type->isPointer()) {
+    } else if (std::holds_alternative<PointerData>(type->data)) {
 	const auto &data = std::get<PointerData>(type->data);
 	return &*ptrTypeSet->insert(Pointer{data, false}).first;
-    } else if (type->isStruct()) {
+    } else if (std::holds_alternative<StructData>(type->data)) {
 	const auto &data = std::get<StructData>(type->data);
 	return &structMap->at(data.id);
+    } else if (std::holds_alternative<EnumData>(type->data)) {
+	const auto &data = std::get<EnumData>(type->data);
+	return &enumMap->at(data.id);
     }
     return type;
 }
@@ -562,6 +732,13 @@ Type::getChar()
     }
     return getUnsignedInteger(8);
 }
+
+const Type *
+Type::getString(std::size_t len)
+{
+    return getArray(getChar(), len + 1);
+}
+
 
 const Type *
 Type::getBool()
@@ -627,16 +804,16 @@ Type::getArray(const Type *refType, std::size_t dim)
 // Create function type or return existing type
 
 const Type *
-Type::getFunction(const Type *retType, std::vector<const Type *> argType,
+Type::getFunction(const Type *retType, std::vector<const Type *> paramType,
 		  bool hasVarg)
 {
     if (!fnTypeSet) {
 	fnTypeSet = new std::set<Function>;
     }
-    return &*fnTypeSet->insert(Function{retType, argType, hasVarg}).first;
+    return &*fnTypeSet->insert(Function{retType, paramType, hasVarg}).first;
 }
 
-// create strcutured types
+// create structured types
 
 Type *
 Type::createIncompleteStruct(UStr name)
@@ -650,6 +827,7 @@ Type::createIncompleteStruct(UStr name)
 	if (!ty->isStruct()) {
 	    return nullptr;
 	}
+	assert(std::holds_alternative<StructData>(ty->data));
 	auto &structData = std::get<StructData>(ty->data);
 	return &structMap->at(structData.id);
     }
@@ -668,38 +846,37 @@ Type::createIncompleteStruct(UStr name)
     return ty;
 }
 
-void
-Type::remove(const Type *ty)
+// create enumeration types
+
+Type *
+Type::createIncompleteEnum(UStr name, const Type *intType)
 {
-    if (ty->isInteger()) {
-	assert(intTypeSet
-		&& "Type::remove() called before any int type was created");
-
-	auto intTy = static_cast<const Integer *>(ty);
-	auto numErased = intTypeSet->erase(*intTy);
-	assert(numErased == 1 && "Type::remove(): no int type deleted");
-    } else if (ty->isPointer()) {
-	assert(ptrTypeSet
-		&& "Type::remove() called before any pointer type was created");
-
-	auto ptrTy = static_cast<const Pointer *>(ty);
-	auto numErased = ptrTypeSet->erase(*ptrTy);
-	assert(numErased == 1 && "Type::remove(): no pointer type deleted");
-    } else if (ty->isArray()) {
-	assert(arrayTypeSet
-		&& "Type::remove() called before any array type was created");
-
-	auto arrayTy = static_cast<const Array *>(ty);
-	auto numErased = arrayTypeSet->erase(*arrayTy);
-	assert(numErased == 1 && "Type::remove(): no array type deleted");
-    } else if (ty->isStruct()) {
-	assert(structMap
-		&& "Type::remove() called before any struct was created");
-    
-	const auto &structData = std::get<StructData>(ty->data);
-	auto numErased = structMap->erase(structData.id);
-	assert(numErased == 1 && "Type::remove(): no struct type deleted");
+    assert(!constEnumMap == !enumMap);
+    if (!enumMap) {
+	enumMap = new std::unordered_map<std::size_t, Enum>;
+	constEnumMap = new std::unordered_map<std::size_t, Enum>;
     }
+    if (auto ty = Symtab::getNamedType(name, Symtab::CurrentScope)) {
+	if (!ty->isEnum()) {
+	    return nullptr;
+	}
+	assert(std::holds_alternative<EnumData>(ty->data));
+	auto &enumData = std::get<EnumData>(ty->data);
+	return &enumMap->at(enumData.id);
+    }
+
+    // new enum type is needed
+    static size_t id;
+    auto ty = &enumMap->insert({id, Enum{id, name, intType}}).first->second;
+    // also create the const version
+    auto data = std::get<EnumData>(ty->data);
+    constEnumMap->insert({id, Enum{data, true}});
+    ++id;
+
+    // add type to current scope
+    auto tyAdded = Symtab::addTypeAlias(name, ty);
+    assert(ty == tyAdded);
+    return ty;
 }
 
 /*
@@ -708,74 +885,72 @@ Type::remove(const Type *ty)
 
 const Type *
 Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc,
-			bool silent)
+			bool silent, bool allowConstCast)
 {
     if (from == to) {
 	return to;
     } else if (from->isVoid() && !to->isVoid()) {
 	return nullptr;
-    } else if (getConstRemoved(from) == getConstRemoved(to)) {
-	if (to->hasConstFlag() && !from->hasConstFlag()) {
-	    if (!silent) {
-		error::out() << loc << ": warning: casting '" << from
-		    << "' to '" << to << "' discards const qualifier"
-		    << std::endl;
-		error::warning();
-	    }
-	    from = getConstRemoved(from);
-	    to = getConstRemoved(to);
-	    return getTypeConversion(from, to);
-	}
-	return to;
-    } else if (from->isInteger() && to->isInteger()) {
-	// TODO: -Wconversion generate warning if sizeof(to) < sizeof(from)
-	return to;
     } else if (from->isNullPointer() && to->isPointer()) {
 	return from;
-    } else if (from->isArrayOrPointer() && to->isArrayOrPointer()) {
+    } else if (from->isPointer() && to->isPointer()) {
 	auto fromRefTy = Type::getConstRemoved(from->getRefType());
 	auto toRefTy = Type::getConstRemoved(to->getRefType());
+	bool refTyCheck = *fromRefTy == *toRefTy;
+	bool constCheck = to->getRefType()->hasConstFlag()
+		       || !from->getRefType()->hasConstFlag();
 
-	if (!silent
-	 && fromRefTy != toRefTy && !fromRefTy->isVoid() && !toRefTy->isVoid())
-	{
-	    error::out() << loc << ": warning: casting '" << from
-		<< "' to '" << to << "'" << std::endl;
-	    error::warning();
+	if (!refTyCheck && !fromRefTy->isVoid() && !toRefTy->isVoid()) {
+	    if (!silent) {
+		error::out() << loc << ": error: casting '" << from
+		    << "' to '" << to << "'" << std::endl;
+		error::fatal();
+	    }
+	    return nullptr;
 	}
-	if (!silent
-	 && !to->getRefType()->hasConstFlag()
-	 && from->getRefType()->hasConstFlag())
-	{
-	    error::out() << loc << ": warning: casting '" << from
-		<< "' to '" << to << "' discards const qualifier" << std::endl;
-	    error::warning();
+	if (!constCheck && !allowConstCast) {
+	    if (!silent) {
+		error::out() << loc << ": error: casting '" << from
+		    << "' to '" << to << "' discards const qualifier"
+		    << std::endl;
+		error::fatal();
+	    }
+	    return nullptr;
+	}
+	return from;
+    } else if (getConstRemoved(from) == getConstRemoved(to)) {
+	return to;
+    } else if (from->isInteger() && to->isInteger()) {
+	return to;
+    } else if (from->isArray() && to->isPointer()) {
+	auto fromRefTy = Type::getConstRemoved(from->getRefType());
+	auto toRefTy = Type::getConstRemoved(to->getRefType());
+	bool refTyCheck = *fromRefTy == *toRefTy;
+
+	if (!refTyCheck && !toRefTy->isVoid()) {
+	    if (!silent) {
+		error::out() << loc << ": error: casting '" << from
+		    << "' to '" << to << "'" << std::endl;
+		error::fatal();
+	    }
+	    return nullptr;
+	}
+	return to;
+    } else if (from->isPointer() && to->isBool()) {
+	return to;
+    } else if (from->isPointer() && to->isArray()) {
+	return nullptr;
+    } else if (from->isArray() && to->isArray()) {
+	auto fromRefTy = Type::getConstRemoved(from->getRefType());
+	auto toRefTy = Type::getConstRemoved(to->getRefType());
+	bool refTyCheck = *fromRefTy == *toRefTy;
+
+	if (!refTyCheck || from->getDim() != to->getDim()) {
+	    return nullptr;
 	}
 	return from;
     } else if (from->isFunction() && to->isPointer()) {
-	if (!silent
-	 && from != to->getRefType() && !to->getRefType()->isVoid()) {
-	    error::out() << loc << ": warning: casting '" << from
-		<< "' to '" << to << "'" << std::endl;
-	    error::warning();
-	}
-	return from; // no cast required
-    } else if (convertArrayOrFunctionToPointer(from)->isPointer()
-	    && to->isInteger()) {
-	if (!silent) {
-	    error::out() << loc << ": warning: casting '" << from
-		<< "' to '" << to << "'" << std::endl;
-	    error::warning();
-	}
-	return to;
-    } else if (from->isInteger()
-	    && convertArrayOrFunctionToPointer(to)->isPointer()) {
-	if (!silent) {
-	    error::out() << loc << ": warning: casting '" << from
-		<< "' to '" << to << "'" << std::endl;
-	    error::warning();
-	}
-	return to;
+	return from;
     }
     return nullptr;
 }
@@ -859,6 +1034,11 @@ operator<<(std::ostream &out, const Type *type)
 	out << "void";
     } else if (type->isBool()) {
 	out << "bool";
+    } else if (type->isEnum()) {
+	out << type->getName().c_str();
+	if (!type->hasSize()) {
+	    out << " (incomplete enum)";
+	}
     } else if (type->isInteger()) {
 	out << (type->getIntegerKind() == Type::SIGNED ? "i" : "u")
 	    << type->getIntegerNumBits();
@@ -891,6 +1071,11 @@ operator<<(std::ostream &out, const Type *type)
 	}
 	out << "): " << type->getRetType();
     } else if (type->isStruct()) {
+	out << type->getName().c_str();
+	if (!type->hasSize()) {
+	    out << " (incomplete struct)";
+	}
+	/*
 	type = Type::getConstRemoved(type);
 	auto memType = type->getMemberType();
 	auto memIdent = type->getMemberIdent();
@@ -905,6 +1090,7 @@ operator<<(std::ostream &out, const Type *type)
 	    }
 	    out << "}";
 	}
+	*/
     } else {
 	out << "unknown type: id = " << type->id
 	    << ", address = " << (int *)type

@@ -1,0 +1,48 @@
+#ifndef LEXER_HDR
+#define LEXER_HDR
+
+#include <stdio.hdr>
+
+enum TokenKind : int
+{
+    BAD_TOKEN,
+    EOI,
+    IDENTIFIER,
+    DECIMAL_LITERAL,
+    HEXADECIMAL_LITERAL,
+    OCTAL_LITERAL,
+    PLUS,
+    MINUS,
+    ASTERISK,
+    SLASH,
+    LPAREN,
+    RPAREN,
+    SEMICOLON,
+    EQUAL,
+    EQUAL2,
+    NOT_EQUAL,
+    LOGICAL_NOT,
+};
+
+enum LexerConst : i32
+{
+    TOKEN_VAL_MAX_LEN = 42,
+};
+
+struct Token {
+    kind:   TokenKind;
+    loc:    struct TokenLoc {
+		from, to:   struct TokenPos {
+				line, col: int;
+			    };
+	    };
+    val:    array[TOKEN_VAL_MAX_LEN + 1] of char;
+    valLen: int;
+};
+
+extern token: Token;
+extern fn tokenKindStr(kind: TokenKind): -> char;
+extern fn tokenKindVal(kind: TokenKind): -> char;
+extern fn getToken(): TokenKind;
+
+#endif // LEXER_HDR

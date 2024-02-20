@@ -1,0 +1,9 @@
+#ifndef STRING_HDR
+#define STRING_HDR
+
+#include <stdabc.hdr>
+
+extern fn strncpy(dest: -> char, src: -> const char, len: size_t): -> char;
+extern fn strcmp(s1: -> const char, s2: -> const char): int;
+
+#endif // STRING_HDR

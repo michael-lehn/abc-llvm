@@ -26,6 +26,8 @@ enum LexerConst : i32
     TOKEN_VAL_MAX_LEN = 42,
 };
 
+type TokenVal: array[TOKEN_VAL_MAX_LEN + 1] of char;
+
 struct Token {
     kind:   TokenKind;
     loc:    struct TokenLoc {
@@ -33,7 +35,7 @@ struct Token {
 				line, col: int;
 			    };
 	    };
-    val:    array[TOKEN_VAL_MAX_LEN + 1] of char;
+    val:    TokenVal;
     valLen: int;
 };
 

@@ -11,11 +11,17 @@ fn main()
     p = &a;
 
     // verbose cast
+    /*
+    // error if arrays are assignable
     p = cast(p: array[2] of u64);
+    */
     p[0] = 42;
 
     // slick cast
+    /*
+    // error if arrays are assignable
     p = :array[2] of u64(p);
+    */
     p[0] = 42;
 
     // conditional with a slick cast ... hmm

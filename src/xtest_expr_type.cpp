@@ -1,20 +1,21 @@
 #include <cstdio>
 #include <iostream>
 
-#include "expr.hpp"
+#include "integerliteral.hpp"
+#include "binaryexpr.hpp"
 
 int
 main(void)
 {
-    auto zero = Expr::createLiteral("0", 10);
-    auto larger = Expr::createLiteral("1234", 10);
+    auto zero = IntegerLiteral::create("0");
+    auto larger = IntegerLiteral::create("1234");
 
 
-    std::cout << "typeof(zero) = " << zero->getType() << std::endl;
-    std::cout << "typeof(larger) = " << larger->getType() << std::endl;
+    std::cout << "typeof(zero) = " << zero->type << std::endl;
+    std::cout << "typeof(larger) = " << larger->type << std::endl;
 
-    auto sum = Expr::createBinary(Binary::Kind::ADD,
+    auto sum = BinaryExpr::create(BinaryExpr::Kind::ADD,
 				  std::move(zero),
 				  std::move(larger));
-    std::cout << "typeof(sum) = " << sum->getType() << std::endl;
+    std::cout << "typeof(sum) = " << sum->type << std::endl;
 }

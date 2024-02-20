@@ -1,0 +1,22 @@
+#include <stdio.hdr>
+
+#include "expr.hdr"
+#include "gen.hdr"
+#include "symtab.hdr"
+
+fn main()
+{
+
+    symtabAdd("foo", 13);
+    symtabAdd("bar", 31);
+
+    local one: -> Expr = createLiteralExpr(1);
+    local foo: -> Expr = createIdentifierExpr("foo");
+    local cmp: -> Expr = createBinaryExpr(EXPR_EQ, one, foo);
+    local bar: -> Expr = createIdentifierExpr("bar");
+    local assign: -> Expr = createBinaryExpr(EXPR_ASSIGN, bar, cmp);
+
+    printExpr(assign);
+    printf("assembly code:\n");
+    loadExpr(assign);
+}

@@ -1,0 +1,23 @@
+#include <stdio.hdr>
+
+enum Lang : u8
+{
+    DE,
+    EN,
+};
+
+fn getStr(sel: Lang): -> char
+{
+    switch (sel) {
+	case DE: return "Hallo Welt!\n";
+	case EN: return "hello, world!\n";
+	default: return "<language not supported>";
+    }
+}
+
+fn main()
+{
+    printf("hello, world!\n");
+    printf("%*s%", 5, " "); printf(getStr(DE));
+    printf(getStr(EN));
+}

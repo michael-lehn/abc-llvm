@@ -1,5 +1,6 @@
-#include "expr.hpp"
+#include "integerliteral.hpp"
 #include "symtab.hpp"
+#include "identifier.hpp"
 #include "initializerlist.hpp"
 
 int
@@ -8,19 +9,17 @@ main(void)
     auto aTy = Type::getUnsignedInteger(64);
     aTy = Type::getArray(aTy, 5);
 
-    //InitializerList initList(aTy);
-    InitializerList initList;
+    InitializerList initList(aTy);
 
-    initList.add(Expr::createLiteral("1"));
-    initList.add(Expr::createLiteral("2"));
-    initList.add(Expr::createLiteral("3"));
+    initList.add(IntegerLiteral::create("1"));
+    initList.add(IntegerLiteral::create("2"));
+    initList.add(IntegerLiteral::create("3"));
 
     initList.print();
-    initList.setType(aTy);
-    auto aVal = initList.loadConst();
+    auto aVal = initList.loadConstValue();
 
     Symtab::addDecl(Token::Loc{}, "a", aTy);
-    auto a = Expr::createIdentifier("a");
+    auto a = Identifier::create("a");
     gen::defGlobal("a", aTy, aVal);
 
     // --------
@@ -30,14 +29,14 @@ main(void)
     bTy->complete({"first", "second"}, {b1Ty, b2Ty});
 
     InitializerList initList2(bTy);
-    initList2.add(Expr::createLiteral("11"));
-    initList2.add(Expr::createLiteral("21"));
+    initList2.add(IntegerLiteral::create("11"));
+    initList2.add(IntegerLiteral::create("21"));
 
     initList2.print();
-    auto bVal = initList2.loadConst();
+    auto bVal = initList2.loadConstValue();
 
     Symtab::addDecl(Token::Loc{}, "b", bTy);
-    auto b = Expr::createIdentifier("b");
+    auto b = Identifier::create("b");
     gen::defGlobal("b", bTy, bVal);
 
     // --------

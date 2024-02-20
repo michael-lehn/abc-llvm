@@ -1,23 +1,45 @@
-#include <stdio.hdr>
-
-enum Foo : i16
-{
-    A = 42,
-    B,
-    C = 13,
+enum Foo {
+    A = 1,
+    B = 1,
 };
 
-global p: u8 = B + C;
-
-fn main()
+struct Bar
 {
-    printf("A = %d\n", A);
-    printf("B = %d\n", B);
-    printf("C = %d\n", C);
-    printf("p = %d\n", p);
+    b: int;
+    a, x: struct Bar_ {
+	a : int;
+	b : int;
+    };
+};
 
-    local err: -> i32;
-    err = cast(B: -> i32);
+type FooBar: array[4] of int;
+type Str5: array[5] of char;
 
-    printf("err = %p\n", err);
+global str: Str5 = "abc";
+global arr: array[10] of int = "abc";
+
+struct Mix
+{
+    a: array[5] of char;
+    b: array[10] of int;
+};
+
+global mix: Mix = {"abcd", "abc"};
+
+fn main(argc: int): int
+{
+    local bar: Bar;
+
+    bar = :Bar{1, {2}, {3}};
+
+    local foobar: FooBar;
+
+    foobar = :array[4] of int{42};
+    foobar[2] = 42;
+    local i: int;
+    i = 4;
+
+    local mix: Mix = {"abcd", "abc"};
+
+    return 0;
 }

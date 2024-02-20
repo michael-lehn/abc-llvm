@@ -46,7 +46,6 @@
 
 #include "error.hpp"
 #include "gen.hpp"
-#include "symtab.hpp"
 
 namespace gen {
 
@@ -221,28 +220,24 @@ static std::unordered_map<std::string, llvm::AllocaInst *> local;
 static std::unordered_map<std::string, llvm::GlobalValue *> global;
 
 static llvm::Function *
-makeFnDecl(const char *ident, const Type *fnType)
+makeFnDecl(const char *ident, const Type *fnType, bool external)
 {
     if (auto fn = llvmModule->getFunction(ident)) {
 	return fn;
     }
 
-    auto s = Symtab::get(ident, Symtab::RootScope);
-    if (!s) {
-	assert(0 && "symbol for function not declared in root scope");
-    }
-
-    auto linkage = s->hasExternFlag() || !strcmp(ident, "main")
+    auto linkage = external || !strcmp(ident, "main")
 	? llvm::Function::ExternalLinkage
 	: llvm::Function::InternalLinkage;
     auto llvmType = TypeMap::get<llvm::FunctionType>(fnType);
+
     return llvm::Function::Create(llvmType, linkage, ident, llvmModule.get());
 }
 
 void
-fnDecl(const char *ident, const Type *fnType)
+fnDecl(const char *ident, const Type *fnType, bool external)
 {
-    makeFnDecl(ident, fnType);
+    makeFnDecl(ident, fnType, external);
 }
 
 static struct {
@@ -272,18 +267,12 @@ assureOpenBuildingBlock()
 
 void
 fnDef(const char *ident, const Type *fnType,
-      const std::vector<const char *> &param)
+      const std::vector<const char *> &param,
+      bool external)
 {
-    if (auto s = Symtab::get(ident, Symtab::RootScope)) {
-	s->setDefinitionFlag();
-	ident = s->getInternalIdent().c_str();
-    } else {
-	assert(0 && "symbol for function not declared in root scope");
-    }
-
     local.clear();
 
-    auto fn = makeFnDecl(ident, fnType);
+    auto fn = makeFnDecl(ident, fnType, external);
     fn->setDoesNotThrow();
     llvmBB = llvm::BasicBlock::Create(*llvmContext, "entry", fn);
     llvmBuilder->SetInsertPoint(llvmBB);
@@ -347,21 +336,11 @@ ret(Reg reg)
     jmp(currFn.leave);
 }
 
-void
+bool
 defLocal(const char *ident, const Type *type)
 {
     assert(currFn.llvmFn);
     assureOpenBuildingBlock();
-
-    if (auto s = Symtab::get(ident, Symtab::CurrentScope)) {
-	s->setDefinitionFlag();
-	ident = s->getInternalIdent().c_str();
-    } else {
-	error::out() << "internal error: Symbol '" << ident
-	    << "' not found in current scope" << std::endl;
-	Symtab::print(error::out());
-	assert(0 && "symbol for local variable not declared in current scope");
-    }
 
     if (type->isFunction()) {
 	error::out() << "Function can not be defined as local variable"
@@ -369,29 +348,27 @@ defLocal(const char *ident, const Type *type)
 	error::fatal();
     }
 
+    if (local.contains(ident)) {
+	return false;
+    }
+
     // always allocate memory at entry of function
     llvm::IRBuilder<> tmpBuilder(&currFn.llvmFn->getEntryBlock(),
 				 currFn.llvmFn->getEntryBlock().begin());
     auto ty = TypeMap::get(type);
     local[ident] = tmpBuilder.CreateAlloca(ty, nullptr, ident);
+    return true;
 }
 
 void
-declGlobal(const char *ident, const Type *type)
+declGlobal(const char *ident, const Type *type, bool external)
 {
     if (type->isFunction()) {
-	fnDecl(ident, type);
+	fnDecl(ident, type, external);
 	return;
     }
 
-    auto s = Symtab::get(ident, Symtab::RootScope);
-    if (s) {
-	ident = s->getInternalIdent().c_str();
-    } else {
-	assert(0 && "symbol for global variable not declared in root scope");
-    }
-
-    auto linkage = s->hasExternFlag()
+    auto linkage = external
 	? llvm::GlobalValue::ExternalLinkage
 	: llvm::GlobalValue::InternalLinkage;
 
@@ -407,22 +384,14 @@ declGlobal(const char *ident, const Type *type)
 }
 
 void
-defGlobal(const char *ident, const Type *type, ConstVal val)
+defGlobal(const char *ident, const Type *type, bool external, ConstVal val)
 {
     if (type->isFunction()) {
-	fnDecl(ident, type);
+	fnDecl(ident, type, external);
 	return;
     }
 
-    auto s = Symtab::get(ident);
-    if (s) {
-	s->setDefinitionFlag();
-	ident = s->getInternalIdent().c_str();
-    } else {
-	assert(0 && "symbol for global variable not declared in root scope");
-    }
-
-    auto linkage = s->hasExternFlag()
+    auto linkage = external
 	? llvm::GlobalValue::ExternalLinkage
 	: llvm::GlobalValue::InternalLinkage;
 
@@ -475,11 +444,6 @@ Reg
 call(const char *ident, const std::vector<Reg> &param)
 {
     assureOpenBuildingBlock();
-    if (auto s = Symtab::get(ident, Symtab::RootScope)) {
-	ident = s->getInternalIdent().c_str();
-    } else {
-	assert(0 && "symbol for function not declared in root scope");
-    }
 
     auto fn = llvmModule->getFunction(ident);
     assert(fn && "function not declared");
@@ -530,6 +494,14 @@ cond(CondOp op, Reg a, Reg b)
     }
     assert(0);
     return nullptr; // never reached
+}
+
+ConstVal
+cond(CondOp op, ConstVal a, ConstVal b)
+{
+    auto regA = llvm::dyn_cast<llvm::Value>(a);
+    auto regB = llvm::dyn_cast<llvm::Value>(b);
+    return llvm::dyn_cast<llvm::Constant>(cond(op, regA, regB));
 }
 
 Label
@@ -607,13 +579,11 @@ Reg
 loadAddr(const char *ident)
 {
     assureOpenBuildingBlock();
-    if (auto s = Symtab::get(ident)) {
-	ident = s->getInternalIdent().c_str();
-    } else {
-	error::out() << "internal error: symbol '" << ident
-	    << "' not found in symbol table" << std::endl;
-	Symtab::print(error::out());
-	assert(0 && "symbol for not declared in any scope");
+
+    if (!local.contains(ident) && !global.contains(ident)) {
+	auto fn = llvmModule->getFunction(ident);
+	assert(fn && "function not declared");
+	return fn;
     }
 
     auto addr = local.contains(ident)
@@ -627,11 +597,7 @@ Reg
 fetch(const char *ident, const Type *type)
 {
     assureOpenBuildingBlock();
-    if (auto s = Symtab::get(ident)) {
-	ident = s->getInternalIdent().c_str();
-    } else {
-	assert(0 && "symbol for not declared in any scope");
-    }
+    assert(local.contains(ident) || global.contains(ident));
 
     auto ty = TypeMap::get(type);
     auto addr = local.contains(ident)
@@ -648,27 +614,26 @@ fetch(Reg addr, const Type *type)
     return llvmBuilder->CreateLoad(ty, addr);
 }
 
-void
+Reg
 store(Reg val, const char *ident, const Type *type)
 {
     assureOpenBuildingBlock();
-    if (auto s = Symtab::get(ident)) {
-	ident = s->getInternalIdent().c_str();
-    } else {
-	assert(0 && "symbol for not declared in any scope");
-    }
+
+    assert(local.contains(ident) || global.contains(ident));
 
     auto addr = local.contains(ident)
 	? llvm::dyn_cast<llvm::Value>(local[ident])
 	: llvm::dyn_cast<llvm::Value>(global[ident]);
     llvmBuilder->CreateStore(val, addr);
+    return val;
 }
 
-void
+Reg
 store(Reg val, Reg addr, const Type *type)
 {
     assureOpenBuildingBlock();
     llvmBuilder->CreateStore(val, addr);
+    return val;
 }
 
 //------------------------------------------------------------------------------
@@ -699,6 +664,9 @@ cast(Reg reg, const Type *fromType, const Type *toType)
     } else if (fromType->isFunction() && toType->isPointer()) {
 	return reg;
     } else if (fromType->isArray() && toType->isPointer()) {
+	assert(0 && "cast of array to pointer");
+	return nullptr;
+    } else if (fromType->isArray() && toType->isArray()) {
 	return reg;
     } else if (fromType->isPointer() && toType->isArray()) {
 	return reg;
@@ -712,7 +680,7 @@ cast(Reg reg, const Type *fromType, const Type *toType)
 	return llvmBuilder->CreateIntToPtr(reg, ty);
     }
     error::out() << "can not cast '" << fromType << "' to '" << toType
-	<< std::endl;
+	<< "'" << std::endl;
     assert(0);
     return nullptr;
 }
@@ -727,7 +695,7 @@ cast(ConstVal constVal, const Type *fromType, const Type *toType)
 ConstVal
 loadIntConst(const char *val, const Type *type, std::uint8_t radix)
 {
-    //assureOpenBuildingBlock();
+    assert(type);
 
     if (type->isInteger()) {
 	auto ty = llvm::APInt(type->getIntegerNumBits(), val, radix);
@@ -743,7 +711,7 @@ loadIntConst(const char *val, const Type *type, std::uint8_t radix)
 }
 
 ConstVal
-loadIntConst(std::uint64_t val, const Type *type)
+loadIntConst(std::uint64_t val, const Type *type, bool isSigned)
 {
     assert(type->isInteger() || (type->isPointer() && val == 0));
     if (type->isPointer() && val == 0) {
@@ -751,7 +719,6 @@ loadIntConst(std::uint64_t val, const Type *type)
 	return llvm::ConstantPointerNull::get(ty);
     } else if (type->isInteger()) {
 	auto ty = llvm::dyn_cast<llvm::IntegerType>(TypeMap::get(type));
-	auto isSigned = type->getIntegerKind() ==  Type::SIGNED;
 	return llvm::ConstantInt::get(ty, val, isSigned);
     }
     error::out() << "loadConst '" << val << "' of type '" << type << "'"
@@ -765,6 +732,12 @@ loadZero(const Type *type)
 {
     auto ty = TypeMap::get(type);
     return llvm::Constant::getNullValue(ty);
+}
+
+ConstVal
+loadConstString(const char *str)
+{
+    return llvm::ConstantDataArray::getString(*llvmContext, str, false);
 }
 
 ConstVal

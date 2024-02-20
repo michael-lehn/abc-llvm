@@ -7,6 +7,7 @@
 
 #include "error.hpp"
 #include "gen.hpp"
+#include "integerliteral.hpp"
 #include "symtab.hpp"
 
 struct ScopeNode
@@ -23,9 +24,6 @@ struct ScopeNode
 	for (auto &s: symtab) {
 	    s.second.invalidate();
 	}
-	for (const auto &ty: nametab) {
-	    Type::remove(ty);
-	}
     }
 };
 
@@ -35,7 +33,7 @@ static ScopeNode *root = curr.get();
 //------------------------------------------------------------------------------
 
 bool
-Symtab::Entry::setDefinitionFlag(void)
+Symtab::Entry::setDefinitionFlag()
 {
     if (definition) {
 	error::out() << lastDeclLoc << ": '" << ident.c_str()
@@ -59,7 +57,7 @@ Symtab::setPrefix(UStr prefix)
 }
 
 void
-Symtab::openScope(void)
+Symtab::openScope()
 {
     static std::size_t id;
 
@@ -71,11 +69,10 @@ Symtab::openScope(void)
     s->up = std::move(curr);
     s->id = ++id;
     curr = std::move(s);
-
 }
 
 void
-Symtab::closeScope(void)
+Symtab::closeScope()
 {
     assert(curr->up);
 
@@ -109,7 +106,7 @@ Symtab::add(Token::Loc loc, UStr ident, Entry::Data &&data, ScopeNode *sn)
 
     if (found) {
 	if (std::holds_alternative<const Type *>(data)) {
-	    const auto &tyOld = *found->getType();
+	    const auto &tyOld = *found->type();
 	    const auto &tyNew = *std::get<const Type *>(data);
 	    if (tyOld != tyNew) {
 		error::out() << loc
@@ -137,11 +134,7 @@ Symtab::add(Token::Loc loc, UStr ident, Entry::Data &&data, ScopeNode *sn)
 
     auto entry = Entry{loc, std::move(data), ident, internalIdent};
     sn->symtab.emplace(ident.c_str(), std::move(entry));
-    //return &sn->symtab.at(ident.c_str());
-
-
-    auto ret = &sn->symtab.at(ident.c_str());
-    return ret;
+    return &sn->symtab.at(ident.c_str());
 }
 
 Symtab::Entry *
@@ -151,9 +144,13 @@ Symtab::addDecl(Token::Loc loc, UStr ident, const Type *type)
 }
 
 Symtab::Entry *
-Symtab::addConstant(Token::Loc loc, UStr ident, ExprPtr &&val)
+Symtab::addConstant(Token::Loc loc, UStr ident, const Type *type,
+		    std::int64_t val)
 {
-    return add(loc, ident, std::move(val), curr.get());
+    auto expr = IntegerLiteral::create(val, type, loc);
+    auto sym = add(loc, ident, std::move(expr), curr.get());
+    assert(sym);
+    return sym;
 }
 
 Symtab::Entry *
@@ -206,12 +203,22 @@ Symtab::getNamedType(UStr ident, Scope scope)
 }
 
 const Type *
-Symtab::addTypeAlias(UStr ident, const Type *type)
+Symtab::addTypeAlias(UStr ident, const Type *type, Token::Loc loc)
 {
     assert(curr.get());
     auto *found = getNamedType(ident, CurrentScope);
 
-    if (found) {
+    if (found && found != type) {
+	error::out() << loc
+	    << ": error: redefinition with different type ('"
+	    << type << "' vs '" << found << "'" << std::endl;
+	error::fatal();
+	return nullptr;
+    } else if (auto sym = get(ident, CurrentScope)) {
+	error::out() << sym->getLoc() << ": error: '" << ident.c_str()
+	    << "' already defined" << std::endl;
+	error::out() << loc << ": error: previous definition'" << std::endl;
+	error::fatal();
 	return nullptr;
     }
 
@@ -236,9 +243,9 @@ print(std::ostream &out, ScopeNode *sn)
     for (const auto &sym: sn->symtab) {
 	out << std::setfill(' ') << std::setw(indent * 4) << " "
 	    << sym.second.ident.c_str() << ": "
-	    << sym.second.getLoc() << ", "
-	    << sym.second.getType() << " ["
-	    << (void *)sym.second.getType() << "], "
+	    << tokenLocStr(sym.second.getLoc()) << ", "
+	    << sym.second.type() << " ["
+	    << (void *)sym.second.type() << "], "
 	    << sym.second.getInternalIdent().c_str()
 	    << std::endl;
     }
