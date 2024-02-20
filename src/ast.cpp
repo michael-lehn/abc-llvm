@@ -543,6 +543,29 @@ AstInitializerList::AstInitializerList(const Type *type, ExprPtr &&expr)
     assert(type);
 }
 
+AstInitializerList::AstInitializerList(const Type *type, Token::Loc loc,
+				       UStr str)
+    : type{type}, initializer{AstList{}}
+{
+    assert(type);
+    assert(type->isArray());
+    if (str.length() >= type->getDim()) {
+	error::out() << loc
+	    << ": error: string of length " << str.length()
+	    << " is an array of dimension " << (str.length() + 1)
+	    << ". It can not be used to initialize an array of dimension "
+	    << type->getDim() << std::endl;
+	error::fatal();
+	type = nullptr;
+    } else {
+	auto ty = type->getRefType();
+	for (std::size_t i = 0; i < str.length(); ++i) {
+	    auto ch = IntegerLiteral::create(str.c_str()[i], Type::getChar());
+	    append(std::make_unique<AstInitializerList>(ty, std::move(ch)));
+	}
+    }
+}
+
 void
 AstInitializerList::append(AstInitializerListPtr &&initializerItem)
 {

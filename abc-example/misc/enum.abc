@@ -13,6 +13,18 @@ struct Bar
 };
 
 type FooBar: array[4] of int;
+type Str5: array[5] of char;
+
+global str: Str5 = "abc";
+global arr: array[10] of int = "abc";
+
+struct Mix
+{
+    a: array[5] of char;
+    b: array[10] of int;
+};
+
+global mix: Mix = {"abcd", "abc"};
 
 fn main(argc: int): int
 {
@@ -22,6 +34,12 @@ fn main(argc: int): int
 
     local foobar: FooBar;
 
-    foobar = :FooBar{42};
+    foobar = :array[4] of int{42};
+    foobar[2] = 42;
+    local i: int;
+    i = 4;
+
+    local mix: Mix = {"abcd", "abc"};
+
     return 0;
 }

@@ -7,8 +7,9 @@
 
 #include "ast.hpp"
 #include "error.hpp"
-#include "lexer.hpp"
 #include "initializerlist.hpp"
+#include "integerliteral.hpp"
+#include "lexer.hpp"
 #include "parseexpr.hpp"
 #include "parser.hpp"
 #include "symtab.hpp"
@@ -407,11 +408,8 @@ parseVariableDeclaration()
 }
 
 //------------------------------------------------------------------------------
-//static bool parseStringLiteral();
-
 /*
  * initializer = expression
- *             | string-literal
  *             | initializer-list
  */
 static AstInitializerListPtr
@@ -426,37 +424,28 @@ parseInitializer(const Type *type)
 	if (auto expr = parseExpression()) {
 	    return std::make_unique<AstInitializerList>(type, std::move(expr));
 	}
-    } else {
     }
-    /*
-    return parseExpression()
-	|| parseStringLiteral()
-	|| parseInitializerList();
-    */
     return nullptr;
 }
 
 //------------------------------------------------------------------------------
 /*
-static bool
-parseStringLiteral()
-{
-    if (token.kind != TokenKind::STRING_LITERAL) {
-	return false;
-    }
-    getToken();
-    return true;
-}
-*/
-
-//------------------------------------------------------------------------------
-/*
  * initializer-list = "{" initializer-sequence "}"
+ *		    | string-literal
  * initializer-sequence = [ initializer ["," [initializer-sequence] ] 
  */
 AstInitializerListPtr
 parseInitializerList(const Type *type)
 {
+    // parse string-literal
+    if (type->isArray() && token.kind == TokenKind::STRING_LITERAL) {
+	auto loc = token.loc;
+	auto str = token.val;
+	getToken();
+	return std::make_unique<AstInitializerList>(type, loc, str);
+    }
+
+    // parse "{" initializer-sequence "}"
     if (token.kind != TokenKind::LBRACE) {
 	return nullptr;
     }

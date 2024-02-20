@@ -201,6 +201,7 @@ class AstInitializerList : public Ast
     public:
 	AstInitializerList(const Type *type);
 	AstInitializerList(const Type *type, ExprPtr &&expr);
+	AstInitializerList(const Type *type, Token::Loc loc, UStr str);
 
 	const Type *type;
 	std::variant<AstList, ExprPtr> initializer;
