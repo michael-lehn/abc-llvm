@@ -35,7 +35,7 @@ fn main(): u8
     printBytes(s1, 15);
 
     printf("First 5 bytes of function 'printBytes':\n");
-    s1 = :-> char(printBytes);
+    s1 = (-> char)printBytes;
     printBytes(s1, 5);
 
     return 0;

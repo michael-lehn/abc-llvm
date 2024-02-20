@@ -1249,9 +1249,11 @@ static const Type *
 parseUnqualifiedType()
 {
     if (token.kind == TokenKind::IDENTIFIER) {
-	auto type = Symtab::getNamedType(token.val, Symtab::AnyScope);
-	getToken();
-	return type;
+	if (auto type = Symtab::getNamedType(token.val, Symtab::AnyScope)) {
+	    getToken();
+	    return type;
+	}
+	return nullptr;
     } else if (auto type = parsePointerType()) {
 	return type;
     } else if (auto type = parseArrayType()) {

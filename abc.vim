@@ -48,6 +48,7 @@ syntax match keyword /\<enum\>/ skipwhite
 syntax match type /\<const\>/ skipwhite
 syntax match type /\<void\>/ skipwhite
 syntax match type /\<bool\>/ skipwhite
+syntax match type /\<char\>/ skipwhite
 syntax match type /\<u8\>/ skipwhite
 syntax match type /\<u16\>/ skipwhite
 syntax match type /\<u32\>/ skipwhite

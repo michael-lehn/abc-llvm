@@ -25,10 +25,10 @@ fn main()
     p[0] = 42;
 
     // conditional with a slick cast ... hmm
-    a = a > 0 ? a : :u64(b);
+    a = a > 0 ? a : u64{b};
 
     // verbose consditional with a slick cast ... maybe more like it
-    a = a > 0 then a else :u64(b);
+    a = a > 0 then a else u64{b};
 
     printf("a = %ld\n", a);
 }

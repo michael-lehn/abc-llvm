@@ -37,5 +37,5 @@ fn main()
 	printf("%02X", instr[i]);
 	checkSum += instr[i];
     }
-    printf("%02X\n", :char(-checkSum));
+    printf("%02X\n", (char)-checkSum);
 }

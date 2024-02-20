@@ -77,22 +77,22 @@ parseIntType()
 
 //------------------------------------------------------------------------------
 
-static ExprPtr parseAssignment(void);
-static ExprPtr parseConditional(void);
+static ExprPtr parseAssignment();
+static ExprPtr parseConditional();
 static ExprPtr parseBinary(int prec);
-static ExprPtr parsePrefix(void);
+static ExprPtr parsePrefix();
 static ExprPtr parsePostfix(ExprPtr &&expr);
-static ExprPtr parsePrimary(void);
+static ExprPtr parsePrimary();
 
 
 ExprPtr
-parseExpression(void)
+parseExpression()
 {
     return parseAssignment();
 }
 
 ExprPtr
-parseConstExpr(void)
+parseConstExpr()
 {
     auto loc = token.loc;
     auto expr = parseExpression();
@@ -106,7 +106,7 @@ parseConstExpr(void)
 }
 
 static ExprPtr
-parseAssignment(void)
+parseAssignment()
 {
     auto expr = parseConditional();
     if (!expr) {
@@ -155,7 +155,7 @@ parseAssignment(void)
 }
 
 static ExprPtr
-parseConditional(void)
+parseConditional()
 {
     auto expr = parseBinary(1);
     if (!expr) {
@@ -246,65 +246,66 @@ parseBinary(int prec)
 }
 
 static ExprPtr
-parsePrefix(void)
+parsePrefix()
 {
-    if (token.kind != TokenKind::PLUS && token.kind != TokenKind::MINUS
-     && token.kind != TokenKind::NOT && token.kind != TokenKind::AND
-     && token.kind != TokenKind::ASTERISK && token.kind != TokenKind::PLUS2
-     && token.kind != TokenKind::MINUS2)
-    {
-	return parsePostfix(parsePrimary());
-    }
-
-    auto opTok = token;
-    getToken();
-    auto expr = parsePrefix();
-    if (!expr) {
-	error::out() << token.loc << " expected non-empty expression"
-	    << std::endl;
-	error::fatal();
-    }
-    switch (opTok.kind) {
+    auto opLoc = token.loc;
+    switch (token.kind) {
+	case TokenKind::LPAREN:
+	    getToken();
+	    if (auto type = parseType()) {
+		// it's a C cast
+		if (!error::expected(TokenKind::RPAREN)) {
+		    return nullptr;
+		}
+		getToken();
+		if (auto ast = parseInitializerList(type)) {
+		    return CompoundLiteral::create(std::move(ast), opLoc);
+		}
+		return CastExpr::create(parsePrefix(), type, opLoc, true);
+	    } else {
+		// ups, it was the '(' of a primary expression
+		auto expr = parseExpression();
+		if (!error::expected(TokenKind::RPAREN)) {
+		    return nullptr;
+		}
+		getToken();
+		return parsePostfix(std::move(expr));
+	    }
 	case TokenKind::MINUS:
-	    expr = UnaryExpr::create(UnaryExpr::MINUS, std::move(expr),
-				     opTok.loc);
-	    break;
+	    getToken();
+	    return UnaryExpr::create(UnaryExpr::MINUS,
+				     parsePrefix(),
+				     opLoc);
 	case TokenKind::NOT:
-	    expr = UnaryExpr::create(UnaryExpr::LOGICAL_NOT, std::move(expr),
-				     opTok.loc);
-	    break;
+	    getToken();
+	    return UnaryExpr::create(UnaryExpr::LOGICAL_NOT,
+				     parsePrefix(),
+				     opLoc);
 	case TokenKind::ASTERISK:
-	    expr = UnaryExpr::create(UnaryExpr::DEREF, std::move(expr),
-				     opTok.loc);
-	    break;
+	    getToken();
+	    return UnaryExpr::create(UnaryExpr::DEREF,
+				     parsePrefix(),
+				     opLoc);
 	case TokenKind::AND:
-	    expr = UnaryExpr::create(UnaryExpr::ADDRESS, std::move(expr),
-				     opTok.loc);
-	    break;
+	    getToken();
+	    return UnaryExpr::create(UnaryExpr::ADDRESS,
+				     parsePrefix(),
+				     opLoc);
 	case TokenKind::PLUS2:
-	    if (!expr->isLValue()) {
-		error::out() << opTok.loc
-		    << "'++' can only be applied to an l-value" << std::endl;
-		error::fatal();
-	    }
-	    expr = BinaryExpr::createOpAssign(BinaryExpr::ADD,
-					      std::move(expr),
-					      IntegerLiteral::create("1"));
-	    break;
+	    getToken();
+	    return BinaryExpr::createOpAssign(BinaryExpr::ADD,
+					      parsePrefix(),
+					      IntegerLiteral::create("1"),
+					      opLoc);
 	case TokenKind::MINUS2:
-	    if (!expr->isLValue()) {
-		error::out() << opTok.loc
-		    << "'--' can only be applied to an l-value" << std::endl;
-		error::fatal();
-	    }
-	    expr = BinaryExpr::createOpAssign(BinaryExpr::SUB,
-					      std::move(expr),
-					      IntegerLiteral::create("1"));
-	    break;
+	    getToken();
+	    return BinaryExpr::createOpAssign(BinaryExpr::SUB,
+					      parsePrefix(),
+					      IntegerLiteral::create("1"),
+					      opLoc);
 	default:
-	    assert(0);
+	    return parsePostfix(parsePrimary());
     }
-    return expr;
 } 
 
 static ExprPtr
@@ -416,13 +417,24 @@ parsePostfix(ExprPtr &&expr)
 }
 
 static ExprPtr
-parsePrimary(void)
+parsePrimary()
 {
     auto opTok = token;
     if (token.kind == TokenKind::IDENTIFIER) {
+	if (auto type = Symtab::getNamedType(token.val, Symtab::AnyScope)) {
+	    getToken();
+	    if (auto ast = parseInitializerList(type)) {
+		return CompoundLiteral::create(std::move(ast), opTok.loc);
+	    }
+	    error::out() << token.loc
+		<< ": error: initializer list expected" << std::endl;
+	    error::fatal();
+	    return nullptr;
+	}
         getToken();
 	auto expr = Identifier::create(opTok.val, opTok.loc);
         return expr;
+/*
     } else if (token.kind == TokenKind::COLON) {
 	getToken();
 	auto type = parseType();
@@ -458,6 +470,7 @@ parsePrimary(void)
 	    getToken();
 	    return CastExpr::create(std::move(expr), type, opTok.loc, true);
 	}
+*/
     } else if (token.kind == TokenKind::SIZEOF) {
 	getToken();
 	error::expected(TokenKind::LPAREN);

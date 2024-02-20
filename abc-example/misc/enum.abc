@@ -30,11 +30,11 @@ fn main(argc: int): int
 {
     local bar: Bar;
 
-    bar = :Bar{1, {2}, {3}};
+    bar = Bar{1, {2}, {3}};
 
     local foobar: FooBar;
 
-    foobar = :array[4] of int{42};
+    foobar = (array[4] of int){42};
     foobar[2] = 42;
     local i: int;
     i = 4;

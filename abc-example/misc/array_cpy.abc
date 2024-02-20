@@ -42,6 +42,6 @@ fn main()
     //b = a;  // error: different dimension
     print10(a);
 
-    b = :int12"abc"; // ok. same as b = :int12{'a', 'b', 'c'};
+    b = (int12)"abc"; // ok. same as b = (int12){'a', 'b', 'c'};
     print12(b);
 }

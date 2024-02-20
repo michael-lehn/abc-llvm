@@ -16,6 +16,12 @@ UnaryExpr::UnaryExpr(Kind kind, ExprPtr &&child, const Type *type,
 ExprPtr
 UnaryExpr::create(Kind kind, ExprPtr &&child, Token::Loc loc)
 {
+    if (!child) {
+	error::out() << loc << "error: expression expected after operator"
+	    << std::endl;
+	error::fatal();
+	return nullptr;
+    }
     auto promotion = promotion::unary(kind, std::move(child), &loc);
     auto p = new UnaryExpr{kind,
 			   std::move(std::get<0>(promotion)),

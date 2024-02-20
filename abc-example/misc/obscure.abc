@@ -2,7 +2,4 @@
 
 fn main()
 {
-    for (local int: int = 0; int < 10; ++int) {
-	printf("int = %d\n", int);
-    }
 }

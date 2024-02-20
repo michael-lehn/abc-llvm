@@ -20,6 +20,8 @@ BinaryExpr::BinaryExpr(Kind kind, ExprPtr &&left, ExprPtr &&right,
 ExprPtr
 BinaryExpr::create(Kind kind, ExprPtr &&left, ExprPtr &&right, Token::Loc loc)
 {
+    assert(left);
+    assert(right);
     auto promotion = promotion::binary(kind, std::move(left),
 				       std::move(right), &loc);
     auto p = new BinaryExpr{kind,
@@ -34,7 +36,13 @@ ExprPtr
 BinaryExpr::createOpAssign(Kind kind, ExprPtr &&left, ExprPtr &&right,
 			   Token::Loc loc)
 {
+    assert(left);
+    assert(right);
     auto expr = ProxyExpr::create(left.get());
+    if (!left->isLValue()) {
+	error::out() << left->loc << ": error: not an lvalue" << std::endl;
+	error::fatal();
+    }
     expr = BinaryExpr::create(kind, std::move(expr), std::move(right), loc);
     return BinaryExpr::create(ASSIGN, std::move(left), std::move(expr), loc);
 }
