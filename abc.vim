@@ -46,37 +46,42 @@ syntax match keyword /\<union\>/ skipwhite
 syntax match keyword /\<enum\>/ skipwhite
 
 syntax match type /\<const\>/ skipwhite
+syntax match type /\<void\>/ skipwhite
+syntax match type /\<bool\>/ skipwhite
+syntax match type /\<u8\>/ skipwhite
+syntax match type /\<u16\>/ skipwhite
+syntax match type /\<u32\>/ skipwhite
+syntax match type /\<u64\>/ skipwhite
+syntax match type /\<i8\>/ skipwhite
+syntax match type /\<i16\>/ skipwhite
+syntax match type /\<i32\>/ skipwhite
+syntax match type /\<i64\>/ skipwhite
+syntax match type /\<size_t\>/ skipwhite
+syntax match type /\<ptrdiff_t\>/ skipwhite
+syntax match type /\<int\>/ skipwhite
+syntax match type /\<long\>/ skipwhite
+syntax match type /\<long_long\>/ skipwhite
+syntax match type /\<unsigned\>/ skipwhite
+syntax match type /\<unsigned_long\>/ skipwhite
+syntax match type /\<unsigned_long_long\>/ skipwhite
 
 syn region cDefine start="^\s*\zs\%(%:\|#\)\s*\%(define\|undef\)\>" skip="\\$" end="$" keepend
 syn region cIncluded display contained start=+"+ skip=+\\\\\|\\"+ end=+"+
 syn match  cIncluded display contained "<[^>]*>"
 syn match  cInclude display "^\s*\zs\%(%:\|#\)\s*include\>\s*["<]" contains=cIncluded
 syn region cPreCondit   start="^\s*\zs\%(%:\|#\)\s*\%(if\|ifdef\|ifndef\|elif\)\>" skip="\\$" end="$" keepend contains=comment
-syn match       cPreCondit display "^\s*\zs\%(%:\|#\)\s*\%(else\|endif\)\>"
+syn match  cPreCondit display "^\s*\zs\%(%:\|#\)\s*\%(else\|endif\)\>"
 
- 
 
-syntax region notype start=/default/ end=/:/ contains=keyword
-syntax region notype start=/case/ end=/:/ contains=keyword,literal
-
-" syn match typeassign /=/ contained 
-" syntax region typedef start="type" end=";" contains=keyword,typeassign
-" syntax region typedef start="struct" end=/[;{]/ contains=keyword,typeassign
-
-syn match ty /->/
-syn match ty /(/
-syn match ty /\[[^]]*\]/
-"syntax region ty2 start=/fn(/ end=/)/
-"syntax region type matchgroup=buflit start="):" end=/[;{]/
-syntax region type matchgroup=transparent start=/:/ end=/[,;()={]/ contains=ty, keyword
 
 syntax match literal /[+-]*[1-9][0-9]*/ skipwhite
 syntax match literal /nullptr/ skipwhite
 syntax match literal /[0-7][0-7]*/ skipwhite
-syntax match literal /0x[0-9a-zA-Z][0-9a-zA-Z]*/ skipwhite
+syntax match literal /0x[0-9a-fA-F][0-9a-fA-F]*/ skipwhite
 syntax region literal start=/"/ skip=/\\"/ end=/"/ skipwhite
 syntax match literal /'.'/ skipwhite
 syntax match literal /'\\[^\\]'/ skipwhite
+"syntax match ident /[a-zA-Z][a-zA-Z0-9_]*/ skipwhite
 
 syntax region comment start="//" end="$" skipwhite
 syntax region comment start="/\*" end="\*/" skipwhite
