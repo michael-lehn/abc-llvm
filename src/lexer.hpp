@@ -19,6 +19,8 @@ enum class TokenKind {
     CHARACTER_LITERAL,
 
     // keywords
+    GOTO,
+    LABEL,
     CONST,
     FN,
     RETURN,

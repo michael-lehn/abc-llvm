@@ -170,6 +170,37 @@ class AstReturn : public Ast
 
 //------------------------------------------------------------------------------
 
+class AstGoto : public Ast
+{
+    public:
+	AstGoto(Token::Loc loc, UStr labelIdent);
+
+	const Token::Loc loc;
+	UStr labelIdent;
+	gen::Label label = nullptr;
+
+	void print(int indent) const override;
+	void codegen() override;
+};
+
+
+//------------------------------------------------------------------------------
+
+class AstLabel : public Ast
+{
+    public:
+	AstLabel(Token::Loc loc, UStr labelIdent);
+
+	const Token::Loc loc;
+	UStr labelIdent;
+	gen::Label label = nullptr;
+
+	void print(int indent) const override;
+	void codegen() override;
+};
+
+//------------------------------------------------------------------------------
+
 class AstBreak : public Ast
 {
     public:

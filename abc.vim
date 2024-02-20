@@ -18,6 +18,7 @@ syntax match abcIdentifier /[A-Za-z_][A-Za-z0-9_]*/ skipwhite
 " syntax match abcMinus /[-]/ contained skipwhite
 syntax match abcIdentifier /[A-Za-z_][A-Za-z0-9_]*/
  
+syntax match keyword /\<label\>/ skipwhite 
 syntax match keyword /\<fn\>/ skipwhite 
 syntax match keyword /\<_fn\>/ skipwhite 
 syntax match keyword /\<for\>/ skipwhite

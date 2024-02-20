@@ -1,0 +1,26 @@
+#include <stdio.hdr>
+
+fn main()
+{
+    local i: int;
+
+    ;
+
+    do {
+	printf("enter integer: ");
+	scanf("%d", &i);
+	if (i == 42) {
+	    printf("integer was 42. I will break.\n");
+	    break;
+	} else if (i == 24) {
+	    printf("integer was 24. I will goto exit.\n");
+	    goto exit;
+	} else if (i % 2 == 0) {
+	    printf("integer was even. I will continue.\n");
+	    continue;
+	}
+	printf("last statement in loop\n");
+    } while (i != 1);
+    printf("done with the loop. i = %d\n", i);
+label exit:
+}

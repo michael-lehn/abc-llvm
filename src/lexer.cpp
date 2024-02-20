@@ -66,6 +66,10 @@ tokenKindCStr(TokenKind kind)
 	    return "STRING_LITERAL";
 	case TokenKind::CHARACTER_LITERAL:
 	    return "CHARACTER_LITERAL";
+	case TokenKind::GOTO:
+	    return "GOTO";
+	case TokenKind::LABEL:
+	    return "LABEL";
 	case TokenKind::CONST:
 	    return "CONST";
 	case TokenKind::FN:
@@ -215,6 +219,10 @@ tokenCStr(TokenKind kind)
 	    return "end of input";
 	case TokenKind::IDENTIFIER:
 	    return "identifier";
+	case TokenKind::GOTO:
+	    return "goto";
+	case TokenKind::LABEL:
+	    return "label";
 	case TokenKind::CONST:
 	    return "const";
 	case TokenKind::FN:
@@ -433,6 +441,8 @@ hexToVal(char ch)
 }
 
 static std::unordered_map<UStr, TokenKind> kw = {
+    { "goto", TokenKind::GOTO },
+    { "label", TokenKind::LABEL },
     { "const", TokenKind::CONST },
     { "fn", TokenKind::FN },
     { "return", TokenKind::RETURN },

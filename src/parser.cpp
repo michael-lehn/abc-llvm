@@ -821,6 +821,8 @@ static AstPtr parseReturnStatement();
 static AstPtr parseBreakStatement();
 static AstPtr parseContinueStatement();
 static AstPtr parseExpressionStatement();
+static AstPtr parseGotoStatement();
+static AstPtr parseLabelDefinition();
 
 /*
  * statement = compound-statement
@@ -833,6 +835,8 @@ static AstPtr parseExpressionStatement();
  *	     | break-statement
  *	     | continue-statement
  *	     | expression-statement
+ *	     | goto-statement
+ *	     | label-definition
  */
 static AstPtr
 parseStatement()
@@ -848,7 +852,9 @@ parseStatement()
     || (ast = parseReturnStatement())
     || (ast = parseBreakStatement())
     || (ast = parseContinueStatement())
-    || (ast = parseExpressionStatement());
+    || (ast = parseExpressionStatement())
+    || (ast = parseGotoStatement())
+    || (ast = parseLabelDefinition());
     return ast;
 }
 
@@ -1253,6 +1259,48 @@ parseExpressionStatement()
     }
     getToken();
     return std::make_unique<AstExpr>(std::move(expr));
+}
+
+//------------------------------------------------------------------------------
+
+static AstPtr
+parseGotoStatement()
+{
+    if (token.kind != TokenKind::GOTO) {
+	return nullptr;
+    }
+    getToken();
+    auto label = token;
+    if (!error::expected(TokenKind::IDENTIFIER)) {
+	return nullptr;
+    }
+    getToken();
+    if (!error::expected(TokenKind::SEMICOLON)) {
+	return nullptr;
+    }
+    getToken();
+    return std::make_unique<AstGoto>(label.loc, label.val);
+}
+
+//------------------------------------------------------------------------------
+
+static AstPtr
+parseLabelDefinition()
+{
+    if (token.kind != TokenKind::LABEL) {
+	return nullptr;
+    }
+    getToken();
+    auto label = token;
+    if (!error::expected(TokenKind::IDENTIFIER)) {
+	return nullptr;
+    }
+    getToken();
+    if (!error::expected(TokenKind::COLON)) {
+	return nullptr;
+    }
+    getToken();
+    return std::make_unique<AstLabel>(label.loc, label.val);
 }
 
 //------------------------------------------------------------------------------

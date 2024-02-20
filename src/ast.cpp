@@ -49,6 +49,44 @@ createSetReturnType(const Type *retType)
     };
 }
 
+static std::function<bool(Ast *)>
+createFindLabel(std::unordered_map<UStr, gen::Label> &label)
+{
+    return [&](Ast *ast) -> bool
+    {
+	if (auto astLabel = dynamic_cast<AstLabel *>(ast)) {
+	    if (label.contains(astLabel->labelIdent)) {
+		error::out() << astLabel->loc
+		    << ": error: label already defined within function"
+		    << std::endl;
+		error::fatal();
+	    } else {
+		label[astLabel->labelIdent] = astLabel->label;
+	    }
+	}
+	return true;
+    };
+}
+
+static std::function<bool(Ast *)>
+createSetGotoLabel(const std::unordered_map<UStr, gen::Label> &label)
+{
+    return [&](Ast *ast) -> bool
+    {
+	if (auto astLabel = dynamic_cast<AstGoto *>(ast)) {
+	    if (!label.contains(astLabel->labelIdent)) {
+		error::out() << astLabel->loc
+		    << ": error: label not defined within function"
+		    << std::endl;
+		error::fatal();
+	    } else {
+		astLabel->label = label.at(astLabel->labelIdent);
+	    }
+	}
+	return true;
+    };
+}
+
 //------------------------------------------------------------------------------
 
 /*
@@ -357,7 +395,6 @@ AstDoWhile::print(int indent) const
 void
 AstDoWhile::codegen()
 {
-    std::cerr << "AstDoWhile::codegen()\n";
     auto loopLabel = gen::getLabel("loop");
     auto condLabel = gen::getLabel("cond");
     auto endLabel = gen::getLabel("end");
@@ -372,7 +409,6 @@ AstDoWhile::codegen()
     cond->condJmp(loopLabel, endLabel);
 
     gen::labelDef(endLabel);
-    std::cerr << "done AstDoWhile::codegen()\n";
 }
 
 void
@@ -498,6 +534,50 @@ AstReturn::codegen()
 	}
 	gen::ret();
     }
+}
+
+/*
+ * AstGoto
+ */
+AstGoto::AstGoto(Token::Loc loc, UStr labelIdent)
+    : loc{loc}, labelIdent{labelIdent}
+{}
+
+void
+AstGoto::print(int indent) const
+{
+    error::out(indent) << "goto " << labelIdent.c_str() << ";" << std::endl;
+}
+
+void
+AstGoto::codegen()
+{
+    if (!label) {
+	error::out() << loc << ": error: no label '" << labelIdent.c_str()
+	    << "' within function" << std::endl;
+	error::fatal();
+    } else {
+	gen::jmp(label);
+    }
+}
+
+/*
+ * AstLabel
+ */
+AstLabel::AstLabel(Token::Loc loc, UStr labelIdent)
+    : loc{loc}, labelIdent{labelIdent}, label{gen::getLabel(labelIdent.c_str())}
+{}
+
+void
+AstLabel::print(int indent) const
+{
+    error::out(indent) << "label " << labelIdent.c_str() << ":" << std::endl;
+}
+
+void
+AstLabel::codegen()
+{
+    gen::labelDef(label);
 }
 
 /*
@@ -945,8 +1025,12 @@ AstFuncDef::~AstFuncDef()
 void
 AstFuncDef::appendBody(AstPtr &&body_)
 {
+    std::unordered_map<UStr, gen::Label> label;
+
     body = std::move(body_);
     body->apply(createSetReturnType(type->getRetType()));
+    body->apply(createFindLabel(label));
+    body->apply(createSetGotoLabel(label));
     Symtab::closeScope();
 }
 
