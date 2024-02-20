@@ -1,0 +1,47 @@
+#include <stdio.hdr>
+
+type int10: array[10] of int;
+type int12: array[12] of int;
+
+fn make(offset: int) : int10
+{
+    local a: int10;
+    for (local i: int = 0; i < 10; ++i) {
+	a[i] = i + offset;
+    }
+    return a;
+}
+
+fn print10(a: int10)
+{
+    for (local i: int = 0; i < 10; ++i) {
+	printf("a[%d] = %d%s", i, a[i], i + 1 < 10 then ", " else "\n\n");
+    }
+}
+
+fn print12(a: int12)
+{
+    for (local i: int = 0; i < 12; ++i) {
+	printf("a[%d] = %d%s", i, a[i], i + 1 < 12 then ", " else "\n\n");
+    }
+}
+
+fn main()
+{
+    print10(make(1));
+
+    local
+	i: int = 4;
+    local
+	a: int10 = make(2),
+	b: int12 = {};
+    // local c: int12 = make(3); // error: different dimension
+
+    a = make(2);
+
+    //b = a;  // error: different dimension
+    print10(a);
+
+    b = :int12"abc"; // ok. same as b = :int12{'a', 'b', 'c'};
+    print12(b);
+}

@@ -1,0 +1,33 @@
+#include <stdio.hdr>
+
+#include "expr.hdr"
+#include "lexer.hdr"
+#include "parser.hdr"
+
+fn main()
+{
+    printf("\n");
+    printf("*** Compiler for Integer Expressions ***\n\n");
+    printf("Use and identifier or integer literal\n");
+    printf("Supported integer representation: dec, hex, oct\n");
+    printf("Operators: '=', '+', '-', '*'/\n");
+    printf("Punctuators: '(', ')', ';'\n\n");
+    printf("Enter '.' to exit\n\n");
+
+    local expr: -> Expr = nullptr;
+    printf("> ");
+    getToken();
+    while (expr = parseExpression()) {
+	printf("expression tree:\n");
+	printExpr(expr);
+	loadExpr(expr);
+	printf("> ");
+	if (token.kind != SEMICOLON) {
+	    break;
+	}
+	getToken();
+	releaseExpr(expr);
+    }
+    printf("\n");
+}
+

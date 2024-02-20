@@ -1,0 +1,8 @@
+#include <stdio.hdr>
+
+fn main(argc: int, argv: -> -> char)
+{
+    for (local i: int = 0; i < argc; ++i) {
+	printf("argv[%d] = %s\n", i, argv[i]);
+    }
+}

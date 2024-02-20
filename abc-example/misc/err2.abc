@@ -1,0 +1,65 @@
+extern fn printf(fmt: -> const char, ...): int;
+extern fn scanf(fmt: -> char, ...): int;
+
+fn foo()
+{
+    type Foo: -> int;
+    local n: int;
+    local p: Foo;
+    global a: int;
+
+    n = 42;
+    p = &n;
+    *p = 12;
+    printf("foo: n = %d\n", n);
+}
+
+fn bar()
+{
+    local n: int;
+    local p: -> int;
+
+    n = 42;
+    p = &n;
+    *p = 12;
+    printf("bar: n = %d\n", n);
+}
+
+fn foobar(b: array[5] of int): array[5] of int
+{
+    printf("foobar: b[1] = %d\n", b[1]);
+    b[1] = 13;
+    return b;
+}
+
+struct Foo;
+
+struct Foo
+{
+    a, b: int;
+    c:	struct Bar {
+	    x: int;
+	};
+};
+
+global f: Foo;
+global g: Foo;
+
+fn main()
+{
+    local a: array[5] of int;
+    printf("size = %zu\n", sizeof(:Foo));
+    
+    local i: -> int;
+
+    f.a = 4;
+    f.c.x = 14;
+    g = f;
+
+    a[1] = 42;
+    foo();
+    bar();
+    foobar(foobar(a));
+    printf("g.a = %d\n", g.a);
+    printf("g.c.x = %d\n", g.c.x);
+}

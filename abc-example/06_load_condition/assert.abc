@@ -1,0 +1,10 @@
+#include <assert.hdr>
+#include <stdlib.hdr>
+#include <stdio.hdr>
+
+fn __assert(msg: -> const char, file: -> const char, line: int): int
+{
+    fprintf(stderr, "%s:%d: Assertion failed.\n", file, line);
+    abort();
+    return 0;
+}

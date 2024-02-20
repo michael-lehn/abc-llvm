@@ -1,0 +1,10 @@
+#ifndef ERROR_HDR
+#define ERROR_HDR
+
+#include "lexer.hdr"
+
+extern fn errorMsg(loc: TokenLoc, msg: -> char);
+extern fn errorFatal();
+extern fn errorExpected(kind: TokenKind): bool;
+
+#endif // ERROR_HDR

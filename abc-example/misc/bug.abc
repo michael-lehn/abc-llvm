@@ -1,0 +1,6 @@
+#include <stdio.hdr>
+
+fn main()
+{
+    printf("%*s", 5, " ");
+}
