@@ -420,10 +420,13 @@ parseInitializer(const Type *type)
     if (!type) {
 	return nullptr;
     }
-    if (auto expr = parseExpression()) {
-	return std::make_unique<AstInitializerList>(type, std::move(expr));
-    } else if (auto list = parseInitializerList(type)) {
+    if (auto list = parseInitializerList(type)) {
 	return list;
+    } else if (!type->isArray() && !type->isStruct()) {
+	if (auto expr = parseExpression()) {
+	    return std::make_unique<AstInitializerList>(type, std::move(expr));
+	}
+    } else {
     }
     /*
     return parseExpression()
@@ -463,8 +466,17 @@ parseInitializerList(const Type *type)
 
     // parseInitializerSequence:
     for (std::size_t index = 0; auto ty = type->getMemberType(index); ++index) {
+	auto lbraceRequired = ty->isArray() || ty->isStruct();
 	auto item = parseInitializer(type->getMemberType(index));
 	if (!item) {
+	    if (token.kind != TokenKind::RBRACE && lbraceRequired) {
+		if (auto expr = parseExpression()) {
+		    error::out() << expr->loc
+			<< ": error: use '{ ..}' for initializing elements "
+			<< "where type is a struct or an array" << std::endl;
+		    error::fatal();
+		}
+	    }
 	    break;
 	}
 	list->append(std::move(item));

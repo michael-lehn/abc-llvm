@@ -32,8 +32,8 @@ bool
 expected(TokenKind kind)
 {
     if (token.kind != kind) {
-	out() << token.loc << ": expected '" << tokenCStr(kind) << "' got '"
-	    << token.val.c_str() << "'" << std::endl;
+	out() << token.loc << ": expected '" << tokenCStr(kind) << "'"
+	    << std::endl;
 	fatal();
 	return false;
     }
