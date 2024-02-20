@@ -118,6 +118,21 @@ class AstWhile : public Ast
 
 //------------------------------------------------------------------------------
 
+class AstDoWhile : public Ast
+{
+    public:
+	AstDoWhile(ExprPtr &&cond, AstPtr &&body);
+
+	const ExprPtr cond;
+	const AstPtr body;
+
+	void print(int indent) const override;
+	void codegen() override;
+	void apply(std::function<bool(Ast *)> op) override;
+};
+
+//------------------------------------------------------------------------------
+
 class AstFor : public Ast
 {
     private:

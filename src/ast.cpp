@@ -340,6 +340,50 @@ AstWhile::apply(std::function<bool(Ast *)> op)
 }
 
 /*
+ * AstDoWhile
+ */
+AstDoWhile::AstDoWhile(ExprPtr &&cond, AstPtr &&body)
+    : cond{std::move(cond)}, body{std::move(body)}
+{}
+
+void
+AstDoWhile::print(int indent) const
+{
+    error::out(indent) << "do" << std::endl;
+    body->print(indent);
+    error::out(indent) << "while (" << cond << ");" << std::endl;
+}
+
+void
+AstDoWhile::codegen()
+{
+    std::cerr << "AstDoWhile::codegen()\n";
+    auto loopLabel = gen::getLabel("loop");
+    auto condLabel = gen::getLabel("cond");
+    auto endLabel = gen::getLabel("end");
+
+    body->apply(createSetBreakLabel(endLabel));
+    body->apply(createSetContinueLabel(condLabel));
+
+    gen::labelDef(loopLabel);
+    body->codegen();
+
+    gen::labelDef(condLabel);
+    cond->condJmp(loopLabel, endLabel);
+
+    gen::labelDef(endLabel);
+    std::cerr << "done AstDoWhile::codegen()\n";
+}
+
+void
+AstDoWhile::apply(std::function<bool(Ast *)> op)
+{
+    if (op(this)) {
+	body->apply(op);
+    }
+}
+
+/*
  * AstFor
  */
 AstFor::AstFor(ExprPtr &&init, ExprPtr &&cond, ExprPtr &&update)
@@ -518,13 +562,19 @@ AstExpr::AstExpr(ExprPtr &&expr)
 void
 AstExpr::print(int indent) const
 {
-    error::out(indent) << expr << ";" << std::endl;
+    if (expr) {
+	error::out(indent) << expr << ";" << std::endl;
+    } else {
+	error::out(indent) << ";" << std::endl;
+    }
 }
 
 void
 AstExpr::codegen()
 {
-    expr->loadValue(); 
+    if (expr) {
+	expr->loadValue(); 
+    }
 }
 
 /*

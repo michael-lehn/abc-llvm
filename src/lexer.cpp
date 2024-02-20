@@ -86,6 +86,8 @@ tokenKindCStr(TokenKind kind)
 	    return "FOR";
 	case TokenKind::WHILE:
 	    return "WHILE";
+	case TokenKind::DO:
+	    return "DO";
 	case TokenKind::IF:
 	    return "IF";
 	case TokenKind::ELSE:
@@ -233,6 +235,8 @@ tokenCStr(TokenKind kind)
 	    return "for";
 	case TokenKind::WHILE:
 	    return "while";
+	case TokenKind::DO:
+	    return "do";
 	case TokenKind::IF:
 	    return "if";
 	case TokenKind::ELSE:
@@ -438,6 +442,7 @@ static std::unordered_map<UStr, TokenKind> kw = {
     { "static", TokenKind::STATIC },
     { "extern", TokenKind::EXTERN },
     { "while", TokenKind::WHILE },
+    { "do", TokenKind::DO },
     { "for", TokenKind::FOR },
     { "if", TokenKind::IF },
     { "else", TokenKind::ELSE },

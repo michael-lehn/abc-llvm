@@ -815,6 +815,7 @@ parseCompoundStatement(bool newScope)
 static AstPtr parseIfStatement();
 static AstPtr parseSwitchStatement();
 static AstPtr parseWhileStatement();
+static AstPtr parseDoWhileStatement();
 static AstPtr parseForStatement();
 static AstPtr parseReturnStatement();
 static AstPtr parseBreakStatement();
@@ -826,6 +827,7 @@ static AstPtr parseExpressionStatement();
  *	     | if-statement
  *	     | switch-statement
  *	     | while-statement
+ *	     | do-while-statement
  *	     | for-statement
  *	     | return-statement
  *	     | break-statement
@@ -841,6 +843,7 @@ parseStatement()
     || (ast = parseIfStatement())
     || (ast = parseSwitchStatement())
     || (ast = parseWhileStatement())
+    || (ast = parseDoWhileStatement())
     || (ast = parseForStatement())
     || (ast = parseReturnStatement())
     || (ast = parseBreakStatement())
@@ -1070,6 +1073,49 @@ parseWhileStatement()
     }
     return std::make_unique<AstWhile>(std::move(whileCond),
 				      std::move(whileBody));
+}
+
+/*
+ * do-while-statement = "do" compound-statement "while" "(" expression ")"
+ */
+static AstPtr
+parseDoWhileStatement()
+{
+    if (token.kind != TokenKind::DO) {
+	return nullptr;
+    }
+    getToken();
+    auto doWhileBody = parseCompoundStatement();
+    if (!doWhileBody) {
+	error::out() << token.loc << ": compound statement expected"
+	    << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    if (!error::expected(TokenKind::WHILE)) {
+	return nullptr;
+    }
+    getToken();
+    if (!error::expected(TokenKind::LPAREN)) {
+	return nullptr;
+    }
+    getToken();
+    auto doWhileCond = parseExpression();
+    if (!doWhileCond) {
+	error::out() << token.loc << ": expression expected" << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    if (!error::expected(TokenKind::RPAREN)) {
+	return nullptr;
+    }
+    getToken();
+    if (!error::expected(TokenKind::SEMICOLON)) {
+	return nullptr;
+    }
+    getToken();
+    return std::make_unique<AstDoWhile>(std::move(doWhileCond),
+				        std::move(doWhileBody));
 }
 
 /*

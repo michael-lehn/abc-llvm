@@ -21,6 +21,7 @@ syntax match abcIdentifier /[A-Za-z_][A-Za-z0-9_]*/
 syntax match keyword /\<fn\>/ skipwhite 
 syntax match keyword /\<_fn\>/ skipwhite 
 syntax match keyword /\<for\>/ skipwhite
+syntax match keyword /\<do\>/ skipwhite
 syntax match keyword /\<while\>/ skipwhite
 syntax match keyword /\<if\>/ skipwhite
 syntax match keyword /\<else\>/ skipwhite

@@ -29,6 +29,7 @@ enum class TokenKind {
     EXTERN,
     FOR,
     WHILE,
+    DO,
     IF,
     ELSE,
     THEN,
