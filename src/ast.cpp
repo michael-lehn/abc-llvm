@@ -605,7 +605,13 @@ AstInitializerList::createInitializerList() const
     InitializerList initList(type);
 
     if (std::holds_alternative<ExprPtr>(initializer)) {
-	initList.add(ProxyExpr::create(std::get<ExprPtr>(initializer).get()));
+	const Expr *expr = std::get<ExprPtr>(initializer).get();
+	assert(expr);
+	if (Type::getTypeConversion(expr->type, type, expr->loc, true)) {
+	    initList.set(ProxyExpr::create(expr));
+	} else {
+	    initList.add(ProxyExpr::create(expr));
+	}
     } else if (std::holds_alternative<AstList>(initializer)) {
 	const auto &astList = std::get<AstList>(initializer);
 	for (std::size_t i = 0; i < astList.size(); ++i) {

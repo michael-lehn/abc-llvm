@@ -47,7 +47,7 @@ Type::EnumData::EnumData(const EnumData &data, bool constFlag)
 struct Integer : public Type
 {
     Integer()
-	: Type{Type::VOID, IntegerData{0, Type::IntegerKind::UNSIGNED, true}}
+	: Type{Type::VOID, IntegerData{0, Type::IntegerKind::UNSIGNED, false}}
     {}
 
     Integer(std::size_t numBits, IntegerKind kind = IntegerKind::UNSIGNED)
@@ -570,12 +570,17 @@ Type::getMemberType(UStr ident) const
     return structData.type[getMemberIndex(ident)];
 }
 
-const std::vector<const Type *> &
+std::vector<const Type *>
 Type::getMemberType() const
 {
-    assert(std::holds_alternative<StructData>(data));
-    const auto &structData = std::get<StructData>(data);
-    return structData.type;
+    if (std::holds_alternative<StructData>(data)) {
+	const auto &structData = std::get<StructData>(data);
+	return structData.type;
+    } else if (std::holds_alternative<ArrayData>(data)) {
+	return std::vector<const Type *>(getDim(), getRefType());
+    } else {
+	return std::vector<const Type *>(1, this);
+    }
 }
 
 const std::vector<UStr> &
@@ -880,14 +885,30 @@ Type::createIncompleteEnum(UStr name, const Type *intType)
 
 const Type *
 Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc,
-			bool silent)
+			bool silent, bool allowConstCast)
 {
     if (from == to) {
 	return to;
     } else if (from->isVoid() && !to->isVoid()) {
 	return nullptr;
-    } else if (getConstRemoved(from) == getConstRemoved(to)) {
-	if (!to->hasConstFlag() && from->hasConstFlag()) {
+    } else if (from->isNullPointer() && to->isPointer()) {
+	return from;
+    } else if (from->isPointer() && to->isPointer()) {
+	auto fromRefTy = Type::getConstRemoved(from->getRefType());
+	auto toRefTy = Type::getConstRemoved(to->getRefType());
+	bool refTyCheck = *fromRefTy == *toRefTy;
+	bool constCheck = to->getRefType()->hasConstFlag()
+		       || !from->getRefType()->hasConstFlag();
+
+	if (!refTyCheck && !fromRefTy->isVoid() && !toRefTy->isVoid()) {
+	    if (!silent) {
+		error::out() << loc << ": error: casting '" << from
+		    << "' to '" << to << "'" << std::endl;
+		error::fatal();
+	    }
+	    return nullptr;
+	}
+	if (!constCheck && !allowConstCast) {
 	    if (!silent) {
 		error::out() << loc << ": error: casting '" << from
 		    << "' to '" << to << "' discards const qualifier"
@@ -896,11 +917,11 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc,
 	    }
 	    return nullptr;
 	}
+	return from;
+    } else if (getConstRemoved(from) == getConstRemoved(to)) {
 	return to;
     } else if (from->isInteger() && to->isInteger()) {
 	return to;
-    } else if (from->isNullPointer() && to->isPointer()) {
-	return from;
     } else if (from->isArray() && to->isPointer()) {
 	auto fromRefTy = Type::getConstRemoved(from->getRefType());
 	auto toRefTy = Type::getConstRemoved(to->getRefType());
@@ -924,31 +945,8 @@ Type::getTypeConversion(const Type *from, const Type *to, Token::Loc loc,
 	auto toRefTy = Type::getConstRemoved(to->getRefType());
 	bool refTyCheck = *fromRefTy == *toRefTy;
 
-	if (!refTyCheck || from->getDim() > to->getDim()) {
+	if (!refTyCheck || from->getDim() != to->getDim()) {
 	    return nullptr;
-	}
-	return from;
-    } else if (from->isPointer() && to->isPointer()) {
-	auto fromRefTy = Type::getConstRemoved(from->getRefType());
-	auto toRefTy = Type::getConstRemoved(to->getRefType());
-	bool refTyCheck = *fromRefTy == *toRefTy;
-	bool constCheck = to->getRefType()->hasConstFlag()
-			    || !from->getRefType()->hasConstFlag();
-
-	if (!refTyCheck && !fromRefTy->isVoid() && !toRefTy->isVoid()) {
-	    if (!silent) {
-		error::out() << loc << ": error: casting '" << from
-		    << "' to '" << to << "'" << std::endl;
-		error::fatal();
-	    }
-	}
-	if (!constCheck) {
-	    if (!silent) {
-		error::out() << loc << ": warning: casting '" << from
-		    << "' to '" << to << "' discards const qualifier"
-		    << std::endl;
-		error::fatal();
-	    }
 	}
 	return from;
     } else if (from->isFunction() && to->isPointer()) {

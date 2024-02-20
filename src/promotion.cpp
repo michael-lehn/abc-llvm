@@ -341,7 +341,7 @@ binaryArray(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	case BinaryExpr::Kind::ASSIGN:
 	    if (left->type->isArray() && right->type->isArray()) {
 		if (*left->type->getRefType() != *right->type->getRefType()
-			|| left->type->getDim() < right->type->getDim())
+			|| left->type->getDim() != right->type->getDim())
 		{
 		    return binaryErr(kind, std::move(left), std::move(right),
 				     loc);
@@ -349,8 +349,8 @@ binaryArray(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		return std::make_tuple(std::move(left), std::move(right),
 				       left->type);	
 	    } else if (left->type->isPointer()) {
-		leftType = Type::getPointer(left->type->getRefType());
-		rightType = right->type;
+		leftType = left->type;
+		rightType = Type::getPointer(right->type->getRefType());
 	    }
 	    break;
 	case BinaryExpr::Kind::ADD:

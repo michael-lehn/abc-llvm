@@ -680,7 +680,7 @@ cast(Reg reg, const Type *fromType, const Type *toType)
 	return llvmBuilder->CreateIntToPtr(reg, ty);
     }
     error::out() << "can not cast '" << fromType << "' to '" << toType
-	<< std::endl;
+	<< "'" << std::endl;
     assert(0);
     return nullptr;
 }

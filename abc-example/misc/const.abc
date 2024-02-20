@@ -29,10 +29,10 @@ fn main()
 
     foo = bar;
     foo.a = 42;
-    *cast(&bar: -> Foo) = foo;
+    *:-> Foo(&bar) = foo;
 
     printf("bar.a = %d\n", bar.a);
 
-    *cast(&foobar[0]: -> int) = 2;
+    *:-> int(&foobar[0]) = 2;
     printf("foobar[%d] = %d\n", 0, foobar[0]);
 }

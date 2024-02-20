@@ -4,12 +4,17 @@
 #include "castexpr.hpp"
 #include "error.hpp"
 
-CastExpr::CastExpr(ExprPtr &&expr, const Type *toType, Token::Loc loc)
+CastExpr::CastExpr(ExprPtr &&expr, const Type *toType, Token::Loc loc,
+		   bool allowConstCast)
     : Expr{loc, toType}, expr{std::move(expr)}
 {
     assert(this->expr && this->expr->type);
     assert(toType);
-    if (!Type::getTypeConversion(this->expr->type, toType, loc, true)) {
+
+    auto check = Type::getTypeConversion(this->expr->type, toType, loc, true,
+					 allowConstCast);
+
+    if (!check) {
 	error::out() << loc << ": error: can not cast " << this->expr->type
 	    << " to " << toType << std::endl;
 	error::fatal();
@@ -17,12 +22,13 @@ CastExpr::CastExpr(ExprPtr &&expr, const Type *toType, Token::Loc loc)
 }
 
 ExprPtr
-CastExpr::create(ExprPtr &&expr, const Type *toType, Token::Loc loc)
+CastExpr::create(ExprPtr &&expr, const Type *toType, Token::Loc loc,
+		 bool allowConstCast)
 {
     if (*expr->type == *toType) {
 	return expr;
     }
-    auto p = new CastExpr{std::move(expr), toType, loc};
+    auto p = new CastExpr{std::move(expr), toType, loc, allowConstCast};
     return std::unique_ptr<CastExpr>{p};
 }
 

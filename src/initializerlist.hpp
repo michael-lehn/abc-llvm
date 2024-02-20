@@ -18,6 +18,7 @@ class InitializerList
 	const Type *type() const;
 	bool isConst() const;
 
+	void set(ExprPtr &&expr);
 	void add(ExprPtr &&expr);
 	void add(InitializerList &&initList, Token::Loc loc = Token::Loc{});
 

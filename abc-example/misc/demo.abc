@@ -2,3 +2,6 @@ global a: array[10] of -> int;
 global b: -> array[10] of int;
 global c: -> array[10] of -> int;
 
+fn main()
+{
+}

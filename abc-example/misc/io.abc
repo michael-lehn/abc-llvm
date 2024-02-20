@@ -1,6 +1,6 @@
 #include <stdio.hdr>
 
-fn main(argc: int, argv: -> -> char)
+fn main(argc: int, argv: -> -> char): int
 {
     for (local i: int = 0; i < argc; ++i) {
 	printf("argv[%d] = %s\n", i, argv[i]);

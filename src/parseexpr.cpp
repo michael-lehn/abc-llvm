@@ -456,7 +456,7 @@ parsePrimary(void)
 	    }
 	    error::expected(TokenKind::RPAREN);
 	    getToken();
-	    return CastExpr::create(std::move(expr), type, opTok.loc);
+	    return CastExpr::create(std::move(expr), type, opTok.loc, true);
 	}
     } else if (token.kind == TokenKind::SIZEOF) {
 	getToken();

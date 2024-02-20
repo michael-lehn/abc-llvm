@@ -6,12 +6,13 @@
 class CastExpr : public Expr
 {
     protected:
-	CastExpr(ExprPtr &&expr, const Type *toType, Token::Loc loc);
+	CastExpr(ExprPtr &&expr, const Type *toType, Token::Loc loc,
+		 bool allowConstCast);
 
     public:
 
 	static ExprPtr create(ExprPtr &&expr, const Type *toType,
-			      Token::Loc loc);
+			      Token::Loc loc, bool allowConstCast = false);
 
 	static ExprPtr create(ExprPtr &&expr, const Type *toType);
 

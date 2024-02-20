@@ -67,7 +67,7 @@ class Type
 	std::size_t getMemberIndex(UStr ident) const;
 	const Type *getMemberType(std::size_t index) const;
 	const Type *getMemberType(UStr ident) const;
-	const std::vector<const Type *> &getMemberType() const;
+	std::vector<const Type *> getMemberType() const;
 	const std::vector<UStr> &getMemberIdent() const;
 
 	// for enum (sub-)types
@@ -162,7 +162,8 @@ class Type
 	// type casts
 	static const Type *getTypeConversion(const Type *from, const Type *to,
 					     Token::Loc loc = Token::Loc{},
-					     bool silent = false);
+					     bool silent = false,
+					     bool allowConstCast = false);
 	static const Type *convertArrayOrFunctionToPointer(const Type *ty);
 };
 

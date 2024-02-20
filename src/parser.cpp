@@ -420,9 +420,15 @@ parseInitializer(const Type *type)
     }
     if (auto list = parseInitializerList(type)) {
 	return list;
-    } else if (!type->isArray() && !type->isStruct()) {
-	if (auto expr = parseExpression()) {
+    } else if (auto expr = parseExpression()) {
+	if (Type::getTypeConversion(expr->type, type, expr->loc, true)) {
 	    return std::make_unique<AstInitializerList>(type, std::move(expr));
+	} else {
+	    Type::getTypeConversion(expr->type, type, expr->loc, false);
+	    error::out() << expr->loc << ": error: expression of type '"
+		<< expr->type << "' can not be used to initialize a variable "
+		<< "of type '" << type << "'" << std::endl;
+	    error::fatal();
 	}
     }
     return nullptr;

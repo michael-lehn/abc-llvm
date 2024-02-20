@@ -7,7 +7,9 @@
 #include "initializerlist.hpp"
 
 InitializerList::InitializerList(const Type *type)
-    : type_{type}, value{type->getNumMembers()}, valueLoc{type->getNumMembers()}
+    : type_{type}, value{type->getNumMembers()}
+    , valueType{type->getMemberType()}
+    , valueLoc{type->getNumMembers()}
 {
 }
 
@@ -37,6 +39,16 @@ InitializerList::isConst() const
 }
 
 void
+InitializerList::set(ExprPtr &&expr)
+{
+    value.resize(1);
+    valueType.resize(1);
+    expr = CastExpr::create(std::move(expr), type(), expr->loc);
+    value[0] = std::move(expr);
+    valueType[0] = type();
+}
+
+void
 InitializerList::add(ExprPtr &&expr)
 {
     auto ty = type()->getMemberType(pos);
@@ -56,8 +68,7 @@ InitializerList::add(InitializerList &&initList, Token::Loc loc)
 void
 InitializerList::store(gen::Reg addr) const
 {
-    if (type()->isStruct() || type()->isArray()) {
-	std::vector<gen::ConstVal> val{value.size()};
+    if (value.size() > 1) {
 	for (size_t i = 0; i < value.size(); ++i) {
 	    auto memAddr = gen::ptrMember(type(), addr, i);
 	    store(i, memAddr);
@@ -72,7 +83,7 @@ void
 InitializerList::store(std::size_t index, gen::Reg addr) const
 {
     auto &v = value[index];
-    auto ty = type()->getMemberType(index);
+    auto ty = valueType[index];
     if (std::holds_alternative<ExprPtr>(v)) {
 	const auto &e = std::get<ExprPtr>(v);
 	auto val = e
@@ -82,6 +93,8 @@ InitializerList::store(std::size_t index, gen::Reg addr) const
     } else if (std::holds_alternative<InitializerList>(v)) {
 	const auto &v = std::get<InitializerList>(value[index]);
 	v.store(addr);
+    } else {
+	assert(0);
     }
 }
 
