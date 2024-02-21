@@ -37,6 +37,6 @@ operator<<(std::ostream &out, const ExprPtr &expr)
 std::ostream &
 operator<<(std::ostream &out, const Expr *expr)
 {
-    expr->printFlat(out, false);
+    expr->printFlat(out, 1);
     return out;
 }

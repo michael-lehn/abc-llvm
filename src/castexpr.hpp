@@ -33,7 +33,7 @@ class CastExpr : public Expr
 	void print(int indent) const override;
 
 	// for printing error messages
-	virtual void printFlat(std::ostream &out, bool isFactor) const override;
+	virtual void printFlat(std::ostream &out, int prec) const override;
 };
 
 #endif // CASTEXPR_HPP

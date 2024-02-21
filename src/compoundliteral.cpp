@@ -99,8 +99,8 @@ CompoundLiteral::print(int indent) const
 }
 
 void
-CompoundLiteral::printFlat(std::ostream &out, bool isFactor) const
+CompoundLiteral::printFlat(std::ostream &out, int prec) const
 {
     out << "(" << type << ")";
-    initializerList.printFlat(out, isFactor);
+    initializerList.printFlat(out, prec);
 }

@@ -89,7 +89,7 @@ ExprVector::print(int indent) const
 }
 
 void
-ExprVector::printFlat(std::ostream &out, bool isFactor) const
+ExprVector::printFlat(std::ostream &out, int prec) const
 {
     for (std::size_t i = 0; i < exprVec.size(); ++i) {
 	out << exprVec[i];

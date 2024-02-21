@@ -35,7 +35,7 @@ main(void)
 				 std::move(proxy_a));
     binary->print();
 
-    auto str = StringLiteral::create("hello, world!");
+    auto str = StringLiteral::create("hello, world!", "hello, world!");
     str->print();
 
     /*

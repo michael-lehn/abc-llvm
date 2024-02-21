@@ -8,12 +8,13 @@
 class StringLiteral : public Expr
 {
     protected:
-	StringLiteral(UStr val, Token::Loc loc);
+	StringLiteral(UStr val, UStr valRaw, Token::Loc loc);
 
     public:
-	static ExprPtr create(UStr val, Token::Loc loc = Token::Loc{});
+	static ExprPtr create(UStr val, UStr valRaw,
+			      Token::Loc loc = Token::Loc{});
 
-	UStr		    val;
+	UStr		    val, valRaw;
 	UStr		    ident;
 
 	bool hasAddr() const override;
@@ -31,7 +32,7 @@ class StringLiteral : public Expr
 	void print(int indent) const override;
 
 	// for printing error messages
-	virtual void printFlat(std::ostream &out, bool isFactor) const override;
+	virtual void printFlat(std::ostream &out, int prec) const override;
 };
 
 #endif // STRINGLITERAL

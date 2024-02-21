@@ -183,7 +183,6 @@ class AstGoto : public Ast
 	void codegen() override;
 };
 
-
 //------------------------------------------------------------------------------
 
 class AstLabel : public Ast

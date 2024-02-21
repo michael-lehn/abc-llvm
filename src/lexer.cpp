@@ -380,6 +380,9 @@ fixCurrentLocatation(std::size_t line)
 
 constexpr std::size_t tabSize = 8;
 
+static std::string token_str_raw; // updated by nextCh()
+static std::string token_str; // updated by tokenUpdate()
+
 static char
 nextCh()
 {
@@ -393,7 +396,71 @@ nextCh()
     } else {
 	++curr.col;
     }
+    token_str_raw += ch;
     return ch;
+}
+
+static void
+tokenReset()
+{
+    token.loc.from.line = curr.line;
+    token.loc.from.col = curr.col;
+    token.val = UStr{};
+    token.valRaw = UStr{};
+    token_str = "";
+}
+
+static void
+tokenUpdate(char addCh = ch)
+{
+    token_str += addCh;
+    token.loc.to.line = curr.line;
+    token.loc.to.col = curr.col;
+}
+
+static std::unordered_map<UStr, TokenKind> kw = {
+    { "goto", TokenKind::GOTO },
+    { "label", TokenKind::LABEL },
+    { "const", TokenKind::CONST },
+    { "fn", TokenKind::FN },
+    { "return", TokenKind::RETURN },
+    { "decl", TokenKind::DECL },
+    { "global", TokenKind::GLOBAL },
+    { "local", TokenKind::LOCAL },
+    { "static", TokenKind::STATIC },
+    { "extern", TokenKind::EXTERN },
+    { "while", TokenKind::WHILE },
+    { "do", TokenKind::DO },
+    { "for", TokenKind::FOR },
+    { "if", TokenKind::IF },
+    { "else", TokenKind::ELSE },
+    { "then", TokenKind::THEN },
+    { "array", TokenKind::ARRAY },
+    { "of", TokenKind::OF },
+    { "sizeof", TokenKind::SIZEOF },
+    { "nullptr", TokenKind::NULLPTR },
+    { "struct", TokenKind::STRUCT },
+    { "union", TokenKind::UNION },
+    { "type", TokenKind::TYPE },
+    { "cast", TokenKind::CAST },
+    { "break", TokenKind::BREAK },
+    { "continue", TokenKind::CONTINUE },
+    { "switch", TokenKind::SWITCH },
+    { "case", TokenKind::CASE },
+    { "default", TokenKind::DEFAULT },
+    { "enum", TokenKind::ENUM },
+};
+
+static TokenKind
+tokenSet(TokenKind kind)
+{
+    token.kind = kind;
+    token.val = UStr{token_str};
+    token.valRaw = UStr{token_str_raw};
+    if (kind == TokenKind::IDENTIFIER && kw.contains(token.val)) {
+	token.kind = kw[token.val];
+    }
+    return token.kind;
 }
 
 static bool
@@ -438,69 +505,6 @@ hexToVal(char ch)
     } else {
         return 10 + ch - 'A';
     }
-}
-
-static std::unordered_map<UStr, TokenKind> kw = {
-    { "goto", TokenKind::GOTO },
-    { "label", TokenKind::LABEL },
-    { "const", TokenKind::CONST },
-    { "fn", TokenKind::FN },
-    { "return", TokenKind::RETURN },
-    { "decl", TokenKind::DECL },
-    { "global", TokenKind::GLOBAL },
-    { "local", TokenKind::LOCAL },
-    { "static", TokenKind::STATIC },
-    { "extern", TokenKind::EXTERN },
-    { "while", TokenKind::WHILE },
-    { "do", TokenKind::DO },
-    { "for", TokenKind::FOR },
-    { "if", TokenKind::IF },
-    { "else", TokenKind::ELSE },
-    { "then", TokenKind::THEN },
-    { "array", TokenKind::ARRAY },
-    { "of", TokenKind::OF },
-    { "sizeof", TokenKind::SIZEOF },
-    { "nullptr", TokenKind::NULLPTR },
-    { "struct", TokenKind::STRUCT },
-    { "union", TokenKind::UNION },
-    { "type", TokenKind::TYPE },
-    { "cast", TokenKind::CAST },
-    { "break", TokenKind::BREAK },
-    { "continue", TokenKind::CONTINUE },
-    { "switch", TokenKind::SWITCH },
-    { "case", TokenKind::CASE },
-    { "default", TokenKind::DEFAULT },
-    { "enum", TokenKind::ENUM },
-};
-
-static std::string token_str;
-
-static void
-tokenReset()
-{
-    token.loc.from.line = curr.line;
-    token.loc.from.col = curr.col;
-    token.val = UStr{};
-    token_str = "";
-}
-
-static void
-tokenUpdate(char addCh = ch)
-{
-    token_str += addCh;
-    token.loc.to.line = curr.line;
-    token.loc.to.col = curr.col;
-}
-
-static TokenKind
-tokenSet(TokenKind kind)
-{
-    token.kind = kind;
-    token.val = UStr{token_str};
-    if (kind == TokenKind::IDENTIFIER && kw.contains(token.val)) {
-	token.kind = kw[token.val];
-    }
-    return token.kind;
 }
 
 static void parseStringLiteral();

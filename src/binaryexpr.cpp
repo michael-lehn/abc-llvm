@@ -275,54 +275,69 @@ BinaryExpr::print(int indent) const
     right->print(indent + 4);
 }
 
+static void
+printFlat(std::ostream &out, int precCaller, int prec, const Expr *left,
+	  const Expr *right, const char *op)
+{
+    if (precCaller > prec) {
+	out << "(";
+    }
+    left->printFlat(out, prec);
+    out << " " << op << " ";
+    right->printFlat(out, prec);
+    if (precCaller > prec) {
+	out << ")";
+    }
+}
+
 void
-BinaryExpr::printFlat(std::ostream &out, bool isFactor) const
+BinaryExpr::printFlat(std::ostream &out, int prec) const
 {
     switch (kind) {
 	case ADD:
-	    out << "(" << left << " + " << right << ")";
+	    ::printFlat(out, prec, 11, left.get(), right.get(), "+");
 	    break;
 	case ASSIGN:
-	    out << "(" << left << " = " << right << ")";
+	    ::printFlat(out, prec, 2, left.get(), right.get(), "=");
 	    break;
 	case EQUAL:
-	    out << "(" << left << " == " << right << ")";
+	    ::printFlat(out, prec, 9, left.get(), right.get(), "==");
 	    break;
 	case NOT_EQUAL:
-	    out << "(" << left << " != " << right << ")";
+	    ::printFlat(out, prec, 9, left.get(), right.get(), "!=");
 	    break;
 	case GREATER:
-	    out << "(" << left << " > " << right << ")";
+	    ::printFlat(out, prec, 10, left.get(), right.get(), ">");
 	    break;
 	case GREATER_EQUAL:
-	    out << "(" << left << " >= " << right << ")";
+	    ::printFlat(out, prec, 10, left.get(), right.get(), ">=");
 	    break;
 	case LESS:
-	    out << "(" << left << " < " << right << ")";
+	    ::printFlat(out, prec, 10, left.get(), right.get(), "<");
 	    break;
 	case LESS_EQUAL:
-	    out << "(" << left << " <= " << right << ")";
+	    ::printFlat(out, prec, 10, left.get(), right.get(), "<=");
 	    break;
 	case LOGICAL_AND:
-	    out << "(" << left << " && " << right << ")";
+	    ::printFlat(out, prec, 5, left.get(), right.get(), "&&");
 	    break;
 	case LOGICAL_OR:
-	    out << "(" << left << " || " << right << ")";
+	    ::printFlat(out, prec, 4, left.get(), right.get(), "||");
 	    break;
 	case SUB:
-	    out << "(" << left << " - " << right << ")";
+	    ::printFlat(out, prec, 11, left.get(), right.get(), "-");
 	    break;
 	case MUL:
-	    out << "(" << left << " * " << right << ")";
+	    ::printFlat(out, prec, 13, left.get(), right.get(), "*");
 	    break;
 	case DIV:
-	    out << "(" << left << " / " << right << ")";
+	    ::printFlat(out, prec, 13, left.get(), right.get(), "/");
 	    break;
 	case MOD:
-	    out << "(" << left << " % " << right << ")";
+	    ::printFlat(out, prec, 13, left.get(), right.get(), "%");
 	    break;
 	case MEMBER:
-	    out << "(" << left << "." << right << ")";
+	    ::printFlat(out, prec, 16, left.get(), right.get(), ".");
 	    break;
 	default:
 	    out << " <binary kind " << kind << ">";

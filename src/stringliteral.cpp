@@ -5,16 +5,16 @@
 #include "stringliteral.hpp"
 #include "symtab.hpp"
 
-StringLiteral::StringLiteral(UStr val, Token::Loc loc)
-    : Expr{loc, Type::getString(val.length())}, val{val}
+StringLiteral::StringLiteral(UStr val, UStr valRaw, Token::Loc loc)
+    : Expr{loc, Type::getString(val.length())}, val{val}, valRaw{valRaw}
     , ident{Symtab::addStringLiteral(val)}
 {
 }
 
 ExprPtr
-StringLiteral::create(UStr val, Token::Loc loc)
+StringLiteral::create(UStr val, UStr valRaw, Token::Loc loc)
 {
-    auto p = new StringLiteral{val, loc};
+    auto p = new StringLiteral{val, valRaw, loc};
     return std::unique_ptr<StringLiteral>{p};
 }
 
@@ -77,12 +77,12 @@ StringLiteral::print(int indent) const
     if (indent) {
 	std::cerr << std::setfill(' ') << std::setw(indent) << ' ';
     }
-    std::cerr << val.c_str() << " [ string literal (" << type << ") ] "
+    std::cerr << valRaw.c_str() << " [ string literal (" << type << ") ] "
 	<< std::endl;
 }
 
 void
-StringLiteral::printFlat(std::ostream &out, bool isFactor) const
+StringLiteral::printFlat(std::ostream &out, int prec) const
 {
-    out << "\"" << val.c_str() << "\"";
+    out << "\"" << valRaw.c_str() << "\"";
 }

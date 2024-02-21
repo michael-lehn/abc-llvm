@@ -29,7 +29,7 @@ class InitializerList
 	gen::ConstVal loadConstValue(size_t index) const;
 
 	void print(int indent = 0) const;
-	void printFlat(std::ostream &out, bool isFactor) const;
+	void printFlat(std::ostream &out, int prec) const;
 
     private:
 	const Type *type_ = nullptr;

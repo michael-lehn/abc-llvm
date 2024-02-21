@@ -102,7 +102,7 @@ extern struct Token {
 	} from, to;
 	UStr path;
     } loc;
-    UStr val;
+    UStr val, valRaw;
 } token;
 
 bool setLexerInputfile(const char *path);

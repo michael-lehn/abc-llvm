@@ -107,7 +107,16 @@ CastExpr::print(int indent) const
 }
 
 void
-CastExpr::printFlat(std::ostream &out, bool isFactor) const
+CastExpr::printFlat(std::ostream &out, int prec) const
 {
-    out << "cast<" << type << ">(" << expr << ")";
+    if (prec > 14) {
+	out << "(";
+    }
+    out << "(";
+    out << type;
+    out << ")";
+    expr->printFlat(out, 14);
+    if (prec > 14) {
+	out << ")";
+    }
 }

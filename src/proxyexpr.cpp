@@ -68,7 +68,7 @@ ProxyExpr::print(int indent) const
 }
 
 void
-ProxyExpr::printFlat(std::ostream &out, bool isFactor) const
+ProxyExpr::printFlat(std::ostream &out, int prec) const
 {
-    expr->printFlat(out, isFactor);
+    expr->printFlat(out, prec);
 }

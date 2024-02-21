@@ -434,43 +434,6 @@ parsePrimary()
         getToken();
 	auto expr = Identifier::create(opTok.val, opTok.loc);
         return expr;
-/*
-    } else if (token.kind == TokenKind::COLON) {
-	getToken();
-	auto type = parseType();
-	if (!type) {
-	    error::out() << token.loc << " type expected"
-		<< std::endl;
-	    error::fatal();
-	} else if (!type->hasSize()) {
-	    error::out() << token.loc
-		<< ": incomplete type '" << type << "'" << std::endl;
-	    error::fatal();
-	} else if (type->isFunction()) {
-	    error::out() << opTok.loc
-		<< ": Function can not be defined as local variable. "
-		<< std::endl
-		<< "\tIf this is supposed to be a function pointer "
-		<< "use type '" << Type::getPointer(type) << "'"
-		<< std::endl;
-	    error::fatal();
-	}
-	if (auto ast = parseInitializerList(type)) {
-	    return CompoundLiteral::create(std::move(ast), opTok.loc);
-	} else {
-	    error::expected(TokenKind::LPAREN);
-	    getToken();
-	    auto expr = parseExpression();
-	    if (!expr) {
-		error::out() << token.loc << " expected non-empty expression"
-		    << std::endl;
-		error::fatal();
-	    }
-	    error::expected(TokenKind::RPAREN);
-	    getToken();
-	    return CastExpr::create(std::move(expr), type, opTok.loc, true);
-	}
-*/
     } else if (token.kind == TokenKind::SIZEOF) {
 	getToken();
 	error::expected(TokenKind::LPAREN);
@@ -529,11 +492,14 @@ parsePrimary()
         return expr;
     } else if (token.kind == TokenKind::STRING_LITERAL) {
 	std::string str{};
+	std::string strRaw{};
 	do {
 	    str += token.val.c_str();
+	    strRaw += token.valRaw.c_str();
 	    getToken();
 	} while (token.kind == TokenKind::STRING_LITERAL);
-	auto expr = StringLiteral::create(str.c_str(), opTok.loc);	
+	auto expr = StringLiteral::create(str.c_str(), strRaw.c_str(),
+					  opTok.loc);	
 	return expr;	
     } else if (token.kind == TokenKind::CHARACTER_LITERAL) {
 	std::stringstream ss;

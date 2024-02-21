@@ -163,7 +163,7 @@ InitializerList::print(int indent) const
 }
 
 void
-InitializerList::printFlat(std::ostream &out, bool isFactor) const
+InitializerList::printFlat(std::ostream &out, int prec) const
 {
     if (value.size() > 1) {
 	out << "{";
@@ -173,12 +173,12 @@ InitializerList::printFlat(std::ostream &out, bool isFactor) const
 	if (std::holds_alternative<ExprPtr>(v)) {
 	    const auto &e = std::get<ExprPtr>(v);
 	    if (e) {
-		e->printFlat(out, isFactor);
+		out << e;
 	    } else {
 		out << "0";
 	    }
 	} else if (std::holds_alternative<InitializerList>(v)) {
-	    std::get<InitializerList>(v).printFlat(out, isFactor);
+	    std::get<InitializerList>(v).printFlat(out, 1);
 	}
 	if (i + 1 < value.size()) {
 	    out << ", ";

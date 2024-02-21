@@ -3,19 +3,20 @@
 fn main()
 {
     local
-	a: u64,
+	a: u64 = 123,
 	b: i32,
-	p: -> u64;
-
-    a = 123;
-    p = &a;
+	p: -> u64 = &a;
 
     // verbose cast
-    /*
     // error if arrays are assignable
-    p = cast(p: array[2] of u64);
-    */
+    // p = (array[2] of u64)p;
     p[0] = 42;
+
+    // error: although C allows it
+    // p = (-> u64)&b;
+
+    // if you really want to cast between any pointer types
+    p = (-> void)&b;
 
     // slick cast
     /*
@@ -24,11 +25,11 @@ fn main()
     */
     p[0] = 42;
 
-    // conditional with a slick cast ... hmm
+    // conditional as in C
     a = a > 0 ? a : u64{b};
 
-    // verbose consditional with a slick cast ... maybe more like it
-    a = a > 0 then a else u64{b};
+    // verbose consditional
+    a = a > 0 then a else (u64)b;
 
     printf("a = %ld\n", a);
 }

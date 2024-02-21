@@ -707,25 +707,7 @@ AstInitializerList::append(AstInitializerListPtr &&initializerItem)
 void
 AstInitializerList::print(int indent) const
 {
-    error::out(indent) << "\n[" << type << "]";
-    if (std::holds_alternative<ExprPtr>(initializer)) {
-	error::out() << std::get<ExprPtr>(initializer);
-    } else if (std::holds_alternative<AstList>(initializer)) {
-	const auto &astList = std::get<AstList>(initializer);
-
-	error::out() << "{";
-	for (std::size_t i = 0; i < astList.size(); ++i) {
-	    auto node = astList.node[i].get();
-	    const auto initList = dynamic_cast<AstInitializerList *>(node);
-	    initList->print(0);
-	    if (i + 1 < astList.size()) {
-		error::out() << ",";
-	    }
-	}
-	error::out() << "}";
-    } else {
-	assert(0);
-    }
+    createInitializerList().printFlat(error::out(), 1);
 }
 
 InitializerList
@@ -779,12 +761,11 @@ AstVar::addInitializer(AstInitializerListPtr &&initializer)
 void
 AstVar::print(int indent) const
 {
-    error::out(indent) << ident.c_str() << ":" << type;
+    error::out(indent) << ident.c_str() << ": " << type;
 
     if (initializer) {
 	error::out() << " = ";
 	initializer->print(0);
-	error::out() << ";" << std::endl;
     }
 }
 
@@ -911,8 +892,8 @@ AstLocalVar::print(int indent) const
 {
     error::out(indent) << "local ";
     if (decl.size() > 1) {
-	error::out() << std::endl;
 	for (std::size_t i = 0; const auto &item : decl.node) {
+	    error::out() << std::endl;
 	    auto var = dynamic_cast<const AstVar *>(item.get());
 	    var->print(indent + 4);
 	    if (i + 1< decl.size()) {

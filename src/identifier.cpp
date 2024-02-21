@@ -9,13 +9,14 @@
 
 Identifier::Identifier(UStr ident, ExprPtr expr)
     : Expr{expr->loc, expr->type}, expr{std::move(expr)}
-    , ident{ident}, misusedAsMember{false}
+    , ident{ident}, identUser{ident}, misusedAsMember{false}
 {
 }
 
-Identifier::Identifier(UStr ident, const Type *type, Token::Loc loc,
-		       bool misusedAsMember)
-    : Expr{loc, type}, ident{ident}, misusedAsMember{misusedAsMember}
+Identifier::Identifier(UStr ident, UStr identUser, const Type *type,
+		       Token::Loc loc, bool misusedAsMember)
+    : Expr{loc, type}, ident{ident}, identUser{identUser}
+    , misusedAsMember{misusedAsMember}
 {
 }
 
@@ -32,7 +33,8 @@ Identifier::create(UStr ident, Token::Loc loc)
 	auto p = new Identifier{ident, ProxyExpr::create(sym->expr())};
 	return std::unique_ptr<Identifier>{p};
     } else {
-	auto p = new Identifier{sym->getInternalIdent(), sym->type(), loc};
+	auto p = new Identifier{sym->getInternalIdent(), ident, sym->type(),
+				loc};
 	return std::unique_ptr<Identifier>{p};
     }
 }
@@ -41,7 +43,7 @@ ExprPtr
 Identifier::create(UStr ident, const Type *type, Token::Loc loc)
 {
     assert(type);
-    auto p = new Identifier{ident, type, loc, true};
+    auto p = new Identifier{ident, ident, type, loc, true};
     return std::unique_ptr<Identifier>{p};
 }
 
@@ -121,12 +123,12 @@ Identifier::print(int indent) const
     if (indent) {
 	std::cerr << std::setfill(' ') << std::setw(indent) << ' ';
     }
-    std::cerr << ident.c_str() << " [ " << type << " ] " << std::endl;
+    std::cerr << identUser.c_str() << " [ " << type << " ] " << std::endl;
 }
     
 void
-Identifier::printFlat(std::ostream &out, bool isFactor) const
+Identifier::printFlat(std::ostream &out, int prec) const
 {
-    out << ident.c_str();
+    out << identUser.c_str();
 }
 

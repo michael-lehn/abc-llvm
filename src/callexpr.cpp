@@ -91,9 +91,9 @@ CallExpr::print(int indent) const
 }
 
 void
-CallExpr::printFlat(std::ostream &out, bool isFactor) const
+CallExpr::printFlat(std::ostream &out, int prec) const
 {
-    fn->printFlat(out, isFactor);
+    fn->printFlat(out, prec);
     out << "(";
     for (std::size_t i = 0; i < param.size(); ++i) {
 	out << param[i];

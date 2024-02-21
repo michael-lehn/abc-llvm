@@ -100,7 +100,7 @@ IntegerLiteral::print(int indent) const
 }
 
 void
-IntegerLiteral::printFlat(std::ostream &out, bool isFactor) const
+IntegerLiteral::printFlat(std::ostream &out, int prec) const
 {
     if (radix == 8) {
 	if (val.c_str() != UStr{"0"}.c_str()) {

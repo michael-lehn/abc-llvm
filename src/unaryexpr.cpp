@@ -159,29 +159,35 @@ UnaryExpr::print(int indent) const
 }
 
 void
-UnaryExpr::printFlat(std::ostream &out, bool isFactor) const
+UnaryExpr::printFlat(std::ostream &out, int prec) const
 {
+    if (prec > 15) {
+	out << "(";
+    }
     switch (kind) {
 	case UnaryExpr::DEREF:
-	    out << "*" << child;
+	    out << "*"; child->printFlat(out, 15);
 	    break;
 	case UnaryExpr::LOGICAL_NOT:
-	    out << "!" << child;
+	    out << "!"; child->printFlat(out, 15);
 	    break;
 	case UnaryExpr::ADDRESS:
-	    out << "&" << child;
+	    out << "&"; child->printFlat(out, 15);
 	    break;
 	case UnaryExpr::POSTFIX_INC:
-	    out << child << "++";
+	    child->printFlat(out, 16); out << "++";
 	    break;
 	case UnaryExpr::POSTFIX_DEC:
-	    out << child << "--";
+	    child->printFlat(out, 16); out << "--";
 	    break;
 	case UnaryExpr::MINUS:
-	    out << "-" << child;
+	    out << "-"; child->printFlat(out, 16);
 	    break;
 	default:
 	    out << " <unary kind " << kind << ">";
+    }
+    if (prec > 15) {
+	out << ")";
     }
 }
 

@@ -42,7 +42,7 @@ class Expr
 	virtual void print(int indent = 1) const = 0;
 
 	// for printing error messages
-	virtual void printFlat(std::ostream &out, bool isFactor) const = 0;
+	virtual void printFlat(std::ostream &out, int prec) const = 0;
 };
 
 using ExprPtr = std::unique_ptr<const Expr>;

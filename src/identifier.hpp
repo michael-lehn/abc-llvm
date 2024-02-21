@@ -7,7 +7,7 @@ class Identifier : public Expr
 {
     protected:
 	Identifier(UStr ident, ExprPtr expr);
-	Identifier(UStr ident, const Type *type, Token::Loc loc,
+	Identifier(UStr ident, UStr identUser, const Type *type, Token::Loc loc,
 		   bool misusedAsMember = false);
 	ExprPtr expr;
 
@@ -17,7 +17,8 @@ class Identifier : public Expr
 	static ExprPtr create(UStr ident, const Type *type,
 			      Token::Loc loc = Token::Loc{});
 
-	const UStr ident;
+	const UStr ident; // identifier for code generation
+	const UStr identUser; // identifier as seen by user
 	const bool misusedAsMember;
 
 	bool hasAddr() const override;
@@ -35,7 +36,7 @@ class Identifier : public Expr
 	void print(int indent) const override;
 
 	// for printing error messages
-	virtual void printFlat(std::ostream &out, bool isFactor) const override;
+	virtual void printFlat(std::ostream &out, int prec) const override;
 };
 
 #endif // IDENTIFIER_HPP
