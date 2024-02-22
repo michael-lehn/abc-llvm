@@ -1,5 +1,4 @@
-//#include <stdio.hdr>
-fn printf(fmt: -> char, ...): int;
+@ <stdio.hdr>
 
 fn foo(a: u64)
 {

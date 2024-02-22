@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <set>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -14,16 +15,24 @@ Token token;
 
 static FILE* fp = stdin;
 
-std::vector<std::pair<UStr, FILE *>> openFile;
+static std::vector<std::pair<UStr, FILE *>> openFile;
+static void saveCurrentLocatation();
+static void restoreCurrentLocatation();
 
 bool
 setLexerInputfile(const char *path)
 {
-    std::pair<UStr, FILE*> p = {UStr{path}, std::fopen(path, "r")};
-    openFile.push_back(p);
+    FILE *file = path ? std::fopen(path, "r") : stdin;
+    if (!path) {
+	path = "stdin";
+    }
+    openFile.push_back({UStr{path}, file});
+    saveCurrentLocatation();
 
-    token.loc.path = p.first;
-    fp = p.second;
+    token.loc = Token::Loc{};
+    token.loc.path = path;
+
+    fp = file;
     return fp;
 }
 
@@ -36,11 +45,12 @@ closeLexerInputfile()
     }
     std::fclose(openFile.back().second);
     openFile.pop_back();
+    restoreCurrentLocatation();
 
     if (!openFile.empty()) {
-	auto &p =  openFile.back();
-	token.loc.path = p.first;
-	fp = p.second;
+	fp = openFile.back().second;
+	token.loc = Token::Loc{};
+	token.loc.path = openFile.back().first;
 	return true;
     }
     return false;
@@ -370,6 +380,25 @@ tokenCStr(TokenKind kind)
 static Token::Loc::Pos curr = { 1, 0 };
 static int ch;
 
+static std::vector<std::pair<int, Token::Loc::Pos>> savedCurrLoc;
+
+static void
+saveCurrentLocatation()
+{
+    savedCurrLoc.push_back({ch, curr});
+    ch = 0;
+    curr = {1, 0};
+}
+
+static void
+restoreCurrentLocatation()
+{
+    assert(savedCurrLoc.size());
+    ch = savedCurrLoc.back().first;
+    curr = savedCurrLoc.back().second;
+    savedCurrLoc.pop_back();
+}
+
 static void
 fixCurrentLocatation(const std::string &path)
 {
@@ -390,8 +419,8 @@ static std::string token_str; // updated by tokenUpdate()
 static char
 nextCh()
 {
-	
     ch = std::fgetc(fp);
+
     if (ch == '\t') {
 	curr.col += tabSize - curr.col % tabSize;
     } else if (ch == '\n') {
@@ -515,6 +544,7 @@ hexToVal(char ch)
 
 static void parseStringLiteral();
 static void parseCharacterLiteral();
+static void parseAddDirective();
 static void parseDirective();
 
 TokenKind
@@ -764,6 +794,10 @@ getToken()
 	tokenUpdate();
 	nextCh();
 	return tokenSet(TokenKind::QUERY);
+    } else if (ch == '@') {
+	nextCh();
+	parseAddDirective();
+	return getToken();
     } else if (ch == '#') {
 	if (curr.col == 1) {
 	    nextCh();
@@ -1002,6 +1036,48 @@ parseCharacterLiteral()
     nextCh();
 }
 
+static std::set<std::string> includePath;
+
+void
+addIncludePath(const char *dir)
+{
+    includePath.insert(dir);
+}
+
+static void
+parseAddDirective()
+{
+    static std::set<UStr> included;
+
+    getToken();
+    if (token.kind == TokenKind::STRING_LITERAL) {
+	if (!included.contains(token.val)) {
+	    included.insert(token.val);
+	    setLexerInputfile(token.val.c_str());
+	}
+    } else if (token.kind == TokenKind::LESS) {
+	std::string file;
+	while (ch != '>') {
+	    file += ch;
+	    nextCh();
+	}
+	nextCh();
+	for (auto path: includePath) {
+	    path += "/";
+	    path += file;
+	    std::ifstream f(path.c_str());
+	    if (f.good()) {
+		setLexerInputfile(path.c_str());
+		break;
+	    }
+	}
+    } else {
+	error::out() << token.loc
+	    << ": expected filename " << std::endl;
+	error::fatal();
+    }
+}
+
 /*
  * from: https://github.com/afborchert/astl-c/blob/master/astl-c/scanner.cpp
  */
@@ -1097,6 +1173,11 @@ std::pair <std::size_t, std::size_t>
 printLine(std::ostream &out, const char *path, std::size_t lineNumber)
 {
     std::fstream file{path};
+
+    if (!file.is_open()) {
+	error::out() << "failed to open " << path << std::endl;
+	return {0, 0};
+    }
 
     file.seekg(std::ios::beg);
     for (std::size_t i = 0; i + 1 < lineNumber; ++i) {

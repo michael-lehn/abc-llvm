@@ -1,4 +1,4 @@
-#include <stdio.hdr>
+@ <stdio.hdr>
 
 /*
  * Print the first 8 bytes of a ELF header in binary.

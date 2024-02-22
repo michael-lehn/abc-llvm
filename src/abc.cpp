@@ -15,6 +15,7 @@ usage(const char *prog)
 {
     std::cerr << "usage: " << prog
 	<< "[ -S | -B] "
+	<< "[ -Idir... ] "
 	<< "[ -Olevel ] "
 	<< "infile" << std::endl;
     std::exit(1);
@@ -86,6 +87,11 @@ initDefaultTypes()
 		     Type::getSignedInteger(8 * sizeof(std::ptrdiff_t))));
 }
 
+void
+optInclude(const char *dir)
+{
+    addIncludePath(dir);
+}
 
 int
 main(int argc, char *argv[])
@@ -104,6 +110,16 @@ main(int argc, char *argv[])
 		    break;
 		case 'B':
 		    output = BC;
+		    break;
+		case 'I':
+		    if (!argv[i][2] && i + 1 < argc) {
+			optInclude(argv[i + 1]);
+			++i;
+		    } else if (argv[i][2]) {
+			optInclude(&argv[i][2]);
+		    } else {
+			usage(argv[0]);
+		    }
 		    break;
 		case 'O':
 		    optLevel = argv[i][2] - '0';

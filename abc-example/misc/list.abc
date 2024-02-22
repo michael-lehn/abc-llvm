@@ -1,5 +1,5 @@
-#include <stdio.hdr>
-#include <stdlib.hdr>
+@ <stdio.hdr>
+@ <stdlib.hdr>
 
 
 struct Node

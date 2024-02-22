@@ -107,6 +107,7 @@ extern struct Token {
 } token;
 
 bool setLexerInputfile(const char *path);
+void addIncludePath(const char *dir);
 const char *tokenKindCStr(TokenKind kind);
 const char *tokenCStr(TokenKind kind);
 TokenKind getToken();

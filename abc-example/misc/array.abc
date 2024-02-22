@@ -1,4 +1,4 @@
-#include <stdio.hdr>
+@ <stdio.hdr>
 
 global a: array[5] of u64,
        b: array[sizeof(a)/sizeof(a[0])] of -> u64;

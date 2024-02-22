@@ -1,5 +1,5 @@
 ABC := ../../bin/abc
-ABCFLAGS := -O3
+ABCFLAGS := -O3 -I ../include
 CPP := $(CC) -E -x c -traditional -Wno-endif-labels -I../include
 CPPFLAGS += -MT $(@:%.abc_p=%.o) -MMD -MP -MF $(dep.dir)/$(<F).d
 
@@ -33,7 +33,8 @@ all: $(target) $(obj.abc)
 %.abc_p : %.abc
 	$(CPP) $(CPPFLAGS) -o $@ $< 
 
-%.s : %.abc_p
+#%.s : %.abc_p
+%.s : %.abc
 	$(ABC) -S $(ABCFLAGS) $<
 
 %.bc : %.abc_p

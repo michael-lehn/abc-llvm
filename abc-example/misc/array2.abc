@@ -1,4 +1,4 @@
-#include <stdio.hdr>
+@ <stdio.hdr>
 
 fn initArray(p: -> u64, dim: u64)
 {

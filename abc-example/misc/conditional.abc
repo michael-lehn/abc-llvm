@@ -1,5 +1,5 @@
-#include <assert.hdr>
-#include <stdio.hdr>
+@ <assert.hdr>
+@ <stdio.hdr>
 
 /*
  * I think a programming language should not provide too many alternatives

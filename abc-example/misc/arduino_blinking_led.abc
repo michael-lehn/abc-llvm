@@ -9,7 +9,7 @@
  *      up for your machine).
  */
 
-#include <stdio.hdr>
+@ <stdio.hdr>
 
 global instr: array[30] of char = {
     0x52, 0x9a, // sbi	0x0a, 2

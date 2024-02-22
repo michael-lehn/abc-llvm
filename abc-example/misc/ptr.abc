@@ -1,4 +1,4 @@
-#include <stdio.hdr>
+@ <stdio.hdr>
 
 fn printBytes(s: -> char, n: u64)
 {
