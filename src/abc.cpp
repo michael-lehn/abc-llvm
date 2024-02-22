@@ -14,7 +14,8 @@ void
 usage(const char *prog)
 {
     std::cerr << "usage: " << prog
-	<< "[ -S | -B] "
+	<< "[ -o outfile ] "
+	<< "[ -c | -S | -B] "
 	<< "[ -Idir... ] "
 	<< "[ -Olevel ] "
 	<< "infile" << std::endl;
@@ -97,14 +98,29 @@ int
 main(int argc, char *argv[])
 {
     const char *infile = nullptr;
-    enum Output { ASM = 1, BC = 2 } output = ASM;
+    enum Output { ASM = 1, OBJ = 2, EXE = 3, BC = 4 } output = EXE;
     int optLevel = 0;
+    std::filesystem::path outfile;
+
 
     initDefaultTypes();
 
     for (int i = 1; i < argc; ++i) {
 	if (argv[i][0] == '-') {
 	    switch (argv[i][1]) {
+		case 'o':
+		    if (!argv[i][2] && i + 1 < argc) {
+			outfile = argv[i + 1];
+			++i;
+		    } else if (argv[i][2]) {
+			outfile = &argv[i][2];
+		    } else {
+			usage(argv[0]);
+		    }
+		    break;
+		case 'c':
+		    output = OBJ;
+		    break;
 		case 'S':
 		    output = ASM;
 		    break;
@@ -150,8 +166,30 @@ main(int argc, char *argv[])
 	ast->codegen();
     }
 
+    if (outfile.empty()) {
+	outfile = infile;
+	switch (output) {
+	    case ASM:
+		outfile.replace_extension(".s");
+		break;
+	    case OBJ:
+		outfile.replace_extension(".o");
+		break;
+	    case EXE:
+		outfile = "a.out";
+		break;
+	    default:
+		outfile.replace_extension(".bc");
+		break;
+	}
+    }
+
     if (output == ASM) {
-	gen::dump_asm(std::filesystem::path(infile).stem().c_str(), optLevel);
+	gen::dump_asm(outfile, optLevel);
+    } else if (output == OBJ) {
+	gen::dump_obj(outfile, optLevel);
+    } else if (output == EXE) {
+	gen::dump_exe(outfile, optLevel);
     } else {
 	gen::dump_bc(std::filesystem::path(infile).stem().c_str());
     }

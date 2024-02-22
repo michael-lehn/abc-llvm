@@ -1,5 +1,5 @@
 ABC := ../../bin/abc
-ABCFLAGS := -O3
+ABCFLAGS := -O3 -I ../include
 CPP := $(CC) -E -x c -traditional -Wno-endif-labels -I../include
 CPPFLAGS += \
 	    -MT $(@:$(cpp.dir)/%.abc_cpp=$(obj.dir)/%.o)\
@@ -43,15 +43,15 @@ all: $(target)
 $(cpp.dir)/%.abc_cpp : %.abc | $(cpp.dir)
 	$(CPP) $(CPPFLAGS) -o $@ $< 
 
-$(asm.dir)/%.s :$(cpp.dir)/%.abc_cpp | $(asm.dir)
+$(asm.dir)/%.s :%.abc | $(asm.dir)
 	$(ABC) -S $(ABCFLAGS) $<
 	@mv $(@F) $@
 
-%.bc : $(cpp.dir)/%.abc_cpp
-	$(ABC) -B $<
+%.bc : /%.abc
+	$(ABC) -B $(ABCFLAGS) $<
 
-$(obj.dir)/%.o : $(asm.dir)/%.s | $(obj.dir)
-	$(AS) -o $@ $<
+$(obj.dir)/%.o : %.abc | $(obj.dir)
+	$(ABC) -c $(ABCFLAGS) $< -o $@
 
 % : $(asm.dir)/%.s
 % : $(obj.dir)/%.o

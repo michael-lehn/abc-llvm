@@ -1,8 +1,5 @@
-#ifndef EXPR_HDR
-#define EXPR_HDR
-
-#include "gen.hdr"
-#include "lexer.hdr"
+@ "gen.hdr"
+@ "lexer.hdr"
 
 enum ExprKind : i32
 {
@@ -58,6 +55,3 @@ extern fn loadExprAddr(expr: -> const Expr): GenReg;
 extern fn loadExpr(expr: -> const Expr): GenReg;
 
 extern fn printExpr(expr: -> const Expr);
-
-
-#endif // EXPR_HDR

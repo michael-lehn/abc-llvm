@@ -37,8 +37,11 @@ all: $(target) $(obj.abc)
 %.s : %.abc
 	$(ABC) -S $(ABCFLAGS) $<
 
-%.bc : %.abc_p
-	$(ABC) -B $<
+%.bc : %.abc
+	$(ABC) -B $(ABCFLAGS) $<
+
+%.o : %.abc
+	$(ABC) -c $(ABCFLAGS) $<
 
 %.o : %.s
 	$(AS) -o $@ $<
@@ -47,6 +50,10 @@ all: $(target) $(obj.abc)
 % : %.o
 % : %.o $(lib)
 	$(LINK.o) $^ -o $@
+
+% : %.abc $(lib)
+	$(ABC) $(ABCFLAGS) $^
+#	$(ABC) $(ABCFLAGS) $^ -o $@
 
 $(dep.dir): ; mkdir -p $@
 

@@ -1,3 +1,13 @@
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <system_error>
+#include <unordered_map>
+
+#include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -36,13 +46,6 @@
 #include "llvm/Transforms/Scalar/Reassociate.h"
 #include "llvm/Transforms/Scalar/SimplifyCFG.h"
 #include "llvm/Transforms/Utils.h"
-
-#include <cassert>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-#include <system_error>
-#include <unordered_map>
 
 #include "error.hpp"
 #include "gen.hpp"
@@ -822,10 +825,11 @@ ptrDiff(const Type *type, Reg addrLeft, Reg addrRight)
 //------------------------------------------------------------------------------
 
 void
-dump_bc(const char *filename)
+dump_bc(std::filesystem::path filename)
 {
     std::error_code ec;
-    auto f = llvm::raw_fd_ostream (std::string{filename} + ".bc", ec);
+    filename.replace_extension("bc");
+    auto f = llvm::raw_fd_ostream (filename.c_str(), ec);
 
     if (ec) {
 	llvm::errs() << "Could not open file: " << ec.message();
@@ -835,35 +839,70 @@ dump_bc(const char *filename)
     llvmModule->print(f, nullptr);
 }
 
-void
-dump_asm(const char *filename, int codeGenOptLevel)
+static void
+dump(std::filesystem::path filename, int codeGenOptLevel, bool obj)
 {
     if (!setTargetInit) {
 	setTarget(codeGenOptLevel);
     }
     assert(targetMachine);
 
-    std::error_code ec;
-    auto dest = llvm::raw_fd_ostream{
-		    std::string{filename} + ".s",
-		    ec,
-		    llvm::sys::fs::OF_None
-    };
+    filename.replace_extension(obj ? ".o" : ".s");
 
+    std::error_code ec;
+    auto dest = llvm::raw_fd_ostream{filename.c_str(), ec,
+				     llvm::sys::fs::OF_None};
     if (ec) {
 	llvm::errs() << "Could not open file: " << ec.message();
 	std::exit(1);
     }
 
     llvm::legacy::PassManager pass;
-    auto fileType = llvm::CodeGenFileType::CGFT_AssemblyFile;
+    auto fileType = obj
+	? llvm::CodeGenFileType::CGFT_ObjectFile
+	: llvm::CodeGenFileType::CGFT_AssemblyFile;
 
     if (targetMachine->addPassesToEmitFile(pass, dest, nullptr, fileType)) {
-	llvm::errs() << "TheTargetMachine can't emit a file of this type";
+	llvm::errs() << "can't emit a file of this type";
 	std::exit(1);
     }
     pass.run(*llvmModule);
     dest.flush();
+}
+
+void
+dump_asm(std::filesystem::path filename, int codeGenOptLevel)
+{
+    dump(filename, codeGenOptLevel, false);
+}
+
+void
+dump_obj(std::filesystem::path filename, int codeGenOptLevel)
+{
+    dump(filename, codeGenOptLevel, true);
+}
+
+void
+dump_exe(std::filesystem::path filename, int codeGenOptLevel)
+{
+    auto tmpObj = std::filesystem::temp_directory_path() / filename;
+    tmpObj.replace_extension("o");
+    std::cerr << "tmpObj = " << tmpObj << "\n";
+
+    dump(tmpObj, codeGenOptLevel, true);
+
+    std::ifstream tmpObjCheck(tmpObj.c_str());
+    if (!tmpObjCheck.good()) {
+	return;
+    }
+
+    std::string linker;
+    linker = linker + "cc -o "  + filename.c_str() + " " + tmpObj.c_str();
+
+    if (std::system(linker.c_str()) || std::remove(tmpObj.c_str())) {
+	std::cerr << "error\n";
+	std::exit(1);
+    }
 }
 
 } // namespace gen

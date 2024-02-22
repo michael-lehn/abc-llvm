@@ -1,6 +1,6 @@
-#include <stdio.hdr>
+@ <stdio.hdr>
 
-#include "symtab.hdr"
+@ "symtab.hdr"
 
 fn main()
 {

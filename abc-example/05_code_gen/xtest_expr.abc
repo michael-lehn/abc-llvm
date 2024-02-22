@@ -1,7 +1,7 @@
-#include <stdio.hdr>
+@ <stdio.hdr>
 
-#include "expr.hdr"
-#include "symtab.hdr"
+@ "expr.hdr"
+@ "symtab.hdr"
 
 fn main()
 {

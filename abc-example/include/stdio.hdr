@@ -1,7 +1,4 @@
-#ifndef STDIO_HBC
-#define STDIO_HBC
-
-#include <stdabc.hdr>
+@ <stdabc.hdr>
 
 enum StdIO_Constants : int
 {
@@ -18,9 +15,9 @@ extern fn getchar(): int;
 extern fn putchar(ch : int);
 extern fn strtol(str: -> char, end: -> char, base: int): long;
 
-#define stdin __stdinp
-#define stdout __stdoutp
-#define stderr __stderrp
+@define stdin __stdinp
+@define stdout __stdoutp
+@define stderr __stderrp
 
 struct FILE;
 extern stdin: -> FILE;
@@ -30,6 +27,3 @@ extern stderr: -> FILE;
 extern fn fopen(path: -> char, mode: -> char): -> FILE;
 extern fn fprintf(stream: -> FILE, fmt: -> char, ...): int;
 extern fn fclose(stream: -> FILE): int;
-
-#endif // STDIO_HBC
-

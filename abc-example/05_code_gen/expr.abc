@@ -1,10 +1,10 @@
-#include <assert.hdr>
-#include <stdlib.hdr>
-#include <stdio.hdr>
-#include <string.hdr>
+@ <assert.hdr>
+@ <stdlib.hdr>
+@ <stdio.hdr>
+@ <string.hdr>
 
-#include "expr.hdr"
-#include "symtab.hdr"
+@ "expr.hdr"
+@ "symtab.hdr"
 
 fn releaseExpr(expr: -> const Expr)
 {

@@ -486,14 +486,20 @@ static std::unordered_map<UStr, TokenKind> kw = {
     { "enum", TokenKind::ENUM },
 };
 
+static std::unordered_map<UStr, UStr> define;
+
 static TokenKind
 tokenSet(TokenKind kind)
 {
     token.kind = kind;
     token.val = UStr{token_str};
     token.valRaw = UStr{token_str_raw};
-    if (kind == TokenKind::IDENTIFIER && kw.contains(token.val)) {
-	token.kind = kw[token.val];
+    if (kind == TokenKind::IDENTIFIER) {
+	if (kw.contains(token.val)) {
+	    token.kind = kw[token.val];
+	} else if (define.contains(token.val)) {
+	    token.val = define[token.val];
+	}
     }
     return token.kind;
 }
@@ -1050,7 +1056,28 @@ parseAddDirective()
     static std::set<UStr> included;
 
     getToken();
-    if (token.kind == TokenKind::STRING_LITERAL) {
+    if (token.kind == TokenKind::IDENTIFIER && token.val == UStr{"define"}) {
+	getToken();
+	if (token.kind != TokenKind::IDENTIFIER) {
+	    error::out() << token.loc
+		<< ": expected identifier" << std::endl;
+	    error::fatal();
+	}
+	auto from = token;
+	getToken();
+	if (token.kind != TokenKind::IDENTIFIER) {
+	    error::out() << token.loc
+		<< ": expected identifier" << std::endl;
+	    error::fatal();
+	}
+	auto to = token;
+	if (define.contains(from.val)) {
+	    error::out() << token.loc
+		<< ": macro already defined" << std::endl;
+	    error::fatal();
+	}
+	define[from.val] = to.val;
+    } else if (token.kind == TokenKind::STRING_LITERAL) {
 	if (!included.contains(token.val)) {
 	    included.insert(token.val);
 	    setLexerInputfile(token.val.c_str());
@@ -1062,18 +1089,28 @@ parseAddDirective()
 	    nextCh();
 	}
 	nextCh();
+	bool succ = false;
 	for (auto path: includePath) {
 	    path += "/";
 	    path += file;
 	    std::ifstream f(path.c_str());
 	    if (f.good()) {
-		setLexerInputfile(path.c_str());
+		if (!included.contains(path.c_str())) {
+		    included.insert(path.c_str());
+		    setLexerInputfile(path.c_str());
+		}
+		succ = true;
 		break;
 	    }
 	}
+	if (!succ) {
+	    error::out() << token.loc
+		<< ": file '" << file << "' not found" << std::endl;
+	    error::fatal();
+	}
     } else {
 	error::out() << token.loc
-	    << ": expected filename " << std::endl;
+	    << ": expected filename" << std::endl;
 	error::fatal();
     }
 }
@@ -1088,7 +1125,7 @@ parseDirective()
 	nextCh();
     }
     if (isLetter(ch)) {
-	// regular directives including #pragma are ignored
+	// other directives including #pragma are ignored
 	while (ch != EOF && ch != '\n') {
 	    nextCh();
 	}

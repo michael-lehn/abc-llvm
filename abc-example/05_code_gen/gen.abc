@@ -1,7 +1,7 @@
-#include <assert.hdr>
-#include <stdio.hdr>
+@ <assert.hdr>
+@ <stdio.hdr>
 
-#include "gen.hdr"
+@ "gen.hdr"
 
 global usedReg: array[256] of bool;
 

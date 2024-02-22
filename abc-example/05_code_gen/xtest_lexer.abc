@@ -1,6 +1,6 @@
-#include <stdio.hdr>
+@ <stdio.hdr>
 
-#include "lexer.hdr"
+@ "lexer.hdr"
 
 fn main()
 {

@@ -1,9 +1,4 @@
-#ifndef STDLIB_ABH
-#define STDLIB_ABH
-
 extern fn malloc(size: size_t): -> void;
 extern fn free(ptr: -> void);
 extern fn abort();
 extern fn exit(status: int);
-
-#endif // STDLIB_ABH

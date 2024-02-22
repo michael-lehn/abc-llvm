@@ -1,7 +1,4 @@
-#ifndef GEN_HDR
-#define GEN_HDR
-
-#include <stdio.hdr>
+@ <stdio.hdr>
 
 type GenReg : u8;
 
@@ -20,5 +17,3 @@ extern fn genFetch(reg: GenReg): GenReg;
 extern fn genStore(val: GenReg, addr: GenReg);
 
 extern fn genAluInstr(op: GEN_ALU_OP, left: GenReg, right: GenReg) : GenReg;
-
-#endif // GEN_HDR

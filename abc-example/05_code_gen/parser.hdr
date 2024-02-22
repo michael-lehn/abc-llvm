@@ -1,8 +1,3 @@
-#ifndef PARSER_HDR
-#define PARSER_HDR
-
-#include "expr.hdr"
+@ "expr.hdr"
 
 extern fn parseExpression() : -> Expr;
-
-#endif // PARSER_HDR

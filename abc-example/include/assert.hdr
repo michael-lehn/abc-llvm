@@ -1,7 +1,4 @@
-#ifndef ASSERT_HDR
-#define ASSERT_HDR
-
-#include <stdabc.hdr>
+@ <stdabc.hdr>
 
 /*
  * assert hack:
@@ -13,5 +10,3 @@
  * extern fn __assert(msg: -> const char, file: -> const char, line: int): bool;
  *
  */
-
-#endif // ASSERT_HDR

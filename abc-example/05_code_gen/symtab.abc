@@ -1,8 +1,8 @@
-#include <assert.hdr>
-#include <stdio.hdr>
-#include <string.hdr>
+@ <assert.hdr>
+@ <stdio.hdr>
+@ <string.hdr>
 
-#include "symtab.hdr"
+@ "symtab.hdr"
 
 enum SymtabConst : i32
 {

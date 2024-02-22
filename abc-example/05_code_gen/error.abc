@@ -1,8 +1,8 @@
-#include <stdlib.hdr>
-#include <stdio.hdr>
+@ <stdlib.hdr>
+@ <stdio.hdr>
 
-#include "error.hdr"
-#include "lexer.hdr"
+@ "error.hdr"
+@ "lexer.hdr"
 
 fn errorMsg(loc: TokenLoc, msg: -> char)
 {

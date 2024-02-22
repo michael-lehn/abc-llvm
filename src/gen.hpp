@@ -2,6 +2,7 @@
 #define GEN_HPP
 
 #include <cstdint>
+#include <filesystem>
 #include <vector>
 
 #include "llvm/IR/Value.h"
@@ -114,8 +115,10 @@ Reg ptrMember(const Type *type, Reg addr, std::size_t index);
 // compute addrLeft - addrRight
 Reg ptrDiff(const Type *type, Reg addrLeft, Reg addRight);
 
-void dump_bc(const char *filename = "out");
-void dump_asm(const char *filename = "out", int codeGenOptLevel = 0);
+void dump_bc(std::filesystem::path filename);
+void dump_asm(std::filesystem::path filename, int codeGenOptLevel = 0);
+void dump_obj(std::filesystem::path filename, int codeGenOptLevel = 0);
+void dump_exe(std::filesystem::path filename, int codeGenOptLevel = 0);
 
 } // namespace gen
 

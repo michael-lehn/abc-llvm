@@ -1,11 +1,6 @@
-#ifndef STDABC_HBC
-#define STDABC_HBC
-
 enum BoolConst : bool
 {
     false,
     true
 };
-
-#endif // STDIO_HBC
 
