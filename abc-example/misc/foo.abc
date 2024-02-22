@@ -1,29 +1,12 @@
 @ <stdio.hdr>
 
-fn foo(a: u64)
+fn foo()
 {
-    printf("I am 'foo' and a = %llu\n", a);
-}
-
-fn foo_de(a: u64)
-{
-    printf("Ich bin 'foo' und a = %llu\n", a);
-}
-
-fn sel(lang: int): -> fn(a: u64)
-{
-    return lang == 0 then foo else foo_de;
+    printf("foo\n");
 }
 
 fn main(): u8
 {
-    local f: -> fn(:u64);
-    f = foo;
-    f(32);
-    f = foo_de;
-    f(32);
-    local s: -> fn(:int): -> fn(:u64);
-    s = sel;
-    s(0)(12);
-    s(1)(12);
+    foo();
+    printf("hello, world!\n");
 }

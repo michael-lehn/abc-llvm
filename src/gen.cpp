@@ -585,6 +585,9 @@ loadAddr(const char *ident)
 
     if (!local.contains(ident) && !global.contains(ident)) {
 	auto fn = llvmModule->getFunction(ident);
+	if (!fn) {
+	    std::cerr << "function " << ident << " not declared\n";
+	}
 	assert(fn && "function not declared");
 	return fn;
     }

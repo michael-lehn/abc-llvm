@@ -27,8 +27,8 @@ struct ScopeNode
     }
 };
 
-static std::unique_ptr<ScopeNode> curr = std::make_unique<ScopeNode>();
-static ScopeNode *root = curr.get();
+static std::unique_ptr<ScopeNode> curr;
+static ScopeNode *root = nullptr;
 
 //------------------------------------------------------------------------------
 
@@ -61,22 +61,32 @@ Symtab::openScope()
 {
     static std::size_t id;
 
-    if (curr.get() == root) {
-	id = 0;
-    }
+    if (!curr) {
+	assert(!root);
+	curr = std::make_unique<ScopeNode>();
+	root = curr.get();
+    } else {
+	if (curr.get() == root) {
+	    id = 0;
+	}
 
-    std::unique_ptr<ScopeNode> s = std::make_unique<ScopeNode>();
-    s->up = std::move(curr);
-    s->id = ++id;
-    curr = std::move(s);
+	std::unique_ptr<ScopeNode> s = std::make_unique<ScopeNode>();
+	s->up = std::move(curr);
+	s->id = ++id;
+	curr = std::move(s);
+    }
 }
 
 void
 Symtab::closeScope()
 {
-    assert(curr->up);
-
-    curr = std::move(curr->up);
+    if (curr->up) {
+	curr = std::move(curr->up);
+    } else {
+	curr.reset();
+	curr = nullptr;
+	root = nullptr;
+    }
 }
 
 Symtab::Entry *

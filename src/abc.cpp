@@ -97,13 +97,13 @@ optInclude(const char *dir)
 int
 main(int argc, char *argv[])
 {
-    const char *infile = nullptr;
     enum Output { ASM = 1, OBJ = 2, EXE = 3, BC = 4 } output = EXE;
     int optLevel = 0;
     std::filesystem::path outfile;
 
+    std::vector<std::filesystem::path> infile;
+    std::vector<std::filesystem::path> objfile;
 
-    initDefaultTypes();
 
     for (int i = 1; i < argc; ++i) {
 	if (argv[i][0] == '-') {
@@ -146,51 +146,75 @@ main(int argc, char *argv[])
 		default:
 		    usage(argv[0]);
 	    }
-	} else if (infile) {
-	    usage(argv[0]);
 	} else {
-	    infile = argv[i];
+	    infile.push_back(argv[i]);
 	}
     }
-    if (!infile) {
+    if (!infile.size()) {
 	usage(argv[0]);
     }
 
-    if (!setLexerInputfile(infile)) {
-	std::cerr << "can not read '" << argv[1] << "'" << std::endl;
+    if (output != EXE && !outfile.empty() && infile.size() > 1) {
+	std::cerr << argv[0] << ": error: "
+	    << "cannot specify -o when generating multiple output files\n";
+	std::exit(1);
     }
 
-    gen::setTarget(optLevel);
-    if (auto ast = parser()) {
-	// ast->print();
-	ast->codegen();
-    }
+    for (auto in: infile) {
+	auto out = infile.size() > 1 || outfile.empty()
+	    ? in
+	    : outfile;
+	if (!setLexerInputfile(in.c_str())) {
+	    std::cerr << "can not read '" << in.c_str() << "'\n";
+	}
+	gen::setTarget(optLevel);
 
-    if (outfile.empty()) {
-	outfile = infile;
+	Symtab::openScope();
+	initDefaultTypes();
+	if (auto ast = parser()) {
+	    // ast->print();
+	    ast->codegen();
+	} else {
+	    Symtab::closeScope();
+	    std::exit(1);
+	}
+	Symtab::closeScope();
 	switch (output) {
 	    case ASM:
-		outfile.replace_extension(".s");
+		out.replace_extension(".s");
 		break;
 	    case OBJ:
-		outfile.replace_extension(".o");
-		break;
 	    case EXE:
-		outfile = "a.out";
+		out.replace_extension(".o");
+		break;
+	    case BC:
+		out.replace_extension(".bc");
 		break;
 	    default:
-		outfile.replace_extension(".bc");
-		break;
+		assert(0);
+	}
+	if (output == ASM) {
+	    gen::dump_asm(out, optLevel);
+	} else if (output == OBJ || output == EXE) {
+	    gen::dump_obj(out, optLevel);
+	} else {
+	    gen::dump_bc(out);
+	}
+
+	if (output) {
+	    objfile.push_back(out);
 	}
     }
+    if (output == EXE) {
+	std::string linker = "cc -o ";
+	linker += outfile.empty() ? "a.out" : outfile.c_str();
 
-    if (output == ASM) {
-	gen::dump_asm(outfile, optLevel);
-    } else if (output == OBJ) {
-	gen::dump_obj(outfile, optLevel);
-    } else if (output == EXE) {
-	gen::dump_exe(outfile, optLevel);
-    } else {
-	gen::dump_bc(std::filesystem::path(infile).stem().c_str());
+	for (auto obj: objfile) {
+	    linker = linker + " " + obj.c_str();
+	}
+	if (std::system(linker.c_str())) {
+	    std::cerr << "linker error\n";
+	    std::exit(1);
+	}
     }
 }
