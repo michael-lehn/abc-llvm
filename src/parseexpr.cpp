@@ -2,6 +2,7 @@
 #include <iostream>
 #include <unordered_map>
 
+#include "asserthack.hpp"
 #include "binaryexpr.hpp"
 #include "callexpr.hpp"
 #include "castexpr.hpp"
@@ -420,7 +421,25 @@ static ExprPtr
 parsePrimary()
 {
     auto opTok = token;
-    if (token.kind == TokenKind::IDENTIFIER) {
+    if (token.kind == TokenKind::ASSERT) {
+	// assert hack
+	getToken();
+	if (!error::expected(TokenKind::LPAREN)) {
+	    return nullptr;
+	}
+	getToken();
+	auto expr = parseExpression();
+	if (!expr) {
+	    error::out() << token.loc << " expected non-empty expression"
+		<< std::endl;
+	    error::fatal();
+	}
+	if (!error::expected(TokenKind::RPAREN)) {
+	    return nullptr;
+	}
+	getToken();
+	return asserthack::createCall(std::move(expr), opTok.loc);
+    } else if (token.kind == TokenKind::IDENTIFIER) {
 	if (auto type = Symtab::getNamedType(token.val, Symtab::AnyScope)) {
 	    getToken();
 	    if (auto ast = parseInitializerList(type)) {
@@ -436,7 +455,9 @@ parsePrimary()
         return expr;
     } else if (token.kind == TokenKind::SIZEOF) {
 	getToken();
-	error::expected(TokenKind::LPAREN);
+	if (!error::expected(TokenKind::LPAREN)) {
+	    return nullptr;
+	}
 	getToken();
 	std::size_t size;
 	if (token.kind == TokenKind::COLON) {

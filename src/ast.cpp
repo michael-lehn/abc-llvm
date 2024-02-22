@@ -1,6 +1,7 @@
 #include <unordered_map>
 #include <iostream>
 
+#include "asserthack.hpp"
 #include "ast.hpp"
 #include "castexpr.hpp"
 #include "error.hpp"
@@ -502,7 +503,6 @@ AstFor::apply(std::function<bool(Ast *)> op)
     }
 }
 
-
 /*
  * AstReturn
  */
@@ -933,43 +933,49 @@ AstFuncDecl::AstFuncDecl(Token fnIdent, const Type *type,
     : fnIdent{fnIdent}, type{type}, paramToken{paramToken}
     , externFlag{externFlag}
 {
-    auto sym = externFlag
-	? Symtab::addDeclToRootScope(fnIdent.loc, fnIdent.val, type)
-	: Symtab::addDecl(fnIdent.loc, fnIdent.val, type);
-    if (externFlag) {
-	sym->setExternFlag();
+    if (fnIdent.val != asserthack::assertIdent) {
+	auto sym = externFlag
+	    ? Symtab::addDeclToRootScope(fnIdent.loc, fnIdent.val, type)
+	    : Symtab::addDecl(fnIdent.loc, fnIdent.val, type);
+	if (externFlag) {
+	    sym->setExternFlag();
+	}
     }
 }
 
 void
 AstFuncDecl::print(int indent) const
 {
-    error::out(indent)
-	<< (externFlag ? "extern " : "")
-	<< "fn " << fnIdent.val.c_str() << "(";
-    for (std::size_t i = 0; i < type->getArgType().size(); ++i) {
-	if (paramToken[i].val.c_str()) {
-	    error::out() << paramToken[i].val.c_str();
+    if (fnIdent.val != asserthack::assertIdent) {
+	error::out(indent)
+	    << (externFlag ? "extern " : "")
+	    << "fn " << fnIdent.val.c_str() << "(";
+	for (std::size_t i = 0; i < type->getArgType().size(); ++i) {
+	    if (paramToken[i].val.c_str()) {
+		error::out() << paramToken[i].val.c_str();
+	    }
+	    error::out() << ": " << type->getArgType()[i];
+	    if (i + 1 < type->getArgType().size()) {
+		error::out() << ", ";
+	    }
 	}
-	error::out() << ": " << type->getArgType()[i];
-	if (i + 1 < type->getArgType().size()) {
-	    error::out() << ", ";
+	if (type->hasVarg()) {
+	    error::out() << ", ...";
 	}
+	error::out() << ")";
+	if (!type->getRetType()->isVoid()) {
+	    error::out() << ":" << type->getRetType();
+	}
+	error::out() << ";" << std::endl << std::endl;
     }
-    if (type->hasVarg()) {
-	error::out() << ", ...";
-    }
-    error::out() << ")";
-    if (!type->getRetType()->isVoid()) {
-	error::out() << ":" << type->getRetType();
-    }
-    error::out() << ";" << std::endl << std::endl;
 }
 
 void
 AstFuncDecl::codegen()
 {
-    gen::fnDecl(fnIdent.val.c_str(), type, externFlag);
+    if (fnIdent.val != asserthack::assertIdent) {
+	gen::fnDecl(fnIdent.val.c_str(), type, externFlag);
+    }
 }
 
 /*

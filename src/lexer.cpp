@@ -66,6 +66,8 @@ tokenKindCStr(TokenKind kind)
 	    return "STRING_LITERAL";
 	case TokenKind::CHARACTER_LITERAL:
 	    return "CHARACTER_LITERAL";
+	case TokenKind::ASSERT:
+	    return "ASSERT";
 	case TokenKind::GOTO:
 	    return "GOTO";
 	case TokenKind::LABEL:
@@ -219,6 +221,8 @@ tokenCStr(TokenKind kind)
 	    return "end of input";
 	case TokenKind::IDENTIFIER:
 	    return "identifier";
+	case TokenKind::ASSERT:
+	    return "assert";
 	case TokenKind::GOTO:
 	    return "goto";
 	case TokenKind::LABEL:
@@ -408,6 +412,7 @@ tokenReset()
     token.val = UStr{};
     token.valRaw = UStr{};
     token_str = "";
+    token_str_raw = "";
 }
 
 static void
@@ -419,6 +424,7 @@ tokenUpdate(char addCh = ch)
 }
 
 static std::unordered_map<UStr, TokenKind> kw = {
+    { "assert", TokenKind::ASSERT },
     { "goto", TokenKind::GOTO },
     { "label", TokenKind::LABEL },
     { "const", TokenKind::CONST },

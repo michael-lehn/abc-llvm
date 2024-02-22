@@ -2,9 +2,9 @@
 #include <stdlib.hdr>
 #include <stdio.hdr>
 
-fn __assert(msg: -> const char, file: -> const char, line: int): int
+fn __assert(msg: -> const char, file: -> const char, line: int): bool
 {
-    fprintf(stderr, "%s:%d: Assertion failed.\n", file, line);
+    fprintf(stderr, "%s:%d: Assertion '%s' failed.\n", file, line, msg);
     abort();
     return 0;
 }

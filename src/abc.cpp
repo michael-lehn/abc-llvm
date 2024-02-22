@@ -3,6 +3,7 @@
 #include <iostream>
 #include <limits>
 
+#include "asserthack.hpp"
 #include "gen.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
@@ -22,6 +23,8 @@ usage(const char *prog)
 static void
 initDefaultTypes()
 {
+    // assert hack
+    asserthack::makeDecl();
 
     Symtab::addTypeAlias(
 	    "char",
