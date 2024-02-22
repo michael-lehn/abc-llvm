@@ -3,8 +3,15 @@
 
 #include <stdabc.hdr>
 
-#define assert(EX) ((EX) || (__assert ("", __FILE__, __LINE__)))
-
-extern fn __assert(msg: -> const char, file: -> const char, line: int): int;
+/*
+ * assert hack:
+ *
+ * assert(expr) is internally expaned to __assert(...)
+ *
+ * __assert is internally declared by the compiler as follows
+ *
+ * extern fn __assert(msg: -> const char, file: -> const char, line: int): bool;
+ *
+ */
 
 #endif // ASSERT_HDR

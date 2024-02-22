@@ -6,7 +6,7 @@
 
 CastExpr::CastExpr(ExprPtr &&expr, const Type *toType, Token::Loc loc,
 		   bool allowConstCast)
-    : Expr{loc, toType}, expr{std::move(expr)}
+    : Expr{loc, toType}, explicitCast{allowConstCast}, expr{std::move(expr)}
 {
     assert(this->expr && this->expr->type);
     assert(toType);
@@ -109,14 +109,18 @@ CastExpr::print(int indent) const
 void
 CastExpr::printFlat(std::ostream &out, int prec) const
 {
-    if (prec > 14) {
+    if (explicitCast) {
+	if (prec > 14) {
+	    out << "(";
+	}
 	out << "(";
-    }
-    out << "(";
-    out << type;
-    out << ")";
-    expr->printFlat(out, 14);
-    if (prec > 14) {
+	out << type;
 	out << ")";
+	expr->printFlat(out, 14);
+	if (prec > 14) {
+	    out << ")";
+	}
+    } else {
+	expr->printFlat(out, 14);
     }
 }

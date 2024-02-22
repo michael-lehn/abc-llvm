@@ -33,8 +33,6 @@ createCall(ExprPtr &&expr, Token::Loc loc)
 	std::stringstream ss;
 	ss << expr;
 
-	std::cerr << loc << "ss.str() = {{{{" << ss.str() << "}}}}\n";
-
 	auto fnAssert = Identifier::create(assertIdent, loc);
 
 	std::vector<ExprPtr> param;

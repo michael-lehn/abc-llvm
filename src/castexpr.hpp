@@ -11,11 +11,13 @@ class CastExpr : public Expr
 
     public:
 
+	// 'allowConstCast' actually means 'explicit cast'
 	static ExprPtr create(ExprPtr &&expr, const Type *toType,
 			      Token::Loc loc, bool allowConstCast = false);
 
 	static ExprPtr create(ExprPtr &&expr, const Type *toType);
 
+	bool explicitCast;
 	const ExprPtr expr;
 
 	bool hasAddr() const override;
