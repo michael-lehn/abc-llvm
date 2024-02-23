@@ -1,3 +1,4 @@
+#include "gen.hpp"
 #include "integerliteral.hpp"
 #include "symtab.hpp"
 #include "identifier.hpp"
@@ -6,6 +7,9 @@
 int
 main(void)
 {
+    gen::init();
+    Symtab::openScope();
+
     auto aTy = Type::getUnsignedInteger(64);
     aTy = Type::getArray(aTy, 5);
 
@@ -44,4 +48,5 @@ main(void)
     initList.add(std::move(initList2));
 
     gen::dump_bc("constexpr");
+    Symtab::closeScope();
 }

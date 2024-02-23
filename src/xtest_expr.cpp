@@ -15,6 +15,8 @@
 int
 main(void)
 {
+    gen::init();
+    Symtab::openScope();
     /*
      * generate function 'foo(a: u64, b: 64): u64'
      */
@@ -87,4 +89,5 @@ main(void)
     gen::dump_asm("expr1", 1);
     gen::dump_asm("expr2", 2);
     gen::dump_asm("expr3", 3);
+    Symtab::closeScope();
 }

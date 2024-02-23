@@ -4,11 +4,15 @@
 
 #include "gen.hpp"
 #include "integerliteral.hpp"
+#include "symtab.hpp"
 #include "type.hpp"
 
 int
 main(void)
 {
+    gen::init();
+    Symtab::openScope();
+
     auto ret = Type::getUnsignedInteger(64);
     std::vector<const Type *>	arg{2};
     arg[0] = Type::getUnsignedInteger(64);
@@ -61,4 +65,6 @@ main(void)
 
     std::cerr << "writing to 'ex_gen.bc'" << std::endl;
     gen::dump_bc("ex_gen");
+
+    Symtab::closeScope();
 }

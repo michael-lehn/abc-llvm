@@ -13,6 +13,8 @@ printType(const Type *ty, const char *str)
 int
 main(void)
 {
+    Symtab::openScope();
+    gen::init();
     /*
      * primitive type i32
      */
@@ -33,4 +35,5 @@ main(void)
     } else {
 	std::cerr << "different types\n";
     }
+    Symtab::closeScope();
 }

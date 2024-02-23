@@ -52,35 +52,45 @@
 
 namespace gen {
 
-static auto llvmContext = std::make_unique<llvm::LLVMContext>();
-static auto llvmModule = std::make_unique<llvm::Module>("llvm", *llvmContext);
-static auto llvmBuilder = std::make_unique<llvm::IRBuilder<>>(*llvmContext);
+static std::unique_ptr<llvm::LLVMContext> llvmContext;
+static std::unique_ptr<llvm::Module> llvmModule;
+static std::unique_ptr<llvm::IRBuilder<>> llvmBuilder;
 static llvm::BasicBlock *llvmBB;
 
-static auto llvmFPM = std::make_unique<llvm::FunctionPassManager>();
-static auto llvmLAM = std::make_unique<llvm::LoopAnalysisManager>();
-static auto llvmFAM = std::make_unique<llvm::FunctionAnalysisManager>();
-static auto llvmCGAM = std::make_unique<llvm::CGSCCAnalysisManager>();
-static auto llvmMAM = std::make_unique<llvm::ModuleAnalysisManager>();
-static auto llvmPIC = std::make_unique<llvm::PassInstrumentationCallbacks>();
-static auto llvmSI = std::make_unique<llvm::StandardInstrumentations>(
-			*llvmContext, /*DebugLogging*/ true);
+static std::unique_ptr<llvm::FunctionPassManager> llvmFPM;
+static std::unique_ptr<llvm::LoopAnalysisManager> llvmLAM;
+static std::unique_ptr<llvm::FunctionAnalysisManager> llvmFAM;
+static std::unique_ptr<llvm::CGSCCAnalysisManager> llvmCGAM;
+static std::unique_ptr<llvm::ModuleAnalysisManager> llvmMAM;
+static std::unique_ptr<llvm::PassInstrumentationCallbacks> llvmPIC;
+static std::unique_ptr<llvm::StandardInstrumentations> llvmSI;
 
-static struct InitPM {
-    InitPM()
-    {
-	llvmSI->registerCallbacks(*llvmPIC, llvmMAM.get());
-	llvmFPM->addPass(llvm::InstCombinePass());
-	llvmFPM->addPass(llvm::ReassociatePass());
-	llvmFPM->addPass(llvm::GVNPass());
-	llvmFPM->addPass(llvm::SimplifyCFGPass());
+void init()
+{
+    llvmContext = std::make_unique<llvm::LLVMContext>();
+    llvmModule = std::make_unique<llvm::Module>("llvm", *llvmContext);
+    llvmBuilder = std::make_unique<llvm::IRBuilder<>>(*llvmContext);
 
-	llvm::PassBuilder pb;
-	pb.registerModuleAnalyses(*llvmMAM);
-	pb.registerFunctionAnalyses(*llvmFAM);
-	pb.crossRegisterProxies(*llvmLAM, *llvmFAM, *llvmCGAM, *llvmMAM);
-    }
-} initPm;
+    llvmFPM = std::make_unique<llvm::FunctionPassManager>();
+    llvmLAM = std::make_unique<llvm::LoopAnalysisManager>();
+    llvmFAM = std::make_unique<llvm::FunctionAnalysisManager>();
+    llvmCGAM = std::make_unique<llvm::CGSCCAnalysisManager>();
+    llvmMAM = std::make_unique<llvm::ModuleAnalysisManager>();
+    llvmPIC = std::make_unique<llvm::PassInstrumentationCallbacks>();
+    llvmSI = std::make_unique<llvm::StandardInstrumentations>(
+		    *llvmContext, /*DebugLogging*/ true);
+
+    llvmSI->registerCallbacks(*llvmPIC, llvmMAM.get());
+    llvmFPM->addPass(llvm::InstCombinePass());
+    llvmFPM->addPass(llvm::ReassociatePass());
+    llvmFPM->addPass(llvm::GVNPass());
+    llvmFPM->addPass(llvm::SimplifyCFGPass());
+
+    llvm::PassBuilder pb;
+    pb.registerModuleAnalyses(*llvmMAM);
+    pb.registerFunctionAnalyses(*llvmFAM);
+    pb.crossRegisterProxies(*llvmLAM, *llvmFAM, *llvmCGAM, *llvmMAM);
+}
 
 struct TypeMap
 {
@@ -126,11 +136,7 @@ struct TypeMap
 			    t->getIntegerNumBits());
 	    }
 	} else if (t->isPointer()) {
-	    if (t->isNullPointer()) {
-		auto ty = llvm::Type::getInt64Ty(*llvmContext);
-		return ty->getPointerTo();
-	    }
-	    return get_(t->getRefType())->getPointerTo();
+	    return llvm::PointerType::get(*llvmContext, 0);
 	} else if (t->isArray()) {
 	    return get_(t->getRefType(), t->getDim());
 	} else if (t->isFunction()) {
@@ -140,9 +146,7 @@ struct TypeMap
 	    auto type = t->getMemberType();
 	    std::vector<llvm::Type *> llvmType(type.size());
 	    for (std::size_t i = 0; i < type.size(); ++i) {
-		llvmType[i] = type[i]->isPointer()
-		    ? get(Type::getPointer(Type::getVoid()))
-		    : get(type[i]);
+		llvmType[i] = get(type[i]);
 	    }
 	    return llvm::StructType::get(*llvmContext, llvmType);
 	}
@@ -182,14 +186,15 @@ setOpt(bool enableOpt)
 void
 setTarget(int codeGenOptLevel)
 {
+    assert(llvmContext && "gen::init called?");
     assert(codeGenOptLevel >= 0 && codeGenOptLevel <= 3);
     setOpt(codeGenOptLevel);
 
     llvm::InitializeAllTargetInfos();
-    llvm::InitializeAllTargets();
+    llvm::InitializeNativeTarget();
     llvm::InitializeAllTargetMCs();
-    llvm::InitializeAllAsmParsers();
-    llvm::InitializeAllAsmPrinters();
+    llvm::InitializeNativeTargetAsmParser();
+    llvm::InitializeNativeTargetAsmPrinter();
 
     auto targetTriple = llvm::sys::getDefaultTargetTriple();
     llvmModule->setTargetTriple(targetTriple);
@@ -225,6 +230,7 @@ static std::unordered_map<std::string, llvm::GlobalValue *> global;
 static llvm::Function *
 makeFnDecl(const char *ident, const Type *fnType, bool external)
 {
+    assert(llvmContext && "gen::init called?");
     if (auto fn = llvmModule->getFunction(ident)) {
 	return fn;
     }
@@ -240,6 +246,7 @@ makeFnDecl(const char *ident, const Type *fnType, bool external)
 void
 fnDecl(const char *ident, const Type *fnType, bool external)
 {
+    assert(llvmContext && "gen::init called?");
     makeFnDecl(ident, fnType, external);
 }
 
@@ -255,12 +262,14 @@ static struct {
 bool
 openBuildingBlock()
 {
+    assert(llvmContext && "gen::init called?");
     return !currFn.bbClosed;
 }
 
 static void
 assureOpenBuildingBlock()
 {
+    assert(llvmContext && "gen::init called?");
     if (!openBuildingBlock()) {
 	labelDef(getLabel("notReached"));
     }
@@ -273,6 +282,7 @@ fnDef(const char *ident, const Type *fnType,
       const std::vector<const char *> &param,
       bool external)
 {
+    assert(llvmContext && "gen::init called?");
     local.clear();
 
     auto fn = makeFnDecl(ident, fnType, external);
@@ -305,6 +315,7 @@ fnDef(const char *ident, const Type *fnType,
 void
 fnDefEnd(void)
 {
+    assert(llvmContext && "gen::init called?");
     assert(currFn.llvmFn);
 
     // leave function
@@ -331,6 +342,7 @@ fnDefEnd(void)
 void
 ret(Reg reg)
 {
+    assert(llvmContext && "gen::init called?");
     assert(currFn.llvmFn);
 
     if (reg) {
@@ -342,6 +354,7 @@ ret(Reg reg)
 bool
 defLocal(const char *ident, const Type *type)
 {
+    assert(llvmContext && "gen::init called?");
     assert(currFn.llvmFn);
     assureOpenBuildingBlock();
 
@@ -366,6 +379,7 @@ defLocal(const char *ident, const Type *type)
 void
 declGlobal(const char *ident, const Type *type, bool external)
 {
+    assert(llvmContext && "gen::init called?");
     if (type->isFunction()) {
 	fnDecl(ident, type, external);
 	return;
@@ -389,6 +403,7 @@ declGlobal(const char *ident, const Type *type, bool external)
 void
 defGlobal(const char *ident, const Type *type, bool external, ConstVal val)
 {
+    assert(llvmContext && "gen::init called?");
     if (type->isFunction()) {
 	fnDecl(ident, type, external);
 	return;
@@ -421,6 +436,7 @@ defGlobal(const char *ident, const Type *type, bool external, ConstVal val)
 void
 defStringLiteral(const char *ident, const char *val, bool isConst)
 {
+    assert(llvmContext && "gen::init called?");
     auto constVal = llvm::ConstantDataArray::getString(*llvmContext, val);
     global[ident] = new llvm::GlobalVariable(*llvmModule,
 			constVal->getType(),
@@ -436,6 +452,7 @@ defStringLiteral(const char *ident, const char *val, bool isConst)
 std::size_t
 getSizeOf(const Type *type)
 {
+    assert(llvmContext && "gen::init called?");
     auto ty = TypeMap::get(type);
     return llvmModule->getDataLayout().getTypeAllocSize(ty);
 }
@@ -446,6 +463,7 @@ getSizeOf(const Type *type)
 Reg
 call(const char *ident, const std::vector<Reg> &param)
 {
+    assert(llvmContext && "gen::init called?");
     assureOpenBuildingBlock();
 
     auto fn = llvmModule->getFunction(ident);
@@ -457,6 +475,7 @@ call(const char *ident, const std::vector<Reg> &param)
 Reg
 call(Reg fnPtr, const Type *fnType, const std::vector<Reg> &param)
 {
+    assert(llvmContext && "gen::init called?");
     assert(fnType->isFunction());
     auto fnTy =  llvm::dyn_cast<llvm::FunctionType>(TypeMap::get(fnType));
     return llvmBuilder->CreateCall(fnTy, fnPtr, param);
@@ -468,6 +487,7 @@ call(Reg fnPtr, const Type *fnType, const std::vector<Reg> &param)
 Cond
 cond(CondOp op, Reg a, Reg b)
 {
+    assert(llvmContext && "gen::init called?");
     assureOpenBuildingBlock();
     switch (op) {
 	case EQ:
@@ -502,6 +522,7 @@ cond(CondOp op, Reg a, Reg b)
 ConstVal
 cond(CondOp op, ConstVal a, ConstVal b)
 {
+    assert(llvmContext && "gen::init called?");
     auto regA = llvm::dyn_cast<llvm::Value>(a);
     auto regB = llvm::dyn_cast<llvm::Value>(b);
     return llvm::dyn_cast<llvm::Constant>(cond(op, regA, regB));
@@ -510,12 +531,14 @@ cond(CondOp op, ConstVal a, ConstVal b)
 Label
 getLabel(const char *name)
 {
+    assert(llvmContext && "gen::init called?");
     return llvm::BasicBlock::Create(*llvmContext, name);
 }
 
 void
 labelDef(Label label)
 {
+    assert(llvmContext && "gen::init called?");
     assert(currFn.llvmFn);
     if (!currFn.bbClosed) {
 	jmp(label);
@@ -529,6 +552,7 @@ labelDef(Label label)
 Label
 jmp(Label &label)
 {
+    assert(llvmContext && "gen::init called?");
     assert(currFn.llvmFn);
     assureOpenBuildingBlock();
     auto ib = llvmBuilder->GetInsertBlock();
@@ -542,6 +566,7 @@ jmp(Label &label)
 void
 jmp(Cond cond, Label trueLabel, Label falseLabel)
 {
+    assert(llvmContext && "gen::init called?");
     assert(currFn.llvmFn);
     assureOpenBuildingBlock();
     if (!currFn.bbClosed) {
@@ -554,6 +579,7 @@ void
 jmp(Cond cond, Label defaultLabel,
     const std::vector<std::pair<ConstIntVal, Label>> &caseLabel)
 {
+    assert(llvmContext && "gen::init called?");
     assert(currFn.llvmFn);
     assureOpenBuildingBlock();
     auto sw = llvmBuilder->CreateSwitch(cond, defaultLabel, caseLabel.size());
@@ -566,6 +592,7 @@ jmp(Cond cond, Label defaultLabel,
 Reg
 phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type)
 {
+    assert(llvmContext && "gen::init called?");
     assert(currFn.llvmFn);
     assureOpenBuildingBlock();
 
@@ -581,6 +608,7 @@ phi(Reg a, Label labelA, Reg b, Label labelB, const Type *type)
 Reg
 loadAddr(const char *ident)
 {
+    assert(llvmContext && "gen::init called?");
     assureOpenBuildingBlock();
 
     if (!local.contains(ident) && !global.contains(ident)) {
@@ -602,6 +630,7 @@ loadAddr(const char *ident)
 Reg
 fetch(const char *ident, const Type *type)
 {
+    assert(llvmContext && "gen::init called?");
     assureOpenBuildingBlock();
     assert(local.contains(ident) || global.contains(ident));
 
@@ -615,6 +644,7 @@ fetch(const char *ident, const Type *type)
 Reg
 fetch(Reg addr, const Type *type)
 {
+    assert(llvmContext && "gen::init called?");
     assureOpenBuildingBlock();
     auto ty = TypeMap::get(type);
     return llvmBuilder->CreateLoad(ty, addr);
@@ -623,6 +653,7 @@ fetch(Reg addr, const Type *type)
 Reg
 store(Reg val, const char *ident, const Type *type)
 {
+    assert(llvmContext && "gen::init called?");
     assureOpenBuildingBlock();
 
     assert(local.contains(ident) || global.contains(ident));
@@ -637,6 +668,7 @@ store(Reg val, const char *ident, const Type *type)
 Reg
 store(Reg val, Reg addr, const Type *type)
 {
+    assert(llvmContext && "gen::init called?");
     assureOpenBuildingBlock();
     llvmBuilder->CreateStore(val, addr);
     return val;
@@ -647,6 +679,7 @@ store(Reg val, Reg addr, const Type *type)
 Reg
 cast(Reg reg, const Type *fromType, const Type *toType)
 {
+    assert(llvmContext && "gen::init called?");
     assureOpenBuildingBlock();
 
     fromType = Type::getConstRemoved(fromType);
@@ -678,12 +711,6 @@ cast(Reg reg, const Type *fromType, const Type *toType)
 	return reg;
     } else if (fromType->isPointer() && toType->isPointer()) {
 	return reg;
-    } else if (Type::convertArrayOrFunctionToPointer(fromType)->isPointer()
-	    && toType->isInteger()) {
-	return llvmBuilder->CreatePointerCast(reg, ty);
-    } else if (fromType->isInteger()
-	    && Type::convertArrayOrFunctionToPointer(toType)->isPointer()) {
-	return llvmBuilder->CreateIntToPtr(reg, ty);
     }
     error::out() << "can not cast '" << fromType << "' to '" << toType
 	<< "'" << std::endl;
@@ -694,6 +721,7 @@ cast(Reg reg, const Type *fromType, const Type *toType)
 ConstVal
 cast(ConstVal constVal, const Type *fromType, const Type *toType)
 {
+    assert(llvmContext && "gen::init called?");
     auto reg = llvm::dyn_cast<llvm::Value>(constVal);
     return llvm::dyn_cast<llvm::Constant>(cast(reg, fromType, toType));
 }
@@ -701,6 +729,7 @@ cast(ConstVal constVal, const Type *fromType, const Type *toType)
 ConstVal
 loadIntConst(const char *val, const Type *type, std::uint8_t radix)
 {
+    assert(llvmContext && "gen::init called?");
     assert(type);
 
     if (type->isInteger()) {
@@ -719,6 +748,7 @@ loadIntConst(const char *val, const Type *type, std::uint8_t radix)
 ConstVal
 loadIntConst(std::uint64_t val, const Type *type, bool isSigned)
 {
+    assert(llvmContext && "gen::init called?");
     assert(type->isInteger() || (type->isPointer() && val == 0));
     if (type->isPointer() && val == 0) {
 	auto ty = llvm::dyn_cast<llvm::PointerType>(TypeMap::get(type));
@@ -736,6 +766,7 @@ loadIntConst(std::uint64_t val, const Type *type, bool isSigned)
 ConstVal
 loadZero(const Type *type)
 {
+    assert(llvmContext && "gen::init called?");
     auto ty = TypeMap::get(type);
     return llvm::Constant::getNullValue(ty);
 }
@@ -743,12 +774,14 @@ loadZero(const Type *type)
 ConstVal
 loadConstString(const char *str)
 {
+    assert(llvmContext && "gen::init called?");
     return llvm::ConstantDataArray::getString(*llvmContext, str, false);
 }
 
 ConstVal
 loadConstArray(const std::vector<ConstVal> &val, const Type *type)
 {
+    assert(llvmContext && "gen::init called?");
     assert(type->isArray());
     auto ty = llvm::dyn_cast<llvm::ArrayType>(TypeMap::get(type));
     return llvm::ConstantArray::get(ty, val);
@@ -757,6 +790,7 @@ loadConstArray(const std::vector<ConstVal> &val, const Type *type)
 ConstVal
 loadConstStruct(const std::vector<ConstVal> &val, const Type *type)
 {
+    assert(llvmContext && "gen::init called?");
     assert(type->isStruct());
     auto ty = llvm::dyn_cast<llvm::StructType>(TypeMap::get(type));
     return llvm::ConstantStruct::get(ty, val);
@@ -767,6 +801,7 @@ loadConstStruct(const std::vector<ConstVal> &val, const Type *type)
 Reg
 aluInstr(AluOp op, Reg l, Reg r)
 {
+    assert(llvmContext && "gen::init called?");
     assureOpenBuildingBlock();
 
     switch (op) {
@@ -793,6 +828,7 @@ aluInstr(AluOp op, Reg l, Reg r)
 Reg
 ptrInc(const Type *type, Reg addr, Reg offset)
 {
+    assert(llvmContext && "gen::init called?");
     assureOpenBuildingBlock();
     auto ty = TypeMap::get(type);
 
@@ -805,6 +841,7 @@ ptrInc(const Type *type, Reg addr, Reg offset)
 Reg
 ptrMember(const Type *type, Reg addr, std::size_t index)
 {
+    assert(llvmContext && "gen::init called?");
     assureOpenBuildingBlock();
 //    assert(type->isStruct());
     auto ty = TypeMap::get(type);
@@ -819,6 +856,7 @@ ptrMember(const Type *type, Reg addr, std::size_t index)
 Reg
 ptrDiff(const Type *type, Reg addrLeft, Reg addrRight)
 {
+    assert(llvmContext && "gen::init called?");
     assureOpenBuildingBlock();
 
     auto ty = TypeMap::get(type);
@@ -830,6 +868,7 @@ ptrDiff(const Type *type, Reg addrLeft, Reg addrRight)
 void
 dump_bc(std::filesystem::path filename)
 {
+    assert(llvmContext && "gen::init called?");
     std::error_code ec;
     filename.replace_extension("bc");
     auto f = llvm::raw_fd_ostream (filename.c_str(), ec);
@@ -845,6 +884,7 @@ dump_bc(std::filesystem::path filename)
 static void
 dump(std::filesystem::path filename, int codeGenOptLevel, bool obj)
 {
+    assert(llvmContext && "gen::init called?");
     if (!setTargetInit) {
 	setTarget(codeGenOptLevel);
     }
@@ -876,18 +916,21 @@ dump(std::filesystem::path filename, int codeGenOptLevel, bool obj)
 void
 dump_asm(std::filesystem::path filename, int codeGenOptLevel)
 {
+    assert(llvmContext && "gen::init called?");
     dump(filename, codeGenOptLevel, false);
 }
 
 void
 dump_obj(std::filesystem::path filename, int codeGenOptLevel)
 {
+    assert(llvmContext && "gen::init called?");
     dump(filename, codeGenOptLevel, true);
 }
 
 void
 dump_exe(std::filesystem::path filename, int codeGenOptLevel)
 {
+    assert(llvmContext && "gen::init called?");
     auto tmpObj = std::filesystem::temp_directory_path() / filename;
     tmpObj.replace_extension("o");
     std::cerr << "tmpObj = " << tmpObj << "\n";

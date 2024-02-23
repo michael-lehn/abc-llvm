@@ -18,6 +18,9 @@ using Reg = llvm::Value *;
 using ConstVal = llvm::Constant *;
 using ConstIntVal = llvm::ConstantInt *;
 
+// needs to be called before any other function is used
+void init();
+
 // enable/disable optimization
 void setOpt(bool);
 void setTarget(int codeGenOptLevel);

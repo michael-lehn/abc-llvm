@@ -97,6 +97,7 @@ optInclude(const char *dir)
 int
 main(int argc, char *argv[])
 {
+    gen::init();
     enum Output { ASM = 1, OBJ = 2, EXE = 3, BC = 4 } output = EXE;
     int optLevel = 0;
     std::filesystem::path outfile;

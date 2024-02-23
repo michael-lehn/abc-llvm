@@ -4,11 +4,15 @@
 
 #include "gen.hpp"
 #include "expr.hpp"
+#include "symtab.hpp"
 #include "type.hpp"
 
 int
 main(void)
 {
+    gen::init();
+    Symtab::openScope();
+
     auto tyInt8 = Type::getUnsignedInteger(8);
     auto tyInt = Type::getUnsignedInteger(64);
     auto tyPtrInt = Type::getPointer(tyInt8);
@@ -34,4 +38,5 @@ main(void)
 
     std::cerr << "writing to 'ex_gen_ptr.bc'" << std::endl;
     gen::dump_bc("ex_gen_ptr");
+    Symtab::closeScope();
 }

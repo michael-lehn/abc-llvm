@@ -64,6 +64,9 @@ makeStruct3(UStr name, const Type *tm1, const Type *tm3)
 int
 main(void)
 {
+    gen::init();
+    Symtab::openScope();
+
     auto ty1 = makeStruct1("Foo");
     std::cout << "ty1 = " << ty1 << ", &ty1 = " << (void *) ty1 << std::endl;
 
@@ -85,4 +88,6 @@ main(void)
 
     auto ty3 = makeStruct3("FooBar", ty1, ty2);
     std::cout << "ty3 = " << ty3 << ", &ty3 = " << (void *) ty3 << std::endl;
+
+    Symtab::closeScope();
 }

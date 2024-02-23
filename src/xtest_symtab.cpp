@@ -49,6 +49,9 @@ addToRootScope(UStr ident)
 int
 main(void)
 {
+    gen::init();
+    Symtab::openScope();
+
     addToRootScope("A");
 
     Symtab::openScope();
@@ -72,5 +75,7 @@ main(void)
     Symtab::openScope();
     add("c");
     Symtab::print(std::cout);
+    Symtab::closeScope();
+
     Symtab::closeScope();
 }

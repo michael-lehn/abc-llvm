@@ -1,5 +1,6 @@
 #include "binaryexpr.hpp"
 #include "castexpr.hpp"
+#include "gen.hpp"
 #include "identifier.hpp"
 #include "integerliteral.hpp"
 #include "proxyexpr.hpp"
@@ -11,6 +12,9 @@
 int
 main(void)
 {
+    gen::init();
+    Symtab::openScope();
+
     /*
      * Create some code from an expression
      */
@@ -53,5 +57,6 @@ main(void)
     // for us to see what the expression represents
     binary->print();
     */
+    Symtab::closeScope();
 }
 

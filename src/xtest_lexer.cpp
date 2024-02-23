@@ -1,10 +1,12 @@
 #include <cstdio>
 
+#include "gen.hpp"
 #include "lexer.hpp"
 
 int
 main(void)
 {
+    gen::init();
     setLexerInputfile(nullptr);
     while (getToken() != TokenKind::EOI) {
 	std::printf("%s:%zu.%zu-%zu.%zu: %s %s\n",

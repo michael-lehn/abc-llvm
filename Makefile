@@ -4,12 +4,12 @@ CXX := g++
 
 #llvm.comp := `llvm-config --cxxflags`
 llvm.comp := -I `llvm-config --includedir`
-llvm.link := `llvm-config --ldflags --system-libs --libs core`
+llvm.link := `llvm-config --ldflags --system-libs --libs all`
 
 CXXFLAGS += $(llvm.comp)
 CXXFLAGS += -std=c++20 -Werror -Wall -Wextra -Wno-unused-parameter -pedantic \
 	    -Wuninitialized
-#CXXFLAGS += -O3
+CXXFLAGS += -O3
 
 src.dir := src
 bin.dir := bin

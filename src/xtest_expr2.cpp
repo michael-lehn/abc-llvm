@@ -24,6 +24,9 @@ makeSomeStructType(void)
 int
 main(void)
 {
+    gen::init();
+    Symtab::openScope();
+
     Symtab::addDecl(Token::Loc{}, UStr{"foo"}, makeSomeStructType());
     auto foo = Identifier::create(UStr{"foo"}, Token::Loc{});
 
@@ -31,4 +34,5 @@ main(void)
 
     foo_second->print();
 
+    Symtab::closeScope();
 }

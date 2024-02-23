@@ -1,12 +1,14 @@
 #include <cstdio>
 #include <iostream>
 
+#include "gen.hpp"
 #include "integerliteral.hpp"
 #include "binaryexpr.hpp"
 
 int
 main(void)
 {
+    gen::init();
     auto zero = IntegerLiteral::create("0");
     auto larger = IntegerLiteral::create("1234");
 
