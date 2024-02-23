@@ -419,6 +419,9 @@ static std::string token_str; // updated by tokenUpdate()
 static char
 nextCh()
 {
+    if (ch) {
+	token_str_raw += ch;
+    }
     ch = std::fgetc(fp);
 
     if (ch == '\t') {
@@ -429,7 +432,6 @@ nextCh()
     } else {
 	++curr.col;
     }
-    token_str_raw += ch;
     return ch;
 }
 
@@ -1054,10 +1056,10 @@ static void
 parseAddDirective()
 {
     static std::set<UStr> included;
+    auto defineIdent = UStr::create("define");
 
     getToken();
-    if (token.kind == TokenKind::IDENTIFIER
-	    && token.val == UStr::create("define")) {
+    if (token.kind == TokenKind::IDENTIFIER && token.val == defineIdent) {
 	getToken();
 	if (token.kind != TokenKind::IDENTIFIER) {
 	    error::out() << token.loc

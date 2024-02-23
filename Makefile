@@ -1,4 +1,4 @@
-CXX := g++
+CXX := g++-12
 #CXX := clang++
 #CXX := g++-13
 

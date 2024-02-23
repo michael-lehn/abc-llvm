@@ -84,5 +84,5 @@ StringLiteral::print(int indent) const
 void
 StringLiteral::printFlat(std::ostream &out, int prec) const
 {
-    out << "\"" << valRaw.c_str();
+    out << valRaw.c_str();
 }
