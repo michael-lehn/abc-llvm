@@ -8,15 +8,15 @@
 const Type *
 makeStruct1(UStr name)
 {
-    auto incompleteStructTy = Type::createIncompleteStruct(name.c_str());
+    auto incompleteStructTy = Type::createIncompleteStruct(name);
 
     std::vector<UStr> ident;
     std::vector<const Type *> type;
 
-    ident.push_back(UStr{"first"});
+    ident.push_back(UStr::create("first"));
     type.push_back(Type::getUnsignedInteger(8));
 
-    ident.push_back(UStr{"second"});
+    ident.push_back(UStr::create("second"));
     type.push_back(Type::getArray(Type::getConst(Type::getUnsignedInteger(16)), 4));
 
     auto ty = incompleteStructTy->complete(std::move(ident), std::move(type));
@@ -31,24 +31,24 @@ makeStruct1(UStr name)
 const Type *
 makeStruct2(UStr name)
 {
-    return Type::createIncompleteStruct(name.c_str());
+    return Type::createIncompleteStruct(name);
 }
 
 const Type *
 makeStruct3(UStr name, const Type *tm1, const Type *tm3)
 {
-    auto incompleteStructTy = Type::createIncompleteStruct(name.c_str());
+    auto incompleteStructTy = Type::createIncompleteStruct(name);
 
     std::vector<UStr> ident;
     std::vector<const Type *> type;
 
-    ident.push_back(UStr{"first"});
+    ident.push_back(UStr::create("first"));
     type.push_back(tm1);
 
-    ident.push_back(UStr{"second"});
+    ident.push_back(UStr::create("second"));
     type.push_back(Type::getUnsignedInteger(16));
 
-    ident.push_back(UStr{"third"});
+    ident.push_back(UStr::create("third"));
     type.push_back(tm3);
 
     auto ty = incompleteStructTy->complete(std::move(ident), std::move(type));
@@ -67,7 +67,7 @@ main(void)
     gen::init();
     Symtab::openScope();
 
-    auto ty1 = makeStruct1("Foo");
+    auto ty1 = makeStruct1(UStr::create("Foo"));
     std::cout << "ty1 = " << ty1 << ", &ty1 = " << (void *) ty1 << std::endl;
 
     auto constTy1 = Type::getConst(ty1);
@@ -79,14 +79,14 @@ main(void)
 	<< ", &nonConstTy1 = " << (void *) nonConstTy1 << std::endl;
 
 
-    auto ty2 = makeStruct2("Bar");
+    auto ty2 = makeStruct2(UStr::create("Bar"));
     std::cout << "ty2 = " << ty2 << ", &ty2 = " << (void *) ty2 << std::endl;
 
-    ty2 = makeStruct2("Bar");
+    ty2 = makeStruct2(UStr::create("Bar"));
     std::cout << "ty2 = " << ty2 << ", &ty2 = " << (void *) ty2 << std::endl;
 
 
-    auto ty3 = makeStruct3("FooBar", ty1, ty2);
+    auto ty3 = makeStruct3(UStr::create("FooBar"), ty1, ty2);
     std::cout << "ty3 = " << ty3 << ", &ty3 = " << (void *) ty3 << std::endl;
 
     Symtab::closeScope();

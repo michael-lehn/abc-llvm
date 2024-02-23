@@ -3,15 +3,11 @@
 
 #include "ustr.hpp"
 
-std::unordered_map<UStr, int> kw = {
-    {"for", 1},
-};
-
 int
 main(void)
 {
-    UStr s1 = "for";
-    UStr s2 = "Hallo";
+    auto s1 = UStr::create("for");
+    auto s2 = UStr::create("Hallo");
 
     //kw[UStr{"for"}.c_str] = 1;
 
@@ -20,5 +16,4 @@ main(void)
     /*
     std::cout << "kw 'for'" << kw["for"] << std::endl;
     */
-    std::cout << "kw[" << s1.c_str() << "] = " << kw[s1] << std::endl;
 }

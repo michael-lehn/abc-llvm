@@ -10,13 +10,19 @@ class UStr
     public:
 	UStr();
 	UStr(const UStr &) = default;
-	UStr(const char *s);
+
+    protected:	
 	UStr(const std::string &s);
+
+    public:
+
+	static UStr create(const char *s);
+	static UStr create(const std::string &s);
 
 	UStr &operator=(const UStr &) = default;
 
 	const char *
-	c_str(void) const
+	c_str() const
 	{
 	    return c_str_;
 	}

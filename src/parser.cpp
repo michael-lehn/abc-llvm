@@ -136,7 +136,7 @@ parseFunctionType(Token *fnIdent, std::vector<Token> *paramIdent)
     getToken();
 
     std::vector<const Type *> paramType;
-    bool hasVarg;
+    bool hasVarg = false;
     if (!parseFunctionParameterList(paramType, hasVarg, paramIdent)) {
 	error::out() << token.loc << ": expected parameter list" << std::endl;
 	error::fatal();
@@ -493,7 +493,8 @@ parseCompoundLiteral(const Type *type)
     auto loc = token.loc;
     if (auto list = parseInitializerList(type)) {
 	AstListPtr declTmp = std::make_unique<AstList>();
-	declTmp->append(std::make_unique<AstVar>("tmp", type, loc));
+	auto tmp = UStr::create("tmp");
+	declTmp->append(std::make_unique<AstVar>(tmp, type, loc));
 	return std::make_unique<AstLocalVar>(std::move(declTmp));
     }
     return nullptr;

@@ -14,7 +14,7 @@ CompoundLiteral::CompoundLiteral(AstInitializerListPtr &&ast, Token::Loc loc)
     static std::size_t id;
     std::stringstream ss;
     ss << ".tmp.compound_literal." << id++;
-    genIdent = ss.str();
+    genIdent = UStr::create(ss.str());
 }
 
 bool

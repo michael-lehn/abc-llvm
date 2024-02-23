@@ -26,11 +26,11 @@ setLexerInputfile(const char *path)
     if (!path) {
 	path = "stdin";
     }
-    openFile.push_back({UStr{path}, file});
+    openFile.push_back({UStr::create(path), file});
     saveCurrentLocatation();
 
     token.loc = Token::Loc{};
-    token.loc.path = path;
+    token.loc.path = UStr::create(path);
 
     fp = file;
     return fp;
@@ -402,7 +402,7 @@ restoreCurrentLocatation()
 static void
 fixCurrentLocatation(const std::string &path)
 {
-    token.loc.path = path;
+    token.loc.path = UStr::create(path);
 }
 
 static void
@@ -438,8 +438,8 @@ tokenReset()
 {
     token.loc.from.line = curr.line;
     token.loc.from.col = curr.col;
-    token.val = UStr{};
-    token.valRaw = UStr{};
+    token.val = UStr::create("");
+    token.valRaw = UStr::create("");
     token_str = "";
     token_str_raw = "";
 }
@@ -452,7 +452,7 @@ tokenUpdate(char addCh = ch)
     token.loc.to.col = curr.col;
 }
 
-static std::unordered_map<UStr, TokenKind> kw = {
+static std::unordered_map<std::string, TokenKind> kw = {
     { "assert", TokenKind::ASSERT },
     { "goto", TokenKind::GOTO },
     { "label", TokenKind::LABEL },
@@ -486,19 +486,19 @@ static std::unordered_map<UStr, TokenKind> kw = {
     { "enum", TokenKind::ENUM },
 };
 
-static std::unordered_map<UStr, UStr> define;
+static std::unordered_map<std::string, std::string> define;
 
 static TokenKind
 tokenSet(TokenKind kind)
 {
     token.kind = kind;
-    token.val = UStr{token_str};
-    token.valRaw = UStr{token_str_raw};
+    token.val = UStr::create(token_str);
+    token.valRaw = UStr::create(token_str_raw);
     if (kind == TokenKind::IDENTIFIER) {
-	if (kw.contains(token.val)) {
-	    token.kind = kw[token.val];
-	} else if (define.contains(token.val)) {
-	    token.val = define[token.val];
+	if (kw.contains(token_str)) {
+	    token.kind = kw[token_str];
+	} else if (define.contains(token_str)) {
+	    token.val = UStr::create(define[token_str]);
 	}
     }
     return token.kind;
@@ -1056,7 +1056,8 @@ parseAddDirective()
     static std::set<UStr> included;
 
     getToken();
-    if (token.kind == TokenKind::IDENTIFIER && token.val == UStr{"define"}) {
+    if (token.kind == TokenKind::IDENTIFIER
+	    && token.val == UStr::create("define")) {
 	getToken();
 	if (token.kind != TokenKind::IDENTIFIER) {
 	    error::out() << token.loc
@@ -1071,12 +1072,12 @@ parseAddDirective()
 	    error::fatal();
 	}
 	auto to = token;
-	if (define.contains(from.val)) {
+	if (define.contains(std::string{from.val.c_str()})) {
 	    error::out() << token.loc
 		<< ": macro already defined" << std::endl;
 	    error::fatal();
 	}
-	define[from.val] = to.val;
+	define[std::string{from.val.c_str()}] = std::string{to.val.c_str()};
     } else if (token.kind == TokenKind::STRING_LITERAL) {
 	if (!included.contains(token.val)) {
 	    included.insert(token.val);
@@ -1095,8 +1096,8 @@ parseAddDirective()
 	    path += file;
 	    std::ifstream f(path.c_str());
 	    if (f.good()) {
-		if (!included.contains(path.c_str())) {
-		    included.insert(path.c_str());
+		if (!included.contains(UStr::create(path.c_str()))) {
+		    included.insert(UStr::create(path.c_str()));
 		    setLexerInputfile(path.c_str());
 		}
 		succ = true;

@@ -10,7 +10,7 @@
 
 namespace asserthack {
 
-UStr assertIdent = "__assert";
+const char *assertIdent = "__assert";
 
 void
 makeDecl()
@@ -23,8 +23,10 @@ makeDecl()
     argType.push_back(Type::getSignedInteger(8 * sizeof(int)));
 
     auto fnAssertType = Type::getFunction(Type::getBool(), argType, true);
-    gen::fnDecl(assertIdent.c_str(), fnAssertType, true);
-    Symtab::addDeclToRootScope(Token::Loc{}, assertIdent, fnAssertType);
+    gen::fnDecl(assertIdent, fnAssertType, true);
+    Symtab::addDeclToRootScope(Token::Loc{},
+			       UStr::create(assertIdent),
+			       fnAssertType);
 }
 
 ExprPtr
@@ -32,16 +34,17 @@ createCall(ExprPtr &&expr, Token::Loc loc)
 {
 	std::stringstream ss;
 	ss << expr;
+	UStr str = UStr::create(ss.str());
 
-	auto fnAssert = Identifier::create(assertIdent, loc);
+	auto fnAssert = Identifier::create(UStr::create(assertIdent), loc);
 
 	std::vector<ExprPtr> param;
-	param.push_back(StringLiteral::create(ss.str(), ss.str(), loc));
+	param.push_back(StringLiteral::create(str, str, loc));
 	param.push_back(
 		StringLiteral::create(token.loc.path, token.loc.path, loc));
 	param.push_back(
 		IntegerLiteral::create(loc.from.line,
-				       Type::getSignedInteger(sizeof(int))));
+				   Type::getSignedInteger(8 * sizeof(int))));
 
 	return BinaryExpr::create(BinaryExpr::LOGICAL_OR,
 				  std::move(expr),

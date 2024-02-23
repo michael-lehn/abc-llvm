@@ -29,62 +29,62 @@ initDefaultTypes()
     asserthack::makeDecl();
 
     Symtab::addTypeAlias(
-	    "char",
+	    UStr::create("char"),
 	    Type::createAlias(
-		"char",
+		UStr::create("char"),
 		Type::getChar()));
 
-    Symtab::addTypeAlias("void", Type::getVoid());
-    Symtab::addTypeAlias("bool", Type::getBool());
+    Symtab::addTypeAlias(UStr::create("void"), Type::getVoid());
+    Symtab::addTypeAlias(UStr::create("bool"), Type::getBool());
 
-    Symtab::addTypeAlias("u8", Type::getUnsignedInteger(8));
-    Symtab::addTypeAlias("u16", Type::getUnsignedInteger(16));
-    Symtab::addTypeAlias("u32", Type::getUnsignedInteger(32));
-    Symtab::addTypeAlias("u64", Type::getUnsignedInteger(64));
-    Symtab::addTypeAlias("i8", Type::getSignedInteger(8));
-    Symtab::addTypeAlias("i16", Type::getSignedInteger(16));
-    Symtab::addTypeAlias("i32", Type::getSignedInteger(32));
-    Symtab::addTypeAlias("i64", Type::getSignedInteger(64));
+    Symtab::addTypeAlias(UStr::create("u8"), Type::getUnsignedInteger(8));
+    Symtab::addTypeAlias(UStr::create("u16"), Type::getUnsignedInteger(16));
+    Symtab::addTypeAlias(UStr::create("u32"), Type::getUnsignedInteger(32));
+    Symtab::addTypeAlias(UStr::create("u64"), Type::getUnsignedInteger(64));
+    Symtab::addTypeAlias(UStr::create("i8"), Type::getSignedInteger(8));
+    Symtab::addTypeAlias(UStr::create("i16"), Type::getSignedInteger(16));
+    Symtab::addTypeAlias(UStr::create("i32"), Type::getSignedInteger(32));
+    Symtab::addTypeAlias(UStr::create("i64"), Type::getSignedInteger(64));
 
     Symtab::addTypeAlias(
-		"int",
+		UStr::create("int"),
 		Type::createAlias(
-		    "int",
+		    UStr::create("int"),
 		    Type::getSignedInteger(8 * sizeof(int))));
     Symtab::addTypeAlias(
-		"long",
+		UStr::create("long"),
 		Type::createAlias(
-		    "long",
+		    UStr::create("long"),
 		    Type::getSignedInteger(8 * sizeof(long))));
     Symtab::addTypeAlias(
-		"long_long",
+		UStr::create("long_long"),
 		Type::createAlias(
-		    "long_long",
+		    UStr::create("long_long"),
 		    Type::getSignedInteger(8 * sizeof(long long))));
     Symtab::addTypeAlias(
-		"unsigned",
-		 Type::createAlias(
-		     "unsigned",
+		UStr::create("unsigned"),
+		Type::createAlias(
+		     UStr::create("unsigned"),
 		     Type::getUnsignedInteger(8 * sizeof(unsigned))));
     Symtab::addTypeAlias(
-		"unsigned_long",
-		 Type::createAlias(
-		     "unsigned_long",
+		UStr::create("unsigned_long"),
+		Type::createAlias(
+		     UStr::create("unsigned_long"),
 		     Type::getUnsignedInteger(8 * sizeof(unsigned long))));
     Symtab::addTypeAlias(
-		"unsigned_long_long",
-		 Type::createAlias(
-		     "unsigned_long_long",
+		UStr::create("unsigned_long_long"),
+		Type::createAlias(
+		     UStr::create("unsigned_long_long"),
 		     Type::getUnsignedInteger(8 * sizeof(unsigned long long))));
     Symtab::addTypeAlias(
-		"size_t",
-		 Type::createAlias(
-		     "size_t",
+		UStr::create("size_t"),
+		Type::createAlias(
+		     UStr::create("size_t"),
 		     Type::getUnsignedInteger(8 * sizeof(std::size_t))));
     Symtab::addTypeAlias(
-		"ptrdiff_t",
-		 Type::createAlias(
-		     "ptrdiff_t",
+		UStr::create("ptrdiff_t"),
+		Type::createAlias(
+		     UStr::create("ptrdiff_t"),
 		     Type::getSignedInteger(8 * sizeof(std::ptrdiff_t))));
 }
 

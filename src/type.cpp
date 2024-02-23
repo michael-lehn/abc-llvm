@@ -533,7 +533,7 @@ Type::hasMember(UStr ident) const
 {
     assert(std::holds_alternative<StructData>(data));
     const auto &structData = std::get<StructData>(data);
-    return structData.index.contains(ident.c_str());
+    return structData.index.contains(ident);
 }
 
 std::size_t
@@ -542,7 +542,7 @@ Type::getMemberIndex(UStr ident) const
     assert(std::holds_alternative<StructData>(data));
     const auto &structData = std::get<StructData>(data);
     assert(hasMember(ident));
-    return structData.index.at(ident.c_str());
+    return structData.index.at(ident);
 }
 
 const Type *

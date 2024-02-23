@@ -933,7 +933,7 @@ AstFuncDecl::AstFuncDecl(Token fnIdent, const Type *type,
     : fnIdent{fnIdent}, type{type}, paramToken{paramToken}
     , externFlag{externFlag}
 {
-    if (fnIdent.val != asserthack::assertIdent) {
+    if (fnIdent.val != UStr::create(asserthack::assertIdent)) {
 	auto sym = externFlag
 	    ? Symtab::addDeclToRootScope(fnIdent.loc, fnIdent.val, type)
 	    : Symtab::addDecl(fnIdent.loc, fnIdent.val, type);
@@ -946,7 +946,7 @@ AstFuncDecl::AstFuncDecl(Token fnIdent, const Type *type,
 void
 AstFuncDecl::print(int indent) const
 {
-    if (fnIdent.val != asserthack::assertIdent) {
+    if (fnIdent.val != UStr::create(asserthack::assertIdent)) {
 	error::out(indent)
 	    << (externFlag ? "extern " : "")
 	    << "fn " << fnIdent.val.c_str() << "(";
@@ -973,7 +973,7 @@ AstFuncDecl::print(int indent) const
 void
 AstFuncDecl::codegen()
 {
-    if (fnIdent.val != asserthack::assertIdent) {
+    if (fnIdent.val != UStr::create(asserthack::assertIdent)) {
 	gen::fnDecl(fnIdent.val.c_str(), type, externFlag);
     }
 }
@@ -1060,8 +1060,8 @@ AstFuncDef::codegen()
 AstTypeDecl::AstTypeDecl(Token tyIdent, const Type *type)
     : tyIdent{tyIdent}, type{type}
 {
-    auto aliasType = Type::createAlias(tyIdent.val.c_str(), type);
-    if (!Symtab::addTypeAlias(tyIdent.val.c_str(), aliasType, tyIdent.loc)) {
+    auto aliasType = Type::createAlias(tyIdent.val, type);
+    if (!Symtab::addTypeAlias(tyIdent.val, aliasType, tyIdent.loc)) {
 	error::out() << tyIdent.loc
 	    << ": error: '" << tyIdent.val.c_str()
 	    << "' already defined in this scope" << std::endl;

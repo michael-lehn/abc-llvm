@@ -23,6 +23,8 @@ IntegerLiteral::create(UStr val, std::uint8_t  radix, const Type *type,
     if (!type) {
 	type = getIntType(val.c_str(), val.c_str() + val.length(), radix, loc);
     }
+    assert(val.c_str());
+    assert(val.length());
     auto p = new IntegerLiteral{val, radix, type, loc};
     return std::unique_ptr<IntegerLiteral>{p};
 }
@@ -35,7 +37,7 @@ IntegerLiteral::create(std::int64_t val, const Type *type, Token::Loc loc)
     }
     std::stringstream ss;
     ss << val;
-    auto p = new IntegerLiteral{ss.str(), 10, type, loc};
+    auto p = new IntegerLiteral{UStr::create(ss.str()), 10, type, loc};
     return std::unique_ptr<IntegerLiteral>{p};
 }
 
@@ -103,7 +105,7 @@ void
 IntegerLiteral::printFlat(std::ostream &out, int prec) const
 {
     if (radix == 8) {
-	if (val.c_str() != UStr{"0"}.c_str()) {
+	if (val != UStr::create("0")) {
 	    out << "0";
 	}
     } else if (radix == 16) {

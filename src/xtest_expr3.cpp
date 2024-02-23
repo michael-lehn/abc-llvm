@@ -19,10 +19,12 @@ main(void)
      * Create some code from an expression
      */
 
-    auto lit42 = IntegerLiteral::create("42", 10, nullptr);
+    auto lit42 = IntegerLiteral::create(42);
     lit42->print();
-    Symtab::addDecl(Token::Loc{}, "a", Type::getUnsignedInteger(64));
-    auto a = Identifier::create("a");
+    Symtab::addDecl(Token::Loc{},
+		    UStr::create("a"),
+		    Type::getUnsignedInteger(64));
+    auto a = Identifier::create(UStr::create("a"));
     a->print();
     auto proxy_a = ProxyExpr::create(a.get());
     auto cast_a = CastExpr::create(std::move(a), Type::getUnsignedInteger(16));
@@ -39,7 +41,8 @@ main(void)
 				 std::move(proxy_a));
     binary->print();
 
-    auto str = StringLiteral::create("hello, world!", "hello, world!");
+    auto str = StringLiteral::create(UStr::create("hello, world!"),
+				     UStr::create("hello, world!"));
     str->print();
 
     /*

@@ -11,13 +11,13 @@ makeSomeStructType(void)
     std::vector<UStr> memIdent;
     std::vector<const Type *> memType;
     
-    memIdent.push_back(UStr{"first"});
+    memIdent.push_back(UStr::create("first"));
     memType.push_back(Type::getUnsignedInteger(16));
 
-    memIdent.push_back(UStr{"second"});
+    memIdent.push_back(UStr::create("second"));
     memType.push_back(Type::getUnsignedInteger(64));
 
-    auto ty = Type::createIncompleteStruct("Foo");
+    auto ty = Type::createIncompleteStruct(UStr::create("Foo"));
     return ty->complete(std::move(memIdent), std::move(memType));
 }
 
@@ -27,10 +27,11 @@ main(void)
     gen::init();
     Symtab::openScope();
 
-    Symtab::addDecl(Token::Loc{}, UStr{"foo"}, makeSomeStructType());
-    auto foo = Identifier::create(UStr{"foo"}, Token::Loc{});
+    Symtab::addDecl(Token::Loc{}, UStr::create("foo"), makeSomeStructType());
+    auto foo = Identifier::create(UStr::create("foo"), Token::Loc{});
 
-    auto foo_second = BinaryExpr::createMember(std::move(foo), UStr{"first"});
+    auto foo_second = BinaryExpr::createMember(std::move(foo),
+					       UStr::create("first"));
 
     foo_second->print();
 

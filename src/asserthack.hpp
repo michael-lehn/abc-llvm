@@ -5,7 +5,7 @@
 
 namespace asserthack {
 
-extern UStr assertIdent;
+extern const char *assertIdent;
 void makeDecl();
 ExprPtr createCall(ExprPtr &&expr, Token::Loc loc);
 

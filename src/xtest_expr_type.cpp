@@ -9,8 +9,8 @@ int
 main(void)
 {
     gen::init();
-    auto zero = IntegerLiteral::create("0");
-    auto larger = IntegerLiteral::create("1234");
+    auto zero = IntegerLiteral::create(0);
+    auto larger = IntegerLiteral::create(1234);
 
 
     std::cout << "typeof(zero) = " << zero->type << std::endl;

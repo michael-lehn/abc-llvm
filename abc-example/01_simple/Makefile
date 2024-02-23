@@ -47,7 +47,7 @@ $(asm.dir)/%.s :%.abc | $(asm.dir)
 	$(ABC) -S $(ABCFLAGS) $<
 	@mv $(@F) $@
 
-%.bc : /%.abc
+%.bc : %.abc
 	$(ABC) -B $(ABCFLAGS) $<
 
 $(obj.dir)/%.o : %.abc | $(obj.dir)

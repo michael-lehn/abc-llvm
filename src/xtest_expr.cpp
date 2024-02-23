@@ -33,16 +33,24 @@ main(void)
 	Type::getUnsignedInteger(64),
 	Type::getUnsignedInteger(64),
     };
-    Symtab::addDecl(Token::Loc{}, fnParamId[0], Type::getUnsignedInteger(64));
-    Symtab::addDecl(Token::Loc{}, fnParamId[1], Type::getUnsignedInteger(64));
+    Symtab::addDecl(Token::Loc{},
+		    UStr::create(fnParamId[0]),
+		    Type::getUnsignedInteger(64));
+    Symtab::addDecl(Token::Loc{},
+		    UStr::create(fnParamId[1]),
+		    Type::getUnsignedInteger(64));
 
     // parse return type (and create a variable for it)
     const Type *retType = Type::getUnsignedInteger(64);
-    Symtab::addDecl(Token::Loc{}, UStr{".retVal"}, retType);
+    Symtab::addDecl(Token::Loc{},
+		    UStr::create(".retVal"),
+		    retType);
 
     // create function type and declare it in root scope
     auto fnType = Type::getFunction(retType, argType);
-    auto fnDecl = Symtab::addDeclToRootScope(Token::Loc{}, "foo", fnType);
+    auto fnDecl = Symtab::addDeclToRootScope(Token::Loc{},
+					     UStr::create("foo"),
+					     fnType);
     if (!fnDecl) {
 	assert(0 && "symbol already exists");
     }
@@ -54,9 +62,9 @@ main(void)
      * Create some code from an expression
      */
 
-    auto lit42 = IntegerLiteral::create("42", 10, nullptr);
-    auto a = Identifier::create("a");
-    auto b = Identifier::create("b");
+    auto lit42 = IntegerLiteral::create(UStr::create("42"), 10, nullptr);
+    auto a = Identifier::create(UStr::create("a"));
+    auto b = Identifier::create(UStr::create("b"));
     auto binary = BinaryExpr::create(
 			BinaryExpr::Kind::ADD,
 			BinaryExpr::create(

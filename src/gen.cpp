@@ -731,6 +731,8 @@ loadIntConst(const char *val, const Type *type, std::uint8_t radix)
 {
     assert(llvmContext && "gen::init called?");
     assert(type);
+    assert(val);
+    assert(*val);
 
     if (type->isInteger()) {
 	auto ty = llvm::APInt(type->getIntegerNumBits(), val, radix);

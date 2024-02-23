@@ -24,9 +24,9 @@ main(void)
     /*
      * type int: i32;
      */
-    auto ty_int = Type::createAlias("int", ty_i32);
+    auto ty_int = Type::createAlias(UStr::create("int"), ty_i32);
     printType(ty_int, "ty_int");
-    if (!Symtab::addTypeAlias("int", ty_i32)) {
+    if (!Symtab::addTypeAlias(UStr::create("int"), ty_i32)) {
 	assert(0 && "type already defined");
     }
 

@@ -139,7 +139,7 @@ Symtab::add(Token::Loc loc, UStr ident, Entry::Data &&data, ScopeNode *sn)
 	    ss << scopePrefix;
 	}
 	ss << "._" << ident.c_str() << sn->id << "_.";
-	internalIdent = ss.str();
+	internalIdent = UStr::create(ss.str());
     }
 
     auto entry = Entry{loc, std::move(data), ident, internalIdent};
@@ -182,7 +182,7 @@ Symtab::addStringLiteral(UStr str)
     }
     std::stringstream ss;
     ss << ".str" << pool[str.c_str()];
-    UStr ident{ss.str()};
+    auto ident = UStr::create(ss.str());
 
     if (added) {
 	auto ty = Type::getArray(Type::getChar(),
