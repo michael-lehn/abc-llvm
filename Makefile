@@ -1,4 +1,4 @@
-CXX := g++-12
+CXX := g++
 #CXX := clang++
 #CXX := g++-13
 
@@ -48,6 +48,9 @@ $(bin.dir)/%: $(obj.dir)/%.cpp
 $(bin.dir)/%: $(obj.dir)/%.o
 $(bin.dir)/%: $(obj.dir)/%.o $(obj) | $(bin.dir)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $< $(obj) $(llvm.link) -o $@
+
+$(bin.dir)/xtest_lexer: $(obj.dir)/xtest_lexer.o $(obj.dir)/lexer.o $(obj.dir)/error.o $(obj.dir)/ustr.o | $(bin.dir)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(llvm.link) -o $@
 
 $(obj.dir): ; mkdir -p $@
 $(dep.dir): ; mkdir -p $@
