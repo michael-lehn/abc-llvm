@@ -1,8 +1,10 @@
+#include <cassert>
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
 
 #include "error.hpp"
+#include "tokenkind.hpp"
 
 namespace error {
 
@@ -29,14 +31,17 @@ warning()
 
 
 bool
-expected(TokenKind kind)
+expected(lexer::TokenKind kind)
 {
-    if (token.kind != kind) {
-	out() << token.loc << ": expected '" << tokenCStr(kind) << "'"
+    /*
+    if (lexer::token.kind != kind) {
+	out() << lexer::token.loc << ": expected '" << kind << "'"
 	    << std::endl;
 	fatal();
 	return false;
     }
+    */
+    assert(0 && "not implemented");
     return true;
 }
 
