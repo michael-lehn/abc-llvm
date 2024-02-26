@@ -44,14 +44,18 @@ main(int argc, char *argv[])
 	: lexer::openInputfile(infile.c_str());
 
     do {
-	lexer::nextCh();
+	if (lexer::reader->ch == '\n') {
+	    while (lexer::nextCh() == '\n') {
+	    }
+	    lexer::reader->resetStart();
+	} else {
+	    lexer::nextCh();
+	}
+
 	std::cerr
 	    << lexer::reader->path << ":"
 	    << lexer::reader->pos << ": "
 	    << "'" << char(lexer::reader->ch) << "'\n";
-	if (lexer::reader->ch == '\n') {
 	    std::cerr << "val = '" << lexer::reader->val << "'\n";
-	    lexer::reader->resetStart();
-	}
     } while (!lexer::reader->eof());
 }

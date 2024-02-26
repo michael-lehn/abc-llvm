@@ -29,8 +29,8 @@ struct ReaderInfo {
 extern std::unique_ptr<ReaderInfo> reader;
 
 // if path is nullptr read from stdin
-bool openInputfile(const char *path);
-bool addSearchPath(const char *path);
+bool openInputfile(const char *path, bool search = false);
+void addSearchPath(const char *path);
 
 // read next character and update reader
 char nextCh();

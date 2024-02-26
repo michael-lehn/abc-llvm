@@ -21,6 +21,7 @@ class UStr
 	static UStr create(const std::string &s);
 
 	UStr &operator=(const UStr &) = default;
+	UStr &operator=(UStr &&) = default;
 
 	const char *
 	c_str() const

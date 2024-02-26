@@ -92,7 +92,7 @@ enum class TokenKind {
     HASH,
 };
 
-const char *enumConstCStr(TokenKind kind);
+const char *TokenKindCStr(TokenKind kind);
 
 std::ostream &operator<<(std::ostream &out, TokenKind kind);
 

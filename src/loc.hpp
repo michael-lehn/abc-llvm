@@ -14,7 +14,7 @@ class Loc
 	class Pos
     	{
 	    public:
-		Pos() : line{0}, col{0} {}
+		Pos() : line{1}, col{1} {}
 		Pos(std::size_t line, std::size_t col) : line{line}, col{col} {}
 		Pos(const Pos &) = default;
 		Pos &operator=(const Pos &) = default;
@@ -24,10 +24,11 @@ class Loc
 	Loc() = default;
 	Loc(UStr path, Pos from, Pos to) : path{path}, from{from}, to{to} {}
 	Loc(const Loc &loc) = default;
-	Loc &operator=(const Loc &loc) = delete;
+	Loc &operator=(const Loc &loc) = default;
+	Loc &operator=(Loc &&loc) = default;
 
-	const UStr path;
-	const Pos from, to;
+	UStr path;
+	Pos from, to;
 };
 
 std::ostream &operator<<(std::ostream &out, Loc::Pos pos);

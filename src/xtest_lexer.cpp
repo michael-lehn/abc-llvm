@@ -18,7 +18,6 @@ usage(const char *prog)
 int
 main(int argc, char *argv[])
 {
-    /*
     std::filesystem::path infile;
     std::filesystem::path outfile;
 
@@ -37,10 +36,10 @@ main(int argc, char *argv[])
 		    break;
 		case 'I':
 		    if (!argv[i][2] && i + 1 < argc) {
-			lexer::addIncludePath(argv[i + 1]);
+			lexer::addSearchPath(argv[i + 1]);
 			++i;
 		    } else if (argv[i][2]) {
-			lexer::addIncludePath(&argv[i][2]);
+			lexer::addSearchPath(&argv[i][2]);
 		    } else {
 			usage(argv[0]);
 		    }
@@ -53,8 +52,8 @@ main(int argc, char *argv[])
 	}
     }
     infile.empty()
-	? lexer::setLexerInputfile(nullptr)
-	: lexer::setLexerInputfile(infile.c_str());
+	? lexer::openInputfile(nullptr)
+	: lexer::openInputfile(infile.c_str());
 
     std::ostream *fp = &std::cout;
     std::ofstream fout;
@@ -67,21 +66,9 @@ main(int argc, char *argv[])
 	fp = &fout;
     }
 
-    while (lexer::getToken() != lexer::TokenKind::EOI) {
-	*fp << lexer::token.loc.path.c_str() << ":"
-	    << lexer::token.loc.from.line << "."
-	    << lexer::token.loc.from.col << "-"
-	    << lexer::token.loc.to.line << "."
-	    << lexer::token.loc.to.col << ": "
-	    << enumConstCStr(lexer::token.kind) << " "
-	    << "'" << lexer::token.kind << "' "
-	    << (lexer::token.kind == lexer::TokenKind::STRING_LITERAL
-		    ? lexer::token.valRaw.c_str()
-		    : lexer::token.val.c_str())
-	    << std::endl;
-	if (lexer::token.kind == lexer::TokenKind::BAD) {
-	    break;
-	}
-    }
-    */
+    lexer::init();
+    do {
+	lexer::getToken();
+	*fp << lexer::token << std::endl;
+    } while (lexer::token.kind != lexer::TokenKind::EOI);
 }

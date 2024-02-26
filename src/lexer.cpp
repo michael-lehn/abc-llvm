@@ -1,193 +1,32 @@
-#include <cassert>
-#include <fstream>
 #include <iostream>
-#include <limits>
-#include <set>
-#include <sstream>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 #include "error.hpp"
 #include "lexer.hpp"
 
 namespace lexer {
 
-/*
-
 Token token;
 
-static FILE* fp = stdin;
+static std::unordered_map<UStr, TokenKind> keyword;
+static std::unordered_map<UStr, UStr> define;
+static std::set<UStr> includedFiles;
 
-static std::vector<std::pair<UStr, FILE *>> openFile;
-static void saveCurrentLocatation();
-static void restoreCurrentLocatation();
 
-bool
-setLexerInputfile(const char *path)
-{
-    FILE *file = path ? std::fopen(path, "r") : stdin;
-    if (!path) {
-	path = "stdin";
-    }
-    openFile.push_back({UStr::create(path), file});
-    saveCurrentLocatation();
+static bool isWhiteSpace(int ch);
+static bool isDecDigit(int ch);
+static bool isOctDigit(int ch);
+static bool isLetter(int ch);
+static UStr applyDefine(UStr ident);
+static TokenKind getToken_();
+static TokenKind setToken(TokenKind kind, std::string processed = "");
 
-    token.loc = Token::Loc{};
-    token.loc.path = UStr::create(path);
+static unsigned hexToVal(char ch);
+static std::string parseStringLiteral();
+static unsigned parseCharacterLiteral();
+static void parseAddDirective();
 
-    fp = file;
-    return fp;
-}
-
-// return true if after closing another file is open.
-bool
-closeLexerInputfile()
-{
-    if (openFile.empty()) {
-	return false;
-    }
-    std::fclose(openFile.back().second);
-    openFile.pop_back();
-    restoreCurrentLocatation();
-
-    if (!openFile.empty()) {
-	fp = openFile.back().second;
-	token.loc = Token::Loc{};
-	token.loc.path = openFile.back().first;
-	return true;
-    }
-    return false;
-}
-
-static Token::Loc::Pos curr = { 1, 0 };
-static int ch;
-
-static std::vector<std::pair<int, Token::Loc::Pos>> savedCurrLoc;
-
-static void
-saveCurrentLocatation()
-{
-    savedCurrLoc.push_back({ch, curr});
-    ch = 0;
-    curr = {1, 0};
-}
-
-static void
-restoreCurrentLocatation()
-{
-    assert(savedCurrLoc.size());
-    ch = savedCurrLoc.back().first;
-    curr = savedCurrLoc.back().second;
-    savedCurrLoc.pop_back();
-}
-
-static void
-fixCurrentLocatation(const std::string &path)
-{
-    token.loc.path = UStr::create(path);
-}
-
-static void
-fixCurrentLocatation(std::size_t line)
-{
-    curr.line = line;
-}
-
-constexpr std::size_t tabSize = 8;
-
-static std::string token_str_raw; // updated by nextCh()
-static std::string token_str; // updated by tokenUpdate()
-
-static char
-nextCh()
-{
-    if (ch) {
-	token_str_raw += ch;
-    }
-    ch = std::fgetc(fp);
-
-    if (ch == '\t') {
-	curr.col += tabSize - curr.col % tabSize;
-    } else if (ch == '\n') {
-	++curr.line;
-	curr.col = 0;
-    } else {
-	++curr.col;
-    }
-    return ch;
-}
-
-static void
-tokenReset()
-{
-    token.loc.from.line = curr.line;
-    token.loc.from.col = curr.col;
-    token.val = UStr::create("");
-    token.valRaw = UStr::create("");
-    token_str = "";
-    token_str_raw = "";
-}
-
-static void
-tokenUpdate(char addCh = ch)
-{
-    token_str += addCh;
-    token.loc.to.line = curr.line;
-    token.loc.to.col = curr.col;
-}
-
-static std::unordered_map<std::string, TokenKind> kw = {
-    { "assert", TokenKind::ASSERT },
-    { "goto", TokenKind::GOTO },
-    { "label", TokenKind::LABEL },
-    { "const", TokenKind::CONST },
-    { "fn", TokenKind::FN },
-    { "return", TokenKind::RETURN },
-    { "decl", TokenKind::DECL },
-    { "global", TokenKind::GLOBAL },
-    { "local", TokenKind::LOCAL },
-    { "static", TokenKind::STATIC },
-    { "extern", TokenKind::EXTERN },
-    { "while", TokenKind::WHILE },
-    { "do", TokenKind::DO },
-    { "for", TokenKind::FOR },
-    { "if", TokenKind::IF },
-    { "else", TokenKind::ELSE },
-    { "then", TokenKind::THEN },
-    { "array", TokenKind::ARRAY },
-    { "of", TokenKind::OF },
-    { "sizeof", TokenKind::SIZEOF },
-    { "nullptr", TokenKind::NULLPTR },
-    { "struct", TokenKind::STRUCT },
-    { "union", TokenKind::UNION },
-    { "type", TokenKind::TYPE },
-    { "cast", TokenKind::CAST },
-    { "break", TokenKind::BREAK },
-    { "continue", TokenKind::CONTINUE },
-    { "switch", TokenKind::SWITCH },
-    { "case", TokenKind::CASE },
-    { "default", TokenKind::DEFAULT },
-    { "enum", TokenKind::ENUM },
-};
-
-static std::unordered_map<std::string, std::string> define;
-
-static TokenKind
-tokenSet(TokenKind kind)
-{
-    token.kind = kind;
-    token.val = UStr::create(token_str);
-    token.valRaw = UStr::create(token_str_raw);
-    if (kind == TokenKind::IDENTIFIER) {
-	if (kw.contains(token_str)) {
-	    token.kind = kw[token_str];
-	} else if (define.contains(token_str)) {
-	    token.val = UStr::create(define[token_str]);
-	}
-    }
-    return token.kind;
-}
+//------------------------------------------------------------------------------
 
 static bool
 isWhiteSpace(int ch)
@@ -221,6 +60,295 @@ isLetter(int ch)
            ch == '_';
 }
 
+void
+init()
+{
+    keyword[UStr::create("array")] = TokenKind::ARRAY;
+    keyword[UStr::create("assert")] = TokenKind::ASSERT;
+    keyword[UStr::create("break")] = TokenKind::BREAK;
+    keyword[UStr::create("case")] = TokenKind::CASE;
+    keyword[UStr::create("cast")] = TokenKind::CAST;
+    keyword[UStr::create("const")] = TokenKind::CONST;
+    keyword[UStr::create("continue")] = TokenKind::CONTINUE;
+    keyword[UStr::create("decl")] = TokenKind::DECL;
+    keyword[UStr::create("default")] = TokenKind::DEFAULT;
+    keyword[UStr::create("do")] = TokenKind::DO;
+    keyword[UStr::create("else")] = TokenKind::ELSE;
+    keyword[UStr::create("enum")] = TokenKind::ENUM;
+    keyword[UStr::create("extern")] = TokenKind::EXTERN;
+    keyword[UStr::create("fn")] = TokenKind::FN;
+    keyword[UStr::create("for")] = TokenKind::FOR;
+    keyword[UStr::create("global")] = TokenKind::GLOBAL;
+    keyword[UStr::create("goto")] = TokenKind::GOTO;
+    keyword[UStr::create("if")] = TokenKind::IF;
+    keyword[UStr::create("label")] = TokenKind::LABEL;
+    keyword[UStr::create("local")] = TokenKind::LOCAL;
+    keyword[UStr::create("nullptr")] = TokenKind::NULLPTR;
+    keyword[UStr::create("of")] = TokenKind::OF;
+    keyword[UStr::create("return")] = TokenKind::RETURN;
+    keyword[UStr::create("sizeof")] = TokenKind::SIZEOF;
+    keyword[UStr::create("static")] = TokenKind::STATIC;
+    keyword[UStr::create("struct")] = TokenKind::STRUCT;
+    keyword[UStr::create("switch")] = TokenKind::SWITCH;
+    keyword[UStr::create("then")] = TokenKind::THEN;
+    keyword[UStr::create("type")] = TokenKind::TYPE;
+    keyword[UStr::create("union")] = TokenKind::UNION;
+    keyword[UStr::create("while")] = TokenKind::WHILE;
+}
+
+static UStr
+applyDefine(UStr ident)
+{
+    auto val = ident;
+    while (define.contains(val)) {
+	val = define.at(val);
+	if (ident == val) {
+	    break;
+	}
+    }
+    return val;
+}
+
+static TokenKind
+setToken(TokenKind kind, std::string processed)
+{
+    auto loc = Loc{reader->path, reader->start, reader->pos};
+    auto val = UStr::create(reader->val);
+
+    token = processed.empty()
+	? Token(loc, kind, val)
+	: Token(loc, kind, val, UStr::create(processed));
+    return kind;
+}
+
+TokenKind
+getToken()
+{
+    getToken_();
+    auto newVal = applyDefine(token.val);
+    if (token.kind == TokenKind::IDENTIFIER && keyword.contains(newVal)) {
+	token = Token(token.loc, keyword.at(newVal), newVal);
+    } else if (newVal != token.val) {
+	token = Token(token.loc, token.kind, newVal);
+    }
+    return token.kind;
+}
+
+TokenKind
+getToken_()
+{
+    // skip white spaces and newlines
+    while (isWhiteSpace(reader->ch) || reader->ch == '\n') {
+        nextCh();
+    }
+
+    reader->resetStart();
+
+    if (reader->eof()) {
+	return setToken(TokenKind::EOI);
+    } else if (reader->ch == '"') {
+	auto str = parseStringLiteral();
+	return setToken(TokenKind::STRING_LITERAL, str);
+    } else if (reader->ch == '\'') {
+	auto str = std::string{1, char(parseCharacterLiteral())};
+	return setToken(TokenKind::CHARACTER_LITERAL, str);
+    } else if (reader->ch == '@') {
+	parseAddDirective();
+	return getToken();
+    } else if (isLetter(reader->ch)) {
+        while (isLetter(reader->ch) || isDecDigit(reader->ch)) {
+            nextCh();
+        }
+        return setToken(TokenKind::IDENTIFIER);
+    } else if (isDecDigit(reader->ch)) {
+        // parse literal
+        if (reader->ch == '0') {
+            nextCh();
+            if (reader->ch == 'x') {
+                nextCh();
+                if (isHexDigit(reader->ch)) {
+                    while (isHexDigit(reader->ch)) {
+                        nextCh();
+                    }
+                    return setToken(TokenKind::HEXADECIMAL_LITERAL);
+                }
+                return setToken(TokenKind::BAD);
+            }
+            while (isOctDigit(reader->ch)) {
+                nextCh();
+            }
+            return setToken(TokenKind::OCTAL_LITERAL);
+        } else {
+            while (isDecDigit(reader->ch)) {
+                nextCh();
+            }
+            return setToken(TokenKind::DECIMAL_LITERAL);
+        }
+    } else if (reader->ch == '.') {
+	nextCh();
+	if (reader->ch == '.') {
+	    nextCh();
+	    if (reader->ch == '.') {
+		nextCh();
+		return setToken(TokenKind::DOT3);
+	    }
+	    return setToken(TokenKind::BAD);
+	}
+	return setToken(TokenKind::DOT);
+    } else if (reader->ch == ';') {
+	nextCh();
+	return setToken(TokenKind::SEMICOLON);
+    } else if (reader->ch == ':') {
+	nextCh();
+	return setToken(TokenKind::COLON);
+    } else if (reader->ch == ',') {
+	nextCh();
+	return setToken(TokenKind::COMMA);
+    } else if (reader->ch == '{') {
+	nextCh();
+	return setToken(TokenKind::LBRACE);
+    } else if (reader->ch == '}') {
+	nextCh();
+	return setToken(TokenKind::RBRACE);
+    } else if (reader->ch == '(') {
+	nextCh();
+	return setToken(TokenKind::LPAREN);
+    } else if (reader->ch == ')') {
+	nextCh();
+	return setToken(TokenKind::RPAREN);
+    } else if (reader->ch == '[') {
+	nextCh();
+	return setToken(TokenKind::LBRACKET);
+    } else if (reader->ch == ']') {
+	nextCh();
+	return setToken(TokenKind::RBRACKET);
+    } else if (reader->ch == '^') {
+	nextCh();
+	return setToken(TokenKind::CARET);
+    } else if (reader->ch == '+') {
+	nextCh();
+	if (reader->ch == '+') {
+	    nextCh();
+	    return setToken(TokenKind::PLUS2);
+	} else if (reader->ch == '=') {
+	    nextCh();
+	    return setToken(TokenKind::PLUS_EQUAL);
+	}
+	return setToken(TokenKind::PLUS);
+    } else if (reader->ch == '-') {
+	nextCh();
+	if (reader->ch == '-') {
+	    nextCh();
+	    return setToken(TokenKind::MINUS2);
+	} else if (reader->ch == '=') {
+	    nextCh();
+	    return setToken(TokenKind::MINUS_EQUAL);
+	} else if (reader->ch == '>') {
+	    nextCh();
+	    return setToken(TokenKind::ARROW);
+	}
+	return setToken(TokenKind::MINUS);
+    } else if (reader->ch == '*') {
+	nextCh();
+	if (reader->ch == '=') {
+	    nextCh();
+	    return setToken(TokenKind::ASTERISK_EQUAL);
+	}
+	return setToken(TokenKind::ASTERISK);
+    } else if (reader->ch == '/') {
+	nextCh();
+	if (reader->ch == '=') {
+	    nextCh();
+	    return setToken(TokenKind::SLASH_EQUAL);
+	} else if (reader->ch == '/') {
+	    nextCh();
+	    // ignore rest of line and return next token
+	    while (reader->ch != '\n') {
+		nextCh();
+	    }
+	    return getToken();
+	} else if (reader->ch == '*') {
+	    nextCh();
+	    // skip to next '*', '/'
+	    while (reader->ch != EOF) {
+		char last = reader->ch;
+		nextCh();
+		if (last == '*' && reader->ch == '/') {
+		    nextCh();
+		    break;
+		}
+	    }
+	    if (reader->ch == EOF) {
+		error::out() << token.loc
+		    <<  ": multi line comment not terminated" << std::endl;
+		error::fatal();
+		return setToken(TokenKind::BAD);
+	    }
+	    return getToken();
+	}
+	return setToken(TokenKind::SLASH);
+     } else if (reader->ch == '%') {
+	nextCh();
+	if (reader->ch == '=') {
+	    nextCh();
+	    return setToken(TokenKind::PERCENT_EQUAL);
+	}
+	return setToken(TokenKind::PERCENT);
+    } else if (reader->ch == '=') {
+	nextCh();
+	if (reader->ch == '=') {
+	    nextCh();
+	    return setToken(TokenKind::EQUAL2);
+	}
+	return setToken(TokenKind::EQUAL);
+    } else if (reader->ch == '!') {
+	nextCh();
+	if (reader->ch == '=') {
+	    nextCh();
+	    return setToken(TokenKind::NOT_EQUAL);
+	}
+	return setToken(TokenKind::NOT);
+    } else if (reader->ch == '>') {
+	nextCh();
+	if (reader->ch == '=') {
+	    nextCh();
+	    return setToken(TokenKind::GREATER_EQUAL);
+	}
+	return setToken(TokenKind::GREATER);
+    } else if (reader->ch == '<') {
+	nextCh();
+	if (reader->ch == '=') {
+	    nextCh();
+	    return setToken(TokenKind::LESS_EQUAL);
+	}
+	return setToken(TokenKind::LESS);
+    } else if (reader->ch == '&') {
+	nextCh();
+	if (reader->ch == '&') {
+	    nextCh();
+	    return setToken(TokenKind::AND2);
+	}
+	return setToken(TokenKind::AND);
+    } else if (reader->ch == '|') {
+	nextCh();
+	if (reader->ch == '|') {
+	    nextCh();
+	    return setToken(TokenKind::OR2);
+	}
+	return setToken(TokenKind::OR);
+    } else if (reader->ch == '?') {
+	nextCh();
+	return setToken(TokenKind::QUERY);
+    } else {
+	nextCh();
+	return setToken(TokenKind::BAD);
+    }
+}
+
+// 
+// from: https://github.com/afborchert/astl-c/blob/master/astl-c/scanner.cpp
+// 
+
 static unsigned
 hexToVal(char ch)
 {
@@ -233,724 +361,295 @@ hexToVal(char ch)
     }
 }
 
-static void parseStringLiteral();
-static void parseCharacterLiteral();
-static void parseAddDirective();
-static void parseDirective();
-
-TokenKind
-getToken()
-{
-    // init ch, skip white spaces and newlines
-    while (ch == 0 || isWhiteSpace(ch) || ch == '\n') {
-        nextCh();
-    }
-
-    tokenReset();
-    if (ch == EOF) {
-	if (!closeLexerInputfile()) {
-	    return tokenSet(TokenKind::EOI);
-	}
-	return getToken();
-    } else if (isLetter(ch)) {
-        while (isLetter(ch) || isDecDigit(ch)) {
-	    tokenUpdate();
-            nextCh();
-        }
-        return tokenSet(TokenKind::IDENTIFIER);
-    } else if (isDecDigit(ch)) {
-        // parse literal
-        if (ch == '0') {
-	    tokenUpdate();
-            nextCh();
-            if (ch == 'x') {
-		tokenUpdate();
-                nextCh();
-                if (isHexDigit(ch)) {
-                    while (isHexDigit(ch)) {
-			tokenUpdate();
-                        nextCh();
-                    }
-                    return tokenSet(TokenKind::HEXADECIMAL_LITERAL);
-                }
-                return tokenSet(TokenKind::BAD);
-            }
-            while (isOctDigit(ch)) {
-		tokenUpdate();
-                nextCh();
-            }
-            return tokenSet(TokenKind::OCTAL_LITERAL);
-        } else if (isDecDigit(ch)) {
-            while (isDecDigit(ch)) {
-		tokenUpdate();
-                nextCh();
-            }
-            return tokenSet(TokenKind::DECIMAL_LITERAL);
-        }
-    } else if (ch == '"') {
-	parseStringLiteral();
-	return tokenSet(TokenKind::STRING_LITERAL);
-    } else if (ch == '\'') {
-	parseCharacterLiteral();
-	return tokenSet(TokenKind::CHARACTER_LITERAL);
-    } else if (ch == '.') {
-	tokenUpdate();
-	nextCh();
-	if (ch == '.') {
-	    tokenUpdate();
-	    nextCh();
-	    if (ch == '.') {
-		tokenUpdate();
-		nextCh();
-		return tokenSet(TokenKind::DOT3);
-	    }
-	    return tokenSet(TokenKind::BAD);
-	}
-	return tokenSet(TokenKind::DOT);
-    } else if (ch == ';') {
-	tokenUpdate();
-	nextCh();
-	return tokenSet(TokenKind::SEMICOLON);
-    } else if (ch == ':') {
-	tokenUpdate();
-	nextCh();
-	return tokenSet(TokenKind::COLON);
-    } else if (ch == ',') {
-	tokenUpdate();
-	nextCh();
-	return tokenSet(TokenKind::COMMA);
-    } else if (ch == '{') {
-	tokenUpdate();
-	nextCh();
-	return tokenSet(TokenKind::LBRACE);
-    } else if (ch == '}') {
-	tokenUpdate();
-	nextCh();
-	return tokenSet(TokenKind::RBRACE);
-    } else if (ch == '(') {
-	tokenUpdate();
-	nextCh();
-	return tokenSet(TokenKind::LPAREN);
-    } else if (ch == ')') {
-	tokenUpdate();
-	nextCh();
-	return tokenSet(TokenKind::RPAREN);
-    } else if (ch == '[') {
-	tokenUpdate();
-	nextCh();
-	return tokenSet(TokenKind::LBRACKET);
-    } else if (ch == ']') {
-	tokenUpdate();
-	nextCh();
-	return tokenSet(TokenKind::RBRACKET);
-    } else if (ch == '^') {
-	tokenUpdate();
-	nextCh();
-	return tokenSet(TokenKind::CARET);
-    } else if (ch == '+') {
-	tokenUpdate();
-	nextCh();
-	if (ch == '+') {
-	    tokenUpdate();
-	    nextCh();
-	    return tokenSet(TokenKind::PLUS2);
-	} else if (ch == '=') {
-	    tokenUpdate();
-	    nextCh();
-	    return tokenSet(TokenKind::PLUS_EQUAL);
-	}
-	return tokenSet(TokenKind::PLUS);
-    } else if (ch == '-') {
-	tokenUpdate();
-	nextCh();
-	if (ch == '-') {
-	    tokenUpdate();
-	    nextCh();
-	    return tokenSet(TokenKind::MINUS2);
-	} else if (ch == '=') {
-	    tokenUpdate();
-	    nextCh();
-	    return tokenSet(TokenKind::MINUS_EQUAL);
-	} else if (ch == '>') {
-	    tokenUpdate();
-	    nextCh();
-	    return tokenSet(TokenKind::ARROW);
-	}
-	return tokenSet(TokenKind::MINUS);
-    } else if (ch == '*') {
-	tokenUpdate();
-	nextCh();
-	if (ch == '=') {
-	    tokenUpdate();
-	    nextCh();
-	    return tokenSet(TokenKind::ASTERISK_EQUAL);
-	}
-	return tokenSet(TokenKind::ASTERISK);
-    } else if (ch == '/') {
-	tokenUpdate();
-	nextCh();
-	if (ch == '=') {
-	    tokenUpdate();
-	    nextCh();
-	    return tokenSet(TokenKind::SLASH_EQUAL);
-	} else if (ch == '/') {
-	    nextCh();
-	    // ignore rest of line and return next token
-	    while (ch != '\n') {
-		nextCh();
-	    }
-	    return getToken();
-	} else if (ch == '*') {
-	    nextCh();
-	    // skip to next '*', '/'
-	    while (ch != EOF) {
-		char last = ch;
-		nextCh();
-		if (last == '*' && ch == '/') {
-		    nextCh();
-		    break;
-		}
-	    }
-	    if (ch == EOF) {
-		std::cerr << "multi line comment not terminated" << std::endl;
-		return tokenSet(TokenKind::BAD);
-	    }
-	    return getToken();
-	}
-	return tokenSet(TokenKind::SLASH);
-     } else if (ch == '%') {
-	tokenUpdate();
-	nextCh();
-	if (ch == '=') {
-	    tokenUpdate();
-	    nextCh();
-	    return tokenSet(TokenKind::PERCENT_EQUAL);
-	}
-	return tokenSet(TokenKind::PERCENT);
-    } else if (ch == '=') {
-	tokenUpdate();
-	nextCh();
-	if (ch == '=') {
-	    tokenUpdate();
-	    nextCh();
-	    return tokenSet(TokenKind::EQUAL2);
-	}
-	return tokenSet(TokenKind::EQUAL);
-    } else if (ch == '!') {
-	tokenUpdate();
-	nextCh();
-	if (ch == '=') {
-	    tokenUpdate();
-	    nextCh();
-	    return tokenSet(TokenKind::NOT_EQUAL);
-	}
-	return tokenSet(TokenKind::NOT);
-    } else if (ch == '>') {
-	tokenUpdate();
-	nextCh();
-	if (ch == '=') {
-	    tokenUpdate();
-	    nextCh();
-	    return tokenSet(TokenKind::GREATER_EQUAL);
-	}
-	return tokenSet(TokenKind::GREATER);
-    } else if (ch == '<') {
-	tokenUpdate();
-	nextCh();
-	if (ch == '=') {
-	    tokenUpdate();
-	    nextCh();
-	    return tokenSet(TokenKind::LESS_EQUAL);
-	}
-	return tokenSet(TokenKind::LESS);
-    } else if (ch == '&') {
-	tokenUpdate();
-	nextCh();
-	if (ch == '&') {
-	    tokenUpdate();
-	    nextCh();
-	    return tokenSet(TokenKind::AND2);
-	}
-	return tokenSet(TokenKind::AND);
-    } else if (ch == '|') {
-	tokenUpdate();
-	nextCh();
-	if (ch == '|') {
-	    tokenUpdate();
-	    nextCh();
-	    return tokenSet(TokenKind::OR2);
-	}
-	return tokenSet(TokenKind::OR);
-    } else if (ch == '?') {
-	tokenUpdate();
-	nextCh();
-	return tokenSet(TokenKind::QUERY);
-    } else if (ch == '@') {
-	nextCh();
-	parseAddDirective();
-	return getToken();
-    } else if (ch == '#') {
-	if (curr.col == 1) {
-	    nextCh();
-	    parseDirective();
-	    return getToken();
-	}
-	nextCh();
-	return tokenSet(TokenKind::HASH);
-    }
-
-    tokenUpdate();
-    nextCh();
-    return tokenSet(TokenKind::BAD);
-}
-
-// 
-// from: https://github.com/afborchert/astl-c/blob/master/astl-c/scanner.cpp
-// 
-static void
+static std::string
 parseStringLiteral()
 {
+    std::string processed;
+
     // ch == '"'
     nextCh();
-    while (ch != '"') {
-        if (ch == '\n') {
+    while (reader->ch != '"') {
+        if (reader->ch == '\n') {
 	    error::out() << token.loc << ": newline in string literal"
 		<< std::endl;
 	    error::fatal();
-        } else if (ch == '\\') {
+        } else if (reader->ch == '\\') {
             nextCh();
-            if (isOctDigit(ch)) {
-                unsigned octalval = ch - '0';
+            if (isOctDigit(reader->ch)) {
+                unsigned octalval = reader->ch - '0';
                 nextCh();
-                if (isOctDigit(ch)) {
-                    octalval = octalval * 8 + ch - '0';
+                if (isOctDigit(reader->ch)) {
+                    octalval = octalval * 8 + reader->ch - '0';
                     nextCh();
                 }
-                if (isOctDigit(ch)) {
-                    octalval = octalval * 8 + ch - '0';
+                if (isOctDigit(reader->ch)) {
+                    octalval = octalval * 8 + reader->ch - '0';
                     nextCh();
                 }
-                ch = octalval;
-                tokenUpdate(ch);
+                reader->ch = octalval;
+		processed += reader->ch;
             } else {
-                switch (ch) {
+                switch (reader->ch) {
                     // simple-escape-sequence
                     case '\'':
-                        tokenUpdate('\'');
+                        processed += '\'';
                         nextCh();
                         break;
                     case '"':
-                        tokenUpdate('\"');
+                        processed += '\"';
                         nextCh();
                         break;
                     case '?':
-                        tokenUpdate('\?');
+                        processed += '\?';
                         nextCh();
                         break;
                     case '\\':
-                        tokenUpdate('\\');
+                        processed += '\\';
                         nextCh();
                         break;
                     case 'a':
-                        tokenUpdate('\a');
+                        processed += '\a';
                         nextCh();
                         break;
                     case 'b':
-                        tokenUpdate('\b');
+                        processed += '\b';
                         nextCh();
                         break;
                     case 'f':
-                        tokenUpdate('\f');
+                        processed += '\f';
                         nextCh();
                         break;
                     case 'n':
-                        tokenUpdate('\n');
+                        processed += '\n';
                         nextCh();
                         break;
                     case 'r':
-                        tokenUpdate('\r');
+                        processed += '\r';
                         nextCh();
                         break;
                     case 't':
-                        tokenUpdate('\t');
+                        processed += '\t';
                         nextCh();
                         break;
                     case 'v':
-                        tokenUpdate('\v');
+                        processed += '\v';
                         nextCh();
                         break;
                     case 'x': {
                         nextCh();
-                        if (!isHexDigit(ch)) {
+                        if (!isHexDigit(reader->ch)) {
 			    error::out() << token.loc
 				<< ": expected hex digit" << std::endl;
 			    error::fatal();
                         }
-                        unsigned hexval = hexToVal(ch);
+                        unsigned hexval = hexToVal(reader->ch);
                         nextCh();
-                        while (isHexDigit(ch)) {
-                            hexval = hexval * 16 + hexToVal(ch);
+                        while (isHexDigit(reader->ch)) {
+                            hexval = hexval * 16 + hexToVal(reader->ch);
                             nextCh();
                         }
-                        tokenUpdate(hexval);
+			processed += hexval;
                         break;
                     }
                     default:
 			error::out() << token.loc
-			    << ": invalid character '" << ch
+			    << ": invalid character '" << reader->ch
 			    << "'" << std::endl;
 			error::fatal();
                 }
             }
-        } else if (ch == EOF) {
+        } else if (reader->ch == EOF) {
 	    error::out() << token.loc << ": end of file in string literal"
 		<< std::endl;
 	    error::fatal();
         } else {
-            tokenUpdate(ch);
+	    processed += reader->ch;
             nextCh();
         }
     }
     nextCh();
+    return processed;
 }
 
 // 
 // from: https://github.com/afborchert/astl-c/blob/master/astl-c/scanner.cpp
 // 
-static void
+static unsigned
 parseCharacterLiteral()
 {
+    unsigned val = 0;
     // ch == '\''
     nextCh();
-    if (ch == '\'') {
+    if (reader->ch == '\'') {
 	error::out() << token.loc << ": single quote as character literal"
 	    << std::endl;
 	error::fatal();
     }
     do {
-        if (ch == '\n') {
+        if (reader->ch == '\n') {
 	    error::out() << token.loc << ": newline as character literal"
 		<< std::endl;
 	    error::fatal();
-        } else if (ch == '\\') {
+	    break;
+        } else if (reader->ch == '\\') {
             nextCh();
-            if (isOctDigit(ch)) {
-                unsigned octalval = ch - '0';
+            if (isOctDigit(reader->ch)) {
+                val = reader->ch - '0';
                 nextCh();
-                if (isOctDigit(ch)) {
-                    octalval = octalval * 8 + ch - '0';
+                if (isOctDigit(reader->ch)) {
+                    val = val * 8 + reader->ch - '0';
                     nextCh();
                 }
-                if (isOctDigit(ch)) {
-                    octalval = octalval * 8 + ch - '0';
+                if (isOctDigit(reader->ch)) {
+                    val = val * 8 + reader->ch - '0';
                     nextCh();
                 }
-                tokenUpdate(octalval);
+                break;
             } else {
-                switch (ch) {
+                switch (reader->ch) {
                     // simple-escape-sequence
                     case '\'':
-                        tokenUpdate('\'');
+                        val = '\'';
                         nextCh();
                         break;
                     case '"':
-                        tokenUpdate('\"');
+                        val = '\"';
                         nextCh();
                         break;
                     case '?':
-                        tokenUpdate('\?');
+                        val = '\?';
                         nextCh();
                         break;
                     case '\\':
-                        tokenUpdate('\\');
+                        val = '\\';
                         nextCh();
                         break;
                     case 'a':
-                        tokenUpdate('\a');
+                        val = '\a';
                         nextCh();
                         break;
                     case 'b':
-                        tokenUpdate('\b');
+                        val = '\b';
                         nextCh();
                         break;
                     case 'f':
-                        tokenUpdate('\f');
+                        val = '\f';
                         nextCh();
                         break;
                     case 'n':
-                        tokenUpdate('\n');
+                        val = '\n';
                         nextCh();
                         break;
                     case 'r':
-                        tokenUpdate('\r');
+                        val = '\r';
                         nextCh();
                         break;
                     case 't':
-                        tokenUpdate('\t');
+                        val = '\t';
                         nextCh();
                         break;
                     case 'v':
-                        tokenUpdate('\v');
+                        val = '\v';
                         nextCh();
                         break;
                     case 'x': {
                         nextCh();
-                        if (!isHexDigit(ch)) {
+                        if (!isHexDigit(reader->ch)) {
 			    error::out() << token.loc
 				<< ": expected hex digit" << std::endl;
 			    error::fatal();
                         }
-                        unsigned hexval = hexToVal(ch);
+                        val = hexToVal(reader->ch);
                         nextCh();
-                        while (isHexDigit(ch)) {
-                            hexval = hexval * 16 + hexToVal(ch);
+                        while (isHexDigit(reader->ch)) {
+                            val = val * 16 + hexToVal(reader->ch);
                             nextCh();
                         }
-                        tokenUpdate(hexval);
-                        break;
+			break;
                     }
                     default:
 			error::out() << token.loc
 			    << ": invalid character literal" << std::endl;
 			error::fatal();
+                        break;
                 }
             }
-        } else if (ch == EOF) {
+        } else if (reader->ch == EOF) {
 	    error::out() << token.loc
 		<< ": end of file in character literal" << std::endl;
 	    error::fatal();
+	    break;
         } else {
-            tokenUpdate(ch);
+	    val = reader->ch; 
             nextCh();
+	    break;
         }
-    } while (ch != '\'');
+    } while (reader->ch != '\'');
     nextCh();
-}
-
-static std::set<std::string> includePath;
-
-void
-addIncludePath(const char *dir)
-{
-    includePath.insert(dir);
+    return val;
 }
 
 static void
 parseAddDirective()
 {
-    static std::set<UStr> included;
-    auto defineIdent = UStr::create("define");
+    auto defineKw = UStr::create("define");
 
-    getToken();
-    if (token.kind == TokenKind::IDENTIFIER && token.val == defineIdent) {
-	getToken();
+    // ch == '@'
+    nextCh();
+    getToken_();
+    if (token.kind == TokenKind::IDENTIFIER && token.val == defineKw) {
+	getToken_();
 	if (token.kind != TokenKind::IDENTIFIER) {
 	    error::out() << token.loc
 		<< ": expected identifier" << std::endl;
 	    error::fatal();
 	}
-	auto from = token;
-	getToken();
+	auto from = token.val;
+	if (define.contains(from)) {
+	    error::out() << token.loc
+		<< ": macro '" << from << "' already defined" << std::endl;
+	    error::fatal();
+	}
+	getToken_();
 	if (token.kind != TokenKind::IDENTIFIER) {
 	    error::out() << token.loc
 		<< ": expected identifier" << std::endl;
 	    error::fatal();
 	}
-	auto to = token;
-	if (define.contains(std::string{from.val.c_str()})) {
-	    error::out() << token.loc
-		<< ": macro already defined" << std::endl;
-	    error::fatal();
-	}
-	define[std::string{from.val.c_str()}] = std::string{to.val.c_str()};
+	auto to = token.val;
+	define[from] = to;
     } else if (token.kind == TokenKind::STRING_LITERAL) {
-	if (!included.contains(token.val)) {
-	    included.insert(token.val);
-	    setLexerInputfile(token.val.c_str());
+	if (includedFiles.contains(token.processedVal)) {
+	    return;
+	}
+	includedFiles.insert(token.processedVal);
+	if (!openInputfile(token.processedVal.c_str(), false)) {
+	    error::out() << token.loc
+		<< ": can not open file " << token.val << std::endl;
+	    error::fatal();
 	}
     } else if (token.kind == TokenKind::LESS) {
-	std::string file;
-	while (ch != '>') {
-	    file += ch;
+	std::string str;
+	while (reader->ch != '>') {
+	    str += reader->ch;
 	    nextCh();
 	}
 	nextCh();
-	bool succ = false;
-	for (auto path: includePath) {
-	    path += "/";
-	    path += file;
-	    std::ifstream f(path.c_str());
-	    if (f.good()) {
-		if (!included.contains(UStr::create(path.c_str()))) {
-		    included.insert(UStr::create(path.c_str()));
-		    setLexerInputfile(path.c_str());
-		}
-		succ = true;
-		break;
-	    }
+	auto path = UStr::create(str);
+	if (includedFiles.contains(path)) {
+	    return;
 	}
-	if (!succ) {
+	includedFiles.insert(path);
+	if (!openInputfile(path.c_str(), true)) {
 	    error::out() << token.loc
-		<< ": file '" << file << "' not found" << std::endl;
+		<< ": can not open file " << path << std::endl;
 	    error::fatal();
 	}
     } else {
 	error::out() << token.loc
-	    << ": expected filename" << std::endl;
+	    << ": expected 'define' of filename" << std::endl;
 	error::fatal();
     }
 }
-
-// 
-// from: https://github.com/afborchert/astl-c/blob/master/astl-c/scanner.cpp
-// 
-static void
-parseDirective()
-{
-    while (ch != '\n' && isWhiteSpace(ch)) {
-	nextCh();
-    }
-    if (isLetter(ch)) {
-	// other directives including #pragma are ignored
-	while (ch != EOF && ch != '\n') {
-	    nextCh();
-	}
-    } else if (isDecDigit(ch)) {
-	// line number and actual pathname in gcc preprocessor output syntax,
-	// see:
-	// http://boredzo.org/blog/archives/category/programming/toolchain/gcc
-	int line = ch - '0';
-	nextCh();
-	while (isDecDigit(ch)) {
-	    line = line * 10 + ch - '0';
-	    nextCh();
-	}
-	// skip whitespace but not the line terminator
-	while (ch != '\n' && isWhiteSpace(ch)) {
-	    nextCh();
-	}
-	// some preprocessors (not gcc) make the pathname optional
-	if (ch == '"') {
-	    // extract pathname
-	    nextCh();
-	    std::string path;
-	    while (ch != EOF && ch != '"' && ch != '\n') {
-		path += ch;
-		nextCh();
-	    }
-	    if (ch == EOF || ch == '\n') {
-		error::out() << token.loc
-		    << ": broken linemarker in cpp output" << std::endl;
-		error::fatal();
-	    }
-	    // skip flags (1 = push, 2 = pop, 3 = system header,
-	    // 4 = requires extern "C") as they do not concern us
-	    while (ch != EOF && ch != '\n') {
-		nextCh();
-	    }
-	    // update filename
-	    fixCurrentLocatation(path);
-	} else {
-	    if (ch == EOF || ch != '\n') {
-		error::out() << token.loc
-		    << ": broken linemarker in cpp output" << std::endl;
-		error::fatal();
-	    }
-	    nextCh(); // skip '\n'
-	}
-	// fix line number of current position
-	fixCurrentLocatation(line);
-    } else if (ch != '\n') {
-	error::out() << token.loc
-	    << ": broken preprocessor directive" << std::endl;
-	error::fatal();
-    }
-}
-
-Token::Loc
-combineLoc(Token::Loc fromLoc, Token::Loc toLoc)
-{
-    return Token::Loc{fromLoc.from, toLoc.to, fromLoc.path};
-}
-
-static std::string
-expandTabs(const std::string &str)
-{
-    std::string result;
-    std::size_t pos = 0;
-
-    for(char c: str) {
-        if(c == '\t') {
-            result.append(tabSize - pos % tabSize, ' ');
-            pos = 0;
-        } else {
-            result += c;
-            pos = (c == '\n') ? 0 : pos + 1;
-        }
-    }
-    return result;
-}
-
-
-std::pair <std::size_t, std::size_t>
-printLine(std::ostream &out, const char *path, std::size_t lineNumber)
-{
-    std::fstream file{path};
-
-    if (!file.is_open()) {
-	error::out() << "failed to open " << path << std::endl;
-	return {0, 0};
-    }
-
-    file.seekg(std::ios::beg);
-    for (std::size_t i = 0; i + 1 < lineNumber; ++i) {
-        file.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
-    }
-    std::string line;
-    std::getline(file, line);
-    line = expandTabs(line);
-    out << line << std::endl;
-    return {line.find_first_not_of(' '), line.length()};
-}	
-
-std::ostream &
-operator<<(std::ostream &out, const Token::Loc &loc)
-{
-    out << std::endl;
-    for (std::size_t line = loc.from.line; line <= loc.to.line; ++line) {
-	auto [from, len] = printLine(out, loc.path.c_str(), line);
-	std::size_t fromCol = line == loc.from.line ? loc.from.col : from + 1;
-	std::size_t toCol = line == loc.to.line ? loc.to.col : len;
-	for (size_t i = 1; i <= toCol; ++i) {
-	    if (i < fromCol) {
-		out << " ";
-	    } else {
-		out << "^";
-	    }
-	}
-	out << std::endl;
-    }
-    if (loc.from.line) {
-	if (loc.path.c_str()) {
-	    out << loc.path.c_str() << ":";
-	}
-	out << loc.from.line << '.' << loc.from.col << '-'
-	    << loc.to.line << '.' << loc.to.col;
-    } else {
-	out << "[internally created location]";
-    }
-    return out;
-}
-
-std::string
-tokenLocStr(const Token::Loc &loc)
-{
-    std::stringstream ss;
-    ss << loc.from.line << '.' << loc.from.col << '-'
-	<< loc.to.line << '.' << loc.to.col;
-    return ss.str();
-}
-
-*/
 
 } // namespace lexer
