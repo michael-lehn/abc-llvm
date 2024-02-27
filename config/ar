@@ -1,0 +1,8 @@
+ar_check := $(shell ar crU config/ar.tmp config/ar > /dev/null 2>&1 || echo "sane")
+$(shell rm -rf config/ar.tmp)
+
+ifeq ($(strip $(ar_check)),sane)
+ARFLAGS := cr
+else
+ARFLAGS := crU
+endif
