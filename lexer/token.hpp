@@ -1,5 +1,5 @@
-#ifndef TOKEN_HPP
-#define TOKEN_HPP
+#ifndef LEXER_TOKEN_HPP
+#define LEXER_TOKEN_HPP
 
 #include "loc.hpp"
 #include "tokenkind.hpp"
@@ -32,4 +32,4 @@ std::ostream &operator<<(std::ostream &out, const Token &token);
 
 } // namespace lexer
 
-#endif // TOKEN_HPP
+#endif // LEXER_TOKEN_HPP

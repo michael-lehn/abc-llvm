@@ -1,5 +1,5 @@
-#ifndef USTR_HPP
-#define USTR_HPP
+#ifndef LEXER_USTR_HPP
+#define LEXER_USTR_HPP
 
 #include <functional>
 #include <ostream>
@@ -70,4 +70,4 @@ struct std::hash<UStr>
     }
 };
 
-#endif // USTR_HPP
+#endif // LEXER_USTR_HPP

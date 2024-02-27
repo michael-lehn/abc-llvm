@@ -149,6 +149,7 @@ $($(id).build_dir)%.o : $($(id).src_dir)%.cpp \
 	    -o $$@ \
 	    -I $($(id).build_dir).. \
 	    $($($(id).module).CXXFLAGS) \
+	    $($($(id).module).CPPFLAGS) \
 	    -MT '$$@' \
 	    -MMD -MP \
 	    -MF $($(id).dep_dir)$$(notdir $$<).d \
@@ -158,6 +159,7 @@ $($(id).build_dir)% : $($(id).build_dir)%.o $($(id).link.libs) \
     | $($(id).build_dir) $($(id).dep_dir) $($(id).dep.content.obsolete)
 	$($(id).LINK.o) $($1.LDFLAGS) $$< \
 	    $($(id).link.libs) \
+	    $($($(id).module).extra_libs) \
 	    $($1.LDFLAGS) \
 	    -o $$@
 

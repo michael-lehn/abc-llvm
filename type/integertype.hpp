@@ -1,5 +1,5 @@
-#ifndef INTEGERTYPE_HPP
-#define INTEGERTYPE_HPP
+#ifndef TYPE_INTEGERTYPE_HPP
+#define TYPE_INTEGERTYPE_HPP
 
 #include "type.hpp"
 
@@ -36,4 +36,4 @@ class IntegerType : public Type
 
 } // namespace type
 
-#endif // INTEGERTYPE_HPP
+#endif // TYPE_INTEGERTYPE_HPP

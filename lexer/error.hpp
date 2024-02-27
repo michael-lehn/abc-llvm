@@ -1,5 +1,5 @@
-#ifndef ERROR_HPP
-#define ERROR_HPP
+#ifndef LEXER_ERROR_HPP
+#define LEXER_ERROR_HPP
 
 #include <ostream>
 
@@ -15,4 +15,4 @@ bool expected(lexer::TokenKind kind);
 
 } // namespace error
 
-#endif // ERROR_HPP
+#endif // LEXER_ERROR_HPP

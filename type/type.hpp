@@ -1,5 +1,5 @@
-#ifndef TYPE_HPP
-#define TYPE_HPP
+#ifndef TYPE_TYPE_HPP
+#define TYPE_TYPE_HPP
 
 #include <cstddef>
 #include <ostream>
@@ -51,4 +51,4 @@ std::ostream &operator<<(std::ostream &out, const Type *type);
 
 } // namespace type
 
-#endif // TYPE_HPP
+#endif // TYPE_TYPE_HPP

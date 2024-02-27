@@ -1,5 +1,5 @@
-#ifndef READER_HPP
-#define READER_HPP
+#ifndef LEXER_READER_HPP
+#define LEXER_READER_HPP
 
 #include <fstream>
 #include <iostream>
@@ -38,4 +38,4 @@ char nextCh();
 } // namespace lexer
 
 
-#endif // READER_HPP
+#endif // LEXER_READER_HPP

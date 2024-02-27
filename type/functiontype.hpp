@@ -1,5 +1,5 @@
-#ifndef FUNCTIONTYPE_HPP
-#define FUNCTIONTYPE_HPP
+#ifndef TYPE_FUNCTIONTYPE_HPP
+#define TYPE_FUNCTIONTYPE_HPP
 
 #include <vector>
 
@@ -41,4 +41,4 @@ class FunctionType : public Type
 
 } // namespace type
 
-#endif // FUNCTIONTYPE_HPP
+#endif // TYPE_FUNCTIONTYPE_HPP

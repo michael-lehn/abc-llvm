@@ -1,5 +1,5 @@
-#ifndef LOC_HPP
-#define LOC_HPP
+#ifndef LEXER_LOC_HPP
+#define LEXER_LOC_HPP
 
 #include <ostream>
 
@@ -36,4 +36,4 @@ std::ostream &operator<<(std::ostream &out, Loc loc);
 
 } // namespace lexer
 
-#endif // LOC_HPP
+#endif // LEXER_LOC_HPP

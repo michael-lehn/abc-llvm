@@ -1,5 +1,5 @@
-#ifndef TOKENKIND_HPP
-#define TOKENKIND_HPP
+#ifndef LEXER_TOKENKIND_HPP
+#define LEXER_TOKENKIND_HPP
 
 #include <ostream>
 
@@ -98,4 +98,4 @@ std::ostream &operator<<(std::ostream &out, TokenKind kind);
 
 } // namespace lexer
 
-#endif // TOKENKIND_HPP
+#endif // LEXER_TOKENKIND_HPP

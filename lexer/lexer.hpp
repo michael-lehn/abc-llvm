@@ -1,5 +1,5 @@
-#ifndef LEXER_HPP
-#define LEXER_HPP
+#ifndef LEXER_LEXER_HPP
+#define LEXER_LEXER_HPP
 
 #include "loc.hpp"
 #include "reader.hpp"
@@ -16,4 +16,4 @@ TokenKind getToken();
 
 } // namespace lexer
 
-#endif // LEXER_HPP
+#endif // LEXER_LEXER_HPP

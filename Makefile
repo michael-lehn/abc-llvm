@@ -1,6 +1,7 @@
-CFLAGS += -Wextra -Wall
-CXXFLAGS += -Wextra -Wall -std=c++20
+CFLAGS += 
+CXXFLAGS += -std=c++20
 CPPFLAGS += -Wextra -Wall -I.
+
 
 include config/ar
 include config/nfs
