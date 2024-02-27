@@ -40,8 +40,7 @@ class UStr
 	std::size_t len;
 };
 
-std::ostream &
-operator<<(std::ostream &out, const UStr &ustr);
+std::ostream &operator<<(std::ostream &out, const UStr &ustr);
 
 inline bool
 operator==(const UStr &a, const UStr &b)

@@ -32,8 +32,6 @@ operator<<(std::ostream &out, const UStr &ustr)
 {
     if (ustr.c_str()) {
 	out << ustr.c_str();
-    } else {
-	out << "[ustr is empty]";
     }
     return out;
 }

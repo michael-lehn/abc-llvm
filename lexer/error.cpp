@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "error.hpp"
-#include "tokenkind.hpp"
+#include "lexer.hpp"
 
 namespace error {
 
@@ -29,18 +29,15 @@ warning()
     out() << std::endl << "WARNING" << std::endl << std::endl;
 }
 
-
 bool
 expected(lexer::TokenKind kind)
 {
-    /*
     if (lexer::token.kind != kind) {
 	out() << lexer::token.loc << ": expected '" << kind << "'"
 	    << std::endl;
 	fatal();
 	return false;
     }
-    */
     assert(0 && "not implemented");
     return true;
 }
