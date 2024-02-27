@@ -24,7 +24,7 @@ static std::set<FunctionType> fnSet;
 
 FunctionType::FunctionType(const Type *ret, std::vector<const Type *> &&arg,
 			   bool varg, UStr alias)
-    : ret{ret}, arg{std::move(arg)}, varg{varg}, alias{alias}
+    : Type{alias}, ret{ret}, arg{std::move(arg)}, varg{varg}
 {
     std::stringstream ss;
     ss << "fn (";
@@ -71,18 +71,6 @@ const Type *
 FunctionType::getConstRemoved() const
 {
     return this;
-}
-
-UStr
-FunctionType::ustr() const
-{
-    return name;
-}
-
-UStr
-FunctionType::aka() const
-{
-    return alias;
 }
 
 bool

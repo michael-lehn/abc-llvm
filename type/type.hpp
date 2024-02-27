@@ -11,7 +11,11 @@ namespace type {
 
 class Type
 {
+    protected:
+	UStr name, alias;
+
     public:
+	Type(UStr alias);
 	virtual ~Type() = default;
 
 	const Type *getAlias(const char *alias) const;
@@ -19,8 +23,8 @@ class Type
 	virtual const Type *getConst() const = 0;
 	virtual const Type *getConstRemoved() const = 0;
 
-	virtual UStr ustr() const = 0;
-	virtual UStr aka() const = 0;
+	UStr ustr() const;
+	UStr aka() const;
 
 	virtual bool hasSize() const = 0;
 	virtual bool hasConstFlag() const = 0;

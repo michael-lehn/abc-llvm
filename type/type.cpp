@@ -2,10 +2,27 @@
 
 namespace type {
 
+Type::Type(UStr alias)
+    : alias{alias}
+{
+}
+
 const Type *
 Type::getAlias(const char *alias) const
 {
     return getAlias(UStr::create(alias));
+}
+
+UStr
+Type::ustr() const
+{
+    return name;
+}
+
+UStr
+Type::aka() const
+{
+    return alias;
 }
 
 // for integer (sub-)types 

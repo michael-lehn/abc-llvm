@@ -13,7 +13,6 @@ class IntegerType : public Type
 	std::size_t numBits_;
 	bool isSigned;
 	bool isConst;
-	UStr name, alias;
 
 	static const Type *create(std::size_t numBits, bool signed_,
 				  bool constFlag, UStr alias);
@@ -26,9 +25,6 @@ class IntegerType : public Type
 	const Type *getConst() const override;
 	const Type *getConstRemoved() const override;
 
-	virtual UStr ustr() const override;
-	virtual UStr aka() const override;
-	
 	bool hasSize() const override;
 	bool hasConstFlag() const override;
 	std::size_t numBits() const override;

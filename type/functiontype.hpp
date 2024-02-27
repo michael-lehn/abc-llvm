@@ -15,7 +15,6 @@ class FunctionType : public Type
 	const Type *ret;
 	std::vector<const Type *> arg;
 	bool varg;
-	UStr name, alias;
 
 	static const Type *create(const Type *ret,
 				  std::vector<const Type *> &&arg,
@@ -29,9 +28,6 @@ class FunctionType : public Type
 	const Type *getAlias(UStr alias) const override;
 	const Type *getConst() const override;
 	const Type *getConstRemoved() const override;
-
-	UStr ustr() const override;
-	UStr aka() const override;
 
 	bool hasSize() const override;
 	bool hasConstFlag() const override;
