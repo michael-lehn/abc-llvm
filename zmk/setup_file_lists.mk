@@ -183,6 +183,7 @@ $($(id).lib)(%.o) : $($(id).src_dir)%.cpp \
 	$($3.COMPILE.cpp) \
 	    $($1.CFLAGS) \
 	    $($($(id).module).CXXFLAGS) \
+	    $($($(id).module).CPPFLAGS) \
 	    -o $($(id).build_dir)$$(notdir $$%) \
 	    -I $($(id).build_dir.top) \
 	    -MT '$$@($$(notdir $$%))' \

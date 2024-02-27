@@ -4,5 +4,6 @@
 int
 main()
 {
+    gen::init();
     std::cerr << "generating hello.bc\n";
 }
