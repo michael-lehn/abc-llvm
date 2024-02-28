@@ -3,7 +3,7 @@
 
 #include "tokenkind.hpp"
 
-namespace lexer {
+namespace abc { namespace lexer {
 
 const char *
 TokenKindCStr(TokenKind kind)
@@ -183,4 +183,4 @@ operator<<(std::ostream &out, TokenKind kind)
     return out;
 }
 
-} // namespace lexer
+} } // namespace lexer, abc

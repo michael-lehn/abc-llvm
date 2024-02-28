@@ -1,16 +1,18 @@
 #include "expr.hpp"
 
-Expr::Expr(Token::Loc  loc, const Type  *type)
+namespace abc {
+
+Expr::Expr(lexer::Loc  loc, const Type  *type)
     : loc{loc}, type{type}
 {}
 
-gen::ConstIntVal
-Expr::getConstIntValue() const
+gen::ConstantInt
+Expr::getConstantInt() const
 {
     assert(isConst());
     assert(type->isInteger());
-    using T = std::remove_pointer_t<gen::ConstIntVal>;
-    auto check = llvm::dyn_cast<T>(loadConstValue());
+    using T = std::remove_pointer_t<gen::ConstantInt>;
+    auto check = llvm::dyn_cast<T>(loadConstant());
     assert(check);
     return check;
 }
@@ -18,13 +20,13 @@ Expr::getConstIntValue() const
 std::int64_t
 Expr::getSignedIntValue() const
 {
-    return getConstIntValue()->getSExtValue();
+    return getConstantInt()->getSExtValue();
 }
 
 std::uint64_t
 Expr::getUnsignedIntValue() const
 {
-    return getConstIntValue()->getZExtValue();
+    return getConstantInt()->getZExtValue();
 }
 
 std::ostream &
@@ -40,3 +42,5 @@ operator<<(std::ostream &out, const Expr *expr)
     expr->printFlat(out, 1);
     return out;
 }
+
+} // namespace abc

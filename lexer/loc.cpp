@@ -1,6 +1,6 @@
 #include "loc.hpp"
 
-namespace lexer {
+namespace abc { namespace lexer {
 
 std::ostream &
 operator<<(std::ostream &out, Loc::Pos pos)
@@ -16,4 +16,4 @@ operator<<(std::ostream &out, Loc loc)
     return out;
 }
 
-} // namespace lexer
+} } // namespace lexer, abc

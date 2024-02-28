@@ -5,7 +5,7 @@
 
 #include "type.hpp"
 
-namespace type {
+namespace abc {
 
 class FunctionType : public Type
 {
@@ -23,7 +23,7 @@ class FunctionType : public Type
     public:
 	static const Type *create(const Type *ret,
 				  std::vector<const Type *> &&arg,
-				  bool varg);
+				  bool varg = false);
 
 	const Type *getAlias(UStr alias) const override;
 	const Type *getConst() const override;
@@ -39,6 +39,6 @@ class FunctionType : public Type
 	const std::vector<const Type *> &argType() const override;
 };
 
-} // namespace type
+} // namespace abc
 
 #endif // TYPE_FUNCTIONTYPE_HPP

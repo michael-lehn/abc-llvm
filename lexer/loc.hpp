@@ -1,11 +1,12 @@
 #ifndef LEXER_LOC_HPP
 #define LEXER_LOC_HPP
 
+#include <cstdint>
 #include <ostream>
 
-#include "ustr.hpp"
+#include "util/ustr.hpp"
 
-namespace lexer {
+namespace abc { namespace lexer {
 
 class Loc
 {
@@ -34,6 +35,6 @@ class Loc
 std::ostream &operator<<(std::ostream &out, Loc::Pos pos);
 std::ostream &operator<<(std::ostream &out, Loc loc);
 
-} // namespace lexer
+} } // namespace lexer, abc
 
 #endif // LEXER_LOC_HPP

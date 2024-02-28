@@ -2,23 +2,38 @@
 #include <iostream>
 #include <iomanip>
 
+#include "gen/instruction.hpp"
+#include "lexer/error.hpp"
+
 #include "binaryexpr.hpp"
-#include "error.hpp"
 #include "identifier.hpp"
 #include "promotion.hpp"
-#include "proxyexpr.hpp"
 
-static const char *kindStr(BinaryExpr::Kind kind);
+static const char *kindStr(abc::BinaryExpr::Kind kind);
+static gen::AluOp getGenAluOp(abc::BinaryExpr::Kind kind,
+			      const abc::Type *type);
+/*
+static gen::CondOp getGenCondOp(abc::BinaryExpr::Kind kind,
+				const abc::Type *type);
+*/
+
+static void printFlat(std::ostream &out, int precCaller, int prec,
+		      const abc::Expr *left, const abc::Expr *right,
+		      const char *op);
+
+//------------------------------------------------------------------------------
+
+namespace abc {
 
 BinaryExpr::BinaryExpr(Kind kind, ExprPtr &&left, ExprPtr &&right,
-		       const Type *type, Token::Loc loc)
+		       const Type *type, lexer::Loc loc)
     : Expr{loc, type}, kind{kind}, left{std::move(left)}
     , right{std::move(right)}
 {
 }
 
 ExprPtr
-BinaryExpr::create(Kind kind, ExprPtr &&left, ExprPtr &&right, Token::Loc loc)
+BinaryExpr::create(Kind kind, ExprPtr &&left, ExprPtr &&right, lexer::Loc loc)
 {
     assert(left);
     assert(right);
@@ -32,52 +47,16 @@ BinaryExpr::create(Kind kind, ExprPtr &&left, ExprPtr &&right, Token::Loc loc)
     return std::unique_ptr<BinaryExpr>{p};
 }
 
-ExprPtr
-BinaryExpr::createOpAssign(Kind kind, ExprPtr &&left, ExprPtr &&right,
-			   Token::Loc loc)
-{
-    assert(left);
-    assert(right);
-    auto expr = ProxyExpr::create(left.get());
-    if (!left->isLValue()) {
-	error::out() << left->loc << ": error: not an lvalue" << std::endl;
-	error::fatal();
-    }
-    expr = BinaryExpr::create(kind, std::move(expr), std::move(right), loc);
-    return BinaryExpr::create(ASSIGN, std::move(left), std::move(expr), loc);
-}
-
-ExprPtr
-BinaryExpr::createMember(ExprPtr &&structExpr, UStr ident, Token::Loc loc)
-{
-    auto structType = structExpr->type;
-    if (!structType->isStruct() || !structType->hasMember(ident)) {
-	error::out() << loc << ": '" << structType << "' has no member '"
-	    << ident.c_str() << "'" << std::endl;
-	error::fatal();
-	return nullptr;
-    }
-    auto type = structType->getMemberType(ident); 
-    auto member = Identifier::create(ident, type, loc);
-    auto p = new BinaryExpr{MEMBER,
-			    std::move(structExpr),
-			    std::move(member),
-			    type,
-			    loc};
-    return std::unique_ptr<BinaryExpr>{p};
-}
-
-
 bool
 BinaryExpr::hasAddr() const
 {
-    return isLValue();
+    return false;
 }
 
 bool
 BinaryExpr::isLValue() const
 {
-    return kind == MEMBER && left->isLValue();
+    return false;
 }
 
 //-- for checking constness 
@@ -115,29 +94,28 @@ BinaryExpr::isConst() const
     }
 }
 
-gen::ConstVal
-BinaryExpr::loadConstValue() const
+gen::Constant
+BinaryExpr::loadConstant() const
 {
-    using T = std::remove_pointer_t<gen::ConstVal>;
+    using T = std::remove_pointer_t<gen::Constant>;
     return llvm::dyn_cast<T>(loadValue());
 }
 
 // for code generation
 
-static gen::AluOp getGenAluOp(BinaryExpr::Kind kind, const Type *type);
-static gen::CondOp getGenCondOp(BinaryExpr::Kind kind, const Type *type);
-
-gen::Reg
+gen::Value
 BinaryExpr::loadValue() const
 {
     assert(type);
     switch (kind) {
-	case MEMBER:
-	    return gen::fetch(loadAddr(), type);
 	case ASSIGN:
+	    assert(0 && "Not implemented");
+	    return nullptr;
+	    /*
 	    return gen::store(right->loadValue(),
 			      left->loadAddr(),
 			      type);
+	    */
 	case ADD:
 	case SUB:
 	case MUL:
@@ -147,21 +125,28 @@ BinaryExpr::loadValue() const
 		// pointer + integer
 		assert(left->type->isPointer());
 		assert(right->type->isInteger());
+		assert(0 && "Not implemented");
+		return nullptr;
+		/*
 		return gen::ptrInc(left->type->getRefType(),
 				   left->loadValue(),
 				   right->loadValue());
+		*/
 	    } else if (kind == SUB && left->type->isPointer()) {
 		// pointer - pointer
 		assert(right->type->isPointer());
 		assert(type->isInteger());
+		assert(0 && "Not implemented");
+		return nullptr;
+		/*
 		return gen::ptrDiff(left->type->getRefType(),
 				    left->loadValue(),
 				    right->loadValue());
+		*/
 	    } else {
-		assert(*left->type == *right->type);
-		return gen::aluInstr(getGenAluOp(kind, type),
-				     left->loadValue(),
-				     right->loadValue());
+		return gen::instruction(getGenAluOp(kind, type),
+					left->loadValue(),
+					right->loadValue());
 	    }
 	case LESS:
 	case LESS_EQUAL:
@@ -169,15 +154,17 @@ BinaryExpr::loadValue() const
 	case GREATER_EQUAL:
 	case NOT_EQUAL:
 	case EQUAL:
-	    assert(*left->type == *right->type);
+	    assert(0 && "Not implemented");
+	    return nullptr;
+	    /*
 	    return gen::cond(getGenCondOp(kind, left->type),
 			     left->loadValue(),
 			     right->loadValue());
+	    */
 	case LOGICAL_AND:
 	case LOGICAL_OR:
 	    {
-		assert(*left->type == *right->type);
-
+		/*
 		auto trueLabel = gen::getLabel("true");
 		auto falseLabel = gen::getLabel("false");
 		auto phiLabel = gen::getLabel("true");
@@ -194,6 +181,9 @@ BinaryExpr::loadValue() const
 
 		gen::labelDef(phiLabel);
 		return gen::phi(one, trueLabel, zero, falseLabel, type);
+		*/
+		assert(0 && "Not implemented");
+		return nullptr;
 	    }
 	    
 	default:
@@ -203,21 +193,17 @@ BinaryExpr::loadValue() const
     }
 }
 
-gen::Reg
-BinaryExpr::loadAddr() const
+gen::Value
+BinaryExpr::loadAddress() const
 {
-    assert(hasAddr());
-    assert(kind == MEMBER);
-    assert(dynamic_cast<const Identifier *>(right.get()));
-    auto ident = dynamic_cast<const Identifier *>(right.get())->ident;
-    return gen::ptrMember(left->type,
-			  left->loadAddr(),
-			  left->type->getMemberIndex(ident));
+    assert(0 && "Binary expression has no address");
 }
 
 void
 BinaryExpr::condJmp(gen::Label trueLabel, gen::Label falseLabel) const
 {
+    assert(0 && "Not implemented");
+    /*
     switch (kind) {
 	case LESS:
 	case LESS_EQUAL:
@@ -259,10 +245,10 @@ BinaryExpr::condJmp(gen::Label trueLabel, gen::Label falseLabel) const
 		return;
 	    }
     }
+    */
 }
 
 // for debugging and educational purposes
-static const char *kindStr(BinaryExpr::Kind kind);
 
 void
 BinaryExpr::print(int indent) const
@@ -273,21 +259,6 @@ BinaryExpr::print(int indent) const
     std::cerr << kindStr(kind) << " [ " << type << " ] " << std::endl;
     left->print(indent + 4);
     right->print(indent + 4);
-}
-
-static void
-printFlat(std::ostream &out, int precCaller, int prec, const Expr *left,
-	  const Expr *right, const char *op)
-{
-    if (precCaller > prec) {
-	out << "(";
-    }
-    left->printFlat(out, prec);
-    out << " " << op << " ";
-    right->printFlat(out, prec);
-    if (precCaller > prec) {
-	out << ")";
-    }
 }
 
 void
@@ -336,62 +307,61 @@ BinaryExpr::printFlat(std::ostream &out, int prec) const
 	case MOD:
 	    ::printFlat(out, prec, 13, left.get(), right.get(), "%");
 	    break;
-	case MEMBER:
-	    ::printFlat(out, prec, 16, left.get(), right.get(), ".");
-	    break;
 	default:
 	    out << " <binary kind " << kind << ">";
     }
 }
+
+} // namespace abc
+
+//------------------------------------------------------------------------------
 
 /*
  * Auxiliary functions
  */
 
 static gen::AluOp
-getGenAluOp(BinaryExpr::Kind kind, const Type *type)
+getGenAluOp(abc::BinaryExpr::Kind kind, const abc::Type *type)
 {
     assert(type);
-    bool isSignedInt = type->isInteger()
-		    && type->getIntegerKind() == Type::SIGNED;
     switch (kind) {
-	case BinaryExpr::Kind::ADD: return gen::ADD;
-	case BinaryExpr::Kind::SUB: return gen::SUB;
-	case BinaryExpr::Kind::MUL: return gen::SMUL;
-	case BinaryExpr::Kind::DIV: return isSignedInt
-					? gen::SDIV
-					: gen::UDIV;
-	case BinaryExpr::Kind::MOD: return isSignedInt
-					? gen::SMOD
-					: gen::UMOD;
+	case abc::BinaryExpr::Kind::ADD:
+	    return gen::ADD;
+	case abc::BinaryExpr::Kind::SUB:
+	    return gen::SUB;
+	case abc::BinaryExpr::Kind::MUL:
+	    return gen::SMUL;
+	case abc::BinaryExpr::Kind::DIV:
+	    return type->isSignedInteger() ? gen::SDIV : gen::UDIV;
+	case abc::BinaryExpr::Kind::MOD:
+	    return type->isSignedInteger() ? gen::SMOD : gen::UMOD;
 	default:
 	    assert(0);
 	    return gen::ADD;
     }
 }
 
+/*
 static gen::CondOp
-getGenCondOp(BinaryExpr::Kind kind, const Type *type)
+getGenCondOp(abc::BinaryExpr::Kind kind, const abc::Type *type)
 {
     assert(type);
-    bool isSignedInt = type->isInteger()
-		    && type->getIntegerKind() == Type::SIGNED;
     switch (kind) {
-	case BinaryExpr::Kind::EQUAL:
+	case abc::BinaryExpr::Kind::EQUAL:
 	    return gen::EQ;
-	case BinaryExpr::Kind::NOT_EQUAL:
+	case abc::BinaryExpr::Kind::NOT_EQUAL:
 	    return gen::NE;
-	case BinaryExpr::Kind::LESS:
-	    return isSignedInt ? gen::SLT : gen::ULT;
-	case BinaryExpr::Kind::LESS_EQUAL:
-	    return isSignedInt ? gen::SLE : gen::ULE;
-	case BinaryExpr::Kind::GREATER:
+	case abc::BinaryExpr::Kind::LESS:
+	    return type->isSignedInteger() ? gen::SLT : gen::ULT;
+	case abc::BinaryExpr::Kind::LESS_EQUAL:
+	    return type->isSignedInteger() ? gen::SLE : gen::ULE;
+	case abc::BinaryExpr::Kind::GREATER:
 	    return isSignedInt ? gen::SGT : gen::UGT;
-	case BinaryExpr::Kind::GREATER_EQUAL:
-	    return isSignedInt ? gen::SGE : gen::UGE;
-	case BinaryExpr::Kind::LOGICAL_AND:
+	case abc::BinaryExpr::Kind::GREATER_EQUAL:
+	    return type->isSignedInteger() ? gen::SGE : gen::UGE;
+	case abc::BinaryExpr::Kind::LOGICAL_AND:
 	    return gen::AND;
-	case BinaryExpr::Kind::LOGICAL_OR:
+	case abc::BinaryExpr::Kind::LOGICAL_OR:
 	    return gen::OR;
 	default:
 	    std::cerr << "Not handled: " << int(kind) << std::endl;
@@ -399,26 +369,42 @@ getGenCondOp(BinaryExpr::Kind kind, const Type *type)
 	    return gen::EQ;
     }
 }
+*/
 
 static const char *
-kindStr(BinaryExpr::Kind kind)
+kindStr(abc::BinaryExpr::Kind kind)
 {
     switch (kind) {
-	case BinaryExpr::ADD: return "+";
-	case BinaryExpr::ASSIGN: return "=";
-	case BinaryExpr::EQUAL: return "==";
-	case BinaryExpr::NOT_EQUAL: return "!=";
-	case BinaryExpr::GREATER: return ">";
-	case BinaryExpr::GREATER_EQUAL: return ">=";
-	case BinaryExpr::LESS: return "<";
-	case BinaryExpr::LESS_EQUAL: return "<=";
-	case BinaryExpr::LOGICAL_AND: return "&&";
-	case BinaryExpr::LOGICAL_OR: return "||";
-	case BinaryExpr::SUB: return "-";
-	case BinaryExpr::MUL: return "*";
-	case BinaryExpr::DIV: return "/";
-	case BinaryExpr::MOD: return "%";
-	case BinaryExpr::MEMBER: return ".member";
+	case abc::BinaryExpr::ADD: return "+";
+	case abc::BinaryExpr::ASSIGN: return "=";
+	case abc::BinaryExpr::EQUAL: return "==";
+	case abc::BinaryExpr::NOT_EQUAL: return "!=";
+	case abc::BinaryExpr::GREATER: return ">";
+	case abc::BinaryExpr::GREATER_EQUAL: return ">=";
+	case abc::BinaryExpr::LESS: return "<";
+	case abc::BinaryExpr::LESS_EQUAL: return "<=";
+	case abc::BinaryExpr::LOGICAL_AND: return "&&";
+	case abc::BinaryExpr::LOGICAL_OR: return "||";
+	case abc::BinaryExpr::SUB: return "-";
+	case abc::BinaryExpr::MUL: return "*";
+	case abc::BinaryExpr::DIV: return "/";
+	case abc::BinaryExpr::MOD: return "%";
 	default: return "?? (binary)";
     }
 }
+
+static void
+printFlat(std::ostream &out, int precCaller, int prec, const abc::Expr *left,
+	  const abc::Expr *right, const char *op)
+{
+    if (precCaller > prec) {
+	out << "(";
+    }
+    left->printFlat(out, prec);
+    out << " " << op << " ";
+    right->printFlat(out, prec);
+    if (precCaller > prec) {
+	out << ")";
+    }
+}
+

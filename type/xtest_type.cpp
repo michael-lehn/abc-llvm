@@ -6,7 +6,7 @@
 void
 intExample(bool signedInt, std::size_t numBits, const char *alias)
 {
-    using namespace type;
+    using namespace abc;
 
     auto ty = signedInt
 	? IntegerType::createSigned(numBits)
@@ -40,7 +40,7 @@ intExample(bool signedInt, std::size_t numBits, const char *alias)
 void
 fnExample()
 {
-    using namespace type;
+    using namespace abc;
 
     auto ret =  IntegerType::createSigned(32)->getAlias("int");
     std::vector<const Type *> arg = {

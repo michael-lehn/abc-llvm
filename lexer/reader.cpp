@@ -1,12 +1,13 @@
 #include <cassert>
-#include <filesystem>
+#include <cstdint>
 #include <cstdlib>
+#include <filesystem>
 
 #include "lexer.hpp"
 #include "reader.hpp"
-#include "ustr.hpp"
+#include "util/ustr.hpp"
 
-namespace lexer {
+namespace abc { namespace lexer {
 
 ReaderInfo::ReaderInfo()
     : ch{0}, path{UStr::create("<stdin>")}, val{} , infile{} , in{&std::cin}
@@ -127,4 +128,4 @@ addSearchPath(const char *path)
     searchPath.push_back(path);
 }
 
-} // namespace lexer
+} } // namespace lexer, abc

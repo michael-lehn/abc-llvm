@@ -5,15 +5,14 @@
 #include "reader.hpp"
 #include "token.hpp"
 #include "tokenkind.hpp"
-#include "ustr.hpp"
 
-namespace lexer {
+namespace abc { namespace lexer {
 
 extern Token token;
 
 void init();
 TokenKind getToken();
 
-} // namespace lexer
+} } // namespace lexer, abc
 
 #endif // LEXER_LEXER_HPP

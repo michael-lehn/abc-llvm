@@ -5,9 +5,9 @@
 #include <ostream>
 #include <vector>
 
-#include "lexer/ustr.hpp"
+#include "util/ustr.hpp"
 
-namespace type {
+namespace abc {
 
 class Type
 {
@@ -29,6 +29,10 @@ class Type
 	virtual bool hasSize() const = 0;
 	virtual bool hasConstFlag() const = 0;
 
+	virtual bool isVoid() const;
+	virtual bool isBool() const;
+	virtual bool isNullptr() const;
+
 	// for integer (sub-)types 
 	virtual bool isInteger() const;
 	virtual bool isSignedInteger() const;
@@ -37,6 +41,7 @@ class Type
 
 	// for pointer and array (sub-)types
 	virtual bool isPointer() const;
+	virtual bool isArray() const;
 	virtual const Type *refType() const;
 	virtual std::size_t dim() const;
 
@@ -45,10 +50,18 @@ class Type
 	virtual const Type *retType() const;
 	virtual bool hasVarg() const;
 	virtual const std::vector<const Type *> &argType() const;
+
+	// for struct (sub-)types
+	virtual bool isStruct() const;
+	virtual const Type *complete(
+		const std::vector<UStr> &&memberIdent,
+		const std::vector<const Type *> &&memberType);
+	const std::vector<const Type *> &memberType() const;
+	const std::vector<UStr> &memberIdent() const;
 };
 
 std::ostream &operator<<(std::ostream &out, const Type *type);
 
-} // namespace type
+} // namespace abc
 
 #endif // TYPE_TYPE_HPP

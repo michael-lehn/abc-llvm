@@ -2,7 +2,7 @@
 
 #include "functiontype.hpp"
 
-namespace type {
+namespace abc {
 
 static bool
 operator<(const FunctionType &x, const FunctionType &y)
@@ -110,4 +110,4 @@ FunctionType::argType() const
     return arg;
 }
 
-} // namespace type
+} // namespace abc

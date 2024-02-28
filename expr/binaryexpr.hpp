@@ -1,7 +1,12 @@
 #ifndef BINARYEXPR_HPP
 #define BINARYEXPR_HPP
 
+#include "gen/gen.hpp"
+#include "lexer/loc.hpp"
+
 #include "expr.hpp"
+
+namespace abc {
 
 class BinaryExpr : public Expr
 {
@@ -22,23 +27,15 @@ class BinaryExpr : public Expr
 	    MUL,
 	    DIV,
 	    MOD,
-	    MEMBER,
 	};
 
     protected:
 	BinaryExpr(Kind kind, ExprPtr &&left, ExprPtr &&right, const Type *type,
-		   Token::Loc loc);
+		   lexer::Loc loc);
 
     public:
 	static ExprPtr create(Kind kind, ExprPtr &&left, ExprPtr &&right,
-			      Token::Loc loc = Token::Loc{});
-
-	static ExprPtr createOpAssign(Kind kind, ExprPtr &&left,
-				      ExprPtr &&right,
-				      Token::Loc loc = Token::Loc{});
-
-	static ExprPtr createMember(ExprPtr &&structExpr, UStr ident,
-				    Token::Loc loc = Token::Loc{});
+			      lexer::Loc loc = lexer::Loc{});
 
 	const Kind kind;
 	const ExprPtr left, right;
@@ -46,15 +43,19 @@ class BinaryExpr : public Expr
     public:
 	bool hasAddr() const override;
 	bool isLValue() const override;
+
+    private:
 	bool isIntegerConstExpr() const;
 	bool isArithmeticConstExpr() const;
 	bool isAddressConstant() const;
+
+    public:
 	bool isConst() const override;
 
 	// for code generation
-	gen::ConstVal loadConstValue() const override;
-	gen::Reg loadValue() const override;
-	gen::Reg loadAddr() const override;
+	gen::Constant loadConstant() const override;
+	gen::Value loadValue() const override;
+	gen::Value loadAddress() const override;
 	void condJmp(gen::Label trueLabel,
 		     gen::Label falseLabel) const override;
 
@@ -64,5 +65,7 @@ class BinaryExpr : public Expr
 	// for printing error messages
 	virtual void printFlat(std::ostream &out, int prec) const override;
 };
+
+} // namespace abc
 
 #endif // BINARYEXPR_HPP

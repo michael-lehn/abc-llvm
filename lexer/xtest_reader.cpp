@@ -16,6 +16,8 @@ usage(const char *prog)
 int
 main(int argc, char *argv[])
 {
+    using namespace abc;
+
     std::filesystem::path infile;
     std::filesystem::path outfile;
 

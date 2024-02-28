@@ -6,7 +6,7 @@
 #include "error.hpp"
 #include "lexer.hpp"
 
-namespace error {
+namespace abc { namespace error {
 
 std::ostream &
 out(int indent)
@@ -42,4 +42,4 @@ expected(lexer::TokenKind kind)
     return true;
 }
 
-} // namespace error
+} } // namespace error, abc

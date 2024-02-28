@@ -3,7 +3,7 @@
 
 #include "type.hpp"
 
-namespace type {
+namespace abc {
 
 class IntegerType : public Type
 {
@@ -34,6 +34,6 @@ class IntegerType : public Type
 	bool isUnsignedInteger() const override;
 };
 
-} // namespace type
+} // namespace abc
 
 #endif // TYPE_INTEGERTYPE_HPP

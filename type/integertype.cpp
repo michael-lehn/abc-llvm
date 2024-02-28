@@ -5,7 +5,7 @@
 
 #include "integertype.hpp"
 
-namespace type {
+namespace abc {
 
 static bool
 operator<(const IntegerType &x, const IntegerType &y)
@@ -111,4 +111,4 @@ IntegerType::isUnsignedInteger() const
     return !isSigned;
 }
 
-} // namespace type
+} // namespace abc

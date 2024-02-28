@@ -3,9 +3,9 @@
 
 #include "loc.hpp"
 #include "tokenkind.hpp"
-#include "ustr.hpp"
+#include "util/ustr.hpp"
 
-namespace lexer {
+namespace abc { namespace lexer {
 
 class Token
 {
@@ -30,6 +30,6 @@ class Token
 
 std::ostream &operator<<(std::ostream &out, const Token &token);
 
-} // namespace lexer
+} } // namespace lexer, abc
 
 #endif // LEXER_TOKEN_HPP

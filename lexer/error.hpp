@@ -5,7 +5,7 @@
 
 #include "lexer.hpp"
 
-namespace error {
+namespace abc { namespace error {
 
 std::ostream& out(int indent = 0);
 void fatal();
@@ -13,6 +13,6 @@ void warning();
 
 bool expected(lexer::TokenKind kind);
 
-} // namespace error
+} } // namespace error, abc
 
 #endif // LEXER_ERROR_HPP

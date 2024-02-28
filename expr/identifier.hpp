@@ -2,33 +2,31 @@
 #define IDENTIFIER_HPP
 
 #include "expr.hpp"
+#include "lexer/loc.hpp"
+
+namespace abc {
 
 class Identifier : public Expr
 {
     protected:
-	Identifier(UStr ident, ExprPtr expr);
-	Identifier(UStr ident, UStr identUser, const Type *type, Token::Loc loc,
-		   bool misusedAsMember = false);
-	ExprPtr expr;
+	Identifier(UStr ident, const Type *type, lexer::Loc loc);
 
     public:
 
-	static ExprPtr create(UStr ident, Token::Loc loc = Token::Loc{});
 	static ExprPtr create(UStr ident, const Type *type,
-			      Token::Loc loc = Token::Loc{});
+			      lexer::Loc loc = lexer::Loc{});
 
 	const UStr ident; // identifier for code generation
 	const UStr identUser; // identifier as seen by user
-	const bool misusedAsMember;
 
 	bool hasAddr() const override;
 	bool isLValue() const override;
 	bool isConst() const override;
 
 	// for code generation
-	gen::ConstVal loadConstValue() const override;
-	gen::Reg loadValue() const override;
-	gen::Reg loadAddr() const override;
+	gen::Constant loadConstant() const override;
+	gen::Value loadValue() const override;
+	gen::Value loadAddress() const override;
 	void condJmp(gen::Label trueLabel,
 		     gen::Label falseLabel) const override;
 
@@ -38,5 +36,7 @@ class Identifier : public Expr
 	// for printing error messages
 	virtual void printFlat(std::ostream &out, int prec) const override;
 };
+
+} // namespace abc
 
 #endif // IDENTIFIER_HPP

@@ -1,7 +1,7 @@
 #include "token.hpp"
 #include "reader.hpp"
 
-namespace lexer {
+namespace abc { namespace lexer {
 
 std::ostream &
 operator<<(std::ostream &out, const Token &token)
@@ -14,4 +14,4 @@ operator<<(std::ostream &out, const Token &token)
     return out;
 }
 
-} // namespace lexer
+} } // namespace lexer, abc

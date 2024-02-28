@@ -1,6 +1,6 @@
 #include "type.hpp"
 
-namespace type {
+namespace abc {
 
 Type::Type(UStr alias)
     : alias{alias}
@@ -23,6 +23,24 @@ UStr
 Type::aka() const
 {
     return alias;
+}
+
+bool
+Type::isVoid() const
+{
+    return false;
+}
+
+bool
+Type::isBool() const
+{
+    return false;
+}
+
+bool
+Type::isNullptr() const
+{
+    return false;
 }
 
 // for integer (sub-)types 
@@ -53,6 +71,12 @@ Type::numBits() const
 // for pointer and array (sub-)types
 bool
 Type::isPointer() const
+{
+    return false;
+}
+
+bool
+Type::isArray() const
 {
     return false;
 }
@@ -96,6 +120,34 @@ Type::argType() const
     return noArgs;
 }
 
+// for struct (sub-)types
+bool
+Type::isStruct() const
+{
+    return false;
+}
+
+const Type *
+Type::complete(const std::vector<UStr> &&,
+	       const std::vector<const Type *> &&)
+{
+    return nullptr;
+}
+
+const std::vector<const Type *> &
+Type::memberType() const
+{
+    static std::vector<const Type *> noMembers;
+    return noMembers;
+}
+
+const std::vector<UStr> &
+Type::memberIdent() const
+{
+    static std::vector<UStr> noMembers;
+    return noMembers;
+}
+
 std::ostream &
 operator<<(std::ostream &out, const Type *type)
 {
@@ -110,4 +162,4 @@ operator<<(std::ostream &out, const Type *type)
     return out;
 }
 
-} // namespace type
+} // namespace abc

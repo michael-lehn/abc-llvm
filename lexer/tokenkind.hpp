@@ -3,7 +3,7 @@
 
 #include <ostream>
 
-namespace lexer {
+namespace abc { namespace lexer {
 
 enum class TokenKind {
     BAD,
@@ -96,6 +96,6 @@ const char *TokenKindCStr(TokenKind kind);
 
 std::ostream &operator<<(std::ostream &out, TokenKind kind);
 
-} // namespace lexer
+} } // namespace lexer, abc
 
 #endif // LEXER_TOKENKIND_HPP

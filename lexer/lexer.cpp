@@ -3,8 +3,9 @@
 
 #include "error.hpp"
 #include "lexer.hpp"
+#include "util/ustr.hpp"
 
-namespace lexer {
+namespace abc { namespace lexer {
 
 Token token;
 
@@ -652,4 +653,4 @@ parseAddDirective()
     }
 }
 
-} // namespace lexer
+} } // namespace lexer, abc

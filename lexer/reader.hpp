@@ -4,10 +4,11 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <string>
 
 #include "loc.hpp"
 
-namespace lexer {
+namespace abc { namespace lexer {
 
 struct ReaderInfo {
     int			ch;
@@ -35,7 +36,6 @@ void addSearchPath(const char *path);
 // read next character and update reader
 char nextCh();
 
-} // namespace lexer
-
+} } // namespace lexer, abc
 
 #endif // LEXER_READER_HPP

@@ -4,21 +4,23 @@
 #include <cstdint>
 #include <memory>
 
-#include "gen.hpp"
-#include "type.hpp"
-#include "lexer.hpp"
+#include "gen/gen.hpp"
+#include "lexer/loc.hpp"
+#include "type/type.hpp"
+
+namespace abc {
 
 class Expr
 {
     protected:
-	Expr(Token::Loc  loc, const Type  *type);
+	Expr(lexer::Loc  loc, const Type  *type);
 
     public:
 	virtual ~Expr() = default;
 
     public:
-	const Token::Loc    loc;
-	const Type	    * const type;
+	const lexer::Loc loc;
+	const Type * const type;
 
     public:
 	// for sematic checks
@@ -26,15 +28,10 @@ class Expr
 	virtual bool isLValue() const = 0;
 	virtual bool isConst() const = 0;
 
-	// get value from const expressions
-	gen::ConstIntVal getConstIntValue() const;
-	std::int64_t getSignedIntValue() const;
-	std::uint64_t getUnsignedIntValue() const;
-
 	// for code generation
-	virtual gen::ConstVal loadConstValue() const = 0;
-	virtual gen::Reg loadValue() const = 0;
-	virtual gen::Reg loadAddr() const = 0;
+	virtual gen::Constant loadConstant() const = 0;
+	virtual gen::Value loadValue() const = 0;
+	virtual gen::Value loadAddress() const = 0;
 	virtual void condJmp(gen::Label trueLabel,
 			     gen::Label falseLabel) const = 0;
 
@@ -43,6 +40,12 @@ class Expr
 
 	// for printing error messages
 	virtual void printFlat(std::ostream &out, int prec) const = 0;
+
+	// get value from const expressions with integer type
+	gen::ConstantInt getConstantInt() const;
+	std::int64_t getSignedIntValue() const;
+	std::uint64_t getUnsignedIntValue() const;
+
 };
 
 using ExprPtr = std::unique_ptr<const Expr>;
@@ -50,5 +53,6 @@ using ExprPtr = std::unique_ptr<const Expr>;
 std::ostream &operator<<(std::ostream &out, const ExprPtr &expr);
 std::ostream &operator<<(std::ostream &out, const Expr *expr);
 
+} // namespace abc
 
 #endif // EXPR_HPP
