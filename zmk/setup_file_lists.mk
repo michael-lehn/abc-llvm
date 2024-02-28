@@ -106,9 +106,9 @@ $(eval $(id).lib.ar_d := \
     $(if $($(id).lib.content.obsolete),$(id).ar_d))
 
 $(eval $(id).link.libs := \
-    $(patsubst %,$($(id).build_dir.top)%,\
-	$($1.requires.lib)) \
-    $($(id).lib))
+	$($(id).lib) \
+	$(patsubst %,$($(id).build_dir.top)%,\
+		$($1.requires.lib)))
 
 $(eval $(id).LINK.o := \
     $(if $($(id).cpp),$($3.LINK.cpp.o),$($3.LINK.c.o)))
@@ -158,8 +158,8 @@ $($(id).build_dir)%.o : $($(id).src_dir)%.cpp \
 $($(id).build_dir)% : $($(id).build_dir)%.o $($(id).link.libs) \
     | $($(id).build_dir) $($(id).dep_dir) $($(id).dep.content.obsolete)
 	$($(id).LINK.o) $($1.LDFLAGS) $$< \
-	    $($(id).link.libs) \
 	    $($($(id).module).extra_libs) \
+	    $($(id).link.libs) \
 	    $($1.LDFLAGS) \
 	    -o $$@
 
