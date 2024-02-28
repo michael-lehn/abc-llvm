@@ -1,8 +1,8 @@
 $(this).requires.lib := \
-	util/libutil.a \
+	gen/libgen.a \
 	lexer/liblexer.a \
 	type/libtype.a \
-	gen/libgen.a
+	util/libutil.a
 
 $(this).CPPFLAGS += -Wno-unused-parameter -I `llvm-config --includedir`
 $(this).extra_libs += `llvm-config --ldflags --system-libs --libs all`
