@@ -28,17 +28,23 @@ convert(const abc::Type *abcType)
 	switch (abcType->numBits()) {
 	    case 1:
 		llvmType = llvm::Type::getInt1Ty(*llvmContext);
+		break;
 	    case 8:
 		llvmType = llvm::Type::getInt8Ty(*llvmContext);
+		break;
 	    case 16:
 		llvmType = llvm::Type::getInt16Ty(*llvmContext);
+		break;
 	    case 32:
 		llvmType = llvm::Type::getInt32Ty(*llvmContext);
+		break;
 	    case 64:
 		llvmType = llvm::Type::getInt64Ty(*llvmContext);
+		break;
 	    default:
 		llvmType = llvm::Type::getIntNTy(*llvmContext,
 						 abcType->numBits());
+		break;
 	}
     } else if (abcType->isFunction()) {
 	llvmType = llvm::FunctionType::get(convert(abcType->retType()),
