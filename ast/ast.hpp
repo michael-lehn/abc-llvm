@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 
+#include "expr/expr.hpp"
 #include "lexer/token.hpp"
 #include "type/type.hpp"
 

@@ -21,9 +21,8 @@ class Token
 	    : loc{loc}, kind{kind}, val{val}, processedVal{processedVal}
 	{}
 
+	Token &operator=(const Token &) = default;
 	Token &operator=(Token &&) = default;
-
-	Token getWithVal(UStr val) const;
 
 	Loc	    loc;
 	TokenKind   kind = TokenKind::BAD;

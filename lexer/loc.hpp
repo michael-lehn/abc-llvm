@@ -24,8 +24,8 @@ class Loc
 
 	Loc() = default;
 	Loc(UStr path, Pos from, Pos to) : path{path}, from{from}, to{to} {}
-	Loc(Loc &&loc) = default;
 	Loc(const Loc &loc) = default;
+	Loc(Loc &&loc) = default;
 	Loc &operator=(const Loc &loc) = default;
 	Loc &operator=(Loc &&loc) = default;
 
