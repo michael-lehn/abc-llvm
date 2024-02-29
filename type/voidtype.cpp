@@ -19,16 +19,16 @@ static std::set<VoidType> voidSet;
 
 //------------------------------------------------------------------------------
 
-VoidType::VoidType(bool constFlag, UStr alias)
-    : Type{alias}, isConst{constFlag}
+VoidType::VoidType(bool constFlag, UStr name)
+    : Type{constFlag, name}
 {
-    name = UStr::create("void");
+    aka_ = UStr::create("void");
 }
 
 const Type *
-VoidType::create(bool constFlag, UStr alias)
+VoidType::create(bool constFlag, UStr name)
 {
-    auto ty = VoidType{constFlag, alias};
+    auto ty = VoidType{constFlag, name};
     return &*voidSet.insert(ty).first;
 }
 
@@ -47,13 +47,13 @@ VoidType::getAlias(UStr alias) const
 const Type *
 VoidType::getConst() const
 {
-    return create(true, alias);
+    return create(true, name);
 }
 
 const Type *
 VoidType::getConstRemoved() const
 {
-    return create(false, alias);
+    return create(false, name);
 }
 
 bool

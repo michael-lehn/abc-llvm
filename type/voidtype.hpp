@@ -9,9 +9,8 @@ class VoidType : public Type
 {
     protected:
 	VoidType(bool constFlag, UStr alias);
-	bool isConst;
 
-	static const Type *create(bool constFlag, UStr alias);
+	static const Type *create(bool constFlag, UStr name);
     public:
 	static const Type *create();
 

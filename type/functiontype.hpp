@@ -11,14 +11,14 @@ class FunctionType : public Type
 {
     protected:
 	FunctionType(const Type *ret, std::vector<const Type *> &&param,
-		     bool varg, UStr alias);
+		     bool varg, bool constFlag, UStr name);
 	const Type *ret;
 	std::vector<const Type *> param;
 	bool varg;
 
 	static const Type *create(const Type *ret,
 				  std::vector<const Type *> &&arg,
-				  bool varg, UStr alias);
+				  bool varg, bool constFlag, UStr alias);
 
     public:
 	static const Type *create(const Type *ret,
@@ -30,7 +30,6 @@ class FunctionType : public Type
 	const Type *getConstRemoved() const override;
 
 	bool hasSize() const override;
-	bool hasConstFlag() const override;
 
 	// for function (sub-)types 
 	bool isFunction() const override;

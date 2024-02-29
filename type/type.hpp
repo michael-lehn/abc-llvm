@@ -12,10 +12,11 @@ namespace abc {
 class Type
 {
     protected:
-	UStr name, alias;
+	bool isConst;
+	UStr name, aka_;
 
     public:
-	Type(UStr alias);
+	Type(bool isConst, UStr name);
 	virtual ~Type() = default;
 
 	const Type *getAlias(const char *alias) const;
@@ -27,7 +28,7 @@ class Type
 	UStr aka() const;
 
 	virtual bool hasSize() const = 0;
-	virtual bool hasConstFlag() const = 0;
+	virtual bool hasConstFlag() const;
 
 	virtual bool isVoid() const;
 	virtual bool isBool() const;

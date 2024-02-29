@@ -2,8 +2,8 @@
 
 namespace abc {
 
-Type::Type(UStr alias)
-    : alias{alias}
+Type::Type(bool isConst, UStr name)
+    : isConst{isConst}, name{name}
 {
 }
 
@@ -22,7 +22,13 @@ Type::ustr() const
 UStr
 Type::aka() const
 {
-    return alias;
+    return aka_;
+}
+
+bool
+Type::hasConstFlag() const
+{
+    return isConst;
 }
 
 bool
@@ -153,10 +159,10 @@ operator<<(std::ostream &out, const Type *type)
 {
     const char *constFlag = type->hasConstFlag() ? "const " : "";
 
-    if (type->aka().c_str()) {
-	out << constFlag << type->aka();
-    } else {
+    if (type->ustr().c_str()) {
 	out << constFlag << type->ustr();
+    } else {
+	out << constFlag << type->aka();
     }
     return out;
 }

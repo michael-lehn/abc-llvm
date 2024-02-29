@@ -9,10 +9,9 @@ class IntegerType : public Type
 {
     protected:
 	IntegerType(std::size_t numBits, bool signed_, bool constFlag,
-		    UStr alias);
+		    UStr name);
 	std::size_t numBits_;
 	bool isSigned;
-	bool isConst;
 
 	static const Type *create(std::size_t numBits, bool signed_,
 				  bool constFlag, UStr alias);
@@ -26,7 +25,6 @@ class IntegerType : public Type
 	const Type *getConstRemoved() const override;
 
 	bool hasSize() const override;
-	bool hasConstFlag() const override;
 	std::size_t numBits() const override;
 
 	bool isInteger() const override;

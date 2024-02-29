@@ -29,12 +29,12 @@ static std::set<IntegerType> intSet;
 //------------------------------------------------------------------------------
 
 IntegerType::IntegerType(std::size_t numBits, bool signed_, bool constFlag,
-			 UStr alias)
-    : Type{alias}, numBits_{numBits}, isSigned{signed_}, isConst{constFlag}
+			 UStr name)
+    : Type{constFlag, name}, numBits_{numBits}, isSigned{signed_}
 {
     std::stringstream ss;
     ss << (isSignedInteger() ? "i" : "u") << this->numBits();
-    name = UStr::create(ss.str());
+    aka_ = UStr::create(ss.str());
 }
 
 const Type *
@@ -66,25 +66,19 @@ IntegerType::getAlias(UStr alias) const
 const Type *
 IntegerType::getConst() const
 {
-    return create(numBits(), isSignedInteger(), true, alias);
+    return create(numBits(), isSignedInteger(), true, name);
 }
 
 const Type *
 IntegerType::getConstRemoved() const
 {
-    return create(numBits(), isSignedInteger(), false, alias);
+    return create(numBits(), isSignedInteger(), false, name);
 }
 
 bool
 IntegerType::hasSize() const
 {
     return true;
-}
-
-bool
-IntegerType::hasConstFlag() const
-{
-    return isConst;
 }
 
 std::size_t

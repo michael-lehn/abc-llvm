@@ -8,14 +8,16 @@
 int
 main()
 {
+    const char *name = "hello";
+
     abc::lexer::openInputfile(nullptr);
     abc::lexer::init();
-    gen::init();
+    gen::init(name);
 
     if (auto ast = abc::parser()) {
 	ast->print();
 	ast->codegen();
-	std::cerr << "generating hello.bc\n";
-	gen::print("hello");
+	std::cerr << "generating " << name << ".bc\n";
+	gen::print(name);
     }
 }

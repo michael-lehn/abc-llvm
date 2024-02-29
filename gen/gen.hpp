@@ -18,7 +18,9 @@ extern std::unique_ptr<llvm::Module> llvmModule;
 extern std::unique_ptr<llvm::IRBuilder<>> llvmBuilder;
 extern llvm::BasicBlock *llvmBB;
 
-void init();
+extern const char *moduleName;
+
+void init(const char *name = nullptr);
 
 } // namespace gen
 
