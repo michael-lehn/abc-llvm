@@ -12,6 +12,7 @@ class Token
     public:
 	Token() = default;
 	Token(Token &&) = default;
+	Token(const Token &) = default;
 	Token(Loc loc, TokenKind kind, UStr val)
 	    : loc{loc}, kind{kind}, val{val}, processedVal{val}
 	{}

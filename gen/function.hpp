@@ -25,7 +25,7 @@ llvm::Function *functionDeclaration(const char *ident, const abc::Type *fnType,
 				    bool externalLinkage);
 
 void functionDefinitionBegin(const char *ident, const abc::Type *fnType,
-			     const std::vector<const char *> &param,
+			     const std::vector<const char *> &arg,
 			     bool externalLinkage);
 
 void functionDefinitionEnd();

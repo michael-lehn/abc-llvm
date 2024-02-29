@@ -31,8 +31,6 @@ class Symtab
 
     private:
 	static UStr getId(UStr name);
-	static std::pair<symtab::Entry *, bool>
-	    add(lexer::Loc loc, UStr name, const Type *type, bool toRoot);
 
 	using ScopeNode = std::unordered_map<UStr, symtab::Entry>;
 	static std::forward_list<std::unique_ptr<ScopeNode>> scope;
