@@ -77,13 +77,13 @@ AstList::apply(std::function<bool(Ast *)> op)
  * AstFunctionDecl
  */
 AstFuncDecl::AstFuncDecl(lexer::Token fnName, const Type *fnType,
-			 std::vector<lexer::Token> &&fnArgName,
+			 std::vector<lexer::Token> &&fnParamName,
 			 bool externalLinkage)
-    : fnName{fnName}, fnType{fnType}, fnArgName{std::move(fnArgName)}
+    : fnName{fnName}, fnType{fnType}, fnParamName{std::move(fnParamName)}
     , externalLinkage{externalLinkage}
 {
-    assert(this->fnArgName.size() == this->fnType->argType().size()
-	    || this->fnArgName.size() == 0);
+    assert(this->fnParamName.size() == this->fnType->paramType().size()
+	    || this->fnParamName.size() == 0);
 
     auto addDecl = Symtab::addDeclaration(fnName.loc, fnName.val, fnType);
     if (addDecl.first) {
@@ -96,12 +96,12 @@ AstFuncDecl::print(int indent) const
 {
     error::out(indent) << (externalLinkage ? "extern " : "");
     error::out() << "fn " << fnName.val << "(";
-    for (std::size_t i = 0; i < fnType->argType().size(); ++i) {
-	if (i < fnArgName.size()) {
-	    error::out() << fnArgName[i].val;
+    for (std::size_t i = 0; i < fnType->paramType().size(); ++i) {
+	if (i < fnParamName.size()) {
+	    error::out() << fnParamName[i].val;
 	}
-	error::out() << ": " << fnType->argType()[i];
-	if (i + 1 < fnType->argType().size()) {
+	error::out() << ": " << fnType->paramType()[i];
+	if (i + 1 < fnType->paramType().size()) {
 	    error::out() << ", ";
 	}
     }
@@ -136,17 +136,17 @@ AstFuncDef::AstFuncDef(lexer::Token fnName, const Type *fnType)
 }
 
 void
-AstFuncDef::appendArgName(std::vector<lexer::Token> &&fnArgName_)
+AstFuncDef::appendParamName(std::vector<lexer::Token> &&fnParamName_)
 {
-    fnArgName = std::move(fnArgName_);
-    assert(fnArgName.size() == fnType->argType().size());
-    for (size_t i = 0; i < fnArgName.size(); ++i) {
-	auto addDecl = Symtab::addDeclaration(fnArgName[i].loc,
-					      fnArgName[i].val,
-					      fnType->argType()[i]);
+    fnParamName = std::move(fnParamName_);
+    assert(fnParamName.size() == fnType->paramType().size());
+    for (size_t i = 0; i < fnParamName.size(); ++i) {
+	auto addDecl = Symtab::addDeclaration(fnParamName[i].loc,
+					      fnParamName[i].val,
+					      fnType->paramType()[i]);
 	assert(addDecl.first);
 	assert(addDecl.second);
-	fnArgId.push_back(addDecl.first->id.c_str());
+	fnParamId.push_back(addDecl.first->id.c_str());
     }
 }
 
@@ -161,10 +161,10 @@ void
 AstFuncDef::print(int indent) const
 {
     error::out(indent) << "fn " << fnName.val << "(";
-    for (std::size_t i = 0; i < fnType->argType().size(); ++i) {
-	error::out() << fnArgName[i].val;
-	error::out() << ": " << fnType->argType()[i];
-	if (i + 1 < fnType->argType().size()) {
+    for (std::size_t i = 0; i < fnType->paramType().size(); ++i) {
+	error::out() << fnParamName[i].val;
+	error::out() << ": " << fnType->paramType()[i];
+	if (i + 1 < fnType->paramType().size()) {
 	    error::out() << ", ";
 	}
     }
@@ -189,7 +189,7 @@ AstFuncDef::codegen()
     if (!fnId.c_str()) {
 	return;
     }
-    gen::functionDefinitionBegin(fnId.c_str(), fnType, fnArgId, false);
+    gen::functionDefinitionBegin(fnId.c_str(), fnType, fnParamId, false);
     if (body) {
 	body->codegen();
     }

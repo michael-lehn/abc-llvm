@@ -48,12 +48,12 @@ class AstFuncDecl : public Ast
 {
     public:
 	AstFuncDecl(lexer::Token fnName, const Type *fnType,
-		    std::vector<lexer::Token> &&fnArgName,
+		    std::vector<lexer::Token> &&fnParamName,
 		    bool externalLinkage);
 
 	const lexer::Token fnName;
 	const Type * const fnType;
-	const std::vector<lexer::Token> fnArgName;
+	const std::vector<lexer::Token> fnParamName;
 	const bool externalLinkage;
 	UStr fnId;
 
@@ -66,8 +66,8 @@ class AstFuncDecl : public Ast
 class AstFuncDef : public Ast
 {
     private:
-	std::vector<lexer::Token> fnArgName;
-	std::vector<const char *> fnArgId;
+	std::vector<lexer::Token> fnParamName;
+	std::vector<const char *> fnParamId;
 	AstPtr body;
 
     public:
@@ -78,7 +78,7 @@ class AstFuncDef : public Ast
 	UStr fnId;
 
 
-	void appendArgName(std::vector<lexer::Token> &&fnArgName);
+	void appendParamName(std::vector<lexer::Token> &&fnParamName);
 	void appendBody(AstPtr &&body);
 
 	void print(int indent) const override;

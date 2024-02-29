@@ -114,7 +114,7 @@ Type::hasVarg() const
 
 const
 std::vector<const Type *> &
-Type::argType() const
+Type::paramType() const
 {
     static std::vector<const Type *> noArgs;
     return noArgs;

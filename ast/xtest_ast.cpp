@@ -40,14 +40,14 @@ makeMainDecl()
 
     auto fnName = makeIdentifierToken("main");
     auto fnRetType = intType;
-    auto fnArgType = std::vector<const abc::Type *>{intType};
+    auto fnParamType = std::vector<const abc::Type *>{intType};
     auto fnType = abc::FunctionType::create(fnRetType,
-					    std::move(fnArgType),
+					    std::move(fnParamType),
 					    false);
-    auto fnArgName = std::vector<abc::lexer::Token>{};
+    auto fnParamName = std::vector<abc::lexer::Token>{};
     auto fnMainDecl = std::make_unique<abc::AstFuncDecl>(fnName,
 							 fnType,
-							 std::move(fnArgName),
+							 std::move(fnParamName),
 							 true);
     return fnMainDecl;
 }
@@ -81,15 +81,15 @@ makeMainDef()
 
     auto fnName = makeIdentifierToken("main");
     auto fnRetType = intType;
-    auto fnArgType = std::vector<const abc::Type *>{intType};
+    auto fnParamType = std::vector<const abc::Type *>{intType};
     auto fnType = abc::FunctionType::create(fnRetType,
-					    std::move(fnArgType),
+					    std::move(fnParamType),
 					    false);
 
     auto fnMainDef = std::make_unique<abc::AstFuncDef>(fnName, fnType);
     abc::Symtab guard(abc::UStr::create("main"));
 
-    fnMainDef->appendArgName({makeIdentifierToken("argc")});
+    fnMainDef->appendParamName({makeIdentifierToken("argc")});
 
 
     auto body = std::make_unique<abc::AstList>();

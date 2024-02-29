@@ -48,7 +48,7 @@ convert(const abc::Type *abcType)
 	}
     } else if (abcType->isFunction()) {
 	llvmType = llvm::FunctionType::get(convert(abcType->retType()),
-					   convert(abcType->argType()),
+					   convert(abcType->paramType()),
 					   abcType->hasVarg());
     } else if (abcType->isPointer()) {
 	llvmType = llvm::PointerType::get(*llvmContext, 0);

@@ -48,8 +48,8 @@ class Type
 	// for function (sub-)types 
 	virtual bool isFunction() const;
 	virtual const Type *retType() const;
+	virtual const std::vector<const Type *> &paramType() const;
 	virtual bool hasVarg() const;
-	virtual const std::vector<const Type *> &argType() const;
 
 	// for struct (sub-)types
 	virtual bool isStruct() const;

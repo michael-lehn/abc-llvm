@@ -10,10 +10,10 @@ namespace abc {
 class FunctionType : public Type
 {
     protected:
-	FunctionType(const Type *ret, std::vector<const Type *> &&arg,
+	FunctionType(const Type *ret, std::vector<const Type *> &&param,
 		     bool varg, UStr alias);
 	const Type *ret;
-	std::vector<const Type *> arg;
+	std::vector<const Type *> param;
 	bool varg;
 
 	static const Type *create(const Type *ret,
@@ -36,7 +36,7 @@ class FunctionType : public Type
 	bool isFunction() const override;
 	const Type *retType() const override;
 	bool hasVarg() const override;
-	const std::vector<const Type *> &argType() const override;
+	const std::vector<const Type *> &paramType() const override;
 };
 
 } // namespace abc

@@ -49,10 +49,10 @@ functionDeclaration(const char *ident, const abc::Type *fnType,
 
 void
 functionDefinitionBegin(const char *ident, const abc::Type *fnType,
-			const std::vector<const char *> &arg,
+			const std::vector<const char *> &param,
 			bool externalLinkage)
 {
-    assert(arg.size() == fnType->argType().size());
+    assert(param.size() == fnType->paramType().size());
 
     auto fn = functionDeclaration(ident, fnType, externalLinkage);
     fn->setDoesNotThrow();
@@ -67,8 +67,8 @@ functionDefinitionBegin(const char *ident, const abc::Type *fnType,
     functionBuildingInfo.retVal = nullptr;
     functionBuildingInfo.bbClosed = false;
 
-    for (std::size_t i = 0; i < arg.size(); ++i) {
-	auto addr = localVariableDefinition(arg[i], fnType->argType()[i]);
+    for (std::size_t i = 0; i < param.size(); ++i) {
+	auto addr = localVariableDefinition(param[i], fnType->paramType()[i]);
 	store(fn->getArg(i), addr);
     }
 

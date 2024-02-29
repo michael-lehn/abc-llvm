@@ -43,12 +43,12 @@ fnExample()
     using namespace abc;
 
     auto ret =  IntegerType::createSigned(32)->getAlias("int");
-    std::vector<const Type *> arg = {
+    std::vector<const Type *> param = {
 	IntegerType::createSigned(32)->getAlias("int"),
 	IntegerType::createSigned(16)->getAlias("short"),
 	IntegerType::createUnsigned(32)->getAlias("unsigned"),
     };
-    auto fn = FunctionType::create(ret, std::move(arg), true);
+    auto fn = FunctionType::create(ret, std::move(param), true);
     auto fnAlias = fn->getAlias("foo");
 
     std::cerr << "Some function type\n";
