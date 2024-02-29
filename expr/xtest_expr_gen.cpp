@@ -31,7 +31,7 @@ defineGlobalVariable()
     // definition with initializer
     gen::globalVariableDefinition("foo_global",
 				  intType, 
-				  getConstantInt("42", intType, 10), 
+				  getConstantInt("43", intType, 10), 
 				  false);
 }
 
@@ -40,8 +40,14 @@ someInstructions()
 {
     using namespace abc;
     auto intType = IntegerType::createSigned(32)->getAlias("int");
+
+    auto intExpr = IntegerLiteral::create(-1, intType);
     auto idExpr = Identifier::create(UStr::create("foo_global"), intType);
-    gen::retInstruction(idExpr->loadValue());
+    auto addExpr = BinaryExpr::create(BinaryExpr::ADD,
+				      std::move(intExpr),
+				      std::move(idExpr));
+
+    gen::retInstruction(addExpr->loadValue());
 }
 
 void
