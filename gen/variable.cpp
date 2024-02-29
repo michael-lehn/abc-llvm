@@ -13,6 +13,36 @@ static std::unordered_map<const char *, llvm::AllocaInst *> localVariable;
 //------------------------------------------------------------------------------
 
 void
+externalVariableiDeclaration(const char *ident, const abc::Type *varType)
+{
+    assert(llvmModule);
+    assert(!varType->isFunction());
+
+    auto linkage = llvm::GlobalValue::ExternalLinkage;
+
+    if (auto found = loadAddress(ident)) {
+	// variable exists, assert it is a global variable
+	auto var = llvm::dyn_cast<llvm::GlobalVariable>(found);
+	assert(var);
+	// extern declaration can be followed by static declaration
+	// static declaration *can not* be followed by extern declaration
+	assert(var->getLinkage() == llvm::Function::ExternalLinkage);
+	return;
+    }
+
+    auto llvmVarType = convert(varType);
+    assert(llvmVarType);
+
+    new llvm::GlobalVariable(*llvmModule,
+			     llvmVarType,
+			     /*isConstant=*/false,
+			     /*Linkage=*/linkage,
+			     /*Initializer=*/nullptr,
+			     /*Name=*/ident,
+			     nullptr);
+}
+
+void
 globalVariableDefinition(const char *ident, const abc::Type *varType,
 			 Constant initialValue, bool externalLinkage)
 {
@@ -109,7 +139,7 @@ printGlobalVariableList()
     for (const auto &var : llvmModule->globals()) {
 	std::cerr << "ident: " << var.getGlobalIdentifier() << std::endl;
     }
-    std::cerr << "----\n";
+    std::cerr << "----\n\n";
 }
 
 void
@@ -119,7 +149,7 @@ printFunctionList()
     for (const auto &fn : llvmModule->functions()) {
 	std::cerr << "ident: " << fn.getName().str() << std::endl;
     }
-    std::cerr << "----\n";
+    std::cerr << "----\n\n";
 }
 
 } // namespace gen

@@ -155,7 +155,6 @@ operator<<(std::ostream &out, const Type *type)
 
     if (type->aka().c_str()) {
 	out << constFlag << type->aka();
-	out << " (aka '" << constFlag << type->ustr() << "')";
     } else {
 	out << constFlag << type->ustr();
     }

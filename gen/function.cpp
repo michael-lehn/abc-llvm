@@ -49,9 +49,11 @@ functionDeclaration(const char *ident, const abc::Type *fnType,
 
 void
 functionDefinitionBegin(const char *ident, const abc::Type *fnType,
-			const std::vector<const char *> &param,
+			const std::vector<const char *> &arg,
 			bool externalLinkage)
 {
+    assert(arg.size() == fnType->argType().size());
+
     auto fn = functionDeclaration(ident, fnType, externalLinkage);
     fn->setDoesNotThrow();
     llvmBB = llvm::BasicBlock::Create(*llvmContext, "entry", fn);
@@ -64,6 +66,11 @@ functionDefinitionBegin(const char *ident, const abc::Type *fnType,
     functionBuildingInfo.retType = retType;
     functionBuildingInfo.retVal = nullptr;
     functionBuildingInfo.bbClosed = false;
+
+    for (std::size_t i = 0; i < arg.size(); ++i) {
+	auto addr = localVariableDefinition(arg[i], fnType->argType()[i]);
+	store(fn->getArg(i), addr);
+    }
 
     if (!retType->isVoid()) {
 	functionBuildingInfo.retVal = localVariableDefinition(".retVal",

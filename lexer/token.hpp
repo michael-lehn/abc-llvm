@@ -23,6 +23,8 @@ class Token
 
 	Token &operator=(Token &&) = default;
 
+	Token getWithVal(UStr val) const;
+
 	Loc	    loc;
 	TokenKind   kind = TokenKind::BAD;
 	UStr	    val;

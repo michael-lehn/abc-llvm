@@ -2,6 +2,8 @@
 #include <sstream>
 #include <string>
 
+#include "lexer/error.hpp"
+
 #include "symtab.hpp"
 
 namespace abc {
@@ -30,6 +32,7 @@ Symtab::~Symtab()
 const symtab::Entry *
 Symtab::find(UStr name, Scope inScope)
 {
+    name = getId(name);
     for (auto s = scope.cbegin(); s != scope.cend(); ++s) {
 	for (const auto &node: **s) {
 	    if (node.first == name) {
@@ -55,6 +58,23 @@ Symtab::addDeclaration(lexer::Loc loc, UStr name, const Type *type)
     auto added = scope.front()->insert({id, entry});
     assert(added.second);
     return {&(*added.first).second, true};
+}
+
+void
+Symtab::print(std::ostream &out)
+{
+    out << "Symtab (from current scope to root scope):\n";
+    std::for_each(scope.begin(), scope.end(),
+	    [&](const auto &s) {
+		for (const auto &item: *s) {
+		    out << item.first << ": "
+			<< item.second.id << ", "
+			<< item.second.type
+			<< "\n";
+		}
+		out << "---\n";
+	    });
+    out << "End of symtab\n";
 }
 
 UStr

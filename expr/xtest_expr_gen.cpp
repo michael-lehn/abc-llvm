@@ -47,7 +47,7 @@ someInstructions()
 				      std::move(intExpr),
 				      std::move(idExpr));
 
-    gen::retInstruction(addExpr->loadValue());
+    gen::returnInstruction(addExpr->loadValue());
 }
 
 void

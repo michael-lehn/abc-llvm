@@ -29,6 +29,8 @@ class Symtab
 	static std::pair<symtab::Entry *, bool>
 	    addDeclaration(lexer::Loc loc, UStr name, const Type *type);
 
+	static void print(std::ostream &out);
+
     private:
 	static UStr getId(UStr name);
 

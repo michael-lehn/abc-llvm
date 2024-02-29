@@ -65,23 +65,69 @@ class AstFuncDecl : public Ast
 
 class AstFuncDef : public Ast
 {
+    private:
+	std::vector<lexer::Token> fnArgName;
+	std::vector<const char *> fnArgId;
+	AstPtr body;
+
     public:
-	AstFuncDef(lexer::Token fnName, const Type *fnType,
-		   std::vector<lexer::Token> &&fnArgName);
+	AstFuncDef(lexer::Token fnName, const Type *fnType);
 
 	const lexer::Token fnName;
 	const Type * const fnType;
-	const std::vector<lexer::Token> fnArgName;
 	UStr fnId;
 
-	AstPtr body;
 
+	void appendArgName(std::vector<lexer::Token> &&fnArgName);
 	void appendBody(AstPtr &&body);
 
 	void print(int indent) const override;
 	void codegen() override;
 };
 
+//------------------------------------------------------------------------------
+
+class AstVar : public Ast
+{
+    public:
+	AstVar(lexer::Token varName, const Type *varType);
+
+	const lexer::Token varName;
+	const Type * const varType;
+	UStr varId;
+
+	void print(int indent) const override;
+};
+
+using AstVarPtr = std::unique_ptr<AstVar>;
+
+//------------------------------------------------------------------------------
+
+class AstExternVar : public Ast
+{
+    public:
+	AstExternVar(AstListPtr &&declList);
+
+	const AstListPtr declList;
+
+	void print(int indent) const override;
+	void codegen() override;
+};
+
+//------------------------------------------------------------------------------
+
+class AstReturn : public Ast
+{
+    public:
+	AstReturn(ExprPtr &&expr);
+
+	ExprPtr expr;
+
+	void print(int indent) const override;
+	void codegen() override;
+};
+
+//------------------------------------------------------------------------------
 
 } // namespace abc
 

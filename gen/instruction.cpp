@@ -46,7 +46,7 @@ jumpInstruction(Label label)
 }
 
 void
-retInstruction(Value val)
+returnInstruction(Value val)
 {
     if (val) {
 	store(val, functionBuildingInfo.retVal);

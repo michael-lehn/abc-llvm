@@ -1,7 +1,10 @@
 #include <unordered_map>
 #include <iostream>
 
+#include "expr/expr.hpp"
 #include "gen/function.hpp"
+#include "gen/instruction.hpp"
+#include "gen/variable.hpp"
 #include "lexer/error.hpp"
 #include "symtab/symtab.hpp"
 
@@ -79,7 +82,8 @@ AstFuncDecl::AstFuncDecl(lexer::Token fnName, const Type *fnType,
     : fnName{fnName}, fnType{fnType}, fnArgName{std::move(fnArgName)}
     , externalLinkage{externalLinkage}
 {
-    assert(this->fnArgName.size() == this->fnType->argType().size());
+    assert(this->fnArgName.size() == this->fnType->argType().size()
+	    || this->fnArgName.size() == 0);
 
     auto addDecl = Symtab::addDeclaration(fnName.loc, fnName.val, fnType);
     if (addDecl.first) {
@@ -93,7 +97,9 @@ AstFuncDecl::print(int indent) const
     error::out(indent) << (externalLinkage ? "extern " : "");
     error::out() << "fn " << fnName.val << "(";
     for (std::size_t i = 0; i < fnType->argType().size(); ++i) {
-	error::out() << fnArgName[i].val;
+	if (i < fnArgName.size()) {
+	    error::out() << fnArgName[i].val;
+	}
 	error::out() << ": " << fnType->argType()[i];
 	if (i + 1 < fnType->argType().size()) {
 	    error::out() << ", ";
@@ -120,16 +126,35 @@ AstFuncDecl::codegen()
 /*
  * AstFuncDef
  */
-AstFuncDef::AstFuncDef(lexer::Token fnName, const Type *fnType,
-		       std::vector<lexer::Token> &&fnArgName)
-    : fnName{fnName}, fnType{fnType}, fnArgName{std::move(fnArgName)}
+AstFuncDef::AstFuncDef(lexer::Token fnName, const Type *fnType)
+    : fnName{fnName}, fnType{fnType}
 {
-    assert(this->fnArgName.size() == this->fnType->argType().size());
-
     auto addDecl = Symtab::addDeclaration(fnName.loc, fnName.val, fnType);
     if (addDecl.first) {
 	fnId = addDecl.first->id;
     }
+}
+
+void
+AstFuncDef::appendArgName(std::vector<lexer::Token> &&fnArgName_)
+{
+    fnArgName = std::move(fnArgName_);
+    assert(fnArgName.size() == fnType->argType().size());
+    for (size_t i = 0; i < fnArgName.size(); ++i) {
+	auto addDecl = Symtab::addDeclaration(fnArgName[i].loc,
+					      fnArgName[i].val,
+					      fnType->argType()[i]);
+	assert(addDecl.first);
+	assert(addDecl.second);
+	fnArgId.push_back(addDecl.first->id.c_str());
+    }
+}
+
+void
+AstFuncDef::appendBody(AstPtr &&body_)
+{
+    assert(!body);
+    body = std::move(body_);
 }
 
 void
@@ -164,15 +189,100 @@ AstFuncDef::codegen()
     if (!fnId.c_str()) {
 	return;
     }
-    std::vector<const char *> arg;
-    for (const auto &name : fnArgName) {
-	arg.push_back(name.val.c_str());
-    }
-    gen::functionDefinitionBegin(fnId.c_str(), fnType, arg, false);
+    gen::functionDefinitionBegin(fnId.c_str(), fnType, fnArgId, false);
     if (body) {
 	body->codegen();
     }
     gen::functionDefinitionEnd();
+}
+
+/*
+ * AstVar
+ */
+AstVar::AstVar(lexer::Token varName, const Type *varType)
+    : varName{varName}, varType{varType}
+{
+    auto addDecl = Symtab::addDeclaration(varName.loc, varName.val, varType);
+    if (addDecl.first) {
+	varId = addDecl.first->id;
+    }
+}
+
+void
+AstVar::print(int indent) const
+{
+    error::out(indent) << varName.val << ": " << varType;
+}
+
+/*
+ * AstExternVar
+ */
+AstExternVar::AstExternVar(AstListPtr &&declList)
+    : declList{std::move(declList)}
+{
+}
+
+void
+AstExternVar::print(int indent) const
+{
+    error::out(indent) << "extern ";
+    if (declList->size() > 1) {
+	error::out() << std::endl;
+	for (std::size_t i = 0; const auto &decl : declList->node) {
+	    auto var = dynamic_cast<const AstVar *>(decl.get());
+	    assert(var);
+	    var->print(indent + 4);
+	    if (i + 1< declList->size()) {
+		error::out() << ", ";
+	    } else {
+		error::out() << "; ";
+	    }
+	    ++i;
+	}
+    } else {
+	auto var = dynamic_cast<const AstVar *>(declList->node[0].get());
+	var->print(0);
+	error::out() << "; ";
+    }
+    error::out() << std::endl;
+}
+
+void
+AstExternVar::codegen()
+{
+    for (const auto &decl : declList->node) {
+	auto var = dynamic_cast<const AstVar *>(decl.get());
+	assert(var);
+	if (var->varId.c_str()) {
+	    gen::externalVariableiDeclaration(var->varId.c_str(),
+					      var->varType);
+	}
+    }
+}
+
+/*
+ * AstReturn
+ */
+AstReturn::AstReturn(ExprPtr &&expr)
+    : expr{std::move(expr)}
+{}
+
+void
+AstReturn::print(int indent) const
+{
+    error::out(indent) << "return";
+    if (expr) {
+	error::out() << " " << expr;
+    }
+    error::out() << ";" << std::endl;
+}
+
+void
+AstReturn::codegen()
+{
+    if (expr) {
+	gen::returnInstruction(expr->loadValue());
+    }
 }
 
 } // namespace abc

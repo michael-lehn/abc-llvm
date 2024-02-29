@@ -65,6 +65,7 @@ Identifier::loadAddress() const
 {
     assert(hasAddr());
     assert(ident.c_str());
+    std::cerr << "loadAddress: " << ident.c_str() << "\n";
     return gen::loadAddress(ident.c_str());
 }
 

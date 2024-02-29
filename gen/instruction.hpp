@@ -20,7 +20,7 @@ Value instruction(AluOp op, Value left, Value right);
 
 JumpOrigin jumpInstruction(Label label);
 
-void retInstruction(Value val);
+void returnInstruction(Value val);
 
 } // namespace gen
 

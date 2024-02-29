@@ -1,5 +1,6 @@
 $(this).requires.lib := \
 	symtab/libsymtab.a \
+	expr/libexpr.a \
 	lexer/liblexer.a \
 	gen/libgen.a \
 	type/libtype.a \
