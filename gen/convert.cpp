@@ -24,7 +24,9 @@ convert(const abc::Type *abcType)
 
     llvm::Type *llvmType = nullptr;
 
-    if (abcType->isInteger()) {
+    if (abcType->isVoid()) {
+	return llvm::Type::getVoidTy(*llvmContext);
+    } else if (abcType->isInteger()) {
 	switch (abcType->numBits()) {
 	    case 1:
 		llvmType = llvm::Type::getInt1Ty(*llvmContext);

@@ -25,13 +25,20 @@ class Symtab
 	~Symtab();
 
 	static const symtab::Entry *find(UStr name, Scope inScope = AnyScope);
+	static const symtab::Entry *type(UStr name, Scope inScope = AnyScope);
 
 	static std::pair<symtab::Entry *, bool>
 	    addDeclaration(lexer::Loc loc, UStr name, const Type *type);
 
+	static std::pair<symtab::Entry *, bool>
+	    addType(lexer::Loc loc, UStr name, const Type *type);
+
 	static void print(std::ostream &out);
 
     private:
+	static std::pair<symtab::Entry *, bool>
+	    add(UStr name, symtab::Entry &&entry);
+
 	static UStr getId(UStr name);
 
 	using ScopeNode = std::unordered_map<UStr, symtab::Entry>;

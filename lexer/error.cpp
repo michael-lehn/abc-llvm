@@ -38,7 +38,6 @@ expected(lexer::TokenKind kind)
 	fatal();
 	return false;
     }
-    assert(0 && "not implemented");
     return true;
 }
 

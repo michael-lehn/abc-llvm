@@ -32,7 +32,6 @@ Symtab::~Symtab()
 const symtab::Entry *
 Symtab::find(UStr name, Scope inScope)
 {
-    name = getId(name);
     for (auto s = scope.cbegin(); s != scope.cend(); ++s) {
 	for (const auto &node: **s) {
 	    if (node.first == name) {
@@ -46,18 +45,28 @@ Symtab::find(UStr name, Scope inScope)
     return nullptr;
 }
 
+const symtab::Entry *
+Symtab::type(UStr name, Scope inScope)
+{
+    auto entry = find(name, inScope);
+    if (entry && entry->typeDeclaration()) {
+	return entry;
+    }
+    return nullptr;
+}
+
 std::pair<symtab::Entry *, bool>
 Symtab::addDeclaration(lexer::Loc loc, UStr name, const Type *type)
 {
     auto id = getId(name);
-    if (scope.front()->contains(id)) {
-	return {&scope.front()->at(id), false};
-    }
+    return add(name, symtab::Entry::createVarEntry(loc, id, type));
+}
 
-    auto entry = symtab::Entry{loc, id, type};
-    auto added = scope.front()->insert({id, entry});
-    assert(added.second);
-    return {&(*added.first).second, true};
+std::pair<symtab::Entry *, bool>
+Symtab::addType(lexer::Loc loc, UStr name, const Type *type)
+{
+    auto id = getId(name);
+    return add(name, symtab::Entry::createTypeEntry(loc, id, type));
 }
 
 void
@@ -75,6 +84,27 @@ Symtab::print(std::ostream &out)
 		out << "---\n";
 	    });
     out << "End of symtab\n";
+}
+
+std::pair<symtab::Entry *, bool>
+Symtab::add(UStr name, symtab::Entry &&entry)
+{
+    if (scope.front()->contains(name)) {
+	auto &found = scope.front()->at(name);
+	if (entry != found) {
+	    error::out() << entry.loc
+		<< ": error: incompatible redefinition\n";
+	    error::out() << found.loc
+		<< ": error: previous definition\n";
+	    error::fatal();
+	    return {nullptr, false};
+	}
+	return {&found, false};
+    }
+
+    auto added = scope.front()->insert({name, std::move(entry)});
+    assert(added.second);
+    return {&(*added.first).second, true};
 }
 
 UStr

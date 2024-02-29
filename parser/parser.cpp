@@ -1,9 +1,12 @@
+#include <iostream>
+
 #include "expr/expr.hpp"
 #include "lexer/error.hpp"
 #include "lexer/lexer.hpp"
 #include "symtab/symtab.hpp"
 #include "type/functiontype.hpp"
 #include "type/voidtype.hpp"
+#include "defaulttype.hpp"
 #include "parser.hpp"
 
 namespace abc {
@@ -20,6 +23,7 @@ AstPtr
 parser()
 {
     Symtab newScope;
+    initDefaultType();
     getToken();
 
     auto top = std::make_unique<AstList>();
@@ -88,7 +92,7 @@ parseFunctionDeclarationOrDefinition()
 
     auto fnDef = std::make_unique<AstFuncDef>(fnName, fnType);
 
-    Symtab newScope;
+    Symtab newScope(fnName.val);
     fnDef->appendParamName(std::move(fnParamName));
 
     auto fnBody = parseFunctionBody();
@@ -315,24 +319,23 @@ parseType()
 static const Type *
 parseUnqualifiedType()
 {
-    /*
     if (token.kind == TokenKind::IDENTIFIER) {
-	if (auto type = Symtab::getNamedType(token.val, Symtab::AnyScope)) {
+	if (auto entry = Symtab::type(token.val, Symtab::AnyScope)) {
 	    getToken();
-	    return type;
+	    return entry->type;
 	}
 	return nullptr;
+    /*
     } else if (auto type = parsePointerType()) {
 	return type;
     } else if (auto type = parseArrayType()) {
 	return type;
     } else if (auto type = parseFunctionType()) {
 	return type;
+    */
     } else {
 	return nullptr;
     }
-    */
-    return nullptr;
 }
 
 
