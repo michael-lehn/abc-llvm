@@ -9,15 +9,15 @@ namespace abc {
 class Identifier : public Expr
 {
     protected:
-	Identifier(UStr ident, const Type *type, lexer::Loc loc);
+	Identifier(UStr name, UStr id, const Type *type, lexer::Loc loc);
 
     public:
 
-	static ExprPtr create(UStr ident, const Type *type,
+	static ExprPtr create(UStr name, UStr id, const Type *type,
 			      lexer::Loc loc = lexer::Loc{});
 
-	const UStr ident; // identifier for code generation
-	const UStr identUser; // identifier as seen by user
+	const UStr name;
+	const UStr id;
 
 	bool hasAddr() const override;
 	bool isLValue() const override;

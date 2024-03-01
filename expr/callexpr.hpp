@@ -3,18 +3,20 @@
 
 #include "expr.hpp"
 
+/*
+
 class CallExpr : public Expr
 {
     protected:
-	CallExpr(ExprPtr &&fn, std::vector<ExprPtr> &&param, const Type *type,
+	CallExpr(ExprPtr &&fn, std::vector<ExprPtr> &&arg, const Type *type,
 		 Token::Loc loc);
 
     public:
-	static ExprPtr create(ExprPtr &&fn, std::vector<ExprPtr> &&param,
+	static ExprPtr create(ExprPtr &&fn, std::vector<ExprPtr> &&arg,
 			      Token::Loc loc = Token::Loc{});
 
 	ExprPtr fn;
-	std::vector<ExprPtr> param;
+	std::vector<ExprPtr> arg;
 
 	bool hasAddr() const override;
 	bool isLValue() const override;
@@ -33,5 +35,7 @@ class CallExpr : public Expr
 	// for printing error messages
 	virtual void printFlat(std::ostream &out, int prec) const override;
 };
+
+*/
 
 #endif // CALLEXPR_HPP

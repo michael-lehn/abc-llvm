@@ -9,16 +9,16 @@
 
 namespace abc {
 
-Identifier::Identifier(UStr ident, const Type *type, lexer::Loc loc)
-    : Expr{loc, type}, ident{ident}
+Identifier::Identifier(UStr name, UStr id, const Type *type, lexer::Loc loc)
+    : Expr{loc, type}, name{name}, id{id}
 {
 }
 
 ExprPtr
-Identifier::create(UStr ident, const Type *type, lexer::Loc loc)
+Identifier::create(UStr name, UStr id, const Type *type, lexer::Loc loc)
 {
     assert(type);
-    auto p = new Identifier{ident, type, loc};
+    auto p = new Identifier{name, id, type, loc};
     return std::unique_ptr<Identifier>{p};
 }
 
@@ -56,7 +56,6 @@ Identifier::loadValue() const
     if (type->isFunction()) {
 	return loadAddress();
     }
-    assert(ident.c_str());
     return gen::fetch(loadAddress(), type);
 }
 
@@ -64,8 +63,8 @@ gen::Value
 Identifier::loadAddress() const
 {
     assert(hasAddr());
-    assert(ident.c_str());
-    return gen::loadAddress(ident.c_str());
+    assert(id.c_str());
+    return gen::loadAddress(id.c_str());
 }
 
 void
@@ -86,13 +85,13 @@ Identifier::print(int indent) const
     if (indent) {
 	std::cerr << std::setfill(' ') << std::setw(indent) << ' ';
     }
-    std::cerr << ident << " [ " << type << " ] " << std::endl;
+    std::cerr << name << " [ " << type << " ] " << std::endl;
 }
     
 void
 Identifier::printFlat(std::ostream &out, int prec) const
 {
-    out << ident;
+    out << name;
 }
 
 } // namespace abc

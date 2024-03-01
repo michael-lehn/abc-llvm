@@ -16,6 +16,8 @@ using namespace lexer;
     
 static ExprPtr parseAssignment();
 static ExprPtr parseBinary(int prec);
+static ExprPtr parsePrefix();
+static ExprPtr parsePostfix(ExprPtr &&expr);
 static ExprPtr parsePrimary();
 
 ExprPtr
@@ -132,7 +134,7 @@ tokenKindPrec(TokenKind kind)
 static ExprPtr
 parseBinary(int prec)
 {
-    auto expr = parsePrimary();
+    auto expr = parsePrefix();
     if (!expr) {
 	return nullptr;
     }
@@ -152,6 +154,109 @@ parseBinary(int prec)
         }
     }
     return expr;
+}
+
+//------------------------------------------------------------------------------
+
+static ExprPtr
+parsePrefix()
+{
+    switch (token.kind) {
+	case TokenKind::LPAREN:
+	    getToken();
+	    if (auto type = parseType()) {
+		// it's a C cast
+		assert(0 && "Not implemented");
+		return nullptr;
+	    } else {
+		// ups, it was the '(' of a primary expression
+		auto expr = parseExpression();
+		if (!error::expected(TokenKind::RPAREN)) {
+		    return nullptr;
+		}
+		getToken();
+		return parsePostfix(std::move(expr));
+	    }
+	case TokenKind::MINUS:
+	case TokenKind::NOT:
+	case TokenKind::ASTERISK:
+	case TokenKind::AND:
+	case TokenKind::PLUS2:
+	case TokenKind::MINUS2:
+	    assert(0 && "Not implemented");
+	    return nullptr;
+	default:
+	    return parsePostfix(parsePrimary());
+    }
+} 
+
+//------------------------------------------------------------------------------
+
+static ExprPtr
+parsePostfix(ExprPtr &&expr)
+{
+    if (token.kind != TokenKind::DOT && token.kind != TokenKind::LPAREN
+     && token.kind != TokenKind::LBRACKET
+     && token.kind != TokenKind::ARROW && token.kind != TokenKind::PLUS2
+     && token.kind != TokenKind::MINUS2)
+    {
+	return expr;
+    }
+
+    auto tok = token;
+    getToken();
+
+    if (!expr) {
+	error::out() << tok.loc
+	    << ": postfix operator '" << tok.kind << "' requires"
+	    << " non-empty expression" << std::endl;
+	error::fatal();
+
+    }
+
+    switch (tok.kind) {
+	case TokenKind::DOT:
+	    // member access
+	    assert(0 && "Not implemented");
+	    return nullptr;
+	case TokenKind::ARROW:
+	    assert(0 && "Not implemented");
+	    return nullptr;
+	case TokenKind::LPAREN:
+	    /*
+	    // function call
+	    {
+		// parse parameter list
+		auto loc = token.loc;
+		std::vector<ExprPtr> param;
+		while (auto p = parseExpression()) {
+		    param.push_back(std::move(p));
+		    if (token.kind != TokenKind::COMMA) {
+			break;
+		    }
+		    getToken();
+		}
+		error::expected(TokenKind::RPAREN);
+		getToken();
+
+		loc = combineLoc(expr->loc, token.loc);
+		expr = CallExpr::create(std::move(expr), std::move(param), loc);
+		return parsePostfix(std::move(expr));
+	    }
+	    */
+	case TokenKind::LBRACKET:
+	    assert(0 && "Not implemented");
+	    return nullptr;
+	case TokenKind::PLUS2:
+	    assert(0 && "Not implemented");
+	    return nullptr;
+	case TokenKind::MINUS2:
+	    assert(0 && "Not implemented");
+	    return nullptr;
+	default:
+	    assert(0);
+	    return nullptr;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -177,7 +282,7 @@ parsePrimary()
 	    return nullptr;
 	} else if (auto var = Symtab::variable(tok.val, Symtab::AnyScope)) {
 	    auto ty = var->type;
-	    auto expr = Identifier::create(tok.val, ty, tok.loc);
+	    auto expr = Identifier::create(tok.val, var->id, ty, tok.loc);
 	    return expr;
 	} else {
 	    error::out() << tok.loc << ": error undefined identifier\n";
@@ -207,6 +312,17 @@ parsePrimary()
 	}
 	auto val = *tok.processedVal.c_str();
 	auto expr = IntegerLiteral::create(val, ty, tok.loc);
+        return expr;
+    } else if (token.kind == TokenKind::LPAREN) {
+        getToken();
+	auto expr = parseExpression();
+        if (!expr) {
+	    error::out() << token.loc << " expected non-empty expression"
+		<< std::endl;
+	    error::fatal();
+	}
+	error::expected(TokenKind::RPAREN);
+        getToken();
         return expr;
     } else {
 	return nullptr;

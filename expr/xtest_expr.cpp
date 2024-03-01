@@ -21,6 +21,7 @@ main()
     std::cerr << "unsigned val = " << intExpr->getUnsignedIntValue() << "\n";
 
     auto idExpr = Identifier::create(UStr::create("a"),
+				     UStr::create("a"),
 				     IntegerType::createSigned(32));
     std::cerr << idExpr << "\n";
 

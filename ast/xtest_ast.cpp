@@ -63,7 +63,7 @@ makeExpr()
 	assert(0);
     }
     std::cerr << "argcExpr with id = " << entry->id << "\n";
-    auto argcExpr = abc::Identifier::create(entry->id, entry->type);
+    auto argcExpr = abc::Identifier::create(name, entry->id, entry->type);
 
     auto intType = abc::IntegerType::createSigned(32)->getAlias("int");
     auto intExpr = abc::IntegerLiteral::create(-1, intType);

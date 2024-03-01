@@ -11,7 +11,9 @@ fn foo(:i32): i32
 
 fn main(argc: i32): i32
 {
-    a += 4;
-    a *= 4;
-    return a;
+    local b: i32;
+
+    b = 4;
+    b *= 4;
+    return b;
 }
