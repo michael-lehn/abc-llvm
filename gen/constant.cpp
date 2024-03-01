@@ -28,4 +28,18 @@ getConstantZero(const abc::Type *type)
     return llvm::Constant::getNullValue(llvmType);
 }
 
+Constant
+getFalse()
+{
+    assert(llvmContext);
+    return llvm::ConstantInt::getFalse(*llvmContext);
+}
+
+Constant
+getTrue()
+{
+    assert(llvmContext);
+    return llvm::ConstantInt::getTrue(*llvmContext);
+}
+
 } // namespace gen

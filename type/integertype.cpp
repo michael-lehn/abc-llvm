@@ -46,6 +46,12 @@ IntegerType::create(std::size_t numBits, bool signed_, bool constFlag,
 }
 
 const Type *
+IntegerType::createBool()
+{
+    return createUnsigned(1);
+}
+
+const Type *
 IntegerType::createChar()
 {
     return createSigned(8);
@@ -91,6 +97,12 @@ std::size_t
 IntegerType::numBits() const
 {
     return numBits_;
+}
+
+bool
+IntegerType::isBool() const
+{
+    return numBits() == 1;
 }
 
 bool

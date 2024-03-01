@@ -4,8 +4,10 @@
 
 #include "gen/constant.hpp"
 #include "gen/instruction.hpp"
+#include "gen/label.hpp"
 #include "gen/variable.hpp"
 #include "lexer/error.hpp"
+#include "type/integertype.hpp"
 
 #include "binaryexpr.hpp"
 #include "identifier.hpp"
@@ -96,8 +98,65 @@ BinaryExpr::isConst() const
 gen::Constant
 BinaryExpr::loadConstant() const
 {
-    using T = std::remove_pointer_t<gen::Constant>;
-    return llvm::dyn_cast<T>(loadValue());
+    assert(type);
+    assert(isConst());
+    switch (kind) {
+	default:
+	    assert(0);
+	    return nullptr;
+	case ADD:
+	case SUB:
+	case MUL:
+	case DIV:
+	case MOD:
+	    if (kind == ADD && type->isPointer()) {
+		// pointer + integer
+		assert(left->type->isPointer());
+		assert(right->type->isInteger());
+		assert(0 && "Not implemented");
+		return nullptr;
+	    } else if (kind == SUB && left->type->isPointer()) {
+		// pointer - pointer
+		assert(right->type->isPointer());
+		assert(type->isInteger());
+		assert(0 && "Not implemented");
+		return nullptr;
+		/*
+		return gen::ptrDiff(left->type->getRefType(),
+				    left->loadValue(),
+				    right->loadValue());
+		*/
+	    } else {
+		return gen::instruction(getGenInstructionOp(kind, type),
+					left->loadConstant(),
+					right->loadConstant());
+	    }
+	case LESS:
+	case LESS_EQUAL:
+	case GREATER:
+	case GREATER_EQUAL:
+	case NOT_EQUAL:
+	case EQUAL:
+	    return gen::instruction(getGenInstructionOp(kind, left->type),
+				    left->loadConstant(),
+				    right->loadConstant());
+	case LOGICAL_AND:
+	    if (!left->loadConstant()->isZeroValue()
+		    && !right->loadConstant()->isZeroValue())
+	    { 
+		return gen::getTrue();
+	    } else {
+		return gen::getFalse();
+	    }
+	case LOGICAL_OR:
+	    if (!left->loadConstant()->isZeroValue()
+		    || !right->loadConstant()->isZeroValue())
+	    { 
+		return gen::getTrue();
+	    } else {
+		return gen::getFalse();
+	    }
+    }
 }
 
 gen::Value
@@ -146,6 +205,9 @@ BinaryExpr::handleArithmetricOperation(Kind kind) const
 gen::Value
 BinaryExpr::loadValue() const
 {
+    if (isConst()) {
+	return loadConstant();
+    }
     assert(type);
     switch (kind) {
 	case ASSIGN:
@@ -184,26 +246,22 @@ BinaryExpr::loadValue() const
 	case LOGICAL_AND:
 	case LOGICAL_OR:
 	    {
-		/*
 		auto trueLabel = gen::getLabel("true");
 		auto falseLabel = gen::getLabel("false");
 		auto phiLabel = gen::getLabel("true");
 
 		condition(trueLabel, falseLabel);
 
-		gen::labelDef(trueLabel);
-		auto one = gen::loadIntConst(1, type);
-		gen::jmp(phiLabel);
+		gen::defineLabel(trueLabel);
+		trueLabel = gen::jumpInstruction(phiLabel);
 
-		gen::labelDef(falseLabel);
-		auto zero = gen::loadIntConst(0, type);
-		gen::jmp(phiLabel);
+		gen::defineLabel(falseLabel);
+		falseLabel = gen::jumpInstruction(phiLabel);
 
-		gen::labelDef(phiLabel);
-		return gen::phi(one, trueLabel, zero, falseLabel, type);
-		*/
-		assert(0 && "Not implemented");
-		return nullptr;
+		gen::defineLabel(phiLabel);
+		return gen::phi(gen::getTrue(), trueLabel,
+				gen::getFalse(), falseLabel,
+				IntegerType::createBool());
 	    }
 	    
 	default:
@@ -237,13 +295,12 @@ BinaryExpr::condition(gen::Label trueLabel, gen::Label falseLabel) const
 		gen::jumpInstruction(cond, trueLabel, falseLabel);
 		return;
 	    }
-	/*
 	case LOGICAL_AND:
             {
 		auto chkRightLabel = gen::getLabel("chkRight");
 
 		left->condition(chkRightLabel, falseLabel);
-		gen::labelDef(chkRightLabel);
+		gen::defineLabel(chkRightLabel);
 		right->condition(trueLabel, falseLabel);
 		return;
             }
@@ -252,11 +309,10 @@ BinaryExpr::condition(gen::Label trueLabel, gen::Label falseLabel) const
 		auto chkRightLabel = gen::getLabel("chkRight");
 		
 		left->condition(trueLabel, chkRightLabel);
-		gen::labelDef(chkRightLabel);
+		gen::defineLabel(chkRightLabel);
 		right->condition(trueLabel, falseLabel);
 		return;
             }
-	*/
 	default:
 	    {
 		auto zero = gen::getConstantZero(type);

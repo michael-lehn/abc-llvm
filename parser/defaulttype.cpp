@@ -12,6 +12,9 @@ initDefaultType()
     Symtab::addType(lexer::Loc{}, UStr::create("void"),
 		    VoidType::create());
 
+    Symtab::addType(lexer::Loc{}, UStr::create("bool"),
+		    IntegerType::createBool());
+
     Symtab::addType(lexer::Loc{}, UStr::create("i8"),
 		    IntegerType::createSigned(8));
     Symtab::addType(lexer::Loc{}, UStr::create("i16"),

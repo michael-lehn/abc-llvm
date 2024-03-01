@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "convert.hpp"
 #include "function.hpp"
 #include "instruction.hpp"
 #include "variable.hpp"
@@ -56,15 +57,24 @@ instruction(InstructionOp op, Value left, Value right)
     }
 }
 
+Constant
+instruction(InstructionOp op, Constant left, Constant right)
+{
+    auto left_ = llvm::dyn_cast<llvm::Value>(left);
+    auto right_ = llvm::dyn_cast<llvm::Value>(right);
+    return llvm::dyn_cast<llvm::Constant>(instruction(op, left_, right_));
+}
+
 JumpOrigin
 jumpInstruction(Label label)
 {
     assert(llvmBuilder);
     assert(functionBuildingInfo.fn);
-    assert(!functionBuildingInfo.bbClosed);
 
     auto ib = llvmBuilder->GetInsertBlock();
-    llvmBuilder->CreateBr(label);
+    if (!functionBuildingInfo.bbClosed) {
+	llvmBuilder->CreateBr(label);
+    }
     functionBuildingInfo.bbClosed = true;
     return ib;
 }
@@ -80,6 +90,18 @@ jumpInstruction(Value condition, Label trueLabel, Label falseLabel)
     llvmBuilder->CreateCondBr(condition, trueLabel, falseLabel);
     functionBuildingInfo.bbClosed = true;
     return ib;
+}
+
+Value
+phi(Value a, Label labelA, Value b, Label labelB, const abc::Type *type)
+{
+    assert(llvmBuilder);
+
+    auto llvmType = convert(type);
+    auto phi = llvmBuilder->CreatePHI(llvmType, 2);
+    phi->addIncoming(a, labelA);
+    phi->addIncoming(b, labelB);
+    return phi;
 }
 
 void

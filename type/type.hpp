@@ -31,10 +31,10 @@ class Type
 	virtual bool hasConstFlag() const;
 
 	virtual bool isVoid() const;
-	virtual bool isBool() const;
 	virtual bool isNullptr() const;
 
 	// for integer (sub-)types 
+	virtual bool isBool() const;
 	virtual bool isInteger() const;
 	virtual bool isSignedInteger() const;
 	virtual bool isUnsignedInteger() const;

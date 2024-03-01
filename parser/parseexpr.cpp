@@ -1,5 +1,6 @@
 #include "expr/binaryexpr.hpp"
 #include "expr/callexpr.hpp"
+#include "expr/explicitcast.hpp"
 #include "expr/identifier.hpp"
 #include "expr/integerliteral.hpp"
 #include "lexer/error.hpp"
@@ -161,15 +162,20 @@ parseBinary(int prec)
 static ExprPtr
 parsePrefix()
 {
+    auto tok = token;
     switch (token.kind) {
 	case TokenKind::LPAREN:
+	    // Is it a C cast ?
 	    getToken();
 	    if (auto type = parseType()) {
-		// it's a C cast
-		assert(0 && "Not implemented");
-		return nullptr;
+		// Yes, it's a C cast!
+		if (!error::expected(TokenKind::RPAREN)) {
+		    return nullptr;
+		}
+		getToken();
+		return ExplicitCast::create(parsePrefix(), type, tok.loc);
 	    } else {
-		// ups, it was the '(' of a primary expression
+		// Ups, it was the '(' of a primary expression
 		auto expr = parseExpression();
 		if (!error::expected(TokenKind::RPAREN)) {
 		    return nullptr;
@@ -273,7 +279,7 @@ parsePrimary()
     auto tok = token;
     if (tok.kind == TokenKind::IDENTIFIER) {
 	getToken();
-	if (auto type = Symtab::type(tok.val, Symtab::AnyScope)) {
+	if (/*auto type = */Symtab::type(tok.val, Symtab::AnyScope)) {
 	    assert(0 && "Not implemented");
 	    return nullptr;
 	} else if (auto var = Symtab::variable(tok.val, Symtab::AnyScope)) {

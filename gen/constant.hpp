@@ -10,6 +10,8 @@ ConstantInt getConstantInt(const char *val, const abc::Type *type,
 			   std::uint8_t radix = 10);
 
 Constant getConstantZero(const abc::Type *type);
+Constant getFalse();
+Constant getTrue();
 
 } // namespace gen
 
