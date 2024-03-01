@@ -109,4 +109,14 @@ functionDefinitionEnd()
     functionBuildingInfo.bbClosed = true;
 }
 
+Value
+functionCall(Value fnAddr, const abc::Type *fnType,
+	     const std::vector<Value> &arg)
+{
+    assert(fnType);
+    auto llvmFnType = llvm::dyn_cast<llvm::FunctionType>(convert(fnType));
+    assert(llvmFnType);
+    return llvmBuilder->CreateCall(llvmFnType, fnAddr, arg);
+}
+
 } // namespace gen

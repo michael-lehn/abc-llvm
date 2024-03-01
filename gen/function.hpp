@@ -30,6 +30,9 @@ void functionDefinitionBegin(const char *ident, const abc::Type *fnType,
 
 void functionDefinitionEnd();
 
+Value functionCall(Value fnAddr, const abc::Type *fnType,
+		   const std::vector<Value> &arg);
+
 } // namespace gen
 
 #endif // GEN_FUNCTION

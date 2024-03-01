@@ -18,7 +18,9 @@ Symtab::Symtab(UStr scopePrefix_)
     assert((scopeSize == 1 && scopePrefix_.c_str())
 	|| (scopeSize != 1 && !scopePrefix_.c_str()));
 
-    scopePrefix = scopePrefix_;
+    if (scopePrefix_.c_str() || scopeSize == 0) {
+	scopePrefix = scopePrefix_;
+    }
     scope.push_front(std::make_unique<ScopeNode>());
     ++scopeSize;
 }
@@ -123,6 +125,7 @@ Symtab::getId(UStr name)
     assert(!name.empty());
     std::string idStr = name.c_str();
     if (scopeSize > 1) {
+	assert(scopePrefix.c_str());
 	std::stringstream ss;
 	ss << "." << scopePrefix.c_str() << "." << idStr << "." << scopeSize;
 	idStr = ss.str();

@@ -4,6 +4,7 @@
 #include "expr/expr.hpp"
 #include "gen/function.hpp"
 #include "gen/instruction.hpp"
+#include "gen/label.hpp"
 #include "gen/variable.hpp"
 #include "lexer/error.hpp"
 #include "symtab/symtab.hpp"
@@ -403,6 +404,93 @@ AstExpr::codegen()
 {
     if (expr) {
 	expr->loadValue(); 
+    }
+}
+
+/*
+ * AstCompound
+ */
+AstCompound::AstCompound(AstPtr &&body)
+    : body{std::move(body)}
+{}
+
+void
+AstCompound::print(int indent) const
+{
+    error::out(indent) << "{\n";
+    if (body) {
+	body->print(indent + 4);
+    }
+    error::out(indent) << "}\n";
+}
+
+void
+AstCompound::codegen()
+{
+    if (body) {
+	body->codegen();
+    }
+}
+
+void
+AstCompound::apply(std::function<bool(Ast *)> op)
+{
+    if (op(this) && body) {
+	body->apply(op);
+    }
+}
+
+/*
+ * AstIf
+ */
+AstIf::AstIf(ExprPtr &&cond, AstPtr &&thenBody)
+    : cond{std::move(cond)}, thenBody{std::move(thenBody)}
+{}
+
+AstIf::AstIf(ExprPtr &&cond, AstPtr &&thenBody, AstPtr &&elseBody)
+    : cond{std::move(cond)}, thenBody{std::move(thenBody)}
+    , elseBody{std::move(elseBody)}
+{}
+
+void
+AstIf::print(int indent) const
+{
+    error::out(indent) << "if (" << cond << ")" << std::endl;
+    thenBody->print(indent);
+    if (elseBody) {
+	error::out(indent) << "else" << std::endl;
+	elseBody->print(indent);
+    }
+}
+
+void
+AstIf::codegen()
+{
+    auto thenLabel = gen::getLabel("then");
+    auto elseLabel = gen::getLabel("else");
+    auto endLabel = gen::getLabel("end");
+
+    cond->condition(thenLabel, elseLabel);
+    gen::defineLabel(thenLabel);
+    thenBody->codegen();
+    gen::jumpInstruction(endLabel);
+    gen::defineLabel(elseLabel);
+    if (elseBody) {
+	elseBody->codegen();
+    }
+    gen::jumpInstruction(endLabel); // connect with 'end'
+				    // (even if 'else' is empyt)
+    gen::defineLabel(endLabel);
+}
+
+void
+AstIf::apply(std::function<bool(Ast *)> op)
+{
+    if (op(this)) {
+	thenBody->apply(op);
+	if (elseBody) {
+	    elseBody->apply(op);
+	}
     }
 }
 

@@ -1,7 +1,8 @@
 #include <iostream>
 #include <iomanip>
 
-#include "gen/gen.hpp"
+#include "gen/constant.hpp"
+#include "gen/instruction.hpp"
 #include "gen/variable.hpp"
 #include "lexer/error.hpp"
 
@@ -23,10 +24,10 @@ Identifier::create(UStr name, UStr id, const Type *type, lexer::Loc loc)
 }
 
 bool
-Identifier::hasAddr() const
+Identifier::hasAddress() const
 {
     assert(type);
-    return type->hasSize();
+    return type->isFunction() || type->hasSize();
 }
 
 bool
@@ -62,20 +63,17 @@ Identifier::loadValue() const
 gen::Value
 Identifier::loadAddress() const
 {
-    assert(hasAddr());
+    assert(hasAddress());
     assert(id.c_str());
     return gen::loadAddress(id.c_str());
 }
 
 void
-Identifier::condJmp(gen::Label trueLabel, gen::Label falseLabel) const
+Identifier::condition(gen::Label trueLabel, gen::Label falseLabel) const
 {
-    assert(0 && "Not implemented");
-    /*
-    auto zero = gen::loadZero(type);
-    auto cond = gen::cond(gen::NE, loadValue(), zero);
-    gen::jmp(cond, trueLabel, falseLabel);
-    */
+    auto zero = gen::getConstantZero(type);
+    auto cond = gen::instruction(gen::NE, loadValue(), zero);
+    gen::jumpInstruction(cond, trueLabel, falseLabel);
 }
 
 // for debugging and educational purposes

@@ -9,6 +9,7 @@ namespace gen {
 
 // Map with all local variables
 static std::unordered_map<const char *, llvm::AllocaInst *> localVariable;
+static Value lookup(const char *ident);
 
 //------------------------------------------------------------------------------
 
@@ -20,7 +21,7 @@ externalVariableiDeclaration(const char *ident, const abc::Type *varType)
 
     auto linkage = llvm::GlobalValue::ExternalLinkage;
 
-    if (auto found = loadAddress(ident)) {
+    if (auto found = lookup(ident)) {
 	// variable exists, assert it is a global variable
 	auto var = llvm::dyn_cast<llvm::GlobalVariable>(found);
 	assert(var);
@@ -60,7 +61,7 @@ globalVariableDefinition(const char *ident, const abc::Type *varType,
 	initialValue = llvm::Constant::getNullValue(llvmVarType);
     }
 
-    if (auto found = loadAddress(ident)) {
+    if (auto found = lookup(ident)) {
 	// variable exists, assert it is a global variable
 	auto var = llvm::dyn_cast<llvm::GlobalVariable>(found);
 	assert(var);
@@ -103,8 +104,8 @@ forgetAllLocalVariables()
     localVariable.clear();
 }
 
-Value
-loadAddress(const char *ident)
+static Value
+lookup(const char *ident)
 {
     assert(llvmModule);
     if (auto var = llvmModule->getGlobalVariable(ident, true)) {
@@ -116,6 +117,18 @@ loadAddress(const char *ident)
     } else {
 	return nullptr;
     }
+}
+
+Value
+loadAddress(const char *ident)
+{
+    auto addr = lookup(ident);
+    if (!addr) {
+	std::cerr << "gen::loadAddress: identifier "
+	    << ident << " was not defined.\n";
+	assert(0);
+    }
+    return addr;
 }
 
 Value

@@ -24,7 +24,7 @@ class Expr
 
     public:
 	// for sematic checks
-	virtual bool hasAddr() const = 0;
+	virtual bool hasAddress() const = 0;
 	virtual bool isLValue() const = 0;
 	virtual bool isConst() const = 0;
 
@@ -32,8 +32,8 @@ class Expr
 	virtual gen::Constant loadConstant() const = 0;
 	virtual gen::Value loadValue() const = 0;
 	virtual gen::Value loadAddress() const = 0;
-	virtual void condJmp(gen::Label trueLabel,
-			     gen::Label falseLabel) const = 0;
+	virtual void condition(gen::Label trueLabel,
+			       gen::Label falseLabel) const = 0;
 
 	// for debugging and educational purposes
 	virtual void print(int indent = 1) const = 0;

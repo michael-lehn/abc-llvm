@@ -4,7 +4,7 @@
 #include <sstream>
 
 #include "gen/constant.hpp"
-#include "gen/gen.hpp"
+#include "gen/instruction.hpp"
 #include "integerliteral.hpp"
 #include "lexer/error.hpp"
 #include "type/integertype.hpp"
@@ -48,7 +48,7 @@ IntegerLiteral::create(std::int64_t val, const Type *type, lexer::Loc loc)
 }
 
 bool
-IntegerLiteral::hasAddr() const
+IntegerLiteral::hasAddress() const
 {
     return false;
 }
@@ -86,14 +86,11 @@ IntegerLiteral::loadAddress() const
 }
 
 void
-IntegerLiteral::condJmp(gen::Label trueLabel, gen::Label falseLabel) const
+IntegerLiteral::condition(gen::Label trueLabel, gen::Label falseLabel) const
 {
-    /*
-    auto zero = gen::loadZero(type);
-    auto cond = gen::cond(gen::NE, loadValue(), zero);
-    gen::jmp(cond, trueLabel, falseLabel);
-    */
-    assert(0 && "Not implemented");
+    auto zero = gen::getConstantZero(type);
+    auto cond = gen::instruction(gen::NE, loadValue(), zero);
+    gen::jumpInstruction(cond, trueLabel, falseLabel);
 }
 
 // for debugging and educational purposes

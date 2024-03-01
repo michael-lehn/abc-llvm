@@ -5,8 +5,7 @@
 
 namespace gen {
 
-// ALU
-enum AluOp {
+enum InstructionOp {
     ADD,
     SUB,
     SMUL,
@@ -14,11 +13,25 @@ enum AluOp {
     SMOD,
     UDIV,
     UMOD,
+    EQ,
+    NE,
+    SGT,
+    SGE,
+    SLT,
+    SLE,
+    UGT,
+    UGE,
+    ULT,
+    ULE,
+    AND,
+    OR,
 };
 
-Value instruction(AluOp op, Value left, Value right);
+Value instruction(InstructionOp op, Value left, Value right);
 
 JumpOrigin jumpInstruction(Label label);
+
+JumpOrigin jumpInstruction(Value condition, Label trueLabel, Label falseLabel);
 
 void returnInstruction(Value val);
 

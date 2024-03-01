@@ -46,7 +46,7 @@ class BinaryExpr : public Expr
 	const ExprPtr left, right;
 
     public:
-	bool hasAddr() const override;
+	bool hasAddress() const override;
 	bool isLValue() const override;
 
     private:
@@ -64,8 +64,8 @@ class BinaryExpr : public Expr
     public:
 	gen::Value loadValue() const override;
 	gen::Value loadAddress() const override;
-	void condJmp(gen::Label trueLabel,
-		     gen::Label falseLabel) const override;
+	void condition(gen::Label trueLabel,
+		       gen::Label falseLabel) const override;
 
 	// for debugging and educational purposes
 	void print(int indent) const override;

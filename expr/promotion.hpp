@@ -11,6 +11,14 @@
 namespace abc { namespace promotion {
 
 /*
+ * Rules for call expressions
+ */
+
+using CallResult = std::tuple<ExprPtr, std::vector<ExprPtr>, const Type *>;
+
+CallResult call(ExprPtr &&fn, std::vector<ExprPtr> &&param, lexer::Loc *loc);
+
+/*
  * Rules for binary expressions
  */
 

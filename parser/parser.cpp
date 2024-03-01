@@ -271,7 +271,6 @@ static AstPtr parseStatementOrDeclarationList();
 /*
  * function-body = "{" statement-or-declaration-list "}"
  */
-
 static AstPtr
 parseFunctionBody()
 {
@@ -595,6 +594,8 @@ parseLocalVariableDeclaration()
 
 
 //------------------------------------------------------------------------------
+static AstPtr parseCompoundStatement();
+static AstPtr parseIfStatement();
 static AstPtr parseReturnStatement();
 static AstPtr parseExpressionStatement();
 
@@ -617,10 +618,84 @@ parseStatement()
 {
     AstPtr ast;
 
-    (ast = parseReturnStatement())
+    (ast = parseCompoundStatement())
+    || (ast = parseIfStatement())
+    || (ast = parseReturnStatement())
     || (ast = parseExpressionStatement());
 
     return ast;
+}
+//------------------------------------------------------------------------------
+/*
+ * compound-statement = "{" statement-or-declaration-list "}"
+ */
+static AstPtr
+parseCompoundStatement()
+{
+    if (token.kind != TokenKind::LBRACE) {
+	return nullptr;
+    }
+    getToken();
+
+    Symtab newScope;
+    auto body = parseStatementOrDeclarationList();
+
+    if (!error::expected(TokenKind::RBRACE)) {
+	return nullptr;
+    }
+    getToken();
+    return std::make_unique<AstCompound>(std::move(body));
+}
+
+//------------------------------------------------------------------------------
+/*
+ * if-statement = "if" "(" expression ")" compound-statement
+ *		    [ "else" if-statement | compound-statement ]
+ */
+static AstPtr
+parseIfStatement()
+{
+    if (token.kind != TokenKind::IF) {
+	return nullptr;
+    }
+    getToken();
+    if (!error::expected(TokenKind::LPAREN)) {
+	return nullptr;
+    }
+    getToken();
+    auto ifCond = parseExpression();
+    if (!ifCond) {
+	error::out() << token.loc << ": expression expected" << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    if (!error::expected(TokenKind::RPAREN)) {
+	return nullptr;
+    }
+    getToken();
+    auto thenBody = parseCompoundStatement();
+    if (!thenBody) {
+	error::out() << token.loc << ": compound statement expected"
+	    << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    if (token.kind == TokenKind::ELSE) {
+	getToken();
+	auto elseBody = parseCompoundStatement();
+	if (!elseBody) {
+	    elseBody = parseIfStatement();
+	}
+	if (!elseBody) {
+	    error::out() << token.loc << ": compound statement expected"
+		<< std::endl;
+	    error::fatal();
+	    return nullptr;
+	}
+	return std::make_unique<AstIf>(std::move(ifCond), std::move(thenBody),
+				       std::move(elseBody));
+    }
+    return std::make_unique<AstIf>(std::move(ifCond), std::move(thenBody));
 }
 
 //------------------------------------------------------------------------------
@@ -651,7 +726,6 @@ parseExpressionStatement()
 {
     auto expr = parseExpression();
     if (expr) {
-	std::cerr << "parseExpressionStatement: " << expr << "\n";
 	error::expected(TokenKind::SEMICOLON);
     }
     if (token.kind != TokenKind::SEMICOLON) {

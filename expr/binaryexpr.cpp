@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 
+#include "gen/constant.hpp"
 #include "gen/instruction.hpp"
 #include "gen/variable.hpp"
 #include "lexer/error.hpp"
@@ -11,12 +12,8 @@
 #include "promotion.hpp"
 
 static const char *kindStr(abc::BinaryExpr::Kind kind);
-static gen::AluOp getGenAluOp(abc::BinaryExpr::Kind kind,
-			      const abc::Type *type);
-/*
-static gen::CondOp getGenCondOp(abc::BinaryExpr::Kind kind,
-				const abc::Type *type);
-*/
+static gen::InstructionOp getGenInstructionOp(abc::BinaryExpr::Kind kind,
+					      const abc::Type *type);
 
 static void printFlat(std::ostream &out, int precCaller, int prec,
 		      const abc::Expr *left, const abc::Expr *right,
@@ -49,7 +46,7 @@ BinaryExpr::create(Kind kind, ExprPtr &&left, ExprPtr &&right, lexer::Loc loc)
 }
 
 bool
-BinaryExpr::hasAddr() const
+BinaryExpr::hasAddress() const
 {
     return false;
 }
@@ -139,7 +136,7 @@ BinaryExpr::handleArithmetricOperation(Kind kind) const
 				    right->loadValue());
 		*/
 	    } else {
-		return gen::instruction(getGenAluOp(kind, type),
+		return gen::instruction(getGenInstructionOp(kind, type),
 					left->loadValue(),
 					right->loadValue());
 	    }
@@ -181,13 +178,9 @@ BinaryExpr::loadValue() const
 	case GREATER_EQUAL:
 	case NOT_EQUAL:
 	case EQUAL:
-	    assert(0 && "Not implemented");
-	    return nullptr;
-	    /*
-	    return gen::cond(getGenCondOp(kind, left->type),
-			     left->loadValue(),
-			     right->loadValue());
-	    */
+	    return gen::instruction(getGenInstructionOp(kind, left->type),
+				    left->loadValue(),
+				    right->loadValue());
 	case LOGICAL_AND:
 	case LOGICAL_OR:
 	    {
@@ -196,7 +189,7 @@ BinaryExpr::loadValue() const
 		auto falseLabel = gen::getLabel("false");
 		auto phiLabel = gen::getLabel("true");
 
-		condJmp(trueLabel, falseLabel);
+		condition(trueLabel, falseLabel);
 
 		gen::labelDef(trueLabel);
 		auto one = gen::loadIntConst(1, type);
@@ -227,10 +220,8 @@ BinaryExpr::loadAddress() const
 }
 
 void
-BinaryExpr::condJmp(gen::Label trueLabel, gen::Label falseLabel) const
+BinaryExpr::condition(gen::Label trueLabel, gen::Label falseLabel) const
 {
-    assert(0 && "Not implemented");
-    /*
     switch (kind) {
 	case LESS:
 	case LESS_EQUAL:
@@ -239,40 +230,41 @@ BinaryExpr::condJmp(gen::Label trueLabel, gen::Label falseLabel) const
 	case NOT_EQUAL:
 	case EQUAL:
 	    {
-		assert(*left->type == *right->type);
-		auto cond = gen::cond(getGenCondOp(kind, left->type),
-				      left->loadValue(),
-				      right->loadValue());
-		gen::jmp(cond, trueLabel, falseLabel);
+		auto op = getGenInstructionOp(kind, left->type);
+		auto cond = gen::instruction(op,
+					     left->loadValue(),
+					     right->loadValue());
+		gen::jumpInstruction(cond, trueLabel, falseLabel);
 		return;
 	    }
+	/*
 	case LOGICAL_AND:
             {
 		auto chkRightLabel = gen::getLabel("chkRight");
 
-		left->condJmp(chkRightLabel, falseLabel);
+		left->condition(chkRightLabel, falseLabel);
 		gen::labelDef(chkRightLabel);
-		right->condJmp(trueLabel, falseLabel);
+		right->condition(trueLabel, falseLabel);
 		return;
             }
 	case LOGICAL_OR:
             {
 		auto chkRightLabel = gen::getLabel("chkRight");
 		
-		left->condJmp(trueLabel, chkRightLabel);
+		left->condition(trueLabel, chkRightLabel);
 		gen::labelDef(chkRightLabel);
-		right->condJmp(trueLabel, falseLabel);
+		right->condition(trueLabel, falseLabel);
 		return;
             }
+	*/
 	default:
 	    {
-		auto zero = gen::loadZero(type);
-		auto cond = gen::cond(gen::NE, loadValue(), zero);
-		gen::jmp(cond, trueLabel, falseLabel);
+		auto zero = gen::getConstantZero(type);
+		auto cond = gen::instruction(gen::NE, loadValue(), zero);
+		gen::jumpInstruction(cond, trueLabel, falseLabel);
 		return;
 	    }
     }
-    */
 }
 
 // for debugging and educational purposes
@@ -361,9 +353,8 @@ BinaryExpr::printFlat(std::ostream &out, int prec) const
 /*
  * Auxiliary functions
  */
-
-static gen::AluOp
-getGenAluOp(abc::BinaryExpr::Kind kind, const abc::Type *type)
+static gen::InstructionOp
+getGenInstructionOp(abc::BinaryExpr::Kind kind, const abc::Type *type)
 {
     assert(type);
     switch (kind) {
@@ -377,18 +368,6 @@ getGenAluOp(abc::BinaryExpr::Kind kind, const abc::Type *type)
 	    return type->isSignedInteger() ? gen::SDIV : gen::UDIV;
 	case abc::BinaryExpr::Kind::MOD:
 	    return type->isSignedInteger() ? gen::SMOD : gen::UMOD;
-	default:
-	    assert(0);
-	    return gen::ADD;
-    }
-}
-
-/*
-static gen::CondOp
-getGenCondOp(abc::BinaryExpr::Kind kind, const abc::Type *type)
-{
-    assert(type);
-    switch (kind) {
 	case abc::BinaryExpr::Kind::EQUAL:
 	    return gen::EQ;
 	case abc::BinaryExpr::Kind::NOT_EQUAL:
@@ -398,7 +377,7 @@ getGenCondOp(abc::BinaryExpr::Kind kind, const abc::Type *type)
 	case abc::BinaryExpr::Kind::LESS_EQUAL:
 	    return type->isSignedInteger() ? gen::SLE : gen::ULE;
 	case abc::BinaryExpr::Kind::GREATER:
-	    return isSignedInt ? gen::SGT : gen::UGT;
+	    return type->isSignedInteger() ? gen::SGT : gen::UGT;
 	case abc::BinaryExpr::Kind::GREATER_EQUAL:
 	    return type->isSignedInteger() ? gen::SGE : gen::UGE;
 	case abc::BinaryExpr::Kind::LOGICAL_AND:
@@ -406,12 +385,10 @@ getGenCondOp(abc::BinaryExpr::Kind kind, const abc::Type *type)
 	case abc::BinaryExpr::Kind::LOGICAL_OR:
 	    return gen::OR;
 	default:
-	    std::cerr << "Not handled: " << int(kind) << std::endl;
 	    assert(0);
-	    return gen::EQ;
+	    return gen::ADD;
     }
 }
-*/
 
 static const char *
 kindStr(abc::BinaryExpr::Kind kind)

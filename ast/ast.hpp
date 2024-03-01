@@ -169,6 +169,38 @@ class AstExpr : public Ast
 
 //------------------------------------------------------------------------------
 
+class AstCompound : public Ast
+{
+    private:
+	AstPtr body;
+
+    public:
+	AstCompound(AstPtr &&body);
+
+	void print(int indent) const override;
+	void codegen() override;
+	void apply(std::function<bool(Ast *)> op) override;
+};
+
+//------------------------------------------------------------------------------
+
+class AstIf : public Ast
+{
+    public:
+	AstIf(ExprPtr &&cond, AstPtr &&thenBody);
+	AstIf(ExprPtr &&cond, AstPtr &&thenBody, AstPtr &&elseBody);
+
+	const ExprPtr cond;
+	const AstPtr thenBody;
+	const AstPtr elseBody;
+
+	void print(int indent) const override;
+	void codegen() override;
+	void apply(std::function<bool(Ast *)> op) override;
+};
+
+//------------------------------------------------------------------------------
+
 } // namespace abc
 
 #endif // AST_HPP

@@ -1,4 +1,5 @@
 #include "expr/binaryexpr.hpp"
+#include "expr/callexpr.hpp"
 #include "expr/identifier.hpp"
 #include "expr/integerliteral.hpp"
 #include "lexer/error.hpp"
@@ -72,7 +73,6 @@ getBinaryExprKind(TokenKind kind)
 	case TokenKind::OR2:
 	    return BinaryExpr::Kind::LOGICAL_OR;
 	default:
-	    std::cerr << "BinaryExpr::Kind: kind = " << int(kind) << "\n";
 	    assert(0);
 	    return BinaryExpr::Kind::ADD; // never reached
     }
@@ -223,14 +223,12 @@ parsePostfix(ExprPtr &&expr)
 	    assert(0 && "Not implemented");
 	    return nullptr;
 	case TokenKind::LPAREN:
-	    /*
 	    // function call
 	    {
-		// parse parameter list
-		auto loc = token.loc;
-		std::vector<ExprPtr> param;
-		while (auto p = parseExpression()) {
-		    param.push_back(std::move(p));
+		// parse argument list
+		std::vector<ExprPtr> arg;
+		while (auto a = parseExpression()) {
+		    arg.push_back(std::move(a));
 		    if (token.kind != TokenKind::COMMA) {
 			break;
 		    }
@@ -238,12 +236,10 @@ parsePostfix(ExprPtr &&expr)
 		}
 		error::expected(TokenKind::RPAREN);
 		getToken();
-
-		loc = combineLoc(expr->loc, token.loc);
-		expr = CallExpr::create(std::move(expr), std::move(param), loc);
+		expr = CallExpr::create(std::move(expr), std::move(arg),
+				        tok.loc);
 		return parsePostfix(std::move(expr));
 	    }
-	    */
 	case TokenKind::LBRACKET:
 	    assert(0 && "Not implemented");
 	    return nullptr;

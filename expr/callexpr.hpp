@@ -1,33 +1,35 @@
 #ifndef CALLEXPR_HPP
 #define CALLEXPR_HPP
 
+#include "lexer/token.hpp"
+
 #include "expr.hpp"
 
-/*
+namespace abc {
 
 class CallExpr : public Expr
 {
     protected:
 	CallExpr(ExprPtr &&fn, std::vector<ExprPtr> &&arg, const Type *type,
-		 Token::Loc loc);
+		 lexer::Loc loc);
 
     public:
 	static ExprPtr create(ExprPtr &&fn, std::vector<ExprPtr> &&arg,
-			      Token::Loc loc = Token::Loc{});
+			      lexer::Loc loc = lexer::Loc{});
 
 	ExprPtr fn;
 	std::vector<ExprPtr> arg;
 
-	bool hasAddr() const override;
+	bool hasAddress() const override;
 	bool isLValue() const override;
 	bool isConst() const override;
 
 	// for code generation
-	gen::ConstVal loadConstValue() const override;
-	gen::Reg loadValue() const override;
-	gen::Reg loadAddr() const override;
-	void condJmp(gen::Label trueLabel,
-			     gen::Label falseLabel) const override;
+	gen::Constant loadConstant() const override;
+	gen::Value loadValue() const override;
+	gen::Value loadAddress() const override;
+	void condition(gen::Label trueLabel,
+		       gen::Label falseLabel) const override;
 
 	// for debugging and educational purposes
 	void print(int indent) const override;
@@ -36,6 +38,6 @@ class CallExpr : public Expr
 	virtual void printFlat(std::ostream &out, int prec) const override;
 };
 
-*/
+} // namespace abc
 
 #endif // CALLEXPR_HPP
