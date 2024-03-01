@@ -17,6 +17,7 @@ class IntegerType : public Type
 				  bool constFlag, UStr alias);
 
     public:
+	static const Type *createChar();
 	static const Type *createSigned(std::size_t numBits);
 	static const Type *createUnsigned(std::size_t numBits);
 

@@ -38,6 +38,12 @@ class UStr
 	    return len;
 	}
 
+	bool
+	empty() const
+	{
+	    return length() == 0;
+	}
+
     private:
 	const char *c_str_;
 	std::size_t len;

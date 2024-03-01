@@ -859,6 +859,7 @@ parseStatement()
     return ast;
 }
 
+
 //------------------------------------------------------------------------------
 static AstPtr parseLocalVariableDefinition();
 

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 
 #include "expr/expr.hpp"
 #include "lexer/error.hpp"
@@ -6,7 +7,9 @@
 #include "symtab/symtab.hpp"
 #include "type/functiontype.hpp"
 #include "type/voidtype.hpp"
+
 #include "defaulttype.hpp"
+#include "parseexpr.hpp"
 #include "parser.hpp"
 
 namespace abc {
@@ -42,6 +45,7 @@ parser()
 //------------------------------------------------------------------------------
 static AstPtr parseFunctionDeclarationOrDefinition();
 static AstPtr parseExternDeclaration();
+static AstPtr parseGlobalVariableDefinition();
 
 /*
  * top-level-declaration = function-declaration-or-definition
@@ -57,7 +61,8 @@ parseTopLevelDeclaration()
     AstPtr ast;
 
     (ast = parseFunctionDeclarationOrDefinition())
-    || (ast = parseExternDeclaration());
+    || (ast = parseExternDeclaration())
+    || (ast = parseGlobalVariableDefinition());
 
     return ast;
 }
@@ -69,7 +74,7 @@ static AstPtr parseFunctionBody();
 
 /*
  * function-declaration-or-definition
- *	= function-type (";" | compound-statement)
+ *	= function-type (";" | function-body)
  */
 static AstPtr
 parseFunctionDeclarationOrDefinition()
@@ -169,12 +174,16 @@ parseFunctionParameterList(std::vector<Token> &paramName,
 	return true; // empty parameter list
     }
     hasVarg = false;
+    std::size_t unusedCount = 0;
     while (true) {
 	if (token.kind == TokenKind::IDENTIFIER) {
 	    paramName.push_back(token);
 	    getToken();
 	} else {
-	    paramName.push_back(Token{});
+	    std::stringstream ss;
+	    ss << ".unused" << unusedCount++;
+	    auto unused = UStr::create(ss.str());
+	    paramName.push_back(Token{token.loc, token.kind, unused});
 	}
 	if (!error::expected(TokenKind::COLON)) {
 	    return false;
@@ -260,7 +269,7 @@ parseFunctionDeclaration(Token &fnIdent, std::vector<Token> &param)
 static AstPtr parseStatementOrDeclarationList();
 
 /*
- * compound-statement = "{" statement-or-declaration-list "}"
+ * function-body = "{" statement-or-declaration-list "}"
  */
 
 static AstPtr
@@ -340,6 +349,8 @@ parseUnqualifiedType()
 
 
 //------------------------------------------------------------------------------
+static AstPtr parseDeclaration();
+static AstPtr parseStatement();
 
 /*
  * statement-or-declaration = "{" { statement | declaration } "}"
@@ -348,7 +359,11 @@ parseUnqualifiedType()
 static AstPtr
 parseStatementOrDeclarationList()
 {
-    return std::make_unique<AstList>();
+    auto list = std::make_unique<AstList>();
+    for (AstPtr ast; (ast = parseStatement()) || (ast = parseDeclaration());) {
+	list->append(std::move(ast));
+    }
+    return list;
 }
 
 //------------------------------------------------------------------------------
@@ -386,5 +401,265 @@ parseExternVariableDeclaration()
     }
     return astList;
 }
+
+//------------------------------------------------------------------------------
+static AstPtr parseGlobalVariableDeclaration();
+
+/*
+ * global-variable-definition = global-variable-declaration ";"
+ */
+static AstPtr
+parseGlobalVariableDefinition()
+{
+    auto def = parseGlobalVariableDeclaration();
+    if (!def) {
+	return nullptr;
+    }
+    if (!error::expected(TokenKind::SEMICOLON)) {
+	return nullptr;
+    }
+    getToken();
+    return def;
+}
+
+//------------------------------------------------------------------------------
+static AstListPtr parseVariableDeclarationList();
+
+/*
+ * global-variable-declaration = "global" variable-declaration-list
+ */
+static AstPtr
+parseGlobalVariableDeclaration()
+{
+    if (token.kind != TokenKind::GLOBAL) {
+	return nullptr;
+    }
+    getToken();
+    auto def = parseVariableDeclarationList();
+    if (!def) {
+	error::out() << token.loc
+	    << ": expected global variable declaration list" << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    return std::make_unique<AstGlobalVar>(std::move(def));
+}
+
+//------------------------------------------------------------------------------
+static AstVarPtr parseVariableDeclaration();
+
+/*
+ * variable-declaration-list = variable-declaration { "," variable-declaration }
+ */
+static AstListPtr
+parseVariableDeclarationList()
+{
+    auto astList = std::make_unique<AstList>();
+
+    for (bool first = true; ; first = false) {
+	auto decl = parseVariableDeclaration();
+	if (!decl) {
+	    if (!first) {
+		error::out() << token.loc << ": expected variable declaration"
+		    << std::endl;
+		error::fatal();
+	    }
+	    return nullptr;
+	}
+	astList->append(std::move(decl));
+	if (token.kind != TokenKind::COMMA) {
+	    break;
+	}
+	getToken();
+    }
+    return astList;
+}
+
+//------------------------------------------------------------------------------
+static AstPtr parseInitializer(const Type *type);
+
+/*
+ * variable-declaration = identifier ":" type [ "=" initializer ]
+ */
+static AstVarPtr
+parseVariableDeclaration()
+{
+    if (token.kind != TokenKind::IDENTIFIER) {
+	return nullptr;
+    }
+    auto varName = token;
+    getToken();
+    if (!error::expected(TokenKind::COLON)) {
+	return nullptr;
+    }
+    getToken();
+    auto varType = parseType();
+    if (!varType) {
+	error::out() << token.loc << ": expected variable type" << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    auto astVar = std::make_unique<AstVar>(varName, varType);
+    if (token.kind == TokenKind::EQUAL) {
+	getToken();
+	auto initializer = parseInitializer(varType);
+	if (!initializer) {
+	    error::out() << token.loc << ": initializer expected" << std::endl;
+	    error::fatal();
+	    return nullptr;
+	}
+	assert(0 && "TODO: astVar->addInitializer(std::move(initializer));");
+    }
+    return astVar;
+}
+
+//------------------------------------------------------------------------------
+/*
+ * initializer = expression
+ *             | initializer-list
+ */
+static AstPtr
+parseInitializer(const Type *type)
+{
+    assert(0 && "TODO: parseInitializer(const Type *type)");
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+static AstPtr parseLocalVariableDefinition();
+
+/*
+ * declaration = type-declaration
+ *	       | enum-declaration
+ *	       | struct-declaration
+ *	       | global-variable-definition
+ *	       | local-variable-definition
+ */
+static AstPtr
+parseDeclaration()
+{
+    AstPtr ast;
+
+    ast = parseLocalVariableDefinition();
+
+    /*
+    (ast = parseTypeDeclaration())
+	|| (ast = parseEnumDeclaration())
+	|| (ast = parseStructDeclaration())
+	|| (ast = parseGlobalVariableDefinition())
+	|| (ast = parseLocalVariableDefinition());
+	*/
+    return ast;
+}
+
+//------------------------------------------------------------------------------
+static AstPtr parseLocalVariableDeclaration();
+
+/*
+ * local-variable-definition = local-variable-declaration ";"
+ */
+static AstPtr
+parseLocalVariableDefinition()
+{
+    auto def = parseLocalVariableDeclaration();
+    if (!def) {
+	return nullptr;
+    }
+    if (!error::expected(TokenKind::SEMICOLON)) {
+	return nullptr;
+    }
+    getToken();
+    return def;
+}
+
+//------------------------------------------------------------------------------
+/*
+ * local-variable-declaration = "local" variable-declaration-list
+ */
+static AstPtr
+parseLocalVariableDeclaration()
+{
+    if (token.kind != TokenKind::LOCAL) {
+	return nullptr;
+    }
+    getToken();
+    auto def = parseVariableDeclarationList();
+    if (!def) {
+	error::out() << token.loc
+	    << ": expected local variable declaration list" << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    return std::make_unique<AstLocalVar>(std::move(def));
+}
+
+
+//------------------------------------------------------------------------------
+static AstPtr parseReturnStatement();
+static AstPtr parseExpressionStatement();
+
+/*
+ * statement = compound-statement
+ *	     | if-statement
+ *	     | switch-statement
+ *	     | while-statement
+ *	     | do-while-statement
+ *	     | for-statement
+ *	     | return-statement
+ *	     | break-statement
+ *	     | continue-statement
+ *	     | expression-statement
+ *	     | goto-statement
+ *	     | label-definition
+ */
+static AstPtr
+parseStatement()
+{
+    AstPtr ast;
+
+    (ast = parseReturnStatement())
+    || (ast = parseExpressionStatement());
+
+    return ast;
+}
+
+//------------------------------------------------------------------------------
+/*
+ * return-statement = "return" [ expression ] ";"
+ */
+static AstPtr
+parseReturnStatement()
+{
+    if (token.kind != TokenKind::RETURN) {
+	return nullptr;
+    }
+    getToken();
+    auto expr = parseExpression();
+    if (!error::expected(TokenKind::SEMICOLON)) {
+	return nullptr;
+    }
+    getToken();
+    return std::make_unique<AstReturn>(std::move(expr));
+}
+
+//------------------------------------------------------------------------------
+/*
+ * expression-statement = [expression] ";"
+ */
+static AstPtr
+parseExpressionStatement()
+{
+    auto expr = parseExpression();
+    if (expr) {
+	std::cerr << "parseExpressionStatement: " << expr << "\n";
+	error::expected(TokenKind::SEMICOLON);
+    }
+    if (token.kind != TokenKind::SEMICOLON) {
+	return nullptr;
+    }
+    getToken();
+    return std::make_unique<AstExpr>(std::move(expr));
+}
+
 
 } // namespace abc

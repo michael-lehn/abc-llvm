@@ -527,7 +527,10 @@ parsePrimary()
 	ss << static_cast<int>(*token.val.c_str());
 	auto val = UStr::create(ss.str());
         getToken();
-	auto ty = Type::getSignedInteger(16);
+	auto ty = parseIntType(); // parse suffix
+	if (!ty) {
+	    ty = IntegerType::createChar();
+	}
 	auto expr = IntegerLiteral::create(val, 10, ty, opTok.loc);
         return expr;
     } else if (token.kind == TokenKind::LPAREN) {

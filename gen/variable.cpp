@@ -53,6 +53,13 @@ globalVariableDefinition(const char *ident, const abc::Type *varType,
 	? llvm::GlobalValue::ExternalLinkage
 	: llvm::GlobalValue::InternalLinkage;
 
+    auto llvmVarType = convert(varType);
+    assert(llvmVarType);
+
+    if (!initialValue) {
+	initialValue = llvm::Constant::getNullValue(llvmVarType);
+    }
+
     if (auto found = loadAddress(ident)) {
 	// variable exists, assert it is a global variable
 	auto var = llvm::dyn_cast<llvm::GlobalVariable>(found);
@@ -64,9 +71,6 @@ globalVariableDefinition(const char *ident, const abc::Type *varType,
 	var->setInitializer(initialValue);
 	return;
     }
-
-    auto llvmVarType = convert(varType);
-    assert(llvmVarType);
 
     new llvm::GlobalVariable(*llvmModule,
 			     llvmVarType,

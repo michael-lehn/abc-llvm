@@ -1,4 +1,5 @@
 #include <cassert>
+#include <iostream>
 
 #include "entry.hpp"
 
@@ -46,7 +47,7 @@ operator!=(const Entry &a, const Entry &b)
 	return false;
     }
     if (a.kind == Entry::VAR || a.kind == Entry::TYPE) {
-	return a.type == b.type;
+	return a.type != b.type;
     }
     assert(0);
     return false;

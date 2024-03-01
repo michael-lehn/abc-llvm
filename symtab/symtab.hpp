@@ -24,8 +24,9 @@ class Symtab
 	Symtab(UStr prefix = UStr{});
 	~Symtab();
 
-	static const symtab::Entry *find(UStr name, Scope inScope = AnyScope);
-	static const symtab::Entry *type(UStr name, Scope inScope = AnyScope);
+	static const symtab::Entry *find(UStr name, Scope inScope);
+	static const symtab::Entry *type(UStr name, Scope inScope);
+	static const symtab::Entry *variable(UStr name, Scope inScope);
 
 	static std::pair<symtab::Entry *, bool>
 	    addDeclaration(lexer::Loc loc, UStr name, const Type *type);

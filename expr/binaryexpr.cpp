@@ -3,6 +3,7 @@
 #include <iomanip>
 
 #include "gen/instruction.hpp"
+#include "gen/variable.hpp"
 #include "lexer/error.hpp"
 
 #include "binaryexpr.hpp"
@@ -94,6 +95,7 @@ BinaryExpr::isConst() const
     }
 }
 
+// for code generation
 gen::Constant
 BinaryExpr::loadConstant() const
 {
@@ -101,21 +103,14 @@ BinaryExpr::loadConstant() const
     return llvm::dyn_cast<T>(loadValue());
 }
 
-// for code generation
-
 gen::Value
-BinaryExpr::loadValue() const
+BinaryExpr::handleArithmetricOperation(Kind kind) const
 {
     assert(type);
     switch (kind) {
-	case ASSIGN:
-	    assert(0 && "Not implemented");
+	default:
+	    assert(0);
 	    return nullptr;
-	    /*
-	    return gen::store(right->loadValue(),
-			      left->loadAddr(),
-			      type);
-	    */
 	case ADD:
 	case SUB:
 	case MUL:
@@ -148,6 +143,38 @@ BinaryExpr::loadValue() const
 					left->loadValue(),
 					right->loadValue());
 	    }
+    }
+}
+
+gen::Value
+BinaryExpr::loadValue() const
+{
+    assert(type);
+    switch (kind) {
+	case ASSIGN:
+	    return gen::store(right->loadValue(),
+			      left->loadAddress());
+	case ADD_ASSIGN:
+	    return gen::store(handleArithmetricOperation(ADD),
+			      left->loadAddress());
+	case SUB_ASSIGN:
+	    return gen::store(handleArithmetricOperation(SUB),
+			      left->loadAddress());
+	case MUL_ASSIGN:
+	    return gen::store(handleArithmetricOperation(MUL),
+			      left->loadAddress());
+	case DIV_ASSIGN:
+	    return gen::store(handleArithmetricOperation(DIV),
+			      left->loadAddress());
+	case MOD_ASSIGN:
+	    return gen::store(handleArithmetricOperation(MOD),
+			      left->loadAddress());
+	case ADD:
+	case SUB:
+	case MUL:
+	case DIV:
+	case MOD:
+	    return handleArithmetricOperation(kind);
 	case LESS:
 	case LESS_EQUAL:
 	case GREATER:
@@ -270,6 +297,21 @@ BinaryExpr::printFlat(std::ostream &out, int prec) const
 	    break;
 	case ASSIGN:
 	    ::printFlat(out, prec, 2, left.get(), right.get(), "=");
+	    break;
+	case ADD_ASSIGN:
+	    ::printFlat(out, prec, 2, left.get(), right.get(), "+=");
+	    break;
+	case SUB_ASSIGN:
+	    ::printFlat(out, prec, 2, left.get(), right.get(), "-=");
+	    break;
+	case MUL_ASSIGN:
+	    ::printFlat(out, prec, 2, left.get(), right.get(), "*=");
+	    break;
+	case DIV_ASSIGN:
+	    ::printFlat(out, prec, 2, left.get(), right.get(), "/=");
+	    break;
+	case MOD_ASSIGN:
+	    ::printFlat(out, prec, 2, left.get(), right.get(), "%=");
 	    break;
 	case EQUAL:
 	    ::printFlat(out, prec, 9, left.get(), right.get(), "==");

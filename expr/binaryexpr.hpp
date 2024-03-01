@@ -13,8 +13,13 @@ class BinaryExpr : public Expr
    public:
 	enum Kind
 	{
-	    ADD,
 	    ASSIGN,
+	    ADD_ASSIGN,
+	    SUB_ASSIGN,
+	    MUL_ASSIGN,
+	    DIV_ASSIGN,
+	    MOD_ASSIGN,
+	    ADD,
 	    EQUAL,
 	    NOT_EQUAL,
 	    GREATER,
@@ -54,6 +59,9 @@ class BinaryExpr : public Expr
 
 	// for code generation
 	gen::Constant loadConstant() const override;
+    private:
+	gen::Value handleArithmetricOperation(Kind kind) const;
+    public:
 	gen::Value loadValue() const override;
 	gen::Value loadAddress() const override;
 	void condJmp(gen::Label trueLabel,

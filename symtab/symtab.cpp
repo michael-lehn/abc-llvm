@@ -55,6 +55,16 @@ Symtab::type(UStr name, Scope inScope)
     return nullptr;
 }
 
+const symtab::Entry *
+Symtab::variable(UStr name, Scope inScope)
+{
+    auto entry = find(name, inScope);
+    if (entry && entry->variableDeclaration()) {
+	return entry;
+    }
+    return nullptr;
+}
+
 std::pair<symtab::Entry *, bool>
 Symtab::addDeclaration(lexer::Loc loc, UStr name, const Type *type)
 {
@@ -110,6 +120,7 @@ Symtab::add(UStr name, symtab::Entry &&entry)
 UStr
 Symtab::getId(UStr name)
 {
+    assert(!name.empty());
     std::string idStr = name.c_str();
     if (scopeSize > 1) {
 	std::stringstream ss;

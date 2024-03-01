@@ -1,0 +1,17 @@
+extern a: i32;
+global a: i32;
+
+extern fn foo(:i32): i32;
+
+fn foo(:i32): i32
+{
+    local a: i32;
+    return a;
+}
+
+fn main(argc: i32): i32
+{
+    a += 4;
+    a *= 4;
+    return a;
+}

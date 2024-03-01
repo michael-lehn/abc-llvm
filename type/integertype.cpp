@@ -46,6 +46,12 @@ IntegerType::create(std::size_t numBits, bool signed_, bool constFlag,
 }
 
 const Type *
+IntegerType::createChar()
+{
+    return createSigned(8);
+}
+
+const Type *
 IntegerType::createSigned(std::size_t numBits)
 {
     return create(numBits, true, false, UStr{});

@@ -56,7 +56,7 @@ auto
 makeExpr()
 {
     auto name = abc::UStr::create("argc");
-    auto entry = abc::Symtab::find(name);
+    auto entry = abc::Symtab::find(name, abc::Symtab::AnyScope);
     abc::Symtab::print(std::cerr);
     if (!entry) {
 	std::cerr << "Undeclared identifier " << name << "\n";

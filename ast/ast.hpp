@@ -117,10 +117,49 @@ class AstExternVar : public Ast
 
 //------------------------------------------------------------------------------
 
+class AstGlobalVar : public Ast
+{
+    public:
+	AstGlobalVar(AstListPtr &&decl);
+
+	const AstList decl;
+
+	void print(int indent) const override;
+	void codegen() override;
+};
+
+//------------------------------------------------------------------------------
+
+class AstLocalVar : public Ast
+{
+    public:
+	AstLocalVar(AstListPtr &&decl);
+
+	const AstList decl;
+
+	void print(int indent) const override;
+	void codegen() override;
+};
+
+//------------------------------------------------------------------------------
+
 class AstReturn : public Ast
 {
     public:
 	AstReturn(ExprPtr &&expr);
+
+	ExprPtr expr;
+
+	void print(int indent) const override;
+	void codegen() override;
+};
+
+//------------------------------------------------------------------------------
+
+class AstExpr : public Ast
+{
+    public:
+	AstExpr(ExprPtr &&expr);
 
 	ExprPtr expr;
 

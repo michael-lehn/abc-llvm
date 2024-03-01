@@ -12,6 +12,17 @@
 
 namespace abc {
 
+static UStr
+unusedFilter(UStr name)
+{
+    if (!name.empty() && *name.c_str() == '.') {
+	return UStr{};
+    }
+    return name;
+}
+
+//------------------------------------------------------------------------------
+
 /*
  * Ast
  */
@@ -98,7 +109,7 @@ AstFuncDecl::print(int indent) const
     error::out() << "fn " << fnName.val << "(";
     for (std::size_t i = 0; i < fnType->paramType().size(); ++i) {
 	if (i < fnParamName.size()) {
-	    error::out() << fnParamName[i].val;
+	    error::out() << unusedFilter(fnParamName[i].val);
 	}
 	error::out() << ": " << fnType->paramType()[i];
 	if (i + 1 < fnType->paramType().size()) {
@@ -112,7 +123,7 @@ AstFuncDecl::print(int indent) const
     if (!fnType->retType()->isVoid()) {
 	error::out() << ": " << fnType->retType();
     }
-    error::out() << ";" << std::endl << std::endl;
+    error::out() << ";\n\n";
 }
 
 void
@@ -162,7 +173,7 @@ AstFuncDef::print(int indent) const
 {
     error::out(indent) << "fn " << fnName.val << "(";
     for (std::size_t i = 0; i < fnType->paramType().size(); ++i) {
-	error::out() << fnParamName[i].val;
+	error::out() << unusedFilter(fnParamName[i].val);
 	error::out() << ": " << fnType->paramType()[i];
 	if (i + 1 < fnType->paramType().size()) {
 	    error::out() << ", ";
@@ -175,12 +186,12 @@ AstFuncDef::print(int indent) const
     if (!fnType->retType()->isVoid()) {
 	error::out() << ": " << fnType->retType();
     }
-    error::out() << std::endl;
-    error::out(indent) << "{" << std::endl;
+    error::out() << "\n";
+    error::out(indent) << "{\n";
     if (body) {
 	body->print(indent + 4);
     }
-    error::out(indent) << "}" << std::endl;
+    error::out(indent) << "}\n\n";
 }
 
 void
@@ -227,7 +238,7 @@ AstExternVar::print(int indent) const
 {
     error::out(indent) << "extern ";
     if (declList->size() > 1) {
-	error::out() << std::endl;
+	error::out() << "\n";
 	for (std::size_t i = 0; const auto &decl : declList->node) {
 	    auto var = dynamic_cast<const AstVar *>(decl.get());
 	    assert(var);
@@ -244,7 +255,7 @@ AstExternVar::print(int indent) const
 	var->print(0);
 	error::out() << "; ";
     }
-    error::out() << std::endl;
+    error::out() << "\n";
 }
 
 void
@@ -257,6 +268,91 @@ AstExternVar::codegen()
 	    gen::externalVariableiDeclaration(var->varId.c_str(),
 					      var->varType);
 	}
+    }
+}
+
+/*
+ * AstGlobalVar
+ */
+AstGlobalVar::AstGlobalVar(AstListPtr &&decl)
+    : decl{std::move(*decl)}
+{
+}
+
+void
+AstGlobalVar::print(int indent) const
+{
+    error::out(indent) << "global ";
+    if (decl.size() > 1) {
+	error::out() << "\n";
+	for (std::size_t i = 0; const auto &item : decl.node) {
+	    auto var = dynamic_cast<const AstVar *>(item.get());
+	    var->print(indent + 4);
+	    if (i + 1< decl.size()) {
+		error::out() << ", ";
+	    } else {
+		error::out() << "; ";
+	    }
+	    ++i;
+	}
+    } else {
+	auto var = dynamic_cast<const AstVar *>(decl.node[0].get());
+	var->print(0);
+	error::out() << "; ";
+    }
+    error::out() << "\n";
+}
+
+void
+AstGlobalVar::codegen()
+{
+    for (const auto &item : decl.node) {
+	auto var = dynamic_cast<const AstVar *>(item.get());
+	assert(var);
+	gen::globalVariableDefinition(var->varId.c_str(), var->varType, nullptr,
+				      false);
+    }
+}
+
+/*
+ * AstLocalVar
+ */
+AstLocalVar::AstLocalVar(AstListPtr &&decl)
+    : decl{std::move(*decl)}
+{
+}
+
+void
+AstLocalVar::print(int indent) const
+{
+    error::out(indent) << "local ";
+    if (decl.size() > 1) {
+	for (std::size_t i = 0; const auto &item : decl.node) {
+	    error::out() << "\n";
+	    auto var = dynamic_cast<const AstVar *>(item.get());
+	    var->print(indent + 4);
+	    if (i + 1< decl.size()) {
+		error::out() << ", ";
+	    } else {
+		error::out() << "; ";
+	    }
+	    ++i;
+	}
+    } else {
+	auto var = dynamic_cast<const AstVar *>(decl.node[0].get());
+	var->print(0);
+	error::out() << "; ";
+    }
+    error::out() << "\n";
+}
+
+void
+AstLocalVar::codegen()
+{
+    for (const auto &item : decl.node) {
+	auto var = dynamic_cast<const AstVar *>(item.get());
+	assert(var);
+	gen::localVariableDefinition(var->varId.c_str(), var->varType);
     }
 }
 
@@ -274,7 +370,7 @@ AstReturn::print(int indent) const
     if (expr) {
 	error::out() << " " << expr;
     }
-    error::out() << ";" << std::endl;
+    error::out() << ";\n";
 }
 
 void
@@ -282,6 +378,31 @@ AstReturn::codegen()
 {
     if (expr) {
 	gen::returnInstruction(expr->loadValue());
+    }
+}
+
+/*
+ * AstExpr
+ */
+AstExpr::AstExpr(ExprPtr &&expr)
+    : expr(std::move(expr))
+{}
+
+void
+AstExpr::print(int indent) const
+{
+    if (expr) {
+	error::out(indent) << expr << ";\n";
+    } else {
+	error::out(indent) << ";\n";
+    }
+}
+
+void
+AstExpr::codegen()
+{
+    if (expr) {
+	expr->loadValue(); 
     }
 }
 
