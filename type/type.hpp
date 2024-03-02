@@ -19,6 +19,10 @@ class Type
 	Type(bool isConst, UStr name);
 	virtual ~Type() = default;
 
+	// for type conversion
+	static bool equals(const Type *ty1, const Type *ty2);
+	static const Type *convert(const Type *from, const Type *to);
+
 	const Type *getAlias(const char *alias) const;
 	virtual const Type *getAlias(UStr alias) const = 0;
 	virtual const Type *getConst() const = 0;
@@ -59,7 +63,9 @@ class Type
 		const std::vector<const Type *> &&memberType);
 	const std::vector<const Type *> &memberType() const;
 	const std::vector<UStr> &memberIdent() const;
+
 };
+
 
 std::ostream &operator<<(std::ostream &out, const Type *type);
 

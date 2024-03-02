@@ -1,24 +1,20 @@
-#ifndef IDENTIFIER_HPP
-#define IDENTIFIER_HPP
-
-#include "type/type.hpp"
-#include "lexer/loc.hpp"
+#ifndef IMPLICITCAST_HPP
+#define IMPLICITCAST_HPP
 
 #include "expr.hpp"
+#include "lexer/loc.hpp"
 
 namespace abc {
 
-class Identifier : public Expr
+class ImplicitCast : public Expr
 {
     protected:
-	Identifier(UStr name, UStr id, const Type *type, lexer::Loc loc);
+	ImplicitCast(ExprPtr &&expr, const Type *toType, lexer::Loc loc);
 
     public:
-	static ExprPtr create(UStr name, UStr id, const Type *type,
+	static ExprPtr create(ExprPtr &&expr, const Type *toType, 
 			      lexer::Loc loc = lexer::Loc{});
-
-	const UStr name;
-	const UStr id;
+	const ExprPtr expr;
 
 	bool hasAddress() const override;
 	bool isLValue() const override;
@@ -40,4 +36,4 @@ class Identifier : public Expr
 
 } // namespace abc
 
-#endif // IDENTIFIER_HPP
+#endif // IMPLICITCAST_HPP

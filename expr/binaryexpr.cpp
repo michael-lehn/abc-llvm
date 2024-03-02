@@ -109,28 +109,9 @@ BinaryExpr::loadConstant() const
 	case MUL:
 	case DIV:
 	case MOD:
-	    if (kind == ADD && type->isPointer()) {
-		// pointer + integer
-		assert(left->type->isPointer());
-		assert(right->type->isInteger());
-		assert(0 && "Not implemented");
-		return nullptr;
-	    } else if (kind == SUB && left->type->isPointer()) {
-		// pointer - pointer
-		assert(right->type->isPointer());
-		assert(type->isInteger());
-		assert(0 && "Not implemented");
-		return nullptr;
-		/*
-		return gen::ptrDiff(left->type->getRefType(),
-				    left->loadValue(),
-				    right->loadValue());
-		*/
-	    } else {
-		return gen::instruction(getGenInstructionOp(kind, type),
-					left->loadConstant(),
-					right->loadConstant());
-	    }
+	    return gen::instruction(getGenInstructionOp(kind, type),
+				    left->loadConstant(),
+				    right->loadConstant());
 	case LESS:
 	case LESS_EQUAL:
 	case GREATER:

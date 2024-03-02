@@ -7,6 +7,30 @@ Type::Type(bool isConst, UStr name)
 {
 }
 
+bool
+Type::equals(const Type *ty1, const Type *ty2)
+{
+    if (ty1->isInteger() && ty2->isInteger()) {
+	return ty1->isSignedInteger() == ty2->isSignedInteger()
+	    && ty1->numBits() == ty2->numBits();
+    }
+    return false;
+}
+
+const Type *
+Type::convert(const Type *from, const Type *to)
+{
+    if (to->isInteger()) {
+	if (from->isInteger()) {
+	    return to;
+	} else {
+	    return nullptr;
+	}
+    } else {
+	return nullptr;
+    }
+}
+
 const Type *
 Type::getAlias(const char *alias) const
 {

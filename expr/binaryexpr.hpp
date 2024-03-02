@@ -13,25 +13,32 @@ class BinaryExpr : public Expr
    public:
 	enum Kind
 	{
+	    // assignments
 	    ASSIGN,
 	    ADD_ASSIGN,
 	    SUB_ASSIGN,
 	    MUL_ASSIGN,
 	    DIV_ASSIGN,
 	    MOD_ASSIGN,
+
+	    // arithmetic
 	    ADD,
+	    SUB,
+	    MUL,
+	    DIV,
+	    MOD,
+
+	    // logical arithmetic
 	    EQUAL,
 	    NOT_EQUAL,
 	    GREATER,
 	    GREATER_EQUAL,
 	    LESS,
 	    LESS_EQUAL,
+
+	    // logical connective
 	    LOGICAL_AND,
 	    LOGICAL_OR,
-	    SUB,
-	    MUL,
-	    DIV,
-	    MOD,
 	};
 
     protected:

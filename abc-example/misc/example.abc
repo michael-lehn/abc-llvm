@@ -14,5 +14,14 @@ fn factorial(n: i32): i32
 
 fn main(argc: i32): i32
 {
-    return foo(factorial(argc));
+    local a: u16;
+    local b: i32;
+    local c: i64;
+
+    a = 1;
+    b = 2;
+
+    c = a + b;
+
+    return foo(c + factorial(argc));
 }
