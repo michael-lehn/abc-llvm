@@ -1,5 +1,6 @@
 #include "expr/binaryexpr.hpp"
 #include "expr/callexpr.hpp"
+#include "expr/enumconstant.hpp"
 #include "expr/explicitcast.hpp"
 #include "expr/identifier.hpp"
 #include "expr/integerliteral.hpp"
@@ -282,9 +283,15 @@ parsePrimary()
 	if (/*auto type = */Symtab::type(tok.val, Symtab::AnyScope)) {
 	    assert(0 && "Not implemented");
 	    return nullptr;
-	} else if (auto var = Symtab::variable(tok.val, Symtab::AnyScope)) {
-	    auto ty = var->type;
-	    auto expr = Identifier::create(tok.val, var->id, ty, tok.loc);
+	} else if (auto sym = Symtab::constant(tok.val, Symtab::AnyScope)) {
+	    auto expr = EnumConstant::create(tok.val,
+					     sym->expr->getSignedIntValue(),
+					     sym->expr->type,
+					     tok.loc);
+	    return expr;
+	} else if (auto sym = Symtab::variable(tok.val, Symtab::AnyScope)) {
+	    auto ty = sym->type;
+	    auto expr = Identifier::create(tok.val, sym->id, ty, tok.loc);
 	    return expr;
 	} else {
 	    error::out() << tok.loc << ": error undefined identifier\n";

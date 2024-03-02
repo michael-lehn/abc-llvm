@@ -1,5 +1,7 @@
 $(this).requires.lib := \
 	lexer/liblexer.a \
+	expr/libexpr.a \
+	gen/libgen.a \
 	type/libtype.a \
 	util/libutil.a
 

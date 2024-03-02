@@ -5,9 +5,10 @@
 
 #include "gen/constant.hpp"
 #include "gen/instruction.hpp"
-#include "integerliteral.hpp"
 #include "lexer/error.hpp"
 #include "type/integertype.hpp"
+
+#include "integerliteral.hpp"
 
 static const abc::Type *getIntType(const char *s, const char *end,
 			           std::uint8_t radix, abc::lexer::Loc loc);

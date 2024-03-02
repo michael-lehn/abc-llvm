@@ -1,5 +1,5 @@
-#ifndef INTEGERLITERAL
-#define INTEGERLITERAL
+#ifndef INTEGERLITERAL_HPP
+#define INTEGERLITERAL_HPP
 
 #include <cstdint>
 
@@ -47,4 +47,4 @@ class IntegerLiteral : public Expr
 
 } // namespace abc
  
-#endif // INTEGERLITERAL
+#endif // INTEGERLITERAL_HPP

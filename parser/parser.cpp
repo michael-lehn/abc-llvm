@@ -6,6 +6,7 @@
 #include "lexer/lexer.hpp"
 #include "symtab/symtab.hpp"
 #include "type/functiontype.hpp"
+#include "type/integertype.hpp"
 #include "type/voidtype.hpp"
 
 #include "defaulttype.hpp"
@@ -46,6 +47,7 @@ parser()
 static AstPtr parseFunctionDeclarationOrDefinition();
 static AstPtr parseExternDeclaration();
 static AstPtr parseGlobalVariableDefinition();
+static AstPtr parseEnumDeclaration();
 
 /*
  * top-level-declaration = function-declaration-or-definition
@@ -62,7 +64,8 @@ parseTopLevelDeclaration()
 
     (ast = parseFunctionDeclarationOrDefinition())
     || (ast = parseExternDeclaration())
-    || (ast = parseGlobalVariableDefinition());
+    || (ast = parseGlobalVariableDefinition())
+    || (ast = parseEnumDeclaration());
 
     return ast;
 }
@@ -735,5 +738,116 @@ parseExpressionStatement()
     return std::make_unique<AstExpr>(std::move(expr));
 }
 
+//------------------------------------------------------------------------------
+static bool parseEnumConstantDeclaration(AstEnumDeclPtr &enumDecl);
+
+/*
+ * enum-declaration
+ *	= "enum" identifier [":" integer-type]
+ *	    (";" | enum-constant-declaration )
+ */
+static AstPtr
+parseEnumDeclaration()
+{
+    if (token.kind != TokenKind::ENUM) {
+	return nullptr;
+    }
+    getToken();
+    if (!error::expected(TokenKind::IDENTIFIER)) {
+	return nullptr;
+    }
+    auto ident = token;
+    getToken();
+    auto type = IntegerType::createInt();
+    if (token.kind == TokenKind::COLON) {
+	getToken();
+	type = parseType();
+	if (!type) {
+	    error::out() << token.loc << ": integer type expected" << std::endl;
+	    error::fatal();
+	    return nullptr;
+	}
+    }
+    auto enumDecl = std::make_unique<AstEnumDecl>(ident, type);
+
+    if (token.kind == TokenKind::SEMICOLON) {
+	getToken();
+    } else if (parseEnumConstantDeclaration(enumDecl)) {
+	enumDecl->complete();
+    } else {
+	error::out() << token.loc
+	    << ": ';' or declaration of enum constants expected" << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    return enumDecl;
+}
+ 
+//------------------------------------------------------------------------------
+static bool parseEnumConstantList(AstEnumDeclPtr &enumDecl);
+
+/*
+ * enum-constant-declaration = "{" enum-constant-list "}" ";"
+ */
+static bool
+parseEnumConstantDeclaration(AstEnumDeclPtr &enumDecl)
+{
+    if (token.kind != TokenKind::LBRACE) {
+	return false;
+    }
+    getToken();
+    if (!parseEnumConstantList(enumDecl)) {
+	error::out() << token.loc
+	    << ": list of enum constants expected" << std::endl;
+	error::fatal();
+	return false;
+    }
+    if (!error::expected(TokenKind::RBRACE)) {
+	return false;
+    }
+    getToken();
+    if (!error::expected(TokenKind::SEMICOLON)) {
+	return false;
+    }
+    getToken();
+    return true;
+}
+
+//------------------------------------------------------------------------------
+/*
+ * enum-constant-list = identifier [ "=" expression] ["," [enum-constant-list]] 
+ *
+ */
+static bool
+parseEnumConstantList(AstEnumDeclPtr &enumDecl)
+{
+    if (token.kind != TokenKind::IDENTIFIER) {
+	return false;
+    }
+    while (token.kind == TokenKind::IDENTIFIER) {
+	auto ident = token;
+	getToken();
+	if (token.kind == TokenKind::EQUAL) {
+	    getToken();
+	    auto expr = parseExpression();
+	    if (!expr) {
+		error::out() << token.loc << ": expression expected"
+		    << std::endl;
+		error::fatal();
+		return false;
+	    }
+	    enumDecl->add(ident, std::move(expr));
+	} else {
+	    enumDecl->add(ident);
+	}
+	if (token.kind != TokenKind::COMMA) {
+	    break;
+	}
+	getToken();
+    }
+    return true;
+}
+
+//------------------------------------------------------------------------------
 
 } // namespace abc

@@ -462,4 +462,74 @@ AstIf::apply(std::function<bool(Ast *)> op)
     }
 }
 
+/*
+ * AstEnumDecl
+ */
+
+AstEnumDecl::AstEnumDecl(lexer::Token enumTypeName, const Type *intType)
+    : enumTypeName{enumTypeName}, intType{intType}
+{
+    if (!intType->isInteger()) {
+	error::out() << enumTypeName.loc
+	    << ": error: enum type has to be an integer type"
+	    << std::endl;
+	error::fatal();
+    }
+    //this->type = EnumType::createIncomplete(enumName.val, intType);
+}
+
+void
+AstEnumDecl::add(lexer::Token name)
+{
+    enumExpr.push_back(nullptr);
+
+    auto ec = EnumConstant::create(name.val, enumLastVal++, intType, name.loc);
+    Symtab::addExpression(name.loc, name.val, ec.get());
+    enumConstant.push_back(std::move(ec));
+}
+
+void
+AstEnumDecl::add(lexer::Token name, ExprPtr &&expr)
+{
+    assert(expr);
+    assert(expr->isConst());
+    assert(expr->type);
+    assert(expr->type->isInteger());
+
+    enumLastVal = expr->getSignedIntValue();
+    enumExpr.push_back(std::move(expr));
+    auto ec = EnumConstant::create(name.val, enumLastVal++, intType, name.loc);
+    Symtab::addExpression(name.loc, name.val, ec.get());
+    enumConstant.push_back(std::move(ec));
+}
+
+void
+AstEnumDecl::complete()
+{
+}
+
+void
+AstEnumDecl::print(int indent) const
+{
+    error::out(indent) << "enum " << enumTypeName.val;
+    if (intType) {
+	error::out() << ": " << intType;
+    }
+    error::out() << "\n";
+    error::out(indent) << "{\n";
+    for (std::size_t i = 0; i < enumConstant.size(); ++i) {
+	error::out(indent + 4) << enumConstant[i];
+	if (enumExpr[i]) {
+	    error::out() << " = " << enumExpr[i];
+	}
+	error::out() << ", // " << enumConstant[i]->getSignedIntValue() << "\n";
+    }
+    error::out(indent) << "}\n\n";
+}
+
+void
+AstEnumDecl::codegen()
+{
+}
+
 } // namespace abc

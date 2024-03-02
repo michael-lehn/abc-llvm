@@ -10,10 +10,14 @@ void
 initDefaultType()
 {
     Symtab::addType(lexer::Loc{}, UStr::create("void"),
-		    VoidType::create());
+		    VoidType::create()->getAlias("void"));
 
     Symtab::addType(lexer::Loc{}, UStr::create("bool"),
-		    IntegerType::createBool());
+		    IntegerType::createBool()->getAlias("bool"));
+    Symtab::addType(lexer::Loc{}, UStr::create("char"),
+		    IntegerType::createChar()->getAlias("char"));
+    Symtab::addType(lexer::Loc{}, UStr::create("int"),
+		    IntegerType::createInt()->getAlias("int"));
 
     Symtab::addType(lexer::Loc{}, UStr::create("i8"),
 		    IntegerType::createSigned(8));

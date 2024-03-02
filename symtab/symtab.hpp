@@ -6,6 +6,7 @@
 #include <memory>
 #include <unordered_map>
 
+#include "expr/expr.hpp"
 #include "lexer/loc.hpp"
 
 #include "entry.hpp"
@@ -27,12 +28,16 @@ class Symtab
 	static const symtab::Entry *find(UStr name, Scope inScope);
 	static const symtab::Entry *type(UStr name, Scope inScope);
 	static const symtab::Entry *variable(UStr name, Scope inScope);
+	static const symtab::Entry *constant(UStr name, Scope inScope);
 
 	static std::pair<symtab::Entry *, bool>
 	    addDeclaration(lexer::Loc loc, UStr name, const Type *type);
 
 	static std::pair<symtab::Entry *, bool>
 	    addType(lexer::Loc loc, UStr name, const Type *type);
+
+	static std::pair<symtab::Entry *, bool>
+	    addExpression(lexer::Loc loc, UStr name, const Expr *expr);
 
 	static void print(std::ostream &out);
 

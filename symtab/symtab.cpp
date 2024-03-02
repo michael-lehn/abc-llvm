@@ -67,6 +67,16 @@ Symtab::variable(UStr name, Scope inScope)
     return nullptr;
 }
 
+const symtab::Entry *
+Symtab::constant(UStr name, Scope inScope)
+{
+    auto entry = find(name, inScope);
+    if (entry && entry->expressionDeclaration()) {
+	return entry;
+    }
+    return nullptr;
+}
+
 std::pair<symtab::Entry *, bool>
 Symtab::addDeclaration(lexer::Loc loc, UStr name, const Type *type)
 {
@@ -81,6 +91,13 @@ Symtab::addType(lexer::Loc loc, UStr name, const Type *type)
     return add(name, symtab::Entry::createTypeEntry(loc, id, type));
 }
 
+std::pair<symtab::Entry *, bool>
+Symtab::addExpression(lexer::Loc loc, UStr name, const Expr *expr)
+{
+    auto id = getId(name);
+    return add(name, symtab::Entry::createExprEntry(loc, id, expr));
+}
+
 void
 Symtab::print(std::ostream &out)
 {
@@ -88,10 +105,15 @@ Symtab::print(std::ostream &out)
     std::for_each(scope.begin(), scope.end(),
 	    [&](const auto &s) {
 		for (const auto &item: *s) {
+
 		    out << item.first << ": "
-			<< item.second.id << ", "
-			<< item.second.type
-			<< "\n";
+			<< item.second.id << ", ";
+		    if (item.second.expressionDeclaration()) {
+			out << item.second.expr;
+		    } else {
+			out << item.second.type;
+		    }
+		    out << "\n";
 		}
 		out << "---\n";
 	    });

@@ -54,8 +54,15 @@ IntegerType::createBool()
 const Type *
 IntegerType::createChar()
 {
-    return createSigned(8);
+    return createUnsigned(8 * sizeof(char));
 }
+
+const Type *
+IntegerType::createInt()
+{
+    return createSigned(8 * sizeof(int));
+}
+
 
 const Type *
 IntegerType::createSigned(std::size_t numBits)

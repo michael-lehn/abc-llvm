@@ -18,6 +18,17 @@ getConstantInt(const char *val, const abc::Type *type, std::uint8_t radix)
     return llvm::ConstantInt::get(*llvmContext, apint);
 }
 
+ConstantInt
+getConstantInt(std::uint64_t val, const abc::Type *type)
+{
+    assert(type);
+    assert(type->isInteger());
+
+    auto llvmType = llvm::dyn_cast<llvm::IntegerType>(convert(type));
+    assert(llvmType);
+    return llvm::ConstantInt::get(llvmType, val, type->isSignedInteger());
+}
+
 Constant
 getConstantZero(const abc::Type *type)
 {

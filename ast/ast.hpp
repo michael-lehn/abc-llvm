@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "expr/expr.hpp"
+#include "expr/enumconstant.hpp"
 #include "lexer/token.hpp"
 #include "type/type.hpp"
 
@@ -185,6 +186,30 @@ class AstIf : public Ast
 };
 
 //------------------------------------------------------------------------------
+
+class AstEnumDecl : public Ast
+{
+    private:
+	lexer::Token enumTypeName;
+	const Type *intType;
+
+	//Type *enumType;
+	std::int64_t enumLastVal = 0;
+	std::vector<ExprPtr> enumConstant;
+	std::vector<ExprPtr> enumExpr;
+
+    public:
+	AstEnumDecl(lexer::Token enumTypeName, const Type *intType);
+
+	void add(lexer::Token name);
+	void add(lexer::Token name, ExprPtr &&expr);
+	void complete();
+
+	void print(int indent) const override;
+	void codegen() override;
+};
+
+using AstEnumDeclPtr = std::unique_ptr<AstEnumDecl>;
 
 } // namespace abc
 

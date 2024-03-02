@@ -6,7 +6,12 @@
 namespace abc { namespace symtab {
 
 Entry::Entry(Kind kind, lexer::Loc loc, UStr id, const Type *type)
-    : kind{kind}, loc{loc}, id{id}, type{type}
+    : kind{kind}, loc{loc}, id{id}, type{type}, expr{nullptr}
+{
+}
+
+Entry::Entry(lexer::Loc loc, UStr id, const Expr *expr)
+    : kind{EXPR}, loc{loc}, id{id}, type{nullptr}, expr{expr}
 {
 }
 
@@ -22,6 +27,12 @@ Entry::createTypeEntry(lexer::Loc loc, UStr id, const Type *type)
     return Entry(TYPE, loc, id, type);
 }
 
+Entry
+Entry::createExprEntry(lexer::Loc loc, UStr id, const Expr *expr)
+{
+    return Entry(loc, id, expr);
+}
+
 bool
 Entry::typeDeclaration() const
 {
@@ -35,9 +46,9 @@ Entry::variableDeclaration() const
 }
 
 bool
-Entry::constantDeclaration() const
+Entry::expressionDeclaration() const
 {
-    return false;
+    return kind == EXPR;
 }
 
 bool
