@@ -167,18 +167,21 @@ getToken_()
             nextCh();
             if (reader->ch == 'x') {
                 nextCh();
+		std::string processed = "";
                 if (isHexDigit(reader->ch)) {
                     while (isHexDigit(reader->ch)) {
+			processed += reader->ch;
                         nextCh();
                     }
-                    return setToken(TokenKind::HEXADECIMAL_LITERAL);
+                    return setToken(TokenKind::HEXADECIMAL_LITERAL, processed);
                 }
                 return setToken(TokenKind::BAD);
             }
+	    std::string processed = "";
             while (isOctDigit(reader->ch)) {
                 nextCh();
             }
-            return setToken(TokenKind::OCTAL_LITERAL);
+            return setToken(TokenKind::OCTAL_LITERAL, processed);
         } else {
             while (isDecDigit(reader->ch)) {
                 nextCh();

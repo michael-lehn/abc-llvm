@@ -109,15 +109,6 @@ IntegerLiteral::print(int indent) const
 void
 IntegerLiteral::printFlat(std::ostream &out, int prec) const
 {
-    if (radix == 8) {
-	if (val != UStr::create("0")) {
-	    out << "0";
-	}
-    } else if (radix == 16) {
-	out << "0x";
-    } else if (radix != 10) {
-	out << int(radix) << "'";
-    }
     out << val;
 }
 
