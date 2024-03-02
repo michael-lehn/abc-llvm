@@ -169,21 +169,6 @@ class AstExpr : public Ast
 
 //------------------------------------------------------------------------------
 
-class AstCompound : public Ast
-{
-    private:
-	AstPtr body;
-
-    public:
-	AstCompound(AstPtr &&body);
-
-	void print(int indent) const override;
-	void codegen() override;
-	void apply(std::function<bool(Ast *)> op) override;
-};
-
-//------------------------------------------------------------------------------
-
 class AstIf : public Ast
 {
     public:

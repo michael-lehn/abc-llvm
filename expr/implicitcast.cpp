@@ -5,6 +5,7 @@
 #include "gen/constant.hpp"
 #include "gen/instruction.hpp"
 #include "gen/variable.hpp"
+#include "lexer/error.hpp"
 
 #include "implicitcast.hpp"
 
@@ -24,7 +25,13 @@ ImplicitCast::create(ExprPtr &&expr, const Type *toType, lexer::Loc loc)
     if (Type::equals(expr->type, toType)) {
 	return expr;
     } else {
-	auto p = new ImplicitCast{std::move(expr), toType, loc};
+	auto type = Type::convert(expr->type, toType);
+	if (!type) {
+	    error::out() << loc << ": error: can not convert " << expr->type
+		<< " to " << toType << "\n";
+	    return nullptr;
+	}
+	auto p = new ImplicitCast{std::move(expr), type, loc};
 	return std::unique_ptr<ImplicitCast>{p};
     }
 }

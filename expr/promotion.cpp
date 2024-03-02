@@ -15,6 +15,46 @@ namespace abc { namespace promotion {
 CallResult
 call(ExprPtr &&fn, std::vector<ExprPtr> &&arg, lexer::Loc *loc)
 {
+    auto fnType = fn->type;
+    if (!fnType->isFunction()) {
+	if (loc) {
+	    error::out() << fn->loc << ": Not a function or function ppointer."
+		<< " Operand has type '" << fn->type << "'" << std::endl;
+	    error::fatal();
+	}
+	return std::make_tuple(std::move(fn), std::move(arg), nullptr);
+    }
+    bool hasVarg = fnType->hasVarg();
+    const auto &paramType = fnType->paramType();
+
+    if (arg.size() < paramType.size()) {
+	if (loc) {
+	    error::out() << fn->loc
+		<< ": too few arguments to function" << std::endl;
+	    error::fatal();
+	}
+    } else if (!hasVarg && arg.size() > paramType.size()) {
+	if (loc) {
+	    error::out() << fn->loc
+		<< ": too many arguments to function" << std::endl;
+	    error::fatal();
+	}
+    }
+
+    for (std::size_t i = 0; i < arg.size(); ++i) {
+	auto loc = arg[i]->loc;
+	if (i < paramType.size()) {
+	    arg[i] = ImplicitCast::create(std::move(arg[i]), paramType[i], loc);
+	} else {
+	    // TODO: Rules for converting vargs. For example:
+	    // - If an array is passed as varg it will always converted to a
+	    //	 pointer (required to interface with C)
+	    // - ... maybe other things specified in C
+	}
+    }
+    
+
+
     return std::make_tuple(std::move(fn), std::move(arg), fn->type->retType());
 }
 

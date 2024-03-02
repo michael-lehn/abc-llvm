@@ -644,7 +644,7 @@ parseCompoundStatement()
 	return nullptr;
     }
     getToken();
-    return std::make_unique<AstCompound>(std::move(body));
+    return body;
 }
 
 //------------------------------------------------------------------------------

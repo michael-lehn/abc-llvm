@@ -408,39 +408,6 @@ AstExpr::codegen()
 }
 
 /*
- * AstCompound
- */
-AstCompound::AstCompound(AstPtr &&body)
-    : body{std::move(body)}
-{}
-
-void
-AstCompound::print(int indent) const
-{
-    error::out(indent) << "{\n";
-    if (body) {
-	body->print(indent + 4);
-    }
-    error::out(indent) << "}\n";
-}
-
-void
-AstCompound::codegen()
-{
-    if (body) {
-	body->codegen();
-    }
-}
-
-void
-AstCompound::apply(std::function<bool(Ast *)> op)
-{
-    if (op(this) && body) {
-	body->apply(op);
-    }
-}
-
-/*
  * AstIf
  */
 AstIf::AstIf(ExprPtr &&cond, AstPtr &&thenBody)
@@ -455,12 +422,13 @@ AstIf::AstIf(ExprPtr &&cond, AstPtr &&thenBody, AstPtr &&elseBody)
 void
 AstIf::print(int indent) const
 {
-    error::out(indent) << "if (" << cond << ")" << std::endl;
-    thenBody->print(indent);
+    error::out(indent) << "if (" << cond << ") {\n";
+    thenBody->print(indent + 4);
     if (elseBody) {
-	error::out(indent) << "else" << std::endl;
-	elseBody->print(indent);
+	error::out(indent) << "} else {\n";
+	elseBody->print(indent + 4);
     }
+    error::out(indent) << "}\n";
 }
 
 void
