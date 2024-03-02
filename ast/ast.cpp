@@ -481,25 +481,24 @@ AstEnumDecl::AstEnumDecl(lexer::Token enumTypeName, const Type *intType)
 void
 AstEnumDecl::add(lexer::Token name)
 {
-    enumExpr.push_back(nullptr);
-
-    auto ec = EnumConstant::create(name.val, enumLastVal++, intType, name.loc);
-    Symtab::addExpression(name.loc, name.val, ec.get());
-    enumConstant.push_back(std::move(ec));
+    add(name, ExprPtr{});
 }
 
 void
 AstEnumDecl::add(lexer::Token name, ExprPtr &&expr)
 {
-    assert(expr);
-    assert(expr->isConst());
-    assert(expr->type);
-    assert(expr->type->isInteger());
+    if (expr) {
+	assert(expr->isConst());
+	assert(expr->type);
+	assert(expr->type->isInteger());
 
-    enumLastVal = expr->getSignedIntValue();
+	enumLastVal = expr->getSignedIntValue();
+    }
     enumExpr.push_back(std::move(expr));
+
     auto ec = EnumConstant::create(name.val, enumLastVal++, intType, name.loc);
-    Symtab::addExpression(name.loc, name.val, ec.get());
+    auto add = Symtab::addExpression(name.loc, name.val, ec.get());
+    assert(add.second);
     enumConstant.push_back(std::move(ec));
 }
 

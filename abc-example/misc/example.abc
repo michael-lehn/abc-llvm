@@ -12,6 +12,7 @@ fn factorial(n: i32): i32
     }
 }
 
+
 enum Foo : int
 {
     A = 1,
@@ -28,7 +29,7 @@ fn main(argc: i32): i32
     a = 1;
     b = (u64)(i16)0xFFi8;
 
-    c = a + b + A;
+    c = a + b;
 
     // return foo(c + factorial(argc));
     return C;

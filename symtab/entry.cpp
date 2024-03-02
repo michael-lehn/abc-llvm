@@ -55,10 +55,13 @@ bool
 operator!=(const Entry &a, const Entry &b)
 {
     if (a.kind != b.kind) {
-	return false;
+	return true;
     }
     if (a.kind == Entry::VAR || a.kind == Entry::TYPE) {
 	return a.type != b.type;
+    }
+    if (a.kind == Entry::EXPR) {
+	return a.expr != b.expr;
     }
     assert(0);
     return false;
