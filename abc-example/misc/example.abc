@@ -19,8 +19,7 @@ fn main(argc: i32): i32
     local c: i64;
 
     a = 1;
-    //b = (u64)0xFF;
-    b = (u64)0xFF;
+    b = (u64)(i16)0xFFi8;
 
     c = a + b;
 

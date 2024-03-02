@@ -294,17 +294,17 @@ parsePrimary()
     } else if (tok.kind == TokenKind::DECIMAL_LITERAL) {
 	getToken();
 	auto ty = parseIntType(); // parse suffix
-	auto expr = IntegerLiteral::create(tok.val, 10, ty, tok.loc);
+	auto expr = IntegerLiteral::create(tok.processedVal, 10, ty, tok.loc);
         return expr;
     } else if (token.kind == TokenKind::HEXADECIMAL_LITERAL) {
 	getToken();
 	auto ty = parseIntType(); // parse suffix
-	auto expr = IntegerLiteral::create(tok.val, 16, ty, tok.loc);
+	auto expr = IntegerLiteral::create(tok.processedVal, 16, ty, tok.loc);
         return expr;
     } else if (token.kind == TokenKind::OCTAL_LITERAL) {
 	getToken();
 	auto ty = parseIntType(); // parse suffix
-	auto expr = IntegerLiteral::create(tok.val, 8, ty, tok.loc);
+	auto expr = IntegerLiteral::create(tok.processedVal, 8, ty, tok.loc);
         return expr;
     } else if (token.kind == TokenKind::CHARACTER_LITERAL) {
 	getToken();
