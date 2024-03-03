@@ -93,7 +93,8 @@ makeMainDef()
 
 
     auto body = std::make_unique<abc::AstList>();
-    body->append(std::make_unique<abc::AstReturn>(makeExpr()));
+    body->append(std::make_unique<abc::AstReturn>(abc::lexer::Loc{},
+						  makeExpr()));
     fnMainDef->appendBody(std::move(body));
 
     return fnMainDef;

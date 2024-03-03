@@ -12,34 +12,18 @@ fn factorial(n: i32): i32
     }
 }
 
-
-enum Foo : int
+enum Foo : u8
 {
-    A = 1,
+    A = 0xFF,
     B = A + 4,
     C,
 };
 
 fn main(argc: i32): i32
 {
-    local a: u16;
+    type Foo: i64;
+    local a: Foo;
     a = A;
 
-    enum Foo : int
-    {
-	A = 10,
-	B = A + 4,
-	C,
-    };
-
-    local b: i32;
-    local c: i64;
-
-    a += A;
-    b = (u64)(i16)0xFFi8;
-
-    c = a + b;
-
-    // return foo(c + factorial(argc));
-    return C;
+    return a;
 }

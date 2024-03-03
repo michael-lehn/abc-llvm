@@ -49,8 +49,6 @@ class Type
 	virtual bool isUnsignedInteger() const;
 	virtual std::size_t numBits() const;
 
-	// for enum (sub-)types
-	virtual bool isEnum() const;
 
 	// for pointer and array (sub-)types
 	virtual bool isPointer() const;
@@ -63,6 +61,12 @@ class Type
 	virtual const Type *retType() const;
 	virtual const std::vector<const Type *> &paramType() const;
 	virtual bool hasVarg() const;
+
+	// for enum (sub-)types
+	virtual bool isEnum() const;
+	virtual const Type *complete(
+				const std::vector<UStr> &&constName,
+				const std::vector<std::int64_t> &&constValue);
 
 	// for struct (sub-)types
 	virtual bool isStruct() const;

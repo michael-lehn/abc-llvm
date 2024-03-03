@@ -47,6 +47,7 @@ parser()
 static AstPtr parseFunctionDeclarationOrDefinition();
 static AstPtr parseExternDeclaration();
 static AstPtr parseGlobalVariableDefinition();
+static AstPtr parseTypeDeclaration();
 static AstPtr parseEnumDeclaration();
 
 /*
@@ -65,6 +66,7 @@ parseTopLevelDeclaration()
     (ast = parseFunctionDeclarationOrDefinition())
     || (ast = parseExternDeclaration())
     || (ast = parseGlobalVariableDefinition())
+    || (ast = parseTypeDeclaration())
     || (ast = parseEnumDeclaration());
 
     return ast;
@@ -542,8 +544,10 @@ parseDeclaration()
 {
     AstPtr ast;
 
-    (ast = parseLocalVariableDefinition())
-	|| (ast = parseEnumDeclaration());
+    (ast = parseTypeDeclaration())
+	|| (ast = parseEnumDeclaration())
+	|| (ast = parseGlobalVariableDefinition())
+	|| (ast = parseLocalVariableDefinition());
 
     /*
     (ast = parseTypeDeclaration())
@@ -662,6 +666,7 @@ parseIfStatement()
     if (token.kind != TokenKind::IF) {
 	return nullptr;
     }
+    auto tok = token;
     getToken();
     if (!error::expected(TokenKind::LPAREN)) {
 	return nullptr;
@@ -696,10 +701,12 @@ parseIfStatement()
 	    error::fatal();
 	    return nullptr;
 	}
-	return std::make_unique<AstIf>(std::move(ifCond), std::move(thenBody),
+	return std::make_unique<AstIf>(tok.loc, std::move(ifCond),
+				       std::move(thenBody),
 				       std::move(elseBody));
     }
-    return std::make_unique<AstIf>(std::move(ifCond), std::move(thenBody));
+    return std::make_unique<AstIf>(tok.loc, std::move(ifCond),
+				   std::move(thenBody));
 }
 
 //------------------------------------------------------------------------------
@@ -712,13 +719,14 @@ parseReturnStatement()
     if (token.kind != TokenKind::RETURN) {
 	return nullptr;
     }
+    auto tok = token;
     getToken();
     auto expr = parseExpression();
     if (!error::expected(TokenKind::SEMICOLON)) {
 	return nullptr;
     }
     getToken();
-    return std::make_unique<AstReturn>(std::move(expr));
+    return std::make_unique<AstReturn>(tok.loc, std::move(expr));
 }
 
 //------------------------------------------------------------------------------
@@ -737,6 +745,42 @@ parseExpressionStatement()
     }
     getToken();
     return std::make_unique<AstExpr>(std::move(expr));
+}
+
+//------------------------------------------------------------------------------
+/*
+ * type-declaration = "type" identifier ":" type ";"
+ */
+static AstPtr
+parseTypeDeclaration()
+{
+    if (token.kind != TokenKind::TYPE) {
+	return nullptr;
+    }
+    getToken();
+    if (token.kind != TokenKind::IDENTIFIER) {
+	error::out() << token.loc << ": identifier for type expected"
+	    << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    auto ident = token;
+    getToken();
+    if (!error::expected(TokenKind::COLON)) {
+	return nullptr;
+    }
+    getToken();
+    auto type = parseType();
+    if (!type) {
+	error::out() << token.loc << ": type expected"
+	    << std::endl;
+	error::fatal();
+    }
+    if (!error::expected(TokenKind::SEMICOLON)) {
+	return nullptr;
+    }
+    getToken();
+    return std::make_unique<AstTypeDecl>(ident, type);
 }
 
 //------------------------------------------------------------------------------

@@ -8,6 +8,8 @@
 #include "gen/variable.hpp"
 #include "lexer/error.hpp"
 #include "symtab/symtab.hpp"
+#include "type/enumtype.hpp"
+#include "type/typealias.hpp"
 
 #include "ast.hpp"
 
@@ -360,8 +362,8 @@ AstLocalVar::codegen()
 /*
  * AstReturn
  */
-AstReturn::AstReturn(ExprPtr &&expr)
-    : expr{std::move(expr)}
+AstReturn::AstReturn(lexer::Loc loc, ExprPtr &&expr)
+    : loc{loc}, expr{std::move(expr)}
 {}
 
 void
@@ -377,9 +379,14 @@ AstReturn::print(int indent) const
 void
 AstReturn::codegen()
 {
-    if (expr) {
-	gen::returnInstruction(expr->loadValue());
+    if (!expr) {
+	return;
     }
+    if (!gen::bbOpen()) {
+	error::out() << loc << ": warning: return statement not reachabel\n";
+	return;
+    }
+    gen::returnInstruction(expr->loadValue());
 }
 
 /*
@@ -402,20 +409,27 @@ AstExpr::print(int indent) const
 void
 AstExpr::codegen()
 {
-    if (expr) {
-	expr->loadValue(); 
+    if (!expr) {
+	return;
     }
+    if (!gen::bbOpen()) {
+	error::out() << expr->loc
+	    << ": warning: expression statement not reachabel\n";
+	return;
+    }
+    expr->loadValue(); 
 }
 
 /*
  * AstIf
  */
-AstIf::AstIf(ExprPtr &&cond, AstPtr &&thenBody)
-    : cond{std::move(cond)}, thenBody{std::move(thenBody)}
+AstIf::AstIf(lexer::Loc loc, ExprPtr &&cond, AstPtr &&thenBody)
+    : loc{loc}, cond{std::move(cond)}, thenBody{std::move(thenBody)}
 {}
 
-AstIf::AstIf(ExprPtr &&cond, AstPtr &&thenBody, AstPtr &&elseBody)
-    : cond{std::move(cond)}, thenBody{std::move(thenBody)}
+AstIf::AstIf(lexer::Loc loc, ExprPtr &&cond, AstPtr &&thenBody,
+	     AstPtr &&elseBody)
+    : loc{loc}, cond{std::move(cond)}, thenBody{std::move(thenBody)}
     , elseBody{std::move(elseBody)}
 {}
 
@@ -434,21 +448,36 @@ AstIf::print(int indent) const
 void
 AstIf::codegen()
 {
+    if (!gen::bbOpen()) {
+	error::out() << loc << ": warning: if statement not reachabel\n";
+	return;
+    }
+
     auto thenLabel = gen::getLabel("then");
     auto elseLabel = gen::getLabel("else");
     auto endLabel = gen::getLabel("end");
 
+    bool endLabelUsed = false;
+
     cond->condition(thenLabel, elseLabel);
     gen::defineLabel(thenLabel);
     thenBody->codegen();
-    gen::jumpInstruction(endLabel);
+    if (gen::bbOpen()) {
+	endLabelUsed = true;
+	gen::jumpInstruction(endLabel);
+    }
     gen::defineLabel(elseLabel);
     if (elseBody) {
 	elseBody->codegen();
     }
-    gen::jumpInstruction(endLabel); // connect with 'end'
-				    // (even if 'else' is empyt)
-    gen::defineLabel(endLabel);
+    if (gen::bbOpen()) {
+	endLabelUsed = true;
+	gen::jumpInstruction(endLabel); // connect with 'end'
+					// (even if 'else' is empyt)
+    }
+    if (endLabelUsed) {
+	gen::defineLabel(endLabel);
+    }
 }
 
 void
@@ -463,19 +492,40 @@ AstIf::apply(std::function<bool(Ast *)> op)
 }
 
 /*
+ * AstTypeDecl
+ */
+AstTypeDecl::AstTypeDecl(lexer::Token name, const Type *type)
+    : name{name}, type{type}
+{
+    auto aliasType = TypeAlias::create(name.val, type);
+    auto add = Symtab::addType( name.loc, name.val, aliasType);
+    if (!add.second) {
+	error::out() << name.loc << ": error: '" << name.val
+	    << "' already defined in this scope\n";
+	error::fatal();
+    }
+}
+
+void
+AstTypeDecl::print(int indent) const
+{
+    error::out(indent) << "type " << name.val << ":" << type << "\n";
+}
+
+/*
  * AstEnumDecl
  */
 
 AstEnumDecl::AstEnumDecl(lexer::Token enumTypeName, const Type *intType)
     : enumTypeName{enumTypeName}, intType{intType}
 {
-    if (!intType->isInteger()) {
+    if (!intType->isInteger() || intType->isEnum()) {
 	error::out() << enumTypeName.loc
-	    << ": error: enum type has to be an integer type"
-	    << std::endl;
+	    << ": error: enum type has to be an integer type\n";
 	error::fatal();
     }
-    //this->type = EnumType::createIncomplete(enumName.val, intType);
+    enumType = EnumType::createIncomplete(enumTypeName.val, intType);
+    Symtab::addType(enumTypeName.loc, enumTypeName.val, enumType);
 }
 
 void
@@ -496,7 +546,7 @@ AstEnumDecl::add(lexer::Token name, ExprPtr &&expr)
     }
     enumExpr.push_back(std::move(expr));
 
-    auto ec = EnumConstant::create(name.val, enumLastVal++, intType, name.loc);
+    auto ec = EnumConstant::create(name.val, enumLastVal++, enumType, name.loc);
     auto add = Symtab::addExpression(name.loc, name.val, ec.get());
     assert(add.second);
     enumConstant.push_back(std::move(ec));
@@ -505,6 +555,16 @@ AstEnumDecl::add(lexer::Token name, ExprPtr &&expr)
 void
 AstEnumDecl::complete()
 {
+    std::vector<UStr> constName;
+    std::vector<std::int64_t> constValue;
+
+    for (std::size_t i = 0; i < enumConstant.size(); ++i) {
+	auto p = dynamic_cast<const EnumConstant *>(enumConstant[i].get());
+	assert(p);
+	constName.push_back(p->name);
+	constValue.push_back(p->value);
+    }
+    enumType->complete(std::move(constName), std::move(constValue));
 }
 
 void

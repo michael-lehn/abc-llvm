@@ -15,6 +15,12 @@ namespace gen {
 
 FunctionBuildingInfo functionBuildingInfo;
 
+bool
+bbOpen()
+{
+    return !functionBuildingInfo.bbClosed;
+} 
+
 llvm::Function *
 functionDeclaration(const char *ident, const abc::Type *fnType,
 		    bool externalLinkage)

@@ -123,13 +123,6 @@ Type::numBits() const
     return isAlias() ? getUnalias()->numBits() : 0;
 }
 
-// for enum (sub-)types
-bool
-Type::isEnum() const
-{
-    return isAlias() ? getUnalias()->isEnum() : false;
-}
-
 // for pointer and array (sub-)types
 bool
 Type::isPointer() const
@@ -180,6 +173,24 @@ Type::paramType() const
 {
     static std::vector<const Type *> noArgs;
     return isAlias() ? getUnalias()->paramType() : noArgs;
+}
+
+// for enum (sub-)types
+bool
+Type::isEnum() const
+{
+    return isAlias() ? getUnalias()->isEnum() : false;
+}
+
+const Type *
+Type::complete(const std::vector<UStr> &&constName,
+	       const std::vector<std::int64_t> &&constValue)
+{
+    if (isAlias() && getUnalias()->isEnum()) {
+	assert(0 && "Alias type can not be completed");
+    }
+    assert(0 && "Type can not be completed");
+    return nullptr;
 }
 
 // for struct (sub-)types

@@ -7,6 +7,7 @@
 
 #include "expr/expr.hpp"
 #include "expr/enumconstant.hpp"
+#include "lexer/loc.hpp"
 #include "lexer/token.hpp"
 #include "type/type.hpp"
 
@@ -147,8 +148,9 @@ class AstLocalVar : public Ast
 class AstReturn : public Ast
 {
     public:
-	AstReturn(ExprPtr &&expr);
+	AstReturn(lexer::Loc loc, ExprPtr &&expr);
 
+	lexer::Loc loc;
 	ExprPtr expr;
 
 	void print(int indent) const override;
@@ -173,9 +175,11 @@ class AstExpr : public Ast
 class AstIf : public Ast
 {
     public:
-	AstIf(ExprPtr &&cond, AstPtr &&thenBody);
-	AstIf(ExprPtr &&cond, AstPtr &&thenBody, AstPtr &&elseBody);
+	AstIf(lexer::Loc loc, ExprPtr &&cond, AstPtr &&thenBody);
+	AstIf(lexer::Loc loc, ExprPtr &&cond, AstPtr &&thenBody,
+	      AstPtr &&elseBody);
 
+	lexer::Loc loc;
 	const ExprPtr cond;
 	const AstPtr thenBody;
 	const AstPtr elseBody;
@@ -187,16 +191,29 @@ class AstIf : public Ast
 
 //------------------------------------------------------------------------------
 
+class AstTypeDecl : public Ast
+{
+    public:
+	AstTypeDecl(lexer::Token name, const Type *type);
+
+	const lexer::Token name;
+	const Type * const type;
+
+	void print(int indent) const override;
+};
+
+//------------------------------------------------------------------------------
+
 class AstEnumDecl : public Ast
 {
     private:
 	lexer::Token enumTypeName;
 	const Type *intType;
 
-	//Type *enumType;
+	Type *enumType;
 	std::int64_t enumLastVal = 0;
-	std::vector<ExprPtr> enumConstant;
-	std::vector<ExprPtr> enumExpr;
+	std::vector<ExprPtr> enumExpr;	    // expr found by parser after '='
+	std::vector<ExprPtr> enumConstant;  // gets referenced in symtab
 
     public:
 	AstEnumDecl(lexer::Token enumTypeName, const Type *intType);

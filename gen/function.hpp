@@ -20,6 +20,10 @@ struct FunctionBuildingInfo
 
 extern FunctionBuildingInfo functionBuildingInfo;
 
+// allows to check if we are in a building block. Otherwise instructions are
+// not reachable
+bool bbOpen();
+
 
 llvm::Function *functionDeclaration(const char *ident, const abc::Type *fnType,
 				    bool externalLinkage);

@@ -70,11 +70,10 @@ jumpInstruction(Label label)
 {
     assert(llvmBuilder);
     assert(functionBuildingInfo.fn);
+    assert(!functionBuildingInfo.bbClosed);
 
     auto ib = llvmBuilder->GetInsertBlock();
-    if (!functionBuildingInfo.bbClosed) {
-	llvmBuilder->CreateBr(label);
-    }
+    llvmBuilder->CreateBr(label);
     functionBuildingInfo.bbClosed = true;
     return ib;
 }
@@ -107,6 +106,10 @@ phi(Value a, Label labelA, Value b, Label labelB, const abc::Type *type)
 void
 returnInstruction(Value val)
 {
+    assert(llvmBuilder);
+    assert(functionBuildingInfo.fn);
+    assert(!functionBuildingInfo.bbClosed);
+
     if (val) {
 	store(val, functionBuildingInfo.retVal);
     }
