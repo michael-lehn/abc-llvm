@@ -25,7 +25,6 @@ class FunctionType : public Type
 				  std::vector<const Type *> &&arg,
 				  bool varg = false);
 
-	const Type *getAlias(UStr alias) const override;
 	const Type *getConst() const override;
 	const Type *getConstRemoved() const override;
 

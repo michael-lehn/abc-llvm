@@ -14,12 +14,10 @@ class VoidType : public Type
     public:
 	static const Type *create();
 
-	virtual const Type *getAlias(UStr alias) const override;
 	const Type *getConst() const override;
 	const Type *getConstRemoved() const override;
 
 	bool hasSize() const override;
-	bool hasConstFlag() const override;
 
 	virtual bool isVoid() const override;
 };

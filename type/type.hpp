@@ -13,7 +13,7 @@ class Type
 {
     protected:
 	bool isConst;
-	UStr name, aka_;
+	UStr name;
 
     public:
 	Type(bool isConst, UStr name);
@@ -23,19 +23,24 @@ class Type
 	static bool equals(const Type *ty1, const Type *ty2);
 	static const Type *convert(const Type *from, const Type *to);
 
-	const Type *getAlias(const char *alias) const;
-	virtual const Type *getAlias(UStr alias) const = 0;
 	virtual const Type *getConst() const = 0;
 	virtual const Type *getConstRemoved() const = 0;
 
 	UStr ustr() const;
-	UStr aka() const;
+	bool hasConstFlag() const;
 
-	virtual bool hasSize() const = 0;
-	virtual bool hasConstFlag() const;
+	// for type aliases
+	virtual bool isAlias() const;
+	virtual const Type *getUnalias() const;
+	const Type *getAlias(const char *alias) const;
+	const Type *getAlias(UStr alias) const;
+	// ---
+
+	virtual bool hasSize() const;
 
 	virtual bool isVoid() const;
 	virtual bool isNullptr() const;
+
 
 	// for integer (sub-)types 
 	virtual bool isBool() const;
@@ -43,6 +48,9 @@ class Type
 	virtual bool isSignedInteger() const;
 	virtual bool isUnsignedInteger() const;
 	virtual std::size_t numBits() const;
+
+	// for enum (sub-)types
+	virtual bool isEnum() const;
 
 	// for pointer and array (sub-)types
 	virtual bool isPointer() const;

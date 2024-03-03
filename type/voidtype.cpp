@@ -6,10 +6,8 @@ static bool
 operator<(const VoidType &x, const VoidType &y)
 {
     const auto &tx = std::tuple{x.ustr().c_str(),
-				x.aka().c_str(),
 				x.hasConstFlag()};
     const auto &ty = std::tuple{y.ustr().c_str(),
-				y.aka().c_str(),
 				y.hasConstFlag()};
 
     return tx < ty;
@@ -22,7 +20,6 @@ static std::set<VoidType> voidSet;
 VoidType::VoidType(bool constFlag, UStr name)
     : Type{constFlag, name}
 {
-    aka_ = UStr::create("void");
 }
 
 const Type *
@@ -35,13 +32,7 @@ VoidType::create(bool constFlag, UStr name)
 const Type *
 VoidType::create()
 {
-    return create(false, UStr{});
-}
-
-const Type *
-VoidType::getAlias(UStr alias) const
-{
-    return create(hasConstFlag(), alias);
+    return create(false, UStr::create("void"));
 }
 
 const Type *
@@ -60,12 +51,6 @@ bool
 VoidType::hasSize() const
 {
     return false;
-}
-
-bool
-VoidType::hasConstFlag() const
-{
-    return isConst;
 }
 
 bool

@@ -23,10 +23,19 @@ enum Foo : int
 fn main(argc: i32): i32
 {
     local a: u16;
+    a = A;
+
+    enum Foo : int
+    {
+	A = 10,
+	B = A + 4,
+	C,
+    };
+
     local b: i32;
     local c: i64;
 
-    a = 1;
+    a += A;
     b = (u64)(i16)0xFFi8;
 
     c = a + b;

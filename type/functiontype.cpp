@@ -9,12 +9,10 @@ operator<(const FunctionType &x, const FunctionType &y)
 {
     const auto &tx = std::tuple{x.retType(),
 				x.ustr().c_str(),
-				x.aka().c_str(),
 				x.paramType(),
 				x.hasConstFlag()};
     const auto &ty = std::tuple{y.retType(),
 				y.ustr().c_str(),
-				y.aka().c_str(),
 				y.paramType(),
 				y.hasConstFlag()};
     return tx < ty;
@@ -28,16 +26,6 @@ FunctionType::FunctionType(const Type *ret, std::vector<const Type *> &&param,
 			   bool varg, bool constFlag, UStr name)
     : Type{constFlag, name}, ret{ret}, param{std::move(param)}, varg{varg}
 {
-    std::stringstream ss;
-    ss << "fn (";
-    for (std::size_t i = 0; i < this->param.size(); ++i) {
-	ss << ":" << this->param[i]->aka();
-	if (i + 1 < this->param.size()) {
-	    ss << ", ";
-	}
-    }
-    ss << "): " << ret->aka();
-    aka_ = UStr::create(ss.str());
 }
 
 const Type *
@@ -52,16 +40,18 @@ const Type *
 FunctionType::create(const Type *ret, std::vector<const Type *> &&param,
 		     bool varg)
 {
-    return create(ret, std::move(param), varg, false, UStr{});
+    std::stringstream ss;
+    ss << "fn (";
+    for (std::size_t i = 0; i < param.size(); ++i) {
+	ss << ":" << param[i];
+	if (i + 1 < param.size()) {
+	    ss << ", ";
+	}
+    }
+    ss << "): " << ret;
+    return create(ret, std::move(param), varg, false, UStr::create(ss.str()));
 }
 
-
-const Type *
-FunctionType::getAlias(UStr alias) const
-{
-    std::vector<const Type *> paramTy = paramType();
-    return create(retType(), std::move(paramTy), hasVarg(), false, alias);
-}
 
 const Type *
 FunctionType::getConst() const

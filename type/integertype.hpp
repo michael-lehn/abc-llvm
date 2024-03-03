@@ -14,7 +14,7 @@ class IntegerType : public Type
 	bool isSigned;
 
 	static const Type *create(std::size_t numBits, bool signed_,
-				  bool constFlag, UStr alias);
+				  bool constFlag);
 
     public:
 	static const Type *createBool();
@@ -23,7 +23,6 @@ class IntegerType : public Type
 	static const Type *createSigned(std::size_t numBits);
 	static const Type *createUnsigned(std::size_t numBits);
 
-	virtual const Type *getAlias(UStr alias) const override;
 	const Type *getConst() const override;
 	const Type *getConstRemoved() const override;
 

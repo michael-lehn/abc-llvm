@@ -542,7 +542,8 @@ parseDeclaration()
 {
     AstPtr ast;
 
-    ast = parseLocalVariableDefinition();
+    (ast = parseLocalVariableDefinition())
+	|| (ast = parseEnumDeclaration());
 
     /*
     (ast = parseTypeDeclaration())

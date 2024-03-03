@@ -12,12 +12,10 @@ operator<(const IntegerType &x, const IntegerType &y)
 {
     const auto &tx = std::tuple{x.numBits(),
 				x.ustr().c_str(),
-				x.aka().c_str(),
 				x.isSignedInteger(),
 				x.hasConstFlag()};
     const auto &ty = std::tuple{y.numBits(),
 				y.ustr().c_str(),
-				y.aka().c_str(),
 				y.isSignedInteger(),
 				y.hasConstFlag()};
 
@@ -32,16 +30,14 @@ IntegerType::IntegerType(std::size_t numBits, bool signed_, bool constFlag,
 			 UStr name)
     : Type{constFlag, name}, numBits_{numBits}, isSigned{signed_}
 {
-    std::stringstream ss;
-    ss << (isSignedInteger() ? "i" : "u") << this->numBits();
-    aka_ = UStr::create(ss.str());
 }
 
 const Type *
-IntegerType::create(std::size_t numBits, bool signed_, bool constFlag,
-		    UStr alias)
+IntegerType::create(std::size_t numBits, bool signed_, bool constFlag)
 {
-    auto ty = IntegerType{numBits, signed_, constFlag, alias};
+    std::stringstream ss;
+    ss << (signed_ ? "i" : "u") << numBits;
+    auto ty = IntegerType{numBits, signed_, constFlag, UStr::create(ss.str())};
     return &*intSet.insert(ty).first;
 }
 
@@ -67,31 +63,25 @@ IntegerType::createInt()
 const Type *
 IntegerType::createSigned(std::size_t numBits)
 {
-    return create(numBits, true, false, UStr{});
+    return create(numBits, true, false);
 }
 
 const Type *
 IntegerType::createUnsigned(std::size_t numBits)
 {
-    return create(numBits, false, false, UStr{});
-}
-
-const Type *
-IntegerType::getAlias(UStr alias) const
-{
-    return create(numBits(), isSignedInteger(), hasConstFlag(), alias);
+    return create(numBits, false, false);
 }
 
 const Type *
 IntegerType::getConst() const
 {
-    return create(numBits(), isSignedInteger(), true, name);
+    return create(numBits(), isSignedInteger(), true);
 }
 
 const Type *
 IntegerType::getConstRemoved() const
 {
-    return create(numBits(), isSignedInteger(), false, name);
+    return create(numBits(), isSignedInteger(), false);
 }
 
 bool
