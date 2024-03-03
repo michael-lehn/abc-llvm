@@ -183,8 +183,8 @@ Type::isEnum() const
 }
 
 const Type *
-Type::complete(const std::vector<UStr> &&constName,
-	       const std::vector<std::int64_t> &&constValue)
+Type::complete(const std::vector<UStr> &&/*constName*/,
+	       const std::vector<std::int64_t> &&/*constValue*/)
 {
     if (isAlias() && getUnalias()->isEnum()) {
 	assert(0 && "Alias type can not be completed");
