@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <memory>
+#include <variant>
 #include <vector>
 
 #include "expr/expr.hpp"
