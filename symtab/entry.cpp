@@ -58,6 +58,11 @@ operator!=(const Entry &a, const Entry &b)
 	return true;
     }
     if (a.kind == Entry::VAR || a.kind == Entry::TYPE) {
+	std::cerr << "comparing types:\n";
+	std::cerr << "a.type = " << a.type
+	    << ", (void *)a.type = " << (void *)a.type << "\n";
+	std::cerr << "b.type = " << b.type
+	    << ", (void *)b.type = " << (void *)b.type << "\n";
 	return a.type != b.type;
     }
     if (a.kind == Entry::EXPR) {

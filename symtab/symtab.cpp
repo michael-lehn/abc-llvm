@@ -105,7 +105,6 @@ Symtab::print(std::ostream &out)
     std::for_each(scope.begin(), scope.end(),
 	    [&](const auto &s) {
 		for (const auto &item: *s) {
-
 		    out << item.first << ": "
 			<< item.second.id << ", ";
 		    if (item.second.expressionDeclaration()) {

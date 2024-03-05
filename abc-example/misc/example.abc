@@ -12,6 +12,8 @@ fn factorial(n: i32): i32
     }
 }
 
+enum Foo : u8;
+
 enum Foo : u8
 {
     X = 0,
@@ -21,6 +23,8 @@ enum Foo : u8
     C,
 };
 
+struct FooBar;
+
 struct FooBar {
     a, b: i32;
     c, d:
@@ -28,6 +32,10 @@ struct FooBar {
 	    a, b: i8;
 	};
 };
+
+type xxx: i32;
+type xxx: i32; // ok
+// type xxx: i16; // error
 
 global x: FooBar;
 

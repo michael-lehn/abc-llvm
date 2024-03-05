@@ -498,12 +498,23 @@ AstIf::apply(std::function<bool(Ast *)> op)
 AstTypeDecl::AstTypeDecl(lexer::Token name, const Type *type)
     : name{name}, type{type}
 {
-    auto aliasType = TypeAlias::create(name.val, type);
-    auto add = Symtab::addType( name.loc, name.val, aliasType);
-    if (!add.second) {
-	error::out() << name.loc << ": error: '" << name.val
-	    << "' already defined in this scope\n";
-	error::fatal();
+    if (auto found = Symtab::type(name.val, Symtab::CurrentScope)) {
+	// if <name> is already a type declaration it has to be an
+	// identical alias for type
+	if (found->type->getUnalias() != type) {
+	    error::out() << name.loc << ": error: redefinition of '"
+		<< name.val << "\n";
+	    error::out() << found->loc
+		<< ": note: previous definition is here\n";
+	    error::fatal();
+	}
+    } else {
+	// otherwise a new type alias gets created and added. If <name>
+	// is a different kind of symbol (variable name or enum constatnt)
+	// the error is handled by Symtab::addType
+	auto aliasType = TypeAlias::create(name.val, type);
+	auto add = Symtab::addType(name.loc, name.val, aliasType);
+	assert(add.second);
     }
 }
 
@@ -517,16 +528,36 @@ AstTypeDecl::print(int indent) const
  * AstEnumDecl
  */
 
-AstEnumDecl::AstEnumDecl(lexer::Token enumTypeName, const Type *intType)
-    : enumTypeName{enumTypeName}, intType{intType}
+AstEnumDecl::AstEnumDecl(lexer::Token name, const Type *intType)
+    : enumTypeName{name}, intType{intType}
 {
     if (!intType->isInteger() || intType->isEnum()) {
 	error::out() << enumTypeName.loc
 	    << ": error: enum type has to be an integer type\n";
 	error::fatal();
     }
-    enumType = EnumType::createIncomplete(enumTypeName.val, intType);
-    Symtab::addType(enumTypeName.loc, enumTypeName.val, enumType);
+
+    if (auto found = Symtab::type(name.val, Symtab::CurrentScope)) {
+	// if <name> is already a type declaration it has to be an incomplete
+	// enum type
+	if (!found->type->isEnum() || found->type->hasSize()) {
+	    error::out() << name.loc << ": error: redefinition of '"
+		<< name.val << "\n";
+	    error::out() << found->loc
+		<< ": note: previous definition is here\n";
+	    error::fatal();
+	} else {
+	    // grrh, const_cast! But we have to complete the type ...
+	    enumType = const_cast<Type *>(found->type);
+	}
+    } else {
+	// otherwise a new incomplete struct tyoe gets created and added. If
+	// <name> is a different kind of symbol (variable name or enum
+	// constatnt) the error is handled by Symtab::addType
+	enumType = EnumType::createIncomplete(name.val, intType);
+	auto add = Symtab::addType(name.loc, name.val, enumType);
+	assert(add.second);
+    }
 }
 
 void
@@ -572,25 +603,33 @@ AstEnumDecl::complete()
 void
 AstEnumDecl::print(int indent) const
 {
-    error::out(indent) << "enum " << enumTypeName.val;
-    if (intType) {
-	error::out() << ": " << intType;
-    }
-    error::out() << "\n";
-    error::out(indent) << "{\n";
-    for (std::size_t i = 0; i < enumConstant.size(); ++i) {
-	error::out(indent + 4) << enumConstant[i];
-	if (enumExpr[i]) {
-	    error::out() << " = " << enumExpr[i];
+    if (!enumConstant.size()) {
+	error::out(indent) << "enum " << enumTypeName.val;
+	if (intType) {
+	    error::out() << ": " << intType;
 	}
-	error::out() << ", // ";
-	if (intType->isSignedInteger()) {
-	    error::out() << enumConstant[i]->getSignedIntValue() << "\n";
-	} else {
-	    error::out() << enumConstant[i]->getUnsignedIntValue() << "\n";
+	error::out() << ";\n";
+    } else {
+	error::out(indent) << "enum " << enumTypeName.val;
+	if (intType) {
+	    error::out() << ": " << intType;
 	}
+	error::out() << "\n";
+	error::out(indent) << "{\n";
+	for (std::size_t i = 0; i < enumConstant.size(); ++i) {
+	    error::out(indent + 4) << enumConstant[i];
+	    if (enumExpr[i]) {
+		error::out() << " = " << enumExpr[i];
+	    }
+	    error::out() << ", // ";
+	    if (intType->isSignedInteger()) {
+		error::out() << enumConstant[i]->getSignedIntValue() << "\n";
+	    } else {
+		error::out() << enumConstant[i]->getUnsignedIntValue() << "\n";
+	    }
+	}
+	error::out(indent) << "}\n\n";
     }
-    error::out(indent) << "}\n\n";
 }
 
 void
@@ -601,11 +640,30 @@ AstEnumDecl::codegen()
 /*
  * AstStructDecl
  */
-AstStructDecl::AstStructDecl(lexer::Token structTypeName)
-    : structTypeName{structTypeName}
+AstStructDecl::AstStructDecl(lexer::Token name)
+    : structTypeName{name}
 {
-    structType = StructType::createIncomplete(structTypeName.val);
-    Symtab::addType(structTypeName.loc, structTypeName.val, structType);
+    if (auto found = Symtab::type(name.val, Symtab::CurrentScope)) {
+	// if <name> is already a type declaration it has to be an incomplete
+	// struct type
+	if (!found->type->isStruct() || found->type->hasSize()) {
+	    error::out() << name.loc << ": error: redefinition of '"
+		<< name.val << "\n";
+	    error::out() << found->loc
+		<< ": note: previous definition is here\n";
+	    error::fatal();
+	} else {
+	    // grrh, const_cast! But we have to complete the type ...
+	    structType = const_cast<Type *>(found->type);
+	}
+    } else {
+	// otherwise a new incomplete struct tyoe gets created and added. If
+	// <name> is a different kind of symbol (variable name or enum
+	// constatnt) the error is handled by Symtab::addType
+	structType = StructType::createIncomplete(name.val);
+	auto add = Symtab::addType(name.loc, name.val, structType);
+	assert(add.second);
+    }
 }
 
 void
