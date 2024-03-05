@@ -9,6 +9,7 @@
 #include "lexer/error.hpp"
 #include "symtab/symtab.hpp"
 #include "type/enumtype.hpp"
+#include "type/structtype.hpp"
 #include "type/typealias.hpp"
 
 #include "ast.hpp"
@@ -603,6 +604,8 @@ AstEnumDecl::codegen()
 AstStructDecl::AstStructDecl(lexer::Token structTypeName)
     : structTypeName{structTypeName}
 {
+    structType = StructType::createIncomplete(structTypeName.val);
+    Symtab::addType(structTypeName.loc, structTypeName.val, structType);
 }
 
 void
@@ -623,6 +626,33 @@ AstStructDecl::add(std::vector<lexer::Token> &&memberName, AstPtr &&memberType)
 void
 AstStructDecl::complete()
 {
+    std::vector<UStr> memberName;
+    std::vector<const Type *> memberType;
+
+    for (const auto &decl: memberDecl) {
+	const Type *type = nullptr;
+	if (std::holds_alternative<const Type *>(decl.second)) {
+	    type = std::get<const Type *>(decl.second);
+	} else {
+	    const auto ast = std::get<AstPtr>(decl.second).get();
+	    const auto structDecl = dynamic_cast<AstStructDecl *>(ast);
+	    assert(structDecl);
+	    type = structDecl->getStructType();
+	}
+
+	for (std::size_t i = 0; i < decl.first.size(); ++i) {
+	    memberName.push_back(decl.first[i].val);
+	    memberType.push_back(type);
+	}
+    }
+
+    structType->complete(std::move(memberName), std::move(memberType));
+}
+
+const Type *
+AstStructDecl::getStructType() const
+{
+    return structType;
 }
 
 void

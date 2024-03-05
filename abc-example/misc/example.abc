@@ -21,7 +21,7 @@ enum Foo : u8
     C,
 };
 
-struct Foo {
+struct FooBar {
     a, b: i32;
     c, d:
 	struct Bar {
@@ -29,11 +29,19 @@ struct Foo {
 	};
 };
 
+global x: FooBar;
+
 fn main(argc: i32): i32
 {
     type Foo: i64;
     global a: Foo;
     a = A;
+
+    struct FooBar {
+	a, b: i32;
+    };
+
+    local x: FooBar;
 
     return a;
 }

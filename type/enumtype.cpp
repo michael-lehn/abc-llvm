@@ -80,8 +80,8 @@ EnumType::isEnum() const
 }
 
 const Type *
-EnumType::complete(const std::vector<UStr> &&constName_,
-		   const std::vector<std::int64_t> &&constValue_)
+EnumType::complete(std::vector<UStr> &&constName_,
+		   std::vector<std::int64_t> &&constValue_)
 {
     constName = std::move(constName_);
     constValue = std::move(constValue_);

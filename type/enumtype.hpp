@@ -31,9 +31,8 @@ class EnumType : public Type
 	bool isUnsignedInteger() const override;
 
 	bool isEnum() const override;
-	const Type *complete(
-			const std::vector<UStr> &&constName,
-			const std::vector<std::int64_t> &&constValue) override;
+	const Type *complete(std::vector<UStr> &&constName,
+			     std::vector<std::int64_t> &&constValue) override;
 };
 
 } // namespace abc

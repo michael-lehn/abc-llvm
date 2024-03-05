@@ -183,8 +183,7 @@ Type::isEnum() const
 }
 
 const Type *
-Type::complete(const std::vector<UStr> &&/*constName*/,
-	       const std::vector<std::int64_t> &&/*constValue*/)
+Type::complete(std::vector<UStr> &&, std::vector<std::int64_t> &&)
 {
     if (isAlias() && getUnalias()->isEnum()) {
 	assert(0 && "Alias type can not be completed");
@@ -201,8 +200,7 @@ Type::isStruct() const
 }
 
 const Type *
-Type::complete(const std::vector<UStr> &&,
-	       const std::vector<const Type *> &&)
+Type::complete(std::vector<UStr> &&, std::vector<const Type *> &&)
 {
     if (isAlias() && getUnalias()->isStruct()) {
 	assert(0 && "Alias type can not be completed");
@@ -211,18 +209,18 @@ Type::complete(const std::vector<UStr> &&,
     return nullptr;
 }
 
+const std::vector<UStr> &
+Type::memberName() const
+{
+    static std::vector<UStr> noMembers;
+    return isAlias() ? getUnalias()->memberName() : noMembers;
+}
+
 const std::vector<const Type *> &
 Type::memberType() const
 {
     static std::vector<const Type *> noMembers;
     return isAlias() ? getUnalias()->memberType() : noMembers;
-}
-
-const std::vector<UStr> &
-Type::memberIdent() const
-{
-    static std::vector<UStr> noMembers;
-    return isAlias() ? getUnalias()->memberIdent() : noMembers;
 }
 
 std::ostream &

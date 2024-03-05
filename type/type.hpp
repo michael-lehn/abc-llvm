@@ -64,17 +64,15 @@ class Type
 
 	// for enum (sub-)types
 	virtual bool isEnum() const;
-	virtual const Type *complete(
-				const std::vector<UStr> &&constName,
-				const std::vector<std::int64_t> &&constValue);
+	virtual const Type *complete(std::vector<UStr> &&constName,
+				     std::vector<std::int64_t> &&constValue);
 
 	// for struct (sub-)types
 	virtual bool isStruct() const;
-	virtual const Type *complete(
-		const std::vector<UStr> &&memberIdent,
-		const std::vector<const Type *> &&memberType);
-	const std::vector<const Type *> &memberType() const;
-	const std::vector<UStr> &memberIdent() const;
+	virtual const Type *complete(std::vector<UStr> &&memberName,
+				     std::vector<const Type *> &&memberType);
+	virtual const std::vector<UStr> &memberName() const;
+	virtual const std::vector<const Type *> &memberType() const;
 
 };
 

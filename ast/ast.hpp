@@ -236,6 +236,7 @@ class AstStructDecl : public Ast
     private:
 	lexer::Token structTypeName;
 
+	Type *structType;
 	using AstOrType = std::variant<AstPtr, const Type *>;
 	using MemberDecl = std::pair<std::vector<lexer::Token>, AstOrType>;
 	std::vector<MemberDecl> memberDecl;
@@ -247,6 +248,7 @@ class AstStructDecl : public Ast
 		 const Type *memberType);
 	void add(std::vector<lexer::Token> &&memberName, AstPtr &&memberType);
 	void complete();
+	const Type *getStructType() const;
 
 	void print(int indent) const override;
 	void codegen() override;
