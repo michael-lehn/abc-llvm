@@ -591,4 +591,68 @@ AstEnumDecl::codegen()
 {
 }
 
+/*
+ * AstStructDecl
+ */
+AstStructDecl::AstStructDecl(lexer::Token structTypeName)
+    : structTypeName{structTypeName}
+{
+}
+
+void
+AstStructDecl::add(std::vector<lexer::Token> &&memberName,
+		   const Type *memberType)
+{
+    assert(memberType);
+    memberDecl.push_back({std::move(memberName), memberType});
+}
+
+void
+AstStructDecl::add(std::vector<lexer::Token> &&memberName, AstPtr &&memberType)
+{
+    assert(memberType);
+    memberDecl.push_back({std::move(memberName), std::move(memberType)});
+}
+
+void
+AstStructDecl::complete()
+{
+}
+
+void
+AstStructDecl::print(int indent) const
+{
+    if (!memberDecl.size()) {
+	error::out(indent) << "struct " << structTypeName.val << ";\n";
+    } else {
+	error::out(indent) << "struct " << structTypeName.val << "\n";
+	error::out(indent) << "{\n";
+	for (const auto &decl: memberDecl) {
+	    error::out(indent + 4) << "";
+	    for (std::size_t i = 0; i < decl.first.size(); ++i) {
+		error::out() << decl.first[i].val;
+		if (i + 1 < decl.first.size()) {
+		    error::out() << ", ";
+		}
+	    }
+	    error::out() << ": ";
+	    if (std::holds_alternative<const Type *>(decl.second)) {
+		error::out() << std::get<const Type *>(decl.second) << ";\n";
+	    } else {
+		error::out() << "\n";
+		std::get<AstPtr>(decl.second)->print(indent + 8);
+	    }
+	}
+	error::out(indent) << "};\n";
+	if (indent==0) {
+	    error::out() << "\n";
+	}
+    }
+}
+
+void
+AstStructDecl::codegen()
+{
+}
+
 } // namespace abc

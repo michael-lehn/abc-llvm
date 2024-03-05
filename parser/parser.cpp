@@ -48,6 +48,7 @@ static AstPtr parseFunctionDeclarationOrDefinition();
 static AstPtr parseExternDeclaration();
 static AstPtr parseGlobalVariableDefinition();
 static AstPtr parseTypeDeclaration();
+static AstPtr parseStructDeclaration();
 static AstPtr parseEnumDeclaration();
 
 /*
@@ -55,8 +56,8 @@ static AstPtr parseEnumDeclaration();
  *			 | extern-declaration
  *			 | global-variable-definition
  *			 | type-declaration
- *			 | struct-declaration
  *			 | enum-declaration
+ *			 | struct-declaration
  */
 static AstPtr
 parseTopLevelDeclaration()
@@ -67,7 +68,8 @@ parseTopLevelDeclaration()
     || (ast = parseExternDeclaration())
     || (ast = parseGlobalVariableDefinition())
     || (ast = parseTypeDeclaration())
-    || (ast = parseEnumDeclaration());
+    || (ast = parseEnumDeclaration())
+    || (ast = parseStructDeclaration());
 
     return ast;
 }
@@ -546,16 +548,9 @@ parseDeclaration()
 
     (ast = parseTypeDeclaration())
 	|| (ast = parseEnumDeclaration())
-	|| (ast = parseGlobalVariableDefinition())
-	|| (ast = parseLocalVariableDefinition());
-
-    /*
-    (ast = parseTypeDeclaration())
-	|| (ast = parseEnumDeclaration())
 	|| (ast = parseStructDeclaration())
 	|| (ast = parseGlobalVariableDefinition())
 	|| (ast = parseLocalVariableDefinition());
-	*/
     return ast;
 }
 
@@ -891,6 +886,121 @@ parseEnumConstantList(AstEnumDeclPtr &enumDecl)
 	getToken();
     }
     return true;
+}
+
+//------------------------------------------------------------------------------
+static bool parseStructMemberDeclaration(AstStructDecl *structDecl);
+
+/*
+ * struct-declaration = "struct" identifier (";" | struct-member-declaration )
+ */
+static AstPtr
+parseStructDeclaration()
+{
+    if (token.kind != TokenKind::STRUCT) {
+	return nullptr;
+    }
+    getToken();
+    if (!error::expected(TokenKind::IDENTIFIER)) {
+	return nullptr;
+    }
+    auto tok = token;
+    getToken();
+
+    if (token.kind == TokenKind::SEMICOLON) {
+	getToken();
+	return std::make_unique<AstStructDecl>(tok);
+    }
+
+    auto structDecl = std::make_unique<AstStructDecl>(tok);
+    if (parseStructMemberDeclaration(structDecl.get())) {
+	structDecl->complete();
+	return structDecl;
+    }
+    error::out() << token.loc
+	<< ": ';' or struct member declaration expected" << std::endl;
+    error::fatal();
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+static bool parseStructMemberList(AstStructDecl *structDecl);
+
+/*
+ * struct-member-declaration = "{" { struct-member-list } "}" ";"
+ */
+static bool
+parseStructMemberDeclaration(AstStructDecl *structDecl)
+{
+    if (token.kind != TokenKind::LBRACE) {
+	return false;
+    }
+    getToken();
+
+    while (true) {
+	if (!parseStructMemberList(structDecl)) {
+	    break;
+	}
+    }
+    if (!error::expected(TokenKind::RBRACE)) {
+	return false;
+    }
+    getToken();
+    if (!error::expected(TokenKind::SEMICOLON)) {
+	return false;
+    }
+    getToken();
+    return true;
+}
+
+//------------------------------------------------------------------------------
+/*
+ * struct-member-list
+ *	= identifier { "," identifier } ":" ( type | struct-declaration ) ";"
+ */
+static bool
+parseStructMemberList(AstStructDecl *structDecl)
+{
+    if (token.kind != TokenKind::IDENTIFIER) {
+	return false;
+    }
+    std::vector<lexer::Token> memberName;
+    
+    while (true) {
+	if (token.kind != TokenKind::IDENTIFIER) {
+	    error::out() << token.loc
+		<< ": identifier for struct member expected" << std::endl;
+	    error::fatal();
+	    return false;
+	}
+	memberName.push_back(token);
+	getToken();
+	if (token.kind != TokenKind::COMMA) {
+	    break;
+	}
+	getToken();
+    }
+    if (!error::expected(TokenKind::COLON)) {
+	return false;
+    }
+    getToken();
+    auto type = parseType();
+    if (type) {
+	if (!error::expected(TokenKind::SEMICOLON)) {
+	    return false;
+	}
+	getToken();
+	structDecl->add(std::move(memberName), type);
+	return true;
+    } else if (auto ast = parseStructDeclaration()) {
+	structDecl->add(std::move(memberName), std::move(ast));
+	return true;
+    } else {
+	error::out() << token.loc << ": expected type or struct declaration"
+	    << std::endl;
+	error::fatal();
+	return false;
+    }
 }
 
 //------------------------------------------------------------------------------

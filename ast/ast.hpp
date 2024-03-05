@@ -228,6 +228,31 @@ class AstEnumDecl : public Ast
 
 using AstEnumDeclPtr = std::unique_ptr<AstEnumDecl>;
 
+//------------------------------------------------------------------------------
+
+class AstStructDecl : public Ast
+{
+    private:
+	lexer::Token structTypeName;
+
+	using AstOrType = std::variant<AstPtr, const Type *>;
+	using MemberDecl = std::pair<std::vector<lexer::Token>, AstOrType>;
+	std::vector<MemberDecl> memberDecl;
+
+    public:
+	AstStructDecl(lexer::Token structTypeName);
+
+	void add(std::vector<lexer::Token> &&memberName,
+		 const Type *memberType);
+	void add(std::vector<lexer::Token> &&memberName, AstPtr &&memberType);
+	void complete();
+
+	void print(int indent) const override;
+	void codegen() override;
+};
+
+using AstStructDeclPtr = std::unique_ptr<AstStructDecl>;
+
 } // namespace abc
 
 #endif // AST_HPP

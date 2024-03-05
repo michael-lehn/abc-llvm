@@ -19,10 +19,18 @@ enum Foo : u8
     C,
 };
 
+struct Foo {
+    a, b: i32;
+    c, d:
+	struct Bar {
+	    a, b: i8;
+	};
+};
+
 fn main(argc: i32): i32
 {
     type Foo: i64;
-    local a: Foo;
+    global a: Foo;
     a = A;
 
     return a;
