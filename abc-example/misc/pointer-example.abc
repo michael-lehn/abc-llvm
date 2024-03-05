@@ -1,0 +1,12 @@
+extern a: i32;
+global a: i32;
+
+fn main(argc: i32): i32
+{
+    local x: -> i32;
+    local y: -> i32;
+
+    y = x + 1;
+
+    return a;
+}
