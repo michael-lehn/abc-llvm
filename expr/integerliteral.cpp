@@ -110,6 +110,9 @@ IntegerLiteral::print(int indent) const
 void
 IntegerLiteral::printFlat(std::ostream &out, int prec) const
 {
+    if (radix == 16) {
+	out << "0x";
+    }
     out << val;
 }
 

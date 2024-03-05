@@ -14,6 +14,8 @@ fn factorial(n: i32): i32
 
 enum Foo : u8
 {
+    X = 0,
+    Y = 022,
     A = 0xFF,
     B = A + 4,
     C,

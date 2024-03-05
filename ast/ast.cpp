@@ -567,6 +567,7 @@ AstEnumDecl::complete()
     enumType->complete(std::move(constName), std::move(constValue));
 }
 
+
 void
 AstEnumDecl::print(int indent) const
 {
@@ -581,7 +582,12 @@ AstEnumDecl::print(int indent) const
 	if (enumExpr[i]) {
 	    error::out() << " = " << enumExpr[i];
 	}
-	error::out() << ", // " << enumConstant[i]->getSignedIntValue() << "\n";
+	error::out() << ", // ";
+	if (intType->isSignedInteger()) {
+	    error::out() << enumConstant[i]->getSignedIntValue() << "\n";
+	} else {
+	    error::out() << enumConstant[i]->getUnsignedIntValue() << "\n";
+	}
     }
     error::out(indent) << "}\n\n";
 }
