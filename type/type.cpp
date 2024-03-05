@@ -29,6 +29,12 @@ Type::convert(const Type *from, const Type *to)
 	} else {
 	    return nullptr;
 	}
+    } else if (to->isPointer()) {
+	if (equals(to->refType(), from->refType())) {
+	    return to;
+	} else {
+	    return nullptr;
+	}
     } else {
 	return nullptr;
     }

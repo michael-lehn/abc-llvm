@@ -65,11 +65,15 @@ static BinaryResult binaryErr(BinaryExpr::Kind kind, ExprPtr &&left,
 			      ExprPtr &&right, lexer::Loc *loc);
 static BinaryResult binaryInt(BinaryExpr::Kind kind, ExprPtr &&left,
 			      ExprPtr &&right, lexer::Loc *loc);
+static BinaryResult binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left,
+			      ExprPtr &&right, lexer::Loc *loc);
 
 BinaryResult
 binary(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right, lexer::Loc *loc)
 {
-    if (left->type->isInteger() && right->type->isInteger()) {
+    if (left->type->isPointer() || right->type->isPointer()) {
+	return binaryPtr(kind, std::move(left), std::move(right), loc);
+    } else if (left->type->isInteger() && right->type->isInteger()) {
 	return binaryInt(kind, std::move(left), std::move(right), loc);
     } else {
 	return binaryErr(kind, std::move(left), std::move(right), loc);
@@ -152,6 +156,66 @@ binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
     }
     left = ImplicitCast::create(std::move(left), newLeftType);
     right = ImplicitCast::create(std::move(right), newRightType);
+    return std::make_tuple(std::move(left), std::move(right), type);
+}
+
+static BinaryResult
+binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
+	  lexer::Loc *loc)
+{
+    if (kind == BinaryExpr::ADD && !left->type->isPointer()) {
+	left.swap(right);
+    }
+    const Type *type = nullptr;
+    const Type *newLeftType = nullptr;
+    const Type *newRightType = nullptr;
+
+    switch (kind) {
+	case BinaryExpr::ASSIGN:
+	    type = newLeftType = left->type;
+	    newRightType = Type::convert(right->type, type);
+	    break;
+	case BinaryExpr::ADD:
+	    if (right->type->isInteger()) {
+		type = newLeftType = left->type;
+		newRightType = right->type;
+	    } else {
+		type = newLeftType = newRightType = nullptr;
+	    }
+	    break;
+	case BinaryExpr::SUB:
+	    if (right->type->isPointer()) {
+		type = IntegerType::createSigned(64);
+		newLeftType = left->type;
+		newRightType = right->type;
+	    } else {
+		type = newLeftType = newRightType = nullptr;
+	    }
+	    break;
+	case BinaryExpr::Kind::EQUAL:
+	case BinaryExpr::Kind::NOT_EQUAL:
+	case BinaryExpr::Kind::GREATER:
+	case BinaryExpr::Kind::GREATER_EQUAL:
+	case BinaryExpr::Kind::LESS:
+	case BinaryExpr::Kind::LESS_EQUAL:
+	    {
+		type = IntegerType::createBool();
+		newLeftType = left->type;
+		newRightType = right->type;
+	    }
+	    break;
+	case BinaryExpr::Kind::LOGICAL_AND:
+	case BinaryExpr::Kind::LOGICAL_OR:
+	    {
+		type = newLeftType = newRightType = IntegerType::createBool();
+	    }
+	    break;
+	default:
+	    ;
+    }
+    if (!type || !newLeftType || !newRightType) { 
+	return binaryErr(kind, std::move(left), std::move(right), loc);
+    }
     return std::make_tuple(std::move(left), std::move(right), type);
 }
 

@@ -7,6 +7,7 @@
 #include "symtab/symtab.hpp"
 #include "type/functiontype.hpp"
 #include "type/integertype.hpp"
+#include "type/pointertype.hpp"
 #include "type/voidtype.hpp"
 
 #include "defaulttype.hpp"
@@ -322,7 +323,7 @@ parseType()
 }
 
 //------------------------------------------------------------------------------
-//static const Type *parsePointerType();
+static const Type *parsePointerType();
 //static const Type *parseArrayType();
 
 /*
@@ -340,9 +341,9 @@ parseUnqualifiedType()
 	    return entry->type;
 	}
 	return nullptr;
-    /*
     } else if (auto type = parsePointerType()) {
 	return type;
+    /*
     } else if (auto type = parseArrayType()) {
 	return type;
     } else if (auto type = parseFunctionType()) {
@@ -1001,6 +1002,27 @@ parseStructMemberList(AstStructDecl *structDecl)
 	error::fatal();
 	return false;
     }
+}
+
+//------------------------------------------------------------------------------
+/*
+ * pointer-type = "->" type
+ */
+static const Type *
+parsePointerType()
+{
+    if (token.kind != TokenKind::ARROW) {
+	return nullptr;
+    }
+    getToken();
+    auto type = parseType();
+    if (!type) {
+	error::out() << token.loc << ": type expected"
+	    << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    return PointerType::create(type);
 }
 
 //------------------------------------------------------------------------------
