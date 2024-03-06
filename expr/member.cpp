@@ -29,7 +29,6 @@ Member::create(ExprPtr &&structure, UStr member, lexer::Loc loc)
     const Type *type = nullptr;
     std::size_t index = 0;
     if (structureType->isStruct()) {
-	std::cerr << " is struct\n";
 	const auto &memberName = structureType->memberName();
 	const auto &memberType = structureType->memberType();
 	for (std::size_t i = 0; i < memberName.size(); ++i) {
