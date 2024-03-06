@@ -31,7 +31,7 @@ const Type *
 PointerType::create(const Type *refType, bool constFlag)
 {
     std::stringstream ss;
-    ss << " -> " << refType;
+    ss << "-> " << refType;
     auto ty = PointerType{refType, constFlag, UStr::create(ss.str())};
     return &*pointerSet.insert(ty).first;
 }

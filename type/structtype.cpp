@@ -14,7 +14,7 @@ static std::unordered_map<std::size_t, StructType> structConstSet;
 //------------------------------------------------------------------------------
 
 StructType::StructType(std::size_t id, UStr name, bool constFlag)
-    : Type{constFlag, name}, id{id}, isComplete_{false}
+    : Type{constFlag, name}, id_{id}, isComplete_{false}
 {
 }
 
@@ -30,16 +30,22 @@ StructType::createIncomplete(UStr name)
     return &structSet.at(id);
 }
 
+std::size_t
+StructType::id() const
+{
+    return id_;
+}
+
 const Type *
 StructType::getConst() const
 {
-    return &structConstSet.at(id);
+    return &structConstSet.at(id());
 }
 
 const Type *
 StructType::getConstRemoved() const
 {
-    return &structSet.at(id);
+    return &structSet.at(id());
 }
 
 bool

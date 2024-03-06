@@ -27,6 +27,7 @@ class Type
 	virtual const Type *getConstRemoved() const = 0;
 
 	UStr ustr() const;
+	virtual std::size_t id() const;
 	bool hasConstFlag() const;
 
 	// for type aliases

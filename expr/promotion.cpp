@@ -273,7 +273,6 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
     if (!type || !newChildType) { 
 	return unaryErr(kind, std::move(child), loc);
     }
-    std::cerr << "child = " << child << ", type = " << type << "\n";
     child = ImplicitCast::create(std::move(child), newChildType);
     return std::make_pair(std::move(child), type);
     

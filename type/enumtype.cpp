@@ -15,7 +15,7 @@ static std::unordered_map<std::size_t, EnumType> enumConstSet;
 
 EnumType::EnumType(std::size_t id, UStr name, const Type *intType,
 		   bool constFlag)
-    : Type{constFlag, name}, id{id}, intType{intType}, isComplete_{false}
+    : Type{constFlag, name}, id_{id}, intType{intType}, isComplete_{false}
 {
 }
 
@@ -31,16 +31,22 @@ EnumType::createIncomplete(UStr name, const Type *intType)
     return &enumSet.at(id);
 }
 
+std::size_t
+EnumType::id() const
+{
+    return id_;
+}
+
 const Type *
 EnumType::getConst() const
 {
-    return &enumConstSet.at(id);
+    return &enumConstSet.at(id_);
 }
 
 const Type *
 EnumType::getConstRemoved() const
 {
-    return &enumSet.at(id);
+    return &enumSet.at(id_);
 }
 
 bool

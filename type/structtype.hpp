@@ -9,7 +9,7 @@ class StructType : public Type
 {
     protected:
 	StructType(std::size_t id, UStr name, bool constFlag);
-	std::size_t id;
+	std::size_t id_;
 
 	bool isComplete_;
 	std::vector<UStr> memberName_;
@@ -17,6 +17,8 @@ class StructType : public Type
 
     public:
 	static Type *createIncomplete(UStr name);
+
+	std::size_t id() const override;
 
 	const Type *getConst() const override;
 	const Type *getConstRemoved() const override;

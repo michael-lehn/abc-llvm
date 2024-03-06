@@ -18,6 +18,8 @@ Type::equals(const Type *ty1, const Type *ty2)
 	    && ty1->numBits() == ty2->numBits();
     } else if (ty1->isPointer() && ty2->isPointer()) {
 	return equals(ty1->refType(), ty2->refType());
+    } else if (ty1->isStruct() && ty2->isStruct()) {
+	return ty1->id() == ty2->id();
     }
     return false;
 }
@@ -37,6 +39,8 @@ Type::convert(const Type *from, const Type *to)
 	} else {
 	    return nullptr;
 	}
+    } else if (to->isStruct() && equals(to, from)) {
+	return to;
     } else {
 	return nullptr;
     }
@@ -46,6 +50,12 @@ UStr
 Type::ustr() const
 {
     return name;
+}
+
+std::size_t
+Type::id() const
+{
+    return isAlias() ? getUnalias()->id() : 0;
 }
 
 bool

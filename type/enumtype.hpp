@@ -10,7 +10,7 @@ class EnumType : public Type
     protected:
 	EnumType(std::size_t id, UStr name, const Type *intType,
 		 bool constFlag);
-	std::size_t id;
+	std::size_t id_;
 	const Type *intType;
 
 	bool isComplete_;
@@ -19,6 +19,8 @@ class EnumType : public Type
 
     public:
 	static Type *createIncomplete(UStr name, const Type *intType);
+
+	std::size_t id() const override;
 
 	const Type *getConst() const override;
 	const Type *getConstRemoved() const override;

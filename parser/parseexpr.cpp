@@ -4,6 +4,7 @@
 #include "expr/explicitcast.hpp"
 #include "expr/identifier.hpp"
 #include "expr/integerliteral.hpp"
+#include "expr/member.hpp"
 #include "expr/unaryexpr.hpp"
 #include "lexer/error.hpp"
 #include "lexer/lexer.hpp"
@@ -242,10 +243,13 @@ parsePostfix(ExprPtr &&expr)
     auto tok = token;
     switch (tok.kind) {
 	case TokenKind::DOT:
-	    getToken();
-	    // member access
-	    assert(0 && "Not implemented");
-	    return nullptr;
+	    {
+		getToken();
+		error::expected(TokenKind::IDENTIFIER);
+		expr = Member::create(std::move(expr), token.val, token.loc);
+		getToken();
+		return parsePostfix(std::move(expr));
+	    }
 	case TokenKind::LPAREN:
 	    getToken();
 	    // function call
@@ -271,9 +275,17 @@ parsePostfix(ExprPtr &&expr)
 	    return nullptr;
 	case TokenKind::ARROW:
 	    getToken();
-	    return parsePostfix(UnaryExpr::create(UnaryExpr::ASTERISK_DEREF,
-						  std::move(expr),
-						  tok.loc));
+	    if (token.kind == TokenKind::IDENTIFIER) {
+		auto tok = token;
+		getToken();
+		return  parsePostfix(Member::create(std::move(expr),
+						    tok.val,
+						    tok.loc));
+	    } else {
+		return parsePostfix(UnaryExpr::create(UnaryExpr::ARROW_DEREF,
+						      std::move(expr),
+						      tok.loc));
+	    }
 	case TokenKind::PLUS2:
 	    getToken();
 	    return parsePostfix(UnaryExpr::create(UnaryExpr::POSTFIX_INC,

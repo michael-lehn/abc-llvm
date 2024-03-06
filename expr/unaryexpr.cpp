@@ -136,8 +136,6 @@ UnaryExpr::loadValue() const
 	case POSTFIX_INC:
 	case POSTFIX_DEC:
 	    {
-		std::cerr << "type = " << type << ", type->isPointer() = "
-		    << type->isPointer() << "\n";
 		auto prevLeftVal = child->loadValue();
 		auto incType = type->isPointer()
 		    ? IntegerType::createSigned(8)
@@ -208,7 +206,7 @@ UnaryExpr::printFlat(std::ostream &out, int prec) const
     }
     switch (kind) {
 	case UnaryExpr::ARROW_DEREF:
-	    out << "->"; child->printFlat(out, 16);
+	    child->printFlat(out, 16); out << "->";
 	    break;
 	case UnaryExpr::ASTERISK_DEREF:
 	    out << "*"; child->printFlat(out, 15);
