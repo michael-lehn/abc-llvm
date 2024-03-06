@@ -43,9 +43,8 @@ call(ExprPtr &&fn, std::vector<ExprPtr> &&arg, lexer::Loc *loc)
     }
 
     for (std::size_t i = 0; i < arg.size(); ++i) {
-	auto loc = arg[i]->loc;
 	if (i < paramType.size()) {
-	    arg[i] = ImplicitCast::create(std::move(arg[i]), paramType[i], loc);
+	    arg[i] = ImplicitCast::create(std::move(arg[i]), paramType[i]);
 	} else {
 	    // TODO: Rules for converting vargs. For example:
 	    // - If an array is passed as varg it will always converted to a

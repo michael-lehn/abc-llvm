@@ -18,13 +18,14 @@ ImplicitCast::ImplicitCast(ExprPtr &&expr, const Type *toType,
 }
 
 ExprPtr
-ImplicitCast::create(ExprPtr &&expr, const Type *toType, lexer::Loc loc)
+ImplicitCast::create(ExprPtr &&expr, const Type *toType)
 {
     assert(expr->type);
     assert(toType);
     if (Type::equals(expr->type, toType)) {
 	return expr;
     } else {
+	auto loc = expr->loc;
 	auto type = Type::convert(expr->type, toType);
 	if (!type) {
 	    error::out() << loc << ": error: can not convert " << expr->type

@@ -12,8 +12,7 @@ class ImplicitCast : public Expr
 	ImplicitCast(ExprPtr &&expr, const Type *toType, lexer::Loc loc);
 
     public:
-	static ExprPtr create(ExprPtr &&expr, const Type *toType, 
-			      lexer::Loc loc = lexer::Loc{});
+	static ExprPtr create(ExprPtr &&expr, const Type *toType);
 	const ExprPtr expr;
 
 	bool hasAddress() const override;
