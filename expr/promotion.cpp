@@ -267,21 +267,6 @@ binaryArr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
     // One exception: We do allow array assignments if types are equal!
     //
     switch (kind) {
-	case BinaryExpr::Kind::INDEX:
-	    if (!left->type->isArray()) {
-		left.swap(right);
-	    }
-	    if (!right->type->isInteger()) {
-		error::out() << right->loc << ": integer expression expected\n";
-		error::fatal();
-		return binaryErr(kind, std::move(left), std::move(right), loc);
-	    } else {
-		auto elementType = left->type->refType();
-		auto newLeftType = PointerType::create(elementType);
-		left = ImplicitCast::create(std::move(left), newLeftType);
-		return std::make_tuple(std::move(left), std::move(right),
-				       elementType);
-	    }
 	case BinaryExpr::Kind::ASSIGN:
 	    if (Type::equals(left->type, right->type)) {
 		if (!left->isLValue()) {
