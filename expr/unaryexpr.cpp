@@ -201,44 +201,54 @@ UnaryExpr::print(int indent) const
 void
 UnaryExpr::printFlat(std::ostream &out, int prec) const
 {
-    if (prec > 15) {
-	out << "(";
-    }
     switch (kind) {
 	case UnaryExpr::ARROW_DEREF:
+	    if (prec > 16) { out << "("; }
 	    child->printFlat(out, 16); out << "->";
+	    if (prec > 16) { out << ")"; }
 	    break;
 	case UnaryExpr::ASTERISK_DEREF:
+	    if (prec > 15) { out << "("; }
 	    out << "*"; child->printFlat(out, 15);
+	    if (prec > 15) { out << ")"; }
 	    break;
 	case UnaryExpr::LOGICAL_NOT:
+	    if (prec > 15) { out << "("; }
 	    out << "!"; child->printFlat(out, 15);
+	    if (prec > 15) { out << ")"; }
 	    break;
 	case UnaryExpr::ADDRESS:
+	    if (prec > 15) { out << "("; }
 	    out << "&"; child->printFlat(out, 15);
+	    if (prec > 15) { out << ")"; }
 	    break;
 	case UnaryExpr::PREFIX_INC:
-	    out << "++";
-	    child->printFlat(out, 15);
+	    if (prec > 15) { out << "("; }
+	    out << "++"; child->printFlat(out, 15);
+	    if (prec > 15) { out << ")"; }
 	    break;
 	case UnaryExpr::PREFIX_DEC:
-	    out << "--";
-	    child->printFlat(out, 15);
+	    if (prec > 15) { out << "("; }
+	    out << "--"; child->printFlat(out, 15);
+	    if (prec > 15) { out << ")"; }
 	    break;
 	case UnaryExpr::POSTFIX_INC:
+	    if (prec > 16) { out << "("; }
 	    child->printFlat(out, 16); out << "++";
+	    if (prec > 16) { out << ")"; }
 	    break;
 	case UnaryExpr::POSTFIX_DEC:
+	    if (prec > 16) { out << "("; }
 	    child->printFlat(out, 16); out << "--";
+	    if (prec > 16) { out << ")"; }
 	    break;
 	case UnaryExpr::MINUS:
+	    if (prec > 16) { out << "("; }
 	    out << "-"; child->printFlat(out, 16);
+	    if (prec > 16) { out << ")"; }
 	    break;
 	default:
 	    out << " <unary kind " << kind << ">";
-    }
-    if (prec > 15) {
-	out << ")";
     }
 }
 

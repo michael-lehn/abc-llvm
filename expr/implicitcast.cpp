@@ -107,9 +107,9 @@ ImplicitCast::print(int indent) const
 void
 ImplicitCast::printFlat(std::ostream &out, int prec) const
 {
-    out << "((";
+    out << "(/*implicit cast*/ ";
     out << type;
-    out << "))";
+    out << ")";
     expr->printFlat(out, 14);
 }
 

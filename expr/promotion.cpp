@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "lexer/error.hpp"
+#include "type/arraytype.hpp"
 #include "type/integertype.hpp"
 #include "type/pointertype.hpp"
 
@@ -67,11 +68,15 @@ static BinaryResult binaryInt(BinaryExpr::Kind kind, ExprPtr &&left,
 			      ExprPtr &&right, lexer::Loc *loc);
 static BinaryResult binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left,
 			      ExprPtr &&right, lexer::Loc *loc);
+static BinaryResult binaryArr(BinaryExpr::Kind kind, ExprPtr &&left,
+			      ExprPtr &&right, lexer::Loc *loc);
 
 BinaryResult
 binary(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right, lexer::Loc *loc)
 {
-    if (left->type->isPointer() || right->type->isPointer()) {
+    if (left->type->isArray() || right->type->isArray()) {
+	return binaryArr(kind, std::move(left), std::move(right), loc);
+    } else if (left->type->isPointer() || right->type->isPointer()) {
 	return binaryPtr(kind, std::move(left), std::move(right), loc);
     } else if (left->type->isInteger() && right->type->isInteger()) {
 	return binaryInt(kind, std::move(left), std::move(right), loc);
@@ -85,12 +90,9 @@ binaryErr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	  lexer::Loc *loc)
 {
     if (loc) {
-	error::out() << *loc << ": operator can not be applied to"
-	    << left->loc << " operand " << left
-	    << " of type '" << left->type
-	    << "' and '"
-	    << right->loc << " operand " << right
-	    << " of type '" << right->type
+	error::out() << *loc << ": operator can not be applied to operand '"
+	    << left << "' of type '" << left->type
+	    << "' and  operand '" << right << "' of type '" << right->type
 	    << "'" << std::endl;
 	error::fatal();
     }
@@ -174,15 +176,28 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 
     switch (kind) {
 	case BinaryExpr::ASSIGN:
-	    type = newLeftType = left->type;
-	    newRightType = Type::convert(right->type, type);
+	    if (left->isLValue()) {
+		type = newLeftType = left->type;
+		newRightType = Type::convert(right->type, type);
+	    }
+	    break;
+	case BinaryExpr::Kind::ADD_ASSIGN:
+	    if (left->isLValue() && right->type->isInteger()) {
+		type = newLeftType = left->type;
+		newRightType = right->type;
+	    }
+	    break;
+	case BinaryExpr::Kind::SUB_ASSIGN:
+	    if (left->isLValue() && right->type->isPointer()) {
+		type = IntegerType::createSigned(64);
+		newLeftType = left->type;
+		newRightType = right->type;
+	    }
 	    break;
 	case BinaryExpr::ADD:
 	    if (right->type->isInteger()) {
 		type = newLeftType = left->type;
 		newRightType = right->type;
-	    } else {
-		type = newLeftType = newRightType = nullptr;
 	    }
 	    break;
 	case BinaryExpr::SUB:
@@ -190,8 +205,6 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		type = IntegerType::createSigned(64);
 		newLeftType = left->type;
 		newRightType = right->type;
-	    } else {
-		type = newLeftType = newRightType = nullptr;
 	    }
 	    break;
 	case BinaryExpr::Kind::EQUAL:
@@ -221,6 +234,36 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
     left = ImplicitCast::create(std::move(left), newLeftType);
     right = ImplicitCast::create(std::move(right), newRightType);
     return std::make_tuple(std::move(left), std::move(right), type);
+}
+
+static BinaryResult
+binaryArr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
+	  lexer::Loc *loc)
+{
+    //
+    // Like in C: Arrays in an expression are treated as pointers.
+    // One exception: We do allow array assignments if types are equal!
+    //
+    switch (kind) {
+	case BinaryExpr::Kind::ASSIGN:
+	    if (left->isLValue() && Type::equals(left->type, right->type)) {
+		return std::make_tuple(std::move(left), std::move(right),
+				       left->type);
+	    } else if (left->type->isArray() && right->type->isArray()) {
+		return binaryErr(kind, std::move(left), std::move(right), loc);
+	    }
+	    // fall through
+	default:
+	    if (left->type->isArray()) {
+		auto newLeftType = PointerType::create(left->type->refType());
+		left = ImplicitCast::create(std::move(left), newLeftType);
+	    }
+	    if (right->type->isArray()) {
+		auto newRightType = PointerType::create(right->type->refType());
+		right = ImplicitCast::create(std::move(right), newRightType);
+	    }
+	    return binary(kind, std::move(left), std::move(right), loc);
+    }
 }
 
 /*

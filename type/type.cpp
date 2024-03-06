@@ -1,4 +1,5 @@
 #include <cassert>
+#include <iostream>
 
 #include "type.hpp"
 #include "typealias.hpp"
@@ -20,6 +21,9 @@ Type::equals(const Type *ty1, const Type *ty2)
 	return equals(ty1->refType(), ty2->refType());
     } else if (ty1->isStruct() && ty2->isStruct()) {
 	return ty1->id() == ty2->id();
+    } else if (ty1->isArray() && ty2->isArray()) {
+	return ty1->dim() == ty2->dim()
+	    && equals(ty1->refType(), ty2->refType());
     }
     return false;
 }
@@ -40,6 +44,8 @@ Type::convert(const Type *from, const Type *to)
 	    return nullptr;
 	}
     } else if (to->isStruct() && equals(to, from)) {
+	return to;
+    } else if (to->isArray() && equals(to, from)) {
 	return to;
     } else {
 	return nullptr;

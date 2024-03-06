@@ -5,6 +5,7 @@
 #include "lexer/error.hpp"
 #include "lexer/lexer.hpp"
 #include "symtab/symtab.hpp"
+#include "type/arraytype.hpp"
 #include "type/functiontype.hpp"
 #include "type/integertype.hpp"
 #include "type/pointertype.hpp"
@@ -324,7 +325,7 @@ parseType()
 
 //------------------------------------------------------------------------------
 static const Type *parsePointerType();
-//static const Type *parseArrayType();
+static const Type *parseArrayType();
 
 /*
  * unqualified-type = identifier
@@ -343,9 +344,9 @@ parseUnqualifiedType()
 	return nullptr;
     } else if (auto type = parsePointerType()) {
 	return type;
-    /*
     } else if (auto type = parseArrayType()) {
 	return type;
+    /*
     } else if (auto type = parseFunctionType()) {
 	return type;
     */
@@ -1023,6 +1024,78 @@ parsePointerType()
 	return nullptr;
     }
     return PointerType::create(type);
+}
+
+//------------------------------------------------------------------------------
+static const Type * parseArrayDimAndType();
+
+/*
+ * array-type = "array" array-dim-and-type
+ */
+static const Type *
+parseArrayType()
+{
+    if (token.kind != TokenKind::ARRAY) {
+	return nullptr;
+    }
+    getToken();
+    auto type = parseArrayDimAndType();
+    if (!type) {
+	error::out() << token.loc << ": array dimension expected" << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    return type;
+}
+
+//------------------------------------------------------------------------------
+/*
+ * array-dim-and-type = "[" expression "]" { "[" expression "]" } "of" type
+ */
+static const Type *
+parseArrayDimAndType()
+{
+    if (token.kind != TokenKind::LBRACKET) {
+	return nullptr;
+    }
+    getToken();
+    auto dimExpr = parseExpression();
+    if (!dimExpr || !dimExpr->isConst() || !dimExpr->type->isInteger()) {
+	error::out() << token.loc
+	    << ": constant integer expression expected for array dimension"
+	    << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    auto dim = dimExpr->getSignedIntValue();
+    if (dim < 0) {
+	error::out() << token.loc << ": dimension can not be negative"
+	    << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    if (!error::expected(TokenKind::RBRACKET)) {
+	return nullptr;
+    }
+    getToken();
+    if (token.kind == TokenKind::OF) {
+	getToken();
+	auto type = parseType();
+	if (!type) {
+	    error::out() << token.loc << ": type expected" << std::endl;
+	    error::fatal();
+	}
+	return ArrayType::create(type, dim);
+    } else {
+	auto type = parseArrayDimAndType();
+	if (!type) {
+	    error::out() << token.loc
+		<< ": expected 'of' or array dimension" << std::endl;
+	    error::fatal();
+	    return nullptr;
+	}
+	return ArrayType::create(type, dim);
+    }
 }
 
 //------------------------------------------------------------------------------

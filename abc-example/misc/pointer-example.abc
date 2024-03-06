@@ -13,11 +13,17 @@ fn main(argc: i32): i32
     local y: -> i32;
     local foo: Foo;
     local bar: -> Foo;
+    local z: array[10][20] of int;
+    local z2: array[10][20] of int;
+    local pz: -> array[20] of int;
+
+    z2 = z;
+    pz = z;
 
     y = &a;
     // *y = 42;
     // *y = ++*y;
-    y->++;
+    (y->)++;
     bar = &foo;
     bar->a = 42;
 

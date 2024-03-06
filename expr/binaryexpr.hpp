@@ -21,6 +21,9 @@ class BinaryExpr : public Expr
 	    DIV_ASSIGN,
 	    MOD_ASSIGN,
 
+	    // index operator
+	    INDEX,
+
 	    // arithmetic
 	    ADD,
 	    SUB,
