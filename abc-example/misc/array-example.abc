@@ -1,0 +1,11 @@
+fn main(argc: i32): i32
+{
+    local a: array[10] of i32;
+    local p: -> int;
+
+    a[2] = 42;
+    p = a;
+    p[2] = 13;
+
+    return a[2];
+}

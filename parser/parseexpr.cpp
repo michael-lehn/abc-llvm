@@ -271,6 +271,18 @@ parsePostfix(ExprPtr &&expr)
 	    }
 	case TokenKind::LBRACKET:
 	    getToken();
+	    if (auto index = parseExpression()) {
+		error::expected(TokenKind::RBRACKET);
+		getToken();
+		expr = BinaryExpr::create(BinaryExpr::INDEX, std::move(expr),
+					  std::move(index), tok.loc);
+		return parsePostfix(std::move(expr));
+	    } else {
+		error::out() << token.loc << " expected non-empty expression"
+		    << std::endl;
+		error::fatal();
+		return nullptr;
+	    }
 	    assert(0 && "Not implemented");
 	    return nullptr;
 	case TokenKind::ARROW:

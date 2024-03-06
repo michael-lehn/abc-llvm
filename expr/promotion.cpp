@@ -129,6 +129,8 @@ binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	case BinaryExpr::Kind::MOD_ASSIGN:
 	    if (left->isLValue()) {
 		type = newLeftType = newRightType = left->type;
+	    } else {
+		error::out() << left->loc << ": error: not an LValue\n";
 	    }
 	    break;
 	case BinaryExpr::Kind::ADD:
@@ -175,23 +177,43 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
     const Type *newRightType = nullptr;
 
     switch (kind) {
+	case BinaryExpr::Kind::INDEX:
+	    if (!right->type->isInteger()) {
+		error::out() << right->loc << ": integer expression expected\n";
+		error::fatal();
+		return binaryErr(kind, std::move(left), std::move(right), loc);
+	    } else {
+		auto elementType = left->type->refType();
+		return std::make_tuple(std::move(left), std::move(right),
+				       elementType);
+	    }
 	case BinaryExpr::ASSIGN:
 	    if (left->isLValue()) {
 		type = newLeftType = left->type;
 		newRightType = Type::convert(right->type, type);
+	    } else {
+		error::out() << left->loc << ": error: not an LValue\n";
 	    }
 	    break;
 	case BinaryExpr::Kind::ADD_ASSIGN:
-	    if (left->isLValue() && right->type->isInteger()) {
-		type = newLeftType = left->type;
-		newRightType = right->type;
+	    if (right->type->isInteger()) {
+		if (!left->isLValue()) {
+		    error::out() << left->loc << ": error: not an LValue\n";
+		} else {
+		    type = newLeftType = left->type;
+		    newRightType = right->type;
+		}
 	    }
 	    break;
 	case BinaryExpr::Kind::SUB_ASSIGN:
-	    if (left->isLValue() && right->type->isPointer()) {
-		type = IntegerType::createSigned(64);
-		newLeftType = left->type;
-		newRightType = right->type;
+	    if (right->type->isPointer()) {
+		if (!left->isLValue()) {
+		    error::out() << left->loc << ": error: not an LValue\n";
+		} else {
+		    type = IntegerType::createSigned(64);
+		    newLeftType = left->type;
+		    newRightType = right->type;
+		}
 	    }
 	    break;
 	case BinaryExpr::ADD:
@@ -245,10 +267,29 @@ binaryArr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
     // One exception: We do allow array assignments if types are equal!
     //
     switch (kind) {
-	case BinaryExpr::Kind::ASSIGN:
-	    if (left->isLValue() && Type::equals(left->type, right->type)) {
+	case BinaryExpr::Kind::INDEX:
+	    if (!left->type->isArray()) {
+		left.swap(right);
+	    }
+	    if (!right->type->isInteger()) {
+		error::out() << right->loc << ": integer expression expected\n";
+		error::fatal();
+		return binaryErr(kind, std::move(left), std::move(right), loc);
+	    } else {
+		auto elementType = left->type->refType();
+		auto newLeftType = PointerType::create(elementType);
+		left = ImplicitCast::create(std::move(left), newLeftType);
 		return std::make_tuple(std::move(left), std::move(right),
-				       left->type);
+				       elementType);
+	    }
+	case BinaryExpr::Kind::ASSIGN:
+	    if (Type::equals(left->type, right->type)) {
+		if (!left->isLValue()) {
+		    error::out() << left->loc << ": error: not an LValue\n";
+		} else {
+		    return std::make_tuple(std::move(left), std::move(right),
+					   left->type);
+		}
 	    } else if (left->type->isArray() && right->type->isArray()) {
 		return binaryErr(kind, std::move(left), std::move(right), loc);
 	    }
@@ -325,7 +366,7 @@ unaryErr(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 {
     if (loc) {
 	error::out() << *loc
-	    << ": operator can not be applied to operand " << child
+	    << ": error: operator can not be applied to operand " << child
 	    << " of type '" << child->type << "'" << std::endl;
 	error::fatal();
     }

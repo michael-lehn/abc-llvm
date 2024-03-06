@@ -13,6 +13,9 @@ class BinaryExpr : public Expr
    public:
 	enum Kind
 	{
+	    // index operator
+	    INDEX,
+
 	    // assignments
 	    ASSIGN,
 	    ADD_ASSIGN,
@@ -20,9 +23,6 @@ class BinaryExpr : public Expr
 	    MUL_ASSIGN,
 	    DIV_ASSIGN,
 	    MOD_ASSIGN,
-
-	    // index operator
-	    INDEX,
 
 	    // arithmetic
 	    ADD,

@@ -50,13 +50,13 @@ BinaryExpr::create(Kind kind, ExprPtr &&left, ExprPtr &&right, lexer::Loc loc)
 bool
 BinaryExpr::hasAddress() const
 {
-    return false;
+    return kind == INDEX;
 }
 
 bool
 BinaryExpr::isLValue() const
 {
-    return false;
+    return kind == INDEX;
 }
 
 //-- for checking constness 
@@ -236,6 +236,8 @@ BinaryExpr::loadValue() const
 				gen::getFalse(), falseLabel,
 				IntegerType::createBool());
 	    }
+	case INDEX:
+	    return gen::fetch(loadAddress(), left->type->refType());
 	    
 	default:
 	    error::out() << "kind = " << int(kind) << std::endl;
@@ -247,7 +249,11 @@ BinaryExpr::loadValue() const
 gen::Value
 BinaryExpr::loadAddress() const
 {
-    assert(0 && "Binary expression has no address");
+    assert(hasAddress());
+    assert(kind == INDEX);
+    return gen::pointerIncrement(left->type->refType(),
+				 left->loadValue(),
+				 right->loadValue());
 }
 
 void
@@ -313,6 +319,12 @@ void
 BinaryExpr::printFlat(std::ostream &out, int prec) const
 {
     switch (kind) {
+	case INDEX:
+	    left->printFlat(out, 16);
+	    out << "[";
+	    right->printFlat(out, 16);
+	    out << "]";
+	    break;
 	case ADD:
 	    ::printFlat(out, prec, 11, left.get(), right.get(), "+");
 	    break;
