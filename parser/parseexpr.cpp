@@ -246,10 +246,6 @@ parsePostfix(ExprPtr &&expr)
 	    // member access
 	    assert(0 && "Not implemented");
 	    return nullptr;
-	case TokenKind::ARROW:
-	    getToken();
-	    assert(0 && "Not implemented");
-	    return nullptr;
 	case TokenKind::LPAREN:
 	    getToken();
 	    // function call
@@ -273,16 +269,21 @@ parsePostfix(ExprPtr &&expr)
 	    getToken();
 	    assert(0 && "Not implemented");
 	    return nullptr;
+	case TokenKind::ARROW:
+	    getToken();
+	    return parsePostfix(UnaryExpr::create(UnaryExpr::ASTERISK_DEREF,
+						  std::move(expr),
+						  tok.loc));
 	case TokenKind::PLUS2:
 	    getToken();
-	    return UnaryExpr::create(UnaryExpr::POSTFIX_INC,
-				     std::move(expr),
-				     tok.loc);
+	    return parsePostfix(UnaryExpr::create(UnaryExpr::POSTFIX_INC,
+						  std::move(expr),
+						  tok.loc));
 	case TokenKind::MINUS2:
 	    getToken();
-	    return UnaryExpr::create(UnaryExpr::POSTFIX_DEC,
-				     std::move(expr),
-				     tok.loc);
+	    return parsePostfix(UnaryExpr::create(UnaryExpr::POSTFIX_DEC,
+						  std::move(expr),
+						  tok.loc));
 	default:
 	    assert(0);
 	    return nullptr;

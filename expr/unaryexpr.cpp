@@ -37,10 +37,7 @@ UnaryExpr::create(Kind kind, ExprPtr &&child, lexer::Loc loc)
 			   std::move(std::get<0>(promotion)),
 			   std::move(std::get<1>(promotion)),
 			   loc};
-    //return std::unique_ptr<UnaryExpr>{p};
-    auto tmp = std::unique_ptr<UnaryExpr>{p};
-    std::cerr << "created " << tmp << "\n";
-    return tmp;
+    return std::unique_ptr<UnaryExpr>{p};
 }
 
 bool

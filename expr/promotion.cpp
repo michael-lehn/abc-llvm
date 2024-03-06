@@ -87,9 +87,11 @@ binaryErr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 {
     if (loc) {
 	error::out() << *loc << ": operator can not be applied to"
-	    << left->loc << " left operand of type '" << left->type
+	    << left->loc << " operand " << left
+	    << " of type '" << left->type
 	    << "' and '"
-	    << right->loc << " right operand of type '" << right->type
+	    << right->loc << " operand " << right
+	    << " of type '" << right->type
 	    << "'" << std::endl;
 	error::fatal();
     }
@@ -256,8 +258,10 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 	case UnaryExpr::PREFIX_DEC:
 	case UnaryExpr::POSTFIX_INC:
 	case UnaryExpr::POSTFIX_DEC:
-	    if (child->type->isInteger() || child->type->isPointer()) {
-		type = newChildType = child->type;
+	    if (child->isLValue()) {
+		if (child->type->isInteger() || child->type->isPointer()) {
+		    type = newChildType = child->type;
+		}
 	    }
 	    break;
 	case UnaryExpr::MINUS:
@@ -280,8 +284,8 @@ unaryErr(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 {
     if (loc) {
 	error::out() << *loc
-	    << ": operator can not be applied to operand of type '" 
-	    << child->type << "'" << std::endl;
+	    << ": operator can not be applied to operand " << child
+	    << " of type '" << child->type << "'" << std::endl;
 	error::fatal();
     }
     return std::make_pair(std::move(child), nullptr);
