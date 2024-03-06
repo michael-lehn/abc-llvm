@@ -4,6 +4,7 @@
 #include "expr/explicitcast.hpp"
 #include "expr/identifier.hpp"
 #include "expr/integerliteral.hpp"
+#include "expr/unaryexpr.hpp"
 #include "lexer/error.hpp"
 #include "lexer/lexer.hpp"
 #include "symtab/symtab.hpp"
@@ -184,12 +185,32 @@ parsePrefix()
 		getToken();
 		return parsePostfix(std::move(expr));
 	    }
-	case TokenKind::MINUS:
-	case TokenKind::NOT:
-	case TokenKind::ASTERISK:
 	case TokenKind::AND:
+	    getToken();
+	    return UnaryExpr::create(UnaryExpr::ADDRESS,
+				     parsePrefix(),
+				     tok.loc);
+	case TokenKind::ASTERISK:
+	    getToken();
+	    return UnaryExpr::create(UnaryExpr::ASTERISK_DEREF,
+				     parsePrefix(),
+				     tok.loc);
 	case TokenKind::PLUS2:
+	    getToken();
+	    return UnaryExpr::create(UnaryExpr::PREFIX_INC,
+				     parsePrefix(),
+				     tok.loc);
 	case TokenKind::MINUS2:
+	    getToken();
+	    return UnaryExpr::create(UnaryExpr::PREFIX_DEC,
+				     parsePrefix(),
+				     tok.loc);
+	case TokenKind::MINUS:
+	    getToken();
+	    return UnaryExpr::create(UnaryExpr::MINUS,
+				     parsePrefix(),
+				     tok.loc);
+	case TokenKind::NOT:
 	    assert(0 && "Not implemented");
 	    return nullptr;
 	default:
@@ -210,26 +231,27 @@ parsePostfix(ExprPtr &&expr)
 	return expr;
     }
 
-    auto tok = token;
-    getToken();
-
     if (!expr) {
-	error::out() << tok.loc
-	    << ": postfix operator '" << tok.kind << "' requires"
+	error::out() << token.loc
+	    << ": postfix operator '" << token.kind << "' requires"
 	    << " non-empty expression" << std::endl;
 	error::fatal();
 
     }
 
+    auto tok = token;
     switch (tok.kind) {
 	case TokenKind::DOT:
+	    getToken();
 	    // member access
 	    assert(0 && "Not implemented");
 	    return nullptr;
 	case TokenKind::ARROW:
+	    getToken();
 	    assert(0 && "Not implemented");
 	    return nullptr;
 	case TokenKind::LPAREN:
+	    getToken();
 	    // function call
 	    {
 		// parse argument list
@@ -248,14 +270,19 @@ parsePostfix(ExprPtr &&expr)
 		return parsePostfix(std::move(expr));
 	    }
 	case TokenKind::LBRACKET:
+	    getToken();
 	    assert(0 && "Not implemented");
 	    return nullptr;
 	case TokenKind::PLUS2:
-	    assert(0 && "Not implemented");
-	    return nullptr;
+	    getToken();
+	    return UnaryExpr::create(UnaryExpr::POSTFIX_INC,
+				     std::move(expr),
+				     tok.loc);
 	case TokenKind::MINUS2:
-	    assert(0 && "Not implemented");
-	    return nullptr;
+	    getToken();
+	    return UnaryExpr::create(UnaryExpr::POSTFIX_DEC,
+				     std::move(expr),
+				     tok.loc);
 	default:
 	    assert(0);
 	    return nullptr;

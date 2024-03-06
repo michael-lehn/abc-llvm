@@ -3,10 +3,11 @@
 
 #include <tuple>
 
+#include "type/type.hpp"
+
 #include "binaryexpr.hpp"
 #include "expr.hpp"
-#include "type/type.hpp"
-//#include "unaryexpr.hpp"
+#include "unaryexpr.hpp"
 
 namespace abc { namespace promotion {
 
@@ -26,6 +27,15 @@ using BinaryResult = std::tuple<ExprPtr, ExprPtr, const Type *>;
 
 BinaryResult binary(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		    lexer::Loc *loc = nullptr);
+
+/*
+ * Rules for unary expressions
+ */
+
+using UnaryResult = std::pair<ExprPtr, const Type *>;
+
+UnaryResult unary(UnaryExpr::Kind kind, ExprPtr &&child,
+		  lexer::Loc *loc = nullptr);
 
 } } // namespace promotion, abc
 

@@ -1,6 +1,9 @@
 #include <iostream>
 #include <unordered_map>
 
+#include "type/integertype.hpp"
+
+#include "constant.hpp"
 #include "convert.hpp"
 #include "function.hpp"
 #include "variable.hpp"
@@ -129,6 +132,44 @@ loadAddress(const char *ident)
 	assert(0);
     }
     return addr;
+}
+
+Value
+pointerIncrement(const abc::Type *type, Value pointer, Value offset)
+{
+    assert(llvmBuilder);
+    assert(!functionBuildingInfo.bbClosed);
+    auto llvmType = convert(type);
+
+    std::vector<Value> idxList{1};
+    idxList[0] = offset;
+
+    return llvmBuilder->CreateGEP(llvmType, pointer, idxList);
+}
+
+Value
+pointerDifference(const abc::Type *type, Value pointer1, Value pointer2)
+{
+    assert(llvmBuilder);
+    assert(!functionBuildingInfo.bbClosed);
+    auto llvmType = convert(type);
+
+    return llvmBuilder->CreatePtrDiff(llvmType, pointer1, pointer2);
+}
+
+Value
+pointerToIndex(const abc::Type *type, Value pointer, std::size_t index)
+{
+    assert(llvmBuilder);
+    assert(!functionBuildingInfo.bbClosed);
+    assert(type->isStruct());
+    auto llvmType = convert(type);
+
+    std::vector<Value> idxList{2};
+    idxList[0] = getConstantZero(abc::IntegerType::createSigned(8));
+    idxList[1] = getConstantInt(index, abc::IntegerType::createUnsigned(32));
+
+    return llvmBuilder->CreateGEP(llvmType, pointer, idxList);
 }
 
 Value

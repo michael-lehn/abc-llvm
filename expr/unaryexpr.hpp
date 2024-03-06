@@ -2,6 +2,9 @@
 #define UNARYEXPR_HPP
 
 #include "expr.hpp"
+#include "lexer/loc.hpp"
+
+namespace abc {
 
 class UnaryExpr : public Expr
 {
@@ -9,37 +12,43 @@ class UnaryExpr : public Expr
 	enum Kind
 	{
 	    ADDRESS,
-	    DEREF,
+	    ARROW_DEREF,
+	    ASTERISK_DEREF,
 	    LOGICAL_NOT,
-	    POSTFIX_INC,
-	    POSTFIX_DEC,
 	    MINUS,
+	    POSTFIX_DEC,
+	    POSTFIX_INC,
+	    PREFIX_DEC,
+	    PREFIX_INC,
 	};
 
     protected:
-	UnaryExpr(Kind kind, ExprPtr &&child, const Type *type, Token::Loc loc);
+	UnaryExpr(Kind kind, ExprPtr &&child, const Type *type, lexer::Loc loc);
 
     public:
 	static ExprPtr create(Kind kind, ExprPtr &&child,
-			      Token::Loc loc = Token::Loc{});
+			      lexer::Loc loc = lexer::Loc{});
 
 	const Kind kind;
 	const ExprPtr child;
 
-    public:
-	bool hasAddr() const override;
+	bool hasAddress() const override;
 	bool isLValue() const override;
+
+    private:
 	bool isIntegerConstExpr() const;
 	bool isArithmeticConstExpr() const;
 	bool isAddressConstant() const;
+
+    public:
 	bool isConst() const override;
 
 	// for code generation
-	gen::ConstVal loadConstValue() const override;
-	gen::Reg loadValue() const override;
-	gen::Reg loadAddr() const override;
-	void condJmp(gen::Label trueLabel,
-		     gen::Label falseLabel) const override;
+	gen::Constant loadConstant() const override;
+	gen::Value loadValue() const override;
+	gen::Value loadAddress() const override;
+	void condition(gen::Label trueLabel,
+		       gen::Label falseLabel) const override;
 
 	// for debugging and educational purposes
 	void print(int indent) const override;
@@ -48,5 +57,6 @@ class UnaryExpr : public Expr
 	virtual void printFlat(std::ostream &out, int prec) const override;
 };
 
+} // namespace abc
 
 #endif // UNARYEXPR_HPP

@@ -17,6 +17,10 @@ Value localVariableDefinition(const char *ident, const abc::Type *varType);
 void forgetAllLocalVariables();
 
 Value loadAddress(const char *ident);
+Value pointerIncrement(const abc::Type *type, Value pointer, Value offset);
+Value pointerDifference(const abc::Type *type, Value pointer1, Value pointer2);
+Value pointerToIndex(const abc::Type *type, Value pointer, std::size_t index);
+
 Value fetch(Value addr, const abc::Type *type);
 Value store(Value val, Value addr);
 

@@ -157,24 +157,16 @@ BinaryExpr::handleArithmetricOperation(Kind kind) const
 		// pointer + integer
 		assert(left->type->isPointer());
 		assert(right->type->isInteger());
-		assert(0 && "Not implemented");
-		return nullptr;
-		/*
-		return gen::ptrInc(left->type->getRefType(),
-				   left->loadValue(),
-				   right->loadValue());
-		*/
+		return gen::pointerIncrement(left->type->refType(),
+					     left->loadValue(),
+					     right->loadValue());
 	    } else if (kind == SUB && left->type->isPointer()) {
 		// pointer - pointer
 		assert(right->type->isPointer());
 		assert(type->isInteger());
-		assert(0 && "Not implemented");
-		return nullptr;
-		/*
-		return gen::ptrDiff(left->type->getRefType(),
-				    left->loadValue(),
-				    right->loadValue());
-		*/
+		return gen::pointerDifference(left->type->refType(),
+					      left->loadValue(),
+					      right->loadValue());
 	    } else {
 		return gen::instruction(getGenInstructionOp(kind, type),
 					left->loadValue(),

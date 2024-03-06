@@ -16,6 +16,8 @@ Type::equals(const Type *ty1, const Type *ty2)
     if (ty1->isInteger() && ty2->isInteger()) {
 	return ty1->isSignedInteger() == ty2->isSignedInteger()
 	    && ty1->numBits() == ty2->numBits();
+    } else if (ty1->isPointer() && ty2->isPointer()) {
+	return equals(ty1->refType(), ty2->refType());
     }
     return false;
 }

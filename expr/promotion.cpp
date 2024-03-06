@@ -3,6 +3,7 @@
 
 #include "lexer/error.hpp"
 #include "type/integertype.hpp"
+#include "type/pointertype.hpp"
 
 #include "implicitcast.hpp"
 #include "promotion.hpp"
@@ -216,7 +217,74 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
     if (!type || !newLeftType || !newRightType) { 
 	return binaryErr(kind, std::move(left), std::move(right), loc);
     }
+    left = ImplicitCast::create(std::move(left), newLeftType);
+    right = ImplicitCast::create(std::move(right), newRightType);
     return std::make_tuple(std::move(left), std::move(right), type);
+}
+
+/*
+ * Rules for unary expressions
+ */
+
+using UnaryResult = std::pair<ExprPtr, const Type *>;
+
+static UnaryResult unaryErr(UnaryExpr::Kind kind, ExprPtr &&child,
+			    lexer::Loc *loc);
+
+UnaryResult
+unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
+{
+    const Type *type = nullptr;
+    const Type *newChildType = nullptr;
+    switch (kind) {
+	default:
+	    break;
+	case UnaryExpr::ADDRESS:
+	    if (child->hasAddress()) {
+		type = PointerType::create(child->type);
+		newChildType = child->type;
+	    }
+	    break;
+	case UnaryExpr::ASTERISK_DEREF:
+	case UnaryExpr::ARROW_DEREF:
+	    if (child->type->isPointer() && !child->type->isNullptr()) {
+		type = child->type->refType();
+		newChildType = child->type;
+	    }
+	    break;
+	case UnaryExpr::PREFIX_INC:
+	case UnaryExpr::PREFIX_DEC:
+	case UnaryExpr::POSTFIX_INC:
+	case UnaryExpr::POSTFIX_DEC:
+	    if (child->type->isInteger() || child->type->isPointer()) {
+		type = newChildType = child->type;
+	    }
+	    break;
+	case UnaryExpr::MINUS:
+	    if (child->type->isInteger()) {
+		type = newChildType = child->type;
+	    }
+	    break;
+    }
+    if (!type || !newChildType) { 
+	return unaryErr(kind, std::move(child), loc);
+    }
+    std::cerr << "child = " << child << ", type = " << type << "\n";
+    child = ImplicitCast::create(std::move(child), newChildType);
+    return std::make_pair(std::move(child), type);
+    
+}
+
+static UnaryResult
+unaryErr(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
+{
+    if (loc) {
+	error::out() << *loc
+	    << ": operator can not be applied to operand of type '" 
+	    << child->type << "'" << std::endl;
+	error::fatal();
+    }
+    return std::make_pair(std::move(child), nullptr);
 }
 
 } } // namespace promotion, abc

@@ -6,6 +6,12 @@ Expr::Expr(lexer::Loc  loc, const Type  *type)
     : loc{loc}, type{type}
 {}
 
+bool
+Expr::hasConstantAddress() const
+{
+    return false;
+}
+
 gen::ConstantInt
 Expr::getConstantInt() const
 {

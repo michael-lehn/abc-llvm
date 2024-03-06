@@ -52,7 +52,6 @@ class BinaryExpr : public Expr
 	const Kind kind;
 	const ExprPtr left, right;
 
-    public:
 	bool hasAddress() const override;
 	bool isLValue() const override;
 

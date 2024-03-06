@@ -24,6 +24,7 @@ class Expr
 
     public:
 	// for sematic checks
+	virtual bool hasConstantAddress() const;
 	virtual bool hasAddress() const = 0;
 	virtual bool isLValue() const = 0;
 	virtual bool isConst() const = 0;
