@@ -67,6 +67,7 @@ convert(const abc::Type *abcType)
 	}
 	llvmType = llvm::StructType::get(*llvmContext, llvmMemberType);
     } else {
+	std::cerr << "gen::convert with type '" << abcType << "'\n";
 	assert(0);
 	return nullptr;
     }

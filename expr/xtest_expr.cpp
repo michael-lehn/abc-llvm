@@ -6,6 +6,7 @@
 #include "binaryexpr.hpp"
 #include "identifier.hpp"
 #include "integerliteral.hpp"
+#include "nullptr.hpp"
 
 int
 main()
@@ -29,4 +30,7 @@ main()
 				      std::move(intExpr),
 				      std::move(idExpr));
     std::cerr << addExpr << "\n";
+
+    auto np = Nullptr::create();
+    std::cerr << "np = " << np << "\n";
 }

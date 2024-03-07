@@ -14,11 +14,17 @@ Type::Type(bool isConst, UStr name)
 bool
 Type::equals(const Type *ty1, const Type *ty2)
 {
-    if (ty1->isInteger() && ty2->isInteger()) {
+    if (ty1->isVoid() && ty2->isVoid()) {
+	return true;
+    } else if (ty1->isInteger() && ty2->isInteger()) {
 	return ty1->isSignedInteger() == ty2->isSignedInteger()
 	    && ty1->numBits() == ty2->numBits();
     } else if (ty1->isPointer() && ty2->isPointer()) {
-	return equals(ty1->refType(), ty2->refType());
+	if (ty1->isNullptr() || ty2->isNullptr()) {
+	    return ty1->isNullptr() == ty2->isNullptr();
+	} else {
+	    return equals(ty1->refType(), ty2->refType());
+	}
     } else if (ty1->isStruct() && ty2->isStruct()) {
 	return ty1->id() == ty2->id();
     } else if (ty1->isArray() && ty2->isArray()) {
@@ -37,8 +43,13 @@ Type::convert(const Type *from, const Type *to)
 	} else {
 	    return nullptr;
 	}
-    } else if (to->isPointer()) {
-	if (equals(to->refType(), from->refType())) {
+    } else if (to->isPointer() && (from->isPointer() || from->isArray())) {
+	assert(!to->isNullptr());
+	if (from->isNullptr()) {
+	    return to;
+	} else if (equals(to->refType(), from->refType())) {
+	    return to;
+	} else if (to->refType()->isVoid() || from->refType()->isVoid()) {
 	    return to;
 	} else {
 	    return nullptr;
@@ -47,6 +58,17 @@ Type::convert(const Type *from, const Type *to)
 	return to;
     } else if (to->isArray() && equals(to, from)) {
 	return to;
+    } else {
+	return nullptr;
+    }
+}
+
+const Type *
+Type::explicitCast(const Type *from, const Type *to)
+{
+    if (auto type = convert(from->getConstRemoved(), to->getConstRemoved())) {
+	// allow const-casts
+	return type;
     } else {
 	return nullptr;
     }

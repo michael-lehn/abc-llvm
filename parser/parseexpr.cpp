@@ -5,6 +5,7 @@
 #include "expr/identifier.hpp"
 #include "expr/integerliteral.hpp"
 #include "expr/member.hpp"
+#include "expr/nullptr.hpp"
 #include "expr/stringliteral.hpp"
 #include "expr/unaryexpr.hpp"
 #include "lexer/error.hpp"
@@ -213,8 +214,10 @@ parsePrefix()
 				     parsePrefix(),
 				     tok.loc);
 	case TokenKind::NOT:
-	    assert(0 && "Not implemented");
-	    return nullptr;
+	    getToken();
+	    return UnaryExpr::create(UnaryExpr::LOGICAL_NOT,
+				     parsePrefix(),
+				     tok.loc);
 	default:
 	    return parsePostfix(parsePrimary());
     }
@@ -386,6 +389,9 @@ parsePrimary()
 	auto val = UStr::create(str);
 	auto valRaw = UStr::create(strRaw);
 	return StringLiteral::create(val, valRaw, tok.loc);
+    } else if (token.kind == TokenKind::NULLPTR) {
+        getToken();
+        return Nullptr::create(tok.loc);
     } else if (token.kind == TokenKind::LPAREN) {
         getToken();
 	auto expr = parseExpression();

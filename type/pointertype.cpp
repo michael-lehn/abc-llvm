@@ -26,7 +26,6 @@ PointerType::PointerType(const Type *refType, bool constFlag, UStr name)
 {
 }
 
-
 const Type *
 PointerType::create(const Type *refType, bool constFlag)
 {

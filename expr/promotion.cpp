@@ -182,10 +182,14 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		error::out() << right->loc << ": integer expression expected\n";
 		error::fatal();
 		return binaryErr(kind, std::move(left), std::move(right), loc);
-	    } else {
+	    } else if (!left->type->isNullptr()) {
 		auto elementType = left->type->refType();
 		return std::make_tuple(std::move(left), std::move(right),
 				       elementType);
+	    } else {
+		error::out() << left->loc << ": dereferencing nullptr\n";
+		error::fatal();
+		return binaryErr(kind, std::move(left), std::move(right), loc);
 	    }
 	case BinaryExpr::ASSIGN:
 	    if (left->isLValue()) {
@@ -332,6 +336,7 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 		}
 	    }
 	    break;
+	case UnaryExpr::LOGICAL_NOT:
 	case UnaryExpr::MINUS:
 	    if (child->type->isInteger()) {
 		type = newChildType = child->type;

@@ -8,7 +8,7 @@ namespace abc {
 class VoidType : public Type
 {
     protected:
-	VoidType(bool constFlag, UStr alias);
+	VoidType(bool constFlag, UStr name);
 
 	static const Type *create(bool constFlag, UStr name);
     public:

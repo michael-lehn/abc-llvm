@@ -29,8 +29,11 @@ cast(Value val, const abc::Type *fromType, const abc::Type *toType)
 	} else {
 	    return llvmBuilder->CreateTruncOrBitCast(val, llvmToType); 
 	}
+    } else if (fromType->isPointer() && toType->isPointer()) {
+	return val;
     }
-    std::cerr << "can not cast '" << fromType << "' to '" << toType << "'\n";
+    std::cerr << "gen::cat: can not cast '" << fromType << "' to '" << toType
+	<< "'\n";
     assert(0);
     return nullptr;
 }
