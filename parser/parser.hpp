@@ -5,8 +5,8 @@
 
 namespace abc {
 
-AstPtr parser(void);
-const Type *parseType(void);
+AstPtr parser();
+const Type *parseType();
 
 } // namespace abc
 

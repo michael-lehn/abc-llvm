@@ -601,7 +601,9 @@ parseLocalVariableDeclaration()
 //------------------------------------------------------------------------------
 static AstPtr parseCompoundStatement();
 static AstPtr parseIfStatement();
+static AstPtr parseWhileStatement();
 static AstPtr parseReturnStatement();
+static AstPtr parseBreakStatement();
 static AstPtr parseExpressionStatement();
 
 /*
@@ -625,7 +627,9 @@ parseStatement()
 
     (ast = parseCompoundStatement())
     || (ast = parseIfStatement())
+    || (ast = parseWhileStatement())
     || (ast = parseReturnStatement())
+    || (ast = parseBreakStatement())
     || (ast = parseExpressionStatement());
 
     return ast;
@@ -708,6 +712,42 @@ parseIfStatement()
 
 //------------------------------------------------------------------------------
 /*
+ * while-statement = "while" "(" expression ")" compound-statement
+ */
+static AstPtr
+parseWhileStatement()
+{
+    if (token.kind != TokenKind::WHILE) {
+	return nullptr;
+    }
+    getToken();
+    if (!error::expected(TokenKind::LPAREN)) {
+	return nullptr;
+    }
+    getToken();
+    auto whileCond = parseExpression();
+    if (!whileCond) {
+	error::out() << token.loc << ": expression expected" << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    if (!error::expected(TokenKind::RPAREN)) {
+	return nullptr;
+    }
+    getToken();
+    auto whileBody = parseCompoundStatement();
+    if (!whileBody) {
+	error::out() << token.loc << ": compound statement expected"
+	    << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    return std::make_unique<AstWhile>(std::move(whileCond),
+				      std::move(whileBody));
+}
+
+//------------------------------------------------------------------------------
+/*
  * return-statement = "return" [ expression ] ";"
  */
 static AstPtr
@@ -726,6 +766,24 @@ parseReturnStatement()
     return std::make_unique<AstReturn>(tok.loc, std::move(expr));
 }
 
+//------------------------------------------------------------------------------
+/*
+ * break-statement = "break" ";"
+ */
+static AstPtr
+parseBreakStatement()
+{
+    if (token.kind != TokenKind::BREAK) {
+	return nullptr;
+    }
+    auto loc = token.loc;
+    getToken();
+    if (!error::expected(TokenKind::SEMICOLON)) {
+	return nullptr;
+    }
+    getToken();
+    return std::make_unique<AstBreak>(loc);
+}
 //------------------------------------------------------------------------------
 /*
  * expression-statement = [expression] ";"

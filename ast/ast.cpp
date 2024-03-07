@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "expr/expr.hpp"
+#include "expr/implicitcast.hpp"
 #include "gen/function.hpp"
 #include "gen/instruction.hpp"
 #include "gen/label.hpp"
@@ -25,6 +26,83 @@ unusedFilter(UStr name)
     return name;
 }
 
+static std::function<bool(Ast *)>
+createSetBreakLabel(gen::Label breakLabel)
+{
+    return [=](Ast *ast) -> bool
+    {
+	if (auto astBreak = dynamic_cast<AstBreak *>(ast)) {
+	    if (!astBreak->label) {
+		astBreak->label = breakLabel;
+	    }
+	}
+	return true;
+    };
+}
+
+static std::function<bool(Ast *)>
+createSetContinueLabel(gen::Label continueLabel)
+{
+    return [=](Ast *ast) -> bool
+    {
+	if (auto astContinue = dynamic_cast<AstContinue *>(ast)) {
+	    if (!astContinue->label) {
+		astContinue->label = continueLabel;
+	    }
+	}
+	return true;
+    };
+}
+
+static std::function<bool(Ast *)>
+createSetReturnType(const Type *retType)
+{
+    return [=](Ast *ast) -> bool
+    {
+	if (auto astReturn = dynamic_cast<AstReturn *>(ast)) {
+	    astReturn->retType = retType;
+	}
+	return true;
+    };
+}
+
+static std::function<bool(Ast *)>
+createFindLabel(std::unordered_map<UStr, gen::Label> &label)
+{
+    return [&](Ast *ast) -> bool
+    {
+	if (auto astLabel = dynamic_cast<AstLabel *>(ast)) {
+	    if (label.contains(astLabel->labelName)) {
+		error::out() << astLabel->loc
+		    << ": error: label already defined within function"
+		    << std::endl;
+		error::fatal();
+	    } else {
+		label[astLabel->labelName] = astLabel->label;
+	    }
+	}
+	return true;
+    };
+}
+
+static std::function<bool(Ast *)>
+createSetGotoLabel(const std::unordered_map<UStr, gen::Label> &label)
+{
+    return [&](Ast *ast) -> bool
+    {
+	if (auto astLabel = dynamic_cast<AstGoto *>(ast)) {
+	    if (!label.contains(astLabel->labelName)) {
+		error::out() << astLabel->loc
+		    << ": error: label not defined within function"
+		    << std::endl;
+		error::fatal();
+	    } else {
+		astLabel->label = label.at(astLabel->labelName);
+	    }
+	}
+	return true;
+    };
+}
 //------------------------------------------------------------------------------
 
 /*
@@ -168,8 +246,13 @@ AstFuncDef::appendParamName(std::vector<lexer::Token> &&fnParamName_)
 void
 AstFuncDef::appendBody(AstPtr &&body_)
 {
+    std::unordered_map<UStr, gen::Label> label;
+
     assert(!body);
     body = std::move(body_);
+    body->apply(createSetReturnType(fnType->retType()));
+    body->apply(createFindLabel(label));
+    body->apply(createSetGotoLabel(label));
 }
 
 void
@@ -380,14 +463,125 @@ AstReturn::print(int indent) const
 void
 AstReturn::codegen()
 {
-    if (!expr) {
-	return;
-    }
+    assert(retType);
     if (!gen::bbOpen()) {
 	error::out() << loc << ": warning: return statement not reachabel\n";
 	return;
     }
-    gen::returnInstruction(expr->loadValue());
+    if (retType->isVoid()) {
+	if (expr) {
+	    error::out() << expr->loc
+		<< ": error: void function should not return a value\n";
+	    error::fatal();
+	    return;
+	}
+	gen::returnInstruction(nullptr);
+    } else {
+	if (!expr) {
+	    error::out() << expr->loc
+		<< ": error: non-void function should return a value\n";
+	    error::fatal();
+	    return;
+	}
+	expr = ImplicitCast::create(std::move(expr), retType);
+	gen::returnInstruction(expr->loadValue());
+    }
+}
+
+/*
+ * AstGoto
+ */
+AstGoto::AstGoto(lexer::Loc loc, UStr labelName)
+    : loc{loc}, labelName{labelName}
+{}
+
+void
+AstGoto::print(int indent) const
+{
+    error::out(indent) << "goto " << labelName.c_str() << ";" << std::endl;
+}
+
+void
+AstGoto::codegen()
+{
+    if (!label) {
+	error::out() << loc << ": error: no label '" << labelName.c_str()
+	    << "' within function" << std::endl;
+	error::fatal();
+    } else {
+	gen::jumpInstruction(label);
+    }
+}
+
+/*
+ * AstLabel
+ */
+AstLabel::AstLabel(lexer::Loc loc, UStr labelName)
+    : loc{loc}, labelName{labelName}, label{gen::getLabel(labelName.c_str())}
+{}
+
+void
+AstLabel::print(int indent) const
+{
+    error::out(indent) << "label " << labelName.c_str() << ":" << std::endl;
+}
+
+void
+AstLabel::codegen()
+{
+    gen::defineLabel(label);
+}
+
+/*
+ * AstBreak
+ */
+AstBreak::AstBreak(lexer::Loc loc)
+    : loc{loc}
+{}
+
+void
+AstBreak::print(int indent) const
+{
+    error::out(indent) << "break;" << std::endl;
+}
+
+void
+AstBreak::codegen()
+{
+    if (!label) {
+	error::out() << loc
+	    << ": error: break statement not within loop or switch"
+	    << std::endl;
+	error::fatal();
+	return;
+    }
+    gen::jumpInstruction(label);
+}
+
+/*
+ * AstContinue
+ */
+AstContinue::AstContinue(lexer::Loc loc)
+    : loc{loc}
+{}
+
+void
+AstContinue::print(int indent) const
+{
+    error::out(indent) << "continue;" << std::endl;
+}
+
+void
+AstContinue::codegen()
+{
+    if (!label) {
+	error::out() << loc
+	    << ": error: continue statement not within loop"
+	    << std::endl;
+	error::fatal();
+	return;
+    }
+    gen::jumpInstruction(label);
 }
 
 /*
@@ -489,6 +683,49 @@ AstIf::apply(std::function<bool(Ast *)> op)
 	if (elseBody) {
 	    elseBody->apply(op);
 	}
+    }
+}
+
+/*
+ * AstWhile
+ */
+AstWhile::AstWhile(ExprPtr &&cond, AstPtr &&body)
+    : cond{std::move(cond)}, body{std::move(body)}
+{}
+
+void
+AstWhile::print(int indent) const
+{
+    error::out(indent) << "while (" << cond << ") {" << std::endl;
+    body->print(indent + 4);
+    error::out(indent) << "}\n";
+}
+
+void
+AstWhile::codegen()
+{
+    auto condLabel = gen::getLabel("cond");
+    auto loopLabel = gen::getLabel("loop");
+    auto endLabel = gen::getLabel("end");
+
+    body->apply(createSetBreakLabel(endLabel));
+    body->apply(createSetContinueLabel(condLabel));
+
+    gen::defineLabel(condLabel);
+    cond->condition(loopLabel, endLabel);
+
+    gen::defineLabel(loopLabel);
+    body->codegen();
+    gen::jumpInstruction(condLabel);
+
+    gen::defineLabel(endLabel);
+}
+
+void
+AstWhile::apply(std::function<bool(Ast *)> op)
+{
+    if (op(this)) {
+	body->apply(op);
     }
 }
 

@@ -59,6 +59,11 @@ IntegerType::createInt()
     return createSigned(8 * sizeof(int));
 }
 
+const Type *
+IntegerType::createSizeType()
+{
+    return createSigned(8 * sizeof(std::size_t));
+}
 
 const Type *
 IntegerType::createSigned(std::size_t numBits)

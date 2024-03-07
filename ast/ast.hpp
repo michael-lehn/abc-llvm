@@ -153,6 +153,65 @@ class AstReturn : public Ast
 
 	lexer::Loc loc;
 	ExprPtr expr;
+	const Type *retType = nullptr;
+
+	void print(int indent) const override;
+	void codegen() override;
+};
+
+//------------------------------------------------------------------------------
+
+class AstBreak : public Ast
+{
+    public:
+	AstBreak(lexer::Loc loc);
+
+	const lexer::Loc loc;
+	gen::Label label = nullptr;
+
+	void print(int indent) const override;
+	void codegen() override;
+};
+
+//------------------------------------------------------------------------------
+
+class AstContinue : public Ast
+{
+    public:
+	AstContinue(lexer::Loc loc);
+
+	const lexer::Loc loc;
+	gen::Label label = nullptr;
+
+	void print(int indent) const override;
+	void codegen() override;
+};
+
+//------------------------------------------------------------------------------
+
+class AstGoto : public Ast
+{
+    public:
+	AstGoto(lexer::Loc loc, UStr labelName);
+
+	const lexer::Loc loc;
+	UStr labelName;
+	gen::Label label = nullptr;
+
+	void print(int indent) const override;
+	void codegen() override;
+};
+
+//------------------------------------------------------------------------------
+
+class AstLabel : public Ast
+{
+    public:
+	AstLabel(lexer::Loc loc, UStr labelName);
+
+	const lexer::Loc loc;
+	UStr labelName;
+	gen::Label label = nullptr;
 
 	void print(int indent) const override;
 	void codegen() override;
@@ -184,6 +243,21 @@ class AstIf : public Ast
 	const ExprPtr cond;
 	const AstPtr thenBody;
 	const AstPtr elseBody;
+
+	void print(int indent) const override;
+	void codegen() override;
+	void apply(std::function<bool(Ast *)> op) override;
+};
+
+//------------------------------------------------------------------------------
+
+class AstWhile : public Ast
+{
+    public:
+	AstWhile(ExprPtr &&cond, AstPtr &&body);
+
+	const ExprPtr cond;
+	const AstPtr body;
 
 	void print(int indent) const override;
 	void codegen() override;

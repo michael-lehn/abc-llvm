@@ -6,8 +6,8 @@
 #include "type/integertype.hpp"
 
 #include "constant.hpp"
-#include "convert.hpp"
 #include "function.hpp"
+#include "gentype.hpp"
 #include "variable.hpp"
 
 namespace gen {

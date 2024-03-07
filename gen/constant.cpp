@@ -1,8 +1,8 @@
 #include <iostream>
 
 #include "constant.hpp"
-#include "convert.hpp"
 #include "gen.hpp"
+#include "gentype.hpp"
 
 namespace gen {
 

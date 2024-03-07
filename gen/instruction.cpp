@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "convert.hpp"
 #include "function.hpp"
+#include "gentype.hpp"
 #include "instruction.hpp"
 #include "variable.hpp"
 

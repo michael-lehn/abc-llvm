@@ -1208,6 +1208,7 @@ parseReturnStatement()
     return std::make_unique<AstReturn>(std::move(expr));
 }
 
+//------------------------------------------------------------------------------
 /*
  * break-statement = "break" ";"
  */

@@ -6,6 +6,7 @@
 #include "expr/integerliteral.hpp"
 #include "expr/member.hpp"
 #include "expr/nullptr.hpp"
+#include "expr/sizeof.hpp"
 #include "expr/stringliteral.hpp"
 #include "expr/unaryexpr.hpp"
 #include "lexer/error.hpp"
@@ -392,12 +393,33 @@ parsePrimary()
     } else if (token.kind == TokenKind::NULLPTR) {
         getToken();
         return Nullptr::create(tok.loc);
+    } else if (token.kind == TokenKind::SIZEOF) {
+	getToken();
+	if (!error::expected(TokenKind::LPAREN)) {
+	    return nullptr;
+	}
+	getToken();
+	auto tok = token;
+	ExprPtr sizeofExpr;
+	if (auto type = parseType()) {
+	    sizeofExpr = Sizeof::create(type, tok.loc);
+	} else if (auto expr = parseExpression()) {
+	    sizeofExpr = Sizeof::create(std::move(expr), tok.loc);
+	} else {
+	    error::out() << token.loc << " expected type or expression\n";
+	    error::fatal();
+	    return nullptr;
+	}
+	if (!error::expected(TokenKind::RPAREN)) {
+	    return nullptr;
+	}
+	getToken();
+	return sizeofExpr;
     } else if (token.kind == TokenKind::LPAREN) {
         getToken();
 	auto expr = parseExpression();
         if (!expr) {
-	    error::out() << token.loc << " expected non-empty expression"
-		<< std::endl;
+	    error::out() << token.loc << " expected non-empty expression\n";
 	    error::fatal();
 	}
 	error::expected(TokenKind::RPAREN);

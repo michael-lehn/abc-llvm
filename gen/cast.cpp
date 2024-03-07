@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "cast.hpp"
-#include "convert.hpp"
+#include "gentype.hpp"
 
 namespace gen {
 

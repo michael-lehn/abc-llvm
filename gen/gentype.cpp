@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "convert.hpp"
+#include "gentype.hpp"
 #include "gen.hpp"
 
 #include "llvm/IR/DerivedTypes.h"
@@ -83,6 +83,14 @@ convert(const std::vector<const abc::Type *> &abcType)
 	llvmType[i] = convert(abcType[i]);
     }
     return llvmType;
+}
+
+std::size_t
+getSizeof(const abc::Type *type)
+{
+    assert(llvmContext && "gen::init called?");
+    auto llvmType = convert(type);
+    return llvmModule->getDataLayout().getTypeAllocSize(llvmType);
 }
 
 } // namespace gen

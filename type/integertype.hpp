@@ -20,6 +20,7 @@ class IntegerType : public Type
 	static const Type *createBool();
 	static const Type *createChar();
 	static const Type *createInt();
+	static const Type *createSizeType();
 	static const Type *createSigned(std::size_t numBits);
 	static const Type *createUnsigned(std::size_t numBits);
 

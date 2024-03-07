@@ -1,5 +1,5 @@
-#ifndef GEN_CONVERT_HPP
-#define GEN_CONVERT_HPP
+#ifndef GEN_GENTYPE_HPP
+#define GEN_GENTYPE_HPP
 
 #include "llvm/IR/Type.h"
 
@@ -8,7 +8,9 @@
 namespace gen {
 
 llvm::Type *convert(const abc::Type *type);
+std::size_t getSizeof(const abc::Type *type);
+
 
 } // namespace gen
 
-#endif // GEN_CONVERT_HPP
+#endif // GEN_GENTYPE_HPP

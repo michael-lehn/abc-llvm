@@ -4,8 +4,8 @@
 #include "llvm/IR/Verifier.h"
 
 #include "constant.hpp"
-#include "convert.hpp"
 #include "function.hpp"
+#include "gentype.hpp"
 #include "gen.hpp"
 #include "instruction.hpp"
 #include "label.hpp"
