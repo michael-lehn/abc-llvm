@@ -1,0 +1,51 @@
+extern fn printf(fmt: -> const char, ...): int;
+extern fn scanf(fmt: -> char, ...): int;
+extern fn malloc(size: int): -> void;
+extern fn free(ptr: -> void);
+
+
+struct Node
+{
+    val: int;
+    next: -> Node;
+};
+
+fn insertInList(list: -> Node, val: int): -> Node
+{
+    local n: -> Node;
+    n = nullptr;
+    n = malloc(sizeof(*n));
+    n->val = val;
+    n->next = list;
+    return n;
+}
+
+fn printList(list: -> Node)
+{
+    while (list) {
+	printf("val = %d\n", list->val);
+	list = list->next;
+    }
+}
+
+fn main(): u8
+{
+    local list: -> Node;
+    list = nullptr;
+
+
+    while (1) {
+	printf("Gib eine Zahl ein oder breche ab mit 'x': ");
+
+	local i: int; 
+	if (!scanf("%d", &i)) {
+	    break;
+	}
+	list = insertInList(list, i);
+    }
+
+    printf("Diese Zahlen wurden eingegeben: \n");
+    printList(list);
+
+    return 0;
+}
