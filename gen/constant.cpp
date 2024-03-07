@@ -53,4 +53,11 @@ getTrue()
     return llvm::ConstantInt::getTrue(*llvmContext);
 }
 
+Constant
+getString(const char *str)
+{
+    assert(llvmContext);
+    return llvm::ConstantDataArray::getString(*llvmContext, str, false);
+}
+
 } // namespace gen

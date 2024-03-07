@@ -1,5 +1,5 @@
-#ifndef BINARYEXPR_HPP
-#define BINARYEXPR_HPP
+#ifndef EXPR_BINARYEXPR_HPP
+#define EXPR_BINARYEXPR_HPP
 
 #include "gen/gen.hpp"
 #include "lexer/loc.hpp"
@@ -85,4 +85,4 @@ class BinaryExpr : public Expr
 
 } // namespace abc
 
-#endif // BINARYEXPR_HPP
+#endif // EXPR_BINARYEXPR_HPP

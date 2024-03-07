@@ -5,12 +5,13 @@
 #include "expr/identifier.hpp"
 #include "expr/integerliteral.hpp"
 #include "expr/member.hpp"
+#include "expr/stringliteral.hpp"
 #include "expr/unaryexpr.hpp"
 #include "lexer/error.hpp"
 #include "lexer/lexer.hpp"
 #include "symtab/symtab.hpp"
-#include "type/type.hpp"
 #include "type/integertype.hpp"
+#include "type/type.hpp"
 
 #include "parseexpr.hpp"
 #include "parser.hpp"
@@ -374,6 +375,17 @@ parsePrimary()
 	auto val = *tok.processedVal.c_str();
 	auto expr = IntegerLiteral::create(val, ty, tok.loc);
         return expr;
+    } else if (token.kind == TokenKind::STRING_LITERAL) {
+	std::string str{};
+	std::string strRaw{};
+	do {
+	    str += token.processedVal.c_str();
+	    strRaw += token.val.c_str();
+	    getToken();
+	} while (token.kind == TokenKind::STRING_LITERAL);
+	auto val = UStr::create(str);
+	auto valRaw = UStr::create(strRaw);
+	return StringLiteral::create(val, valRaw, tok.loc);
     } else if (token.kind == TokenKind::LPAREN) {
         getToken();
 	auto expr = parseExpression();

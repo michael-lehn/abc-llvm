@@ -14,6 +14,8 @@ Constant getConstantZero(const abc::Type *type);
 Constant getFalse();
 Constant getTrue();
 
+Constant getString(const char *str);
+
 } // namespace gen
 
 #endif // GEN_CONSTANT_HPP

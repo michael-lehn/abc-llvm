@@ -1,5 +1,5 @@
-#ifndef CALLEXPR_HPP
-#define CALLEXPR_HPP
+#ifndef EXPR_CALLEXPR_HPP
+#define EXPR_CALLEXPR_HPP
 
 #include "lexer/token.hpp"
 
@@ -40,4 +40,4 @@ class CallExpr : public Expr
 
 } // namespace abc
 
-#endif // CALLEXPR_HPP
+#endif // EXPR_CALLEXPR_HPP

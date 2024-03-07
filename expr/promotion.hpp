@@ -1,5 +1,5 @@
-#ifndef PROMOTION_HPP
-#define PROMOTION_HPP
+#ifndef EXPR_PROMOTION_HPP
+#define EXPR_PROMOTION_HPP
 
 #include <tuple>
 
@@ -39,4 +39,4 @@ UnaryResult unary(UnaryExpr::Kind kind, ExprPtr &&child,
 
 } } // namespace promotion, abc
 
-#endif // PROMOTION_HPP
+#endif // EXPR_PROMOTION_HPP

@@ -1,5 +1,5 @@
-#ifndef IMPLICITCAST_HPP
-#define IMPLICITCAST_HPP
+#ifndef EXPR_IMPLICITCAST_HPP
+#define EXPR_IMPLICITCAST_HPP
 
 #include "expr.hpp"
 #include "lexer/loc.hpp"
@@ -35,4 +35,4 @@ class ImplicitCast : public Expr
 
 } // namespace abc
 
-#endif // IMPLICITCAST_HPP
+#endif // EXPR_IMPLICITCAST_HPP

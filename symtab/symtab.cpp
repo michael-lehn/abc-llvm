@@ -1,6 +1,7 @@
 #include <cassert>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 
 #include "lexer/error.hpp"
 

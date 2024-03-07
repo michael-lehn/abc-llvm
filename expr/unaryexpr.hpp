@@ -1,5 +1,5 @@
-#ifndef UNARYEXPR_HPP
-#define UNARYEXPR_HPP
+#ifndef EXPR_UNARYEXPR_HPP
+#define EXPR_UNARYEXPR_HPP
 
 #include "expr.hpp"
 #include "lexer/loc.hpp"
@@ -59,4 +59,4 @@ class UnaryExpr : public Expr
 
 } // namespace abc
 
-#endif // UNARYEXPR_HPP
+#endif // EXPR_UNARYEXPR_HPP

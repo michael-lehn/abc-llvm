@@ -12,7 +12,10 @@ void externalVariableiDeclaration(const char *ident, const abc::Type *varType);
 void globalVariableDefinition(const char *ident, const abc::Type *varType,
 			      Constant initialValue, bool externalLinkage);
 
+Value loadStringAddress(const char *str);
+
 Value localVariableDefinition(const char *ident, const abc::Type *varType);
+
 
 void forgetAllLocalVariables();
 

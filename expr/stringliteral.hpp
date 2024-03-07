@@ -1,27 +1,23 @@
-#ifndef EXPR_ENUMCONSTANT_HPP
-#define EXPR_ENUMCONSTANT_HPP
+#ifndef EXPR_STRINGLITERAL
+#define EXPR_STRINGLITERAL
 
-#include <cstdint>
+#include <cstddef>
 
 #include "expr.hpp"
-#include "lexer/loc.hpp"
 
 namespace abc {
 
-class EnumConstant : public Expr
+class StringLiteral : public Expr
 {
     protected:
-	EnumConstant(UStr name, std::int64_t value, const Type *type,
-		     lexer::Loc loc);
+	StringLiteral(const Type *type, UStr val, UStr valRaw, lexer::Loc loc);
 
     public:
-	static ExprPtr create(UStr name, std::int64_t value, const Type *type,
-			      lexer::Loc loc);		
+	static ExprPtr create(UStr val, UStr valRaw,
+			      lexer::Loc loc = lexer::Loc{});
 
-	const UStr name;
-	const std::int64_t value;
+	UStr		    val, valRaw;
 
-	// for sematic checks
 	bool hasAddress() const override;
 	bool isLValue() const override;
 	bool isConst() const override;
@@ -37,9 +33,9 @@ class EnumConstant : public Expr
 	void print(int indent) const override;
 
 	// for printing error messages
-	void printFlat(std::ostream &out, int prec) const override;
+	virtual void printFlat(std::ostream &out, int prec) const override;
 };
 
 } // namespace abc
- 
-#endif // EXPR_ENUMCONSTANT_HPP
+
+#endif // EXPR_STRINGLITERAL

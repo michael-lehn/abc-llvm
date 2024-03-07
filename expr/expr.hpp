@@ -1,5 +1,5 @@
-#ifndef EXPR_HPP
-#define EXPR_HPP
+#ifndef EXPR_EXPR_HPP
+#define EXPR_EXPR_HPP
 
 #include <cstdint>
 #include <memory>
@@ -56,4 +56,4 @@ std::ostream &operator<<(std::ostream &out, const Expr *expr);
 
 } // namespace abc
 
-#endif // EXPR_HPP
+#endif // EXPR_EXPR_HPP

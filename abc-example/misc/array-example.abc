@@ -1,11 +1,19 @@
+extern fn printf(fmt: -> char, ...): int;
+
 fn main(argc: i32): i32
 {
     local a: array[10] of i32;
     local p: -> int;
+    local str: array[4] of char;
 
     a[2] = 42;
     p = a;
     p[2] = 13;
+
+    str = "abc";
+    printf("hello, world!\n");
+    printf("hello, world!\n");
+    printf("Hallo Welt! %d\n", p[2]);
 
     return a[2];
 }

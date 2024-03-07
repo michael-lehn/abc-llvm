@@ -1,5 +1,5 @@
-#ifndef IDENTIFIER_HPP
-#define IDENTIFIER_HPP
+#ifndef EXPR_IDENTIFIER_HPP
+#define EXPR_IDENTIFIER_HPP
 
 #include "type/type.hpp"
 #include "lexer/loc.hpp"
@@ -40,4 +40,4 @@ class Identifier : public Expr
 
 } // namespace abc
 
-#endif // IDENTIFIER_HPP
+#endif // EXPR_IDENTIFIER_HPP

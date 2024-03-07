@@ -60,6 +60,7 @@ functionDefinitionBegin(const char *ident, const abc::Type *fnType,
 {
     assert(param.size() == fnType->paramType().size());
 
+    forgetAllLocalVariables();
     auto fn = functionDeclaration(ident, fnType, externalLinkage);
     fn->setDoesNotThrow();
     llvmBB = llvm::BasicBlock::Create(*llvmContext, "entry", fn);

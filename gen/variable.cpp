@@ -1,4 +1,6 @@
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <unordered_map>
 
 #include "type/integertype.hpp"
@@ -9,6 +11,9 @@
 #include "variable.hpp"
 
 namespace gen {
+
+// Map with all string literals
+static std::unordered_map<std::string, std::string> stringMap;
 
 // Map with all local variables
 static std::unordered_map<const char *, llvm::AllocaInst *> localVariable;
@@ -83,6 +88,29 @@ globalVariableDefinition(const char *ident, const abc::Type *varType,
 			     /*Initializer=*/initialValue,
 			     /*Name=*/ident,
 			     nullptr);
+}
+
+Value
+loadStringAddress(const char *stringLiteral)
+{
+    assert(llvmContext);
+    assert(llvmModule);
+
+    std::string str{stringLiteral};
+    if (!stringMap.contains(str)) {
+	std::stringstream ss;
+	ss << ".L" << stringMap.size();
+	stringMap[str] = ss.str();
+	auto llvmStr = llvm::ConstantDataArray::getString(*llvmContext,
+							  stringLiteral);
+	new llvm::GlobalVariable(*llvmModule,
+				 llvmStr->getType(),
+				 /*isConstant=*/true,
+				 /*Linkage=*/llvm::GlobalValue::InternalLinkage,
+				 /*Initializer=*/llvmStr,
+				 /*Name=*/ss.str().c_str());
+    }
+    return loadAddress(stringMap.at(str).c_str());
 }
 
 Value

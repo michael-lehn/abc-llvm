@@ -1,5 +1,5 @@
-#ifndef MEMBERACCESS_HPP
-#define MEMBERACCESS_HPP
+#ifndef EXPR_MEMBERACCESS_HPP
+#define EXPR_MEMBERACCESS_HPP
 
 #include "type/type.hpp"
 #include "lexer/loc.hpp"
@@ -42,4 +42,4 @@ class Member : public Expr
 
 } // namespace abc
 
-#endif // MEMBERACCESS_HPP
+#endif // EXPR_MEMBERACCESS_HPP
