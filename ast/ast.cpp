@@ -689,16 +689,17 @@ AstSwitch::AstSwitch(ExprPtr &&expr)
 {}
 
 void
-AstSwitch::appendCase(ExprPtr &&expr)
+AstSwitch::appendCase(ExprPtr &&caseExpr_)
 {
-    if (!expr || !expr->isConst() || !expr->type->isInteger()) {
-	error::out() << expr->loc
+    if (!caseExpr_ || !caseExpr_->isConst() || !caseExpr_->type->isInteger()) {
+	error::out() << caseExpr_->loc
 	    << ": error: case expression has "
 	    << "to be a constant integer expression\n";
 	error::fatal();
     }
+    caseExpr_ = ImplicitCast::create(std::move(caseExpr_), expr->type);
     casePos.push_back(body.size());
-    caseExpr.push_back(std::move(expr));
+    caseExpr.push_back(std::move(caseExpr_));
 }
 
 bool
@@ -759,7 +760,6 @@ AstSwitch::codegen()
     }
 
     gen::jumpInstruction(expr->loadValue(), defaultLabel, caseLabel);
-    //std::cerr << "AstSwitch::codegen() 2\n";
 
     for (std::size_t i = 0, casePosIndex = 0; i < body.size(); ++i) {
 	if (casePosIndex < casePos.size() && i == casePos[casePosIndex]) {
