@@ -79,7 +79,7 @@ parseTopLevelDeclaration()
 //------------------------------------------------------------------------------
 static const Type *parseFunctionType(Token &fnName,
 				     std::vector<Token> &fnParamName);
-static AstPtr parseFunctionBody();
+static AstPtr parseBlock();
 
 /*
  * function-declaration-or-definition
@@ -109,7 +109,7 @@ parseFunctionDeclarationOrDefinition()
     Symtab newScope(fnName.val);
     fnDef->appendParamName(std::move(fnParamName));
 
-    auto fnBody = parseFunctionBody();
+    auto fnBody = parseBlock();
     if (!fnBody) {
 	error::out() << token.loc << ": expected ';' or compound statement"
 	    << std::endl;
@@ -278,10 +278,10 @@ parseFunctionDeclaration(Token &fnIdent, std::vector<Token> &param)
 static AstPtr parseStatementOrDeclarationList();
 
 /*
- * function-body = "{" statement-or-declaration-list "}"
+ * block = "{" statement-or-declaration-list "}"
  */
 static AstPtr
-parseFunctionBody()
+parseBlock()
 {
     if (token.kind != TokenKind::LBRACE) {
 	return nullptr;
@@ -602,8 +602,13 @@ parseLocalVariableDeclaration()
 static AstPtr parseCompoundStatement();
 static AstPtr parseIfStatement();
 static AstPtr parseWhileStatement();
+static AstPtr parseDoWhileStatement();
+static AstPtr parseForStatement();
 static AstPtr parseReturnStatement();
 static AstPtr parseBreakStatement();
+static AstPtr parseContinueStatement();
+static AstPtr parseGotoStatement();
+static AstPtr parseLabelDefinition();
 static AstPtr parseExpressionStatement();
 
 /*
@@ -616,9 +621,9 @@ static AstPtr parseExpressionStatement();
  *	     | return-statement
  *	     | break-statement
  *	     | continue-statement
- *	     | expression-statement
  *	     | goto-statement
  *	     | label-definition
+ *	     | expression-statement
  */
 static AstPtr
 parseStatement()
@@ -628,8 +633,13 @@ parseStatement()
     (ast = parseCompoundStatement())
     || (ast = parseIfStatement())
     || (ast = parseWhileStatement())
+    || (ast = parseDoWhileStatement())
+    || (ast = parseForStatement())
     || (ast = parseReturnStatement())
     || (ast = parseBreakStatement())
+    || (ast = parseContinueStatement())
+    || (ast = parseGotoStatement())
+    || (ast = parseLabelDefinition())
     || (ast = parseExpressionStatement());
 
     return ast;
@@ -747,6 +757,108 @@ parseWhileStatement()
 }
 
 //------------------------------------------------------------------------------
+static AstPtr
+parseDoWhileStatement()
+{
+    if (token.kind != TokenKind::DO) {
+	return nullptr;
+    }
+    getToken();
+    auto doWhileBody = parseCompoundStatement();
+    if (!doWhileBody) {
+	error::out() << token.loc << ": compound statement expected"
+	    << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    if (!error::expected(TokenKind::WHILE)) {
+	return nullptr;
+    }
+    getToken();
+    if (!error::expected(TokenKind::LPAREN)) {
+	return nullptr;
+    }
+    getToken();
+    auto doWhileCond = parseExpression();
+    if (!doWhileCond) {
+	error::out() << token.loc << ": expression expected" << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    if (!error::expected(TokenKind::RPAREN)) {
+	return nullptr;
+    }
+    getToken();
+    if (!error::expected(TokenKind::SEMICOLON)) {
+	return nullptr;
+    }
+    getToken();
+    return std::make_unique<AstDoWhile>(std::move(doWhileCond),
+				        std::move(doWhileBody));
+}
+
+//------------------------------------------------------------------------------
+/*
+ * for-statement = "for" "(" [expression-or-variable-definition] ";"
+ *			[expression] ";" [expression] ")"
+ *			compound-statement
+ *  expression-or-variable-definition = expression
+ *				      | local-variable-declaration
+ *				      | global-variable-declaration
+ */
+static AstPtr
+parseForStatement()
+{
+    if (token.kind != TokenKind::FOR) {
+	return nullptr;
+    }
+    getToken();
+    if (!error::expected(TokenKind::LPAREN)) {
+	return nullptr;
+    }
+    getToken();
+
+    Symtab newScope;
+    AstPtr forInitDecl;
+    ExprPtr forInitExpr;
+    if (!(forInitDecl = parseLocalVariableDefinition())) {
+	if (!(forInitDecl = parseGlobalVariableDefinition())) {
+	    forInitExpr = parseExpression();
+	    if (!error::expected(TokenKind::SEMICOLON)) {
+		return nullptr;
+	    }
+	    getToken();
+	}
+    }
+    auto forCond = parseExpression();
+    if (!error::expected(TokenKind::SEMICOLON)) {
+	return nullptr;
+    }
+    getToken();
+    auto forUpdate = parseExpression();
+    if (!error::expected(TokenKind::RPAREN)) {
+	return nullptr;
+    }
+    getToken();
+    auto forLoop = forInitDecl
+	?  std::make_unique<AstFor>(std::move(forInitDecl),
+				    std::move(forCond),
+				    std::move(forUpdate))
+	: std::make_unique<AstFor>(std::move(forInitExpr),
+				   std::move(forCond),
+				   std::move(forUpdate));
+    auto forBody = parseBlock();
+    if (!forBody) {
+	error::out() << token.loc << ": compound statement expected"
+	    << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    forLoop->appendBody(std::move(forBody));
+    return forLoop;
+}
+
+//------------------------------------------------------------------------------
 /*
  * return-statement = "return" [ expression ] ";"
  */
@@ -784,6 +896,67 @@ parseBreakStatement()
     getToken();
     return std::make_unique<AstBreak>(loc);
 }
+//------------------------------------------------------------------------------
+/*
+ * continue-statement = "continue" ";"
+ */
+static AstPtr
+parseContinueStatement()
+{
+    if (token.kind != TokenKind::CONTINUE) {
+	return nullptr;
+    }
+    auto loc = token.loc;
+    getToken();
+    if (!error::expected(TokenKind::SEMICOLON)) {
+	return nullptr;
+    }
+    getToken();
+    return std::make_unique<AstContinue>(loc);
+}
+
+//------------------------------------------------------------------------------
+
+static AstPtr
+parseGotoStatement()
+{
+    if (token.kind != TokenKind::GOTO) {
+	return nullptr;
+    }
+    getToken();
+    auto label = token;
+    if (!error::expected(TokenKind::IDENTIFIER)) {
+	return nullptr;
+    }
+    getToken();
+    if (!error::expected(TokenKind::SEMICOLON)) {
+	return nullptr;
+    }
+    getToken();
+    return std::make_unique<AstGoto>(label.loc, label.val);
+}
+
+//------------------------------------------------------------------------------
+
+static AstPtr
+parseLabelDefinition()
+{
+    if (token.kind != TokenKind::LABEL) {
+	return nullptr;
+    }
+    getToken();
+    auto label = token;
+    if (!error::expected(TokenKind::IDENTIFIER)) {
+	return nullptr;
+    }
+    getToken();
+    if (!error::expected(TokenKind::COLON)) {
+	return nullptr;
+    }
+    getToken();
+    return std::make_unique<AstLabel>(label.loc, label.val);
+}
+
 //------------------------------------------------------------------------------
 /*
  * expression-statement = [expression] ";"

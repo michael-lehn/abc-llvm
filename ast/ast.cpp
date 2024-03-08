@@ -730,6 +730,129 @@ AstWhile::apply(std::function<bool(Ast *)> op)
 }
 
 /*
+ * AstDoWhile
+ */
+AstDoWhile::AstDoWhile(ExprPtr &&cond, AstPtr &&body)
+    : cond{std::move(cond)}, body{std::move(body)}
+{}
+
+void
+AstDoWhile::print(int indent) const
+{
+    error::out(indent) << "do" << std::endl;
+    body->print(indent);
+    error::out(indent) << "while (" << cond << ");" << std::endl;
+}
+
+void
+AstDoWhile::codegen()
+{
+    auto loopLabel = gen::getLabel("loop");
+    auto condLabel = gen::getLabel("cond");
+    auto endLabel = gen::getLabel("end");
+
+    body->apply(createSetBreakLabel(endLabel));
+    body->apply(createSetContinueLabel(condLabel));
+
+    gen::defineLabel(loopLabel);
+    body->codegen();
+
+    gen::defineLabel(condLabel);
+    cond->condition(loopLabel, endLabel);
+
+    gen::defineLabel(endLabel);
+}
+
+void
+AstDoWhile::apply(std::function<bool(Ast *)> op)
+{
+    if (op(this)) {
+	body->apply(op);
+    }
+}
+
+/*
+ * AstFor
+ */
+AstFor::AstFor(ExprPtr &&init, ExprPtr &&cond, ExprPtr &&update)
+    : initExpr{std::move(init)}, cond{std::move(cond)}
+    , update{std::move(update)}
+{
+}
+
+AstFor::AstFor(AstPtr &&init, ExprPtr &&cond, ExprPtr &&update)
+    : initAst{std::move(init)}, cond{std::move(cond)}
+    , update{std::move(update)}
+{
+}
+
+void
+AstFor::appendBody(AstPtr &&body_)
+{
+    body = std::move(body_);
+}
+
+void
+AstFor::print(int indent) const
+{
+    error::out(indent) << "for (";
+    if (initAst) {
+	initAst->print(0);
+    } else if (initExpr) {
+	error::out() << initExpr;
+    }
+    error::out() << "; ";
+    if (cond) {
+	error::out() << cond;
+    }
+    error::out() << "; ";
+    if (update) {
+	error::out() << update;
+    }
+    error::out() << ")" << std::endl;
+    body->print(indent);
+}
+
+void
+AstFor::codegen()
+{
+    auto condLabel = gen::getLabel("cond");
+    auto loopLabel = gen::getLabel("loop");
+    auto endLabel = gen::getLabel("end");
+
+    body->apply(createSetBreakLabel(endLabel));
+    body->apply(createSetContinueLabel(condLabel));
+
+    if (initAst) {
+	initAst->codegen();
+    } else if (initExpr) {
+	initExpr->loadValue();
+    }
+
+    gen::defineLabel(condLabel);
+    if (cond) {
+	cond->condition(loopLabel, endLabel);
+    }
+
+    gen::defineLabel(loopLabel);
+    body->codegen();
+    if (update) {
+	update->loadValue();
+    }
+    gen::jumpInstruction(condLabel);
+
+    gen::defineLabel(endLabel);
+}
+
+void
+AstFor::apply(std::function<bool(Ast *)> op)
+{
+    if (op(this)) {
+	body->apply(op);
+    }
+}
+
+/*
  * AstTypeDecl
  */
 AstTypeDecl::AstTypeDecl(lexer::Token name, const Type *type)

@@ -266,6 +266,42 @@ class AstWhile : public Ast
 
 //------------------------------------------------------------------------------
 
+class AstDoWhile : public Ast
+{
+    public:
+	AstDoWhile(ExprPtr &&cond, AstPtr &&body);
+
+	const ExprPtr cond;
+	const AstPtr body;
+
+	void print(int indent) const override;
+	void codegen() override;
+	void apply(std::function<bool(Ast *)> op) override;
+};
+
+//------------------------------------------------------------------------------
+
+class AstFor : public Ast
+{
+    private:
+	AstPtr body;
+
+    public:
+	AstFor(ExprPtr &&init, ExprPtr &&cond, ExprPtr &&update);
+	AstFor(AstPtr &&init, ExprPtr &&cond, ExprPtr &&update);
+
+	const AstPtr initAst;
+	const ExprPtr initExpr;
+	const ExprPtr cond, update;
+
+	void appendBody(AstPtr &&body);
+
+	void print(int indent) const override;
+	void codegen() override;
+	void apply(std::function<bool(Ast *)> op) override;
+};
+
+//------------------------------------------------------------------------------
 class AstTypeDecl : public Ast
 {
     public:
