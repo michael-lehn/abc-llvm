@@ -251,6 +251,31 @@ class AstIf : public Ast
 
 //------------------------------------------------------------------------------
 
+class AstSwitch : public Ast
+{
+    private:
+	AstList body;
+	std::vector<std::size_t> casePos;
+	std::vector<ExprPtr> caseExpr;
+	std::size_t defaultPos;
+	bool hasDefault;
+
+    public:
+	AstSwitch(ExprPtr &&expr);
+
+	const ExprPtr expr;
+
+	void appendCase(ExprPtr &&expr);
+	bool appendDefault();
+	void append(AstPtr &&stmt);
+
+	void print(int indent) const override;
+	void codegen() override;
+	void apply(std::function<bool(Ast *)> op) override;
+};
+
+//------------------------------------------------------------------------------
+
 class AstWhile : public Ast
 {
     public:

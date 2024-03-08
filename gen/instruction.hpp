@@ -36,6 +36,10 @@ Constant instruction(InstructionOp op, Constant left, Constant right);
 JumpOrigin jumpInstruction(Label label);
 JumpOrigin jumpInstruction(Value condition, Label trueLabel, Label falseLabel);
 
+using CaseLabel = std::pair<ConstantInt, Label>;
+JumpOrigin jumpInstruction(Value condition, Label defaultLabel,
+			   const std::vector<CaseLabel> &caseLabel);
+
 Value phi(Value a, Label labelA, Value b, Label labelB, const abc::Type *type);
 
 void returnInstruction(Value val);

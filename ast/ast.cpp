@@ -74,8 +74,7 @@ createFindLabel(std::unordered_map<UStr, gen::Label> &label)
 	if (auto astLabel = dynamic_cast<AstLabel *>(ast)) {
 	    if (label.contains(astLabel->labelName)) {
 		error::out() << astLabel->loc
-		    << ": error: label already defined within function"
-		    << std::endl;
+		    << ": error: label already defined within function\n";
 		error::fatal();
 	    } else {
 		label[astLabel->labelName] = astLabel->label;
@@ -93,8 +92,7 @@ createSetGotoLabel(const std::unordered_map<UStr, gen::Label> &label)
 	if (auto astLabel = dynamic_cast<AstGoto *>(ast)) {
 	    if (!label.contains(astLabel->labelName)) {
 		error::out() << astLabel->loc
-		    << ": error: label not defined within function"
-		    << std::endl;
+		    << ": error: label not defined within function\n";
 		error::fatal();
 	    } else {
 		astLabel->label = label.at(astLabel->labelName);
@@ -498,7 +496,7 @@ AstGoto::AstGoto(lexer::Loc loc, UStr labelName)
 void
 AstGoto::print(int indent) const
 {
-    error::out(indent) << "goto " << labelName.c_str() << ";" << std::endl;
+    error::out(indent) << "goto " << labelName.c_str() << ";\n";
 }
 
 void
@@ -506,7 +504,7 @@ AstGoto::codegen()
 {
     if (!label) {
 	error::out() << loc << ": error: no label '" << labelName.c_str()
-	    << "' within function" << std::endl;
+	    << "' within function\n";
 	error::fatal();
     } else {
 	gen::jumpInstruction(label);
@@ -523,7 +521,7 @@ AstLabel::AstLabel(lexer::Loc loc, UStr labelName)
 void
 AstLabel::print(int indent) const
 {
-    error::out(indent) << "label " << labelName.c_str() << ":" << std::endl;
+    error::out(indent) << "label " << labelName.c_str() << ":\n";
 }
 
 void
@@ -542,7 +540,7 @@ AstBreak::AstBreak(lexer::Loc loc)
 void
 AstBreak::print(int indent) const
 {
-    error::out(indent) << "break;" << std::endl;
+    error::out(indent) << "break;\n";
 }
 
 void
@@ -550,8 +548,7 @@ AstBreak::codegen()
 {
     if (!label) {
 	error::out() << loc
-	    << ": error: break statement not within loop or switch"
-	    << std::endl;
+	    << ": error: break statement not within loop or switch\n";
 	error::fatal();
 	return;
     }
@@ -568,16 +565,14 @@ AstContinue::AstContinue(lexer::Loc loc)
 void
 AstContinue::print(int indent) const
 {
-    error::out(indent) << "continue;" << std::endl;
+    error::out(indent) << "continue;\n";
 }
 
 void
 AstContinue::codegen()
 {
     if (!label) {
-	error::out() << loc
-	    << ": error: continue statement not within loop"
-	    << std::endl;
+	error::out() << loc << ": error: continue statement not within loop\n";
 	error::fatal();
 	return;
     }
@@ -687,6 +682,107 @@ AstIf::apply(std::function<bool(Ast *)> op)
 }
 
 /*
+ * AstSwitch
+ */
+AstSwitch::AstSwitch(ExprPtr &&expr)
+    : hasDefault{false}, expr{std::move(expr)}
+{}
+
+void
+AstSwitch::appendCase(ExprPtr &&expr)
+{
+    if (!expr || !expr->isConst() || !expr->type->isInteger()) {
+	error::out() << expr->loc
+	    << ": error: case expression has "
+	    << "to be a constant integer expression\n";
+	error::fatal();
+    }
+    casePos.push_back(body.size());
+    caseExpr.push_back(std::move(expr));
+}
+
+bool
+AstSwitch::appendDefault()
+{
+    if (hasDefault) {
+	return false;
+    }
+    defaultPos = body.size();
+    hasDefault = true;
+    return true;
+}
+
+void
+AstSwitch::append(AstPtr &&stmt)
+{
+    body.append(std::move(stmt));
+}
+
+void
+AstSwitch::print(int indent) const
+{
+    error::out(indent) << "switch (" << expr << ") {\n";
+    for (std::size_t i = 0, casePosIndex = 0; i < body.size(); ++i) {
+	if (!casePos.size() || i < casePos[0]) {
+	    error::out(indent + 4) << "// never reached\n";
+	}
+	if (casePosIndex < casePos.size() && i == casePos[casePosIndex]) {
+	    error::out(indent + 4) << "case " << caseExpr[casePosIndex++]
+		<< ":\n";
+	}
+	if (hasDefault && i == defaultPos) {
+	    error::out(indent + 4) << "default:\n";
+	}
+	body.node[i]->print(indent + 8);
+    }
+    error::out(indent) << "}\n";
+}
+
+void
+AstSwitch::codegen()
+{
+    auto defaultLabel = gen::getLabel("default");
+    auto breakLabel = gen::getLabel("break");
+    body.apply(createSetBreakLabel(breakLabel));
+
+    std::vector<std::pair<gen::ConstantInt, gen::Label>> caseLabel;
+    std::set<std::uint64_t> usedCaseVal;
+
+    for (const auto &e: caseExpr) {
+	caseLabel.push_back({ e->getConstantInt(), gen::getLabel("case") });
+	auto val = e->getUnsignedIntValue();
+	if (usedCaseVal.contains(val)) {
+	    error::out() << e->loc << ": duplicate case value '" << e << "'\n";
+	    error::fatal();
+	}
+	usedCaseVal.insert(val);
+    }
+
+    gen::jumpInstruction(expr->loadValue(), defaultLabel, caseLabel);
+    //std::cerr << "AstSwitch::codegen() 2\n";
+
+    for (std::size_t i = 0, casePosIndex = 0; i < body.size(); ++i) {
+	if (casePosIndex < casePos.size() && i == casePos[casePosIndex]) {
+	    gen::defineLabel(caseLabel[casePosIndex++].second);
+	}
+	if (hasDefault && i == defaultPos) {
+	    gen::defineLabel(defaultLabel);
+	}
+	body.node[i]->codegen();
+    }
+    if (!hasDefault) {
+	gen::defineLabel(defaultLabel);
+    }
+    gen::defineLabel(breakLabel);
+}
+
+void
+AstSwitch::apply(std::function<bool(Ast *)> op)
+{
+    body.apply(op);
+}
+
+/*
  * AstWhile
  */
 AstWhile::AstWhile(ExprPtr &&cond, AstPtr &&body)
@@ -696,7 +792,7 @@ AstWhile::AstWhile(ExprPtr &&cond, AstPtr &&body)
 void
 AstWhile::print(int indent) const
 {
-    error::out(indent) << "while (" << cond << ") {" << std::endl;
+    error::out(indent) << "while (" << cond << ") {\n";
     body->print(indent + 4);
     error::out(indent) << "}\n";
 }
@@ -739,9 +835,9 @@ AstDoWhile::AstDoWhile(ExprPtr &&cond, AstPtr &&body)
 void
 AstDoWhile::print(int indent) const
 {
-    error::out(indent) << "do {" << std::endl;
+    error::out(indent) << "do {\n";
     body->print(indent + 4);
-    error::out(indent) << "} while (" << cond << ");" << std::endl;
+    error::out(indent) << "} while (" << cond << ");\n";
 }
 
 void
@@ -809,7 +905,7 @@ AstFor::print(int indent) const
     if (update) {
 	error::out() << update;
     }
-    error::out() << ") {" << std::endl;
+    error::out() << ") {\n";
     body->print(indent + 4);
     error::out(indent) << "}\n";
 }

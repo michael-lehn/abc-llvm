@@ -91,6 +91,25 @@ jumpInstruction(Value condition, Label trueLabel, Label falseLabel)
     return ib;
 }
 
+JumpOrigin
+jumpInstruction(Value condition, Label defaultLabel,
+		const std::vector<CaseLabel> &caseLabel)
+{
+    assert(llvmBuilder);
+    assert(functionBuildingInfo.fn);
+    assert(!functionBuildingInfo.bbClosed);
+
+    auto ib = llvmBuilder->GetInsertBlock();
+    auto sw = llvmBuilder->CreateSwitch(condition,
+					defaultLabel,
+					caseLabel.size());
+    for (const auto &[val, label]: caseLabel) {
+	sw->addCase(val, label);
+    }
+    functionBuildingInfo.bbClosed = true;
+    return ib;
+}
+
 Value
 phi(Value a, Label labelA, Value b, Label labelB, const abc::Type *type)
 {

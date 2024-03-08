@@ -1,0 +1,21 @@
+extern fn printf(fmt: -> const char, ...): int;
+extern fn scanf(fmt: -> char, ...): int;
+
+
+fn main()
+{
+    local n: u64;
+    local int: int;
+
+    printf("n = ");
+    scanf("%d", &n);
+
+    switch (n % 1) {
+	case 0:
+	    printf("gerade\n");
+	    break;
+	case 1:
+	    printf("ungerade\n");
+	    break;
+    }
+}

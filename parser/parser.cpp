@@ -601,6 +601,7 @@ parseLocalVariableDeclaration()
 //------------------------------------------------------------------------------
 static AstPtr parseCompoundStatement();
 static AstPtr parseIfStatement();
+static AstPtr parseSwitchStatement();
 static AstPtr parseWhileStatement();
 static AstPtr parseDoWhileStatement();
 static AstPtr parseForStatement();
@@ -632,6 +633,7 @@ parseStatement()
 
     (ast = parseCompoundStatement())
     || (ast = parseIfStatement())
+    || (ast = parseSwitchStatement())
     || (ast = parseWhileStatement())
     || (ast = parseDoWhileStatement())
     || (ast = parseForStatement())
@@ -720,6 +722,77 @@ parseIfStatement()
 				   std::move(thenBody));
 }
 
+//------------------------------------------------------------------------------
+/*
+ * switch-statement = "switch" "(" expression ")"
+ *			"{" switch-case-or-statement "}"
+ * switch-case-or-statement = "case" expression ":"
+ *			    | "default" ":" 
+ *			    | statement
+ */
+static AstPtr
+parseSwitchStatement()
+{
+    if (token.kind != TokenKind::SWITCH) {
+	return nullptr;
+    }
+    getToken();
+    if (!error::expected(TokenKind::LPAREN)) {
+	return nullptr;
+    }
+    getToken();
+    auto switchExpr = parseExpression();
+    if (!switchExpr) {
+	error::out() << token.loc << ": expression expected" << std::endl;
+	error::fatal();
+	return nullptr;
+    }
+    if (!error::expected(TokenKind::RPAREN)) {
+	return nullptr;
+    }
+    getToken();
+    if (!error::expected(TokenKind::LBRACE)) {
+	return nullptr;
+    }
+    getToken();
+
+    auto switchStmt = std::make_unique<AstSwitch>(std::move(switchExpr));
+
+    // { parseSwitchCaseOrStatement }:
+    while (true) {
+	if (token.kind == TokenKind::CASE) {
+	    getToken();
+	    auto expr = parseExpression();
+	    if (!expr) {
+		error::out() << token.loc << ": expression expected"
+		    << std::endl;
+		error::fatal();
+	    }
+	    if (!error::expected(TokenKind::COLON)) {
+		return nullptr;
+	    }
+	    getToken();
+	    switchStmt->appendCase(std::move(expr));
+	} else if (token.kind == TokenKind::DEFAULT) {
+	    getToken();
+	    if (!error::expected(TokenKind::COLON)) {
+		return nullptr;
+	    }
+	    getToken();
+	    switchStmt->appendDefault();
+	} else if (auto ast = parseStatement()) {
+	    switchStmt->append(std::move(ast));
+	} else {
+	    break;
+	}
+    }
+
+    if (!error::expected(TokenKind::RBRACE)) {
+	return nullptr;
+    }
+    getToken();
+    return switchStmt;
+}
 //------------------------------------------------------------------------------
 /*
  * while-statement = "while" "(" expression ")" compound-statement
@@ -929,6 +1002,7 @@ parseGotoStatement()
 	return nullptr;
     }
     getToken();
+
     if (!error::expected(TokenKind::SEMICOLON)) {
 	return nullptr;
     }
