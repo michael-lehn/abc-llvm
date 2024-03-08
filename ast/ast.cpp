@@ -739,9 +739,9 @@ AstDoWhile::AstDoWhile(ExprPtr &&cond, AstPtr &&body)
 void
 AstDoWhile::print(int indent) const
 {
-    error::out(indent) << "do" << std::endl;
-    body->print(indent);
-    error::out(indent) << "while (" << cond << ");" << std::endl;
+    error::out(indent) << "do {" << std::endl;
+    body->print(indent + 4);
+    error::out(indent) << "} while (" << cond << ");" << std::endl;
 }
 
 void
@@ -809,8 +809,9 @@ AstFor::print(int indent) const
     if (update) {
 	error::out() << update;
     }
-    error::out() << ")" << std::endl;
-    body->print(indent);
+    error::out() << ") {" << std::endl;
+    body->print(indent + 4);
+    error::out(indent) << "}\n";
 }
 
 void
