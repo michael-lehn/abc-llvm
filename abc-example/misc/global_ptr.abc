@@ -18,4 +18,10 @@ fn main()
     printf("main: arr = %p, &arr[0] = %p\n", arr, &arr[0]);
     printf("main: p_arr = %p\n", p_arr);
 
+    local diff: ptrdiff_t = &arr[3] - &arr[1];
+    printf("diff = %td\n", diff);
+
+    local diff2: ptrdiff_t = &val - &arr[1];
+    printf("diff2 = %td\n", diff2);
+
 }
