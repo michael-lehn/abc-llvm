@@ -1,0 +1,10 @@
+@ <stdio.hdr>
+
+global val: int = 42;
+global p_val: -> int = &val + 1;
+
+fn main()
+{
+    printf("main: val = %d\n", val);
+    printf("main: p_val = %p\n", p_val);
+}
