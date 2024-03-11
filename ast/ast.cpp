@@ -293,6 +293,23 @@ AstFuncDef::codegen()
 }
 
 /*
+ * AstInitializerExpr
+ */
+
+AstInitializerExpr::AstInitializerExpr(const Type *destType, ExprPtr &&expr)
+    : expr{ImplicitCast::create(std::move(expr), destType)}  
+{
+}
+
+void
+AstInitializerExpr::print(int indent) const
+{
+    if (expr) {
+	error::out(indent) << expr;
+    }
+}
+
+/*
  * AstVar
  */
 AstVar::AstVar(lexer::Token varName, const Type *varType)
@@ -312,9 +329,29 @@ AstVar::AstVar(lexer::Token varName, const Type *varType)
 }
 
 void
+AstVar::addInitializerExpr(AstInitializerExprPtr &&initializerExpr_)
+{
+    initializerExpr = std::move(initializerExpr_);
+}
+
+const Expr *
+AstVar::getInitializerExpr() const
+{
+    if (!initializerExpr) {
+	return nullptr;
+    } else {
+	return initializerExpr->expr.get();
+    }
+}
+
+void
 AstVar::print(int indent) const
 {
     error::out(indent) << varName.val << ": " << varType;
+    if (initializerExpr) {
+	error::out() << " = ";
+	initializerExpr->print(0);
+    }
 }
 
 /*
@@ -401,8 +438,18 @@ AstGlobalVar::codegen()
     for (const auto &item : decl.node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
-	gen::globalVariableDefinition(var->varId.c_str(), var->varType, nullptr,
-				      false);
+	gen::Constant initialValue = nullptr;
+	if (auto expr = var->getInitializerExpr()) {
+	    if (!expr->isConst()) {
+		error::out() << expr->loc << ": error: initializer element "
+		    << "is not a compile-time constant\n";
+		error::fatal();
+	    } else {
+		initialValue = expr->loadConstant();
+	    }
+	}
+	gen::globalVariableDefinition(var->varId.c_str(), var->varType,
+				      initialValue, false);
     }
 }
 

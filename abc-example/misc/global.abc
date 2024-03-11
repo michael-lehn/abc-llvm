@@ -1,6 +1,6 @@
 @ <stdio.hdr>
 
-global val: u64 = 12;
+global val: u64 = 12 + 1;
 
 fn foo()
 {

@@ -91,10 +91,29 @@ class AstFuncDef : public Ast
 
 //------------------------------------------------------------------------------
 
-class AstVar : public Ast
+class AstInitializerExpr : public Ast
 {
     public:
+	AstInitializerExpr(const Type *destType, ExprPtr &&expr);
+	const ExprPtr expr;
+
+	void print(int indent) const override;
+};
+
+using AstInitializerExprPtr = std::unique_ptr<AstInitializerExpr>;
+
+//------------------------------------------------------------------------------
+
+class AstVar : public Ast
+{
+    private:
+	AstInitializerExprPtr initializerExpr;
+
+    public:
 	AstVar(lexer::Token varName, const Type *varType);
+
+	void addInitializerExpr(AstInitializerExprPtr &&initializerExpr_);
+	const Expr *getInitializerExpr() const;
 
 	const lexer::Token varName;
 	const Type * const varType;

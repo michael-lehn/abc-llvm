@@ -485,10 +485,10 @@ parseVariableDeclarationList()
 }
 
 //------------------------------------------------------------------------------
-static AstPtr parseInitializer(const Type *type);
+static AstInitializerExprPtr parseInitializerExpression(const Type *type);
 
 /*
- * variable-declaration = identifier ":" type [ "=" initializer ]
+ * variable-declaration = identifier ":" type [ "=" initializer-expression ]
  */
 static AstVarPtr
 parseVariableDeclaration()
@@ -511,26 +511,28 @@ parseVariableDeclaration()
     auto astVar = std::make_unique<AstVar>(varName, varType);
     if (token.kind == TokenKind::EQUAL) {
 	getToken();
-	auto initializer = parseInitializer(varType);
+	auto initializer = parseInitializerExpression(varType);
 	if (!initializer) {
 	    error::out() << token.loc << ": initializer expected" << std::endl;
 	    error::fatal();
 	    return nullptr;
 	}
-	assert(0 && "TODO: astVar->addInitializer(std::move(initializer));");
+	astVar->addInitializerExpr(std::move(initializer));
     }
     return astVar;
 }
 
 //------------------------------------------------------------------------------
 /*
- * initializer = expression
- *             | initializer-list
+ * initializer-expression = expression
+ *			  | initializer-list   ?? own rule ??
  */
-static AstPtr
-parseInitializer(const Type *type)
+static AstInitializerExprPtr
+parseInitializerExpression(const Type *type)
 {
-    assert(0 && "TODO: parseInitializer(const Type *type)");
+    if (auto expr = parseExpression()) {
+	return std::make_unique<AstInitializerExpr>(type, std::move(expr));
+    }
     return nullptr;
 }
 
