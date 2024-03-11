@@ -65,7 +65,11 @@ main(int argc, char *argv[])
     }
 
 
-    abc::lexer::openInputfile(infile.c_str());
+    if (!abc::lexer::openInputfile(infile.c_str())) {
+	std::cerr << argv[0] << ": error: can not open '" << infile.c_str()
+	    << "'\n";
+	return 1;
+    }
     abc::lexer::init();
     gen::init(infile.stem().c_str());
 

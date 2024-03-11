@@ -21,7 +21,7 @@ fn main()
     local diff: ptrdiff_t = &arr[3] - &arr[1];
     printf("diff = %td\n", diff);
 
-    local diff2: ptrdiff_t = &val - &arr[1];
+    local diff2: ptrdiff_t = &val - &arr[0];
     printf("diff2 = %td\n", diff2);
 
 
