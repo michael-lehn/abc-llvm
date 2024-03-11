@@ -60,6 +60,12 @@ IntegerType::createInt()
 }
 
 const Type *
+IntegerType::createLong()
+{
+    return createSigned(8 * sizeof(long));
+}
+
+const Type *
 IntegerType::createSizeType()
 {
     return createSigned(8 * sizeof(std::size_t));

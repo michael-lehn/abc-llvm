@@ -18,6 +18,10 @@ initDefaultType()
 		    IntegerType::createChar()->getAlias("char"));
     Symtab::addType(lexer::Loc{}, UStr::create("int"),
 		    IntegerType::createInt()->getAlias("int"));
+    Symtab::addType(lexer::Loc{}, UStr::create("long"),
+		    IntegerType::createInt()->getAlias("long"));
+    Symtab::addType(lexer::Loc{}, UStr::create("size_t"),
+		    IntegerType::createSizeType()->getAlias("size_t"));
 
     Symtab::addType(lexer::Loc{}, UStr::create("i8"),
 		    IntegerType::createSigned(8));

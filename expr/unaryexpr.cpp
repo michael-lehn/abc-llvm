@@ -86,9 +86,12 @@ UnaryExpr::loadConstant() const
 	    assert(0);
 	    return nullptr;
 	case LOGICAL_NOT:
-	case MINUS:
 	    assert(0 && "Not implemented");
 	    return nullptr;
+	case MINUS:
+	    return gen::instruction(gen::SUB,
+				    gen::getConstantZero(type), 
+				    child->loadConstant());
 	case ADDRESS:
 	    assert(0 && "Not implemented");
 	    return nullptr;

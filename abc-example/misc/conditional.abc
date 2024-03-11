@@ -1,6 +1,4 @@
-// @ <stdio.hdr>
-extern fn printf(fmt: -> const char, ...): int;
-extern fn scanf(fmt: -> char, ...): int;
+@ <stdio.hdr>
 
 /*
  * I think a programming language should not provide too many alternatives

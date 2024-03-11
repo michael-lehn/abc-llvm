@@ -3,8 +3,6 @@
 enum StdIO_Constants : int
 {
     EOF = -1,
-    true = 1,
-    false = 0,
 };
 
 extern fn printf(fmt: -> const char, ...): int;
