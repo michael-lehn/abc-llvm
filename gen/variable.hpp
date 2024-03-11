@@ -23,7 +23,10 @@ bool hasConstantAddress(const char *ident);
 Constant loadConstantAddress(const char *ident);
 Value loadAddress(const char *ident);
 
+Constant pointerIncrement(const abc::Type *type, Constant pointer,
+			  std::uint64_t offset);
 Value pointerIncrement(const abc::Type *type, Value pointer, Value offset);
+
 Value pointerDifference(const abc::Type *type, Value pointer1, Value pointer2);
 Value pointerToIndex(const abc::Type *type, Value pointer, std::size_t index);
 

@@ -5,6 +5,8 @@ global p_val: -> int = &val + 1;
 
 fn main()
 {
-    printf("main: val = %d\n", val);
+    printf("main: val = %d, &val = %p\n", val, &val);
+    printf("main: p_val = %p\n", p_val);
+    p_val--;
     printf("main: p_val = %p\n", p_val);
 }

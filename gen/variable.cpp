@@ -181,6 +181,16 @@ loadAddress(const char *ident)
     return addr;
 }
 
+Constant
+pointerIncrement(const abc::Type *type, Constant pointer, std::uint64_t offset)
+{
+    assert(llvmBuilder);
+    auto llvmType = convert(type);
+
+    auto addr =  llvmBuilder->CreateConstGEP1_64(llvmType, pointer, offset);
+    return llvm::dyn_cast<llvm::Constant>(addr);
+}
+
 Value
 pointerIncrement(const abc::Type *type, Value pointer, Value offset)
 {

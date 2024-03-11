@@ -105,6 +105,21 @@ BinaryExpr::loadConstant() const
 	    assert(0);
 	    return nullptr;
 	case ADD:
+	    if (type->isPointer()) {
+		// pointer + integer
+		assert(left->type->isPointer());
+		assert(right->type->isInteger());
+		auto offset = right->getUnsignedIntValue();
+		auto addr =  gen::pointerIncrement(left->type->refType(),
+						   left->loadConstant(),
+						   offset);
+		assert(addr);
+		return addr;
+	    } else {
+		return gen::instruction(getGenInstructionOp(kind, type),
+					left->loadConstant(),
+					right->loadConstant());
+	    }
 	case SUB:
 	case MUL:
 	case DIV:
@@ -149,18 +164,20 @@ BinaryExpr::handleArithmetricOperation(Kind kind) const
 	    assert(0);
 	    return nullptr;
 	case ADD:
-	case SUB:
-	case MUL:
-	case DIV:
-	case MOD:
-	    if (kind == ADD && type->isPointer()) {
+	    if (type->isPointer()) {
 		// pointer + integer
 		assert(left->type->isPointer());
 		assert(right->type->isInteger());
 		return gen::pointerIncrement(left->type->refType(),
 					     left->loadValue(),
 					     right->loadValue());
-	    } else if (kind == SUB && left->type->isPointer()) {
+	    } else {
+		return gen::instruction(getGenInstructionOp(kind, type),
+					left->loadValue(),
+					right->loadValue());
+	    }
+	case SUB:
+	    if (kind == SUB && left->type->isPointer()) {
 		// pointer - pointer
 		assert(right->type->isPointer());
 		assert(type->isInteger());
@@ -172,6 +189,12 @@ BinaryExpr::handleArithmetricOperation(Kind kind) const
 					left->loadValue(),
 					right->loadValue());
 	    }
+	case MUL:
+	case DIV:
+	case MOD:
+	    return gen::instruction(getGenInstructionOp(kind, type),
+				    left->loadValue(),
+				    right->loadValue());
     }
 }
 
