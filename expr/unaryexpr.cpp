@@ -94,8 +94,7 @@ UnaryExpr::loadConstant() const
 				    gen::getConstantZero(type), 
 				    child->loadConstant());
 	case ADDRESS:
-	    assert(0 && "Not implemented");
-	    return nullptr;
+	    return child->loadConstantAddress();
     }
 }
 

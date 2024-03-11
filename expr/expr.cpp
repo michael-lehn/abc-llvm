@@ -12,6 +12,12 @@ Expr::hasConstantAddress() const
     return false;
 }
 
+gen::Constant
+Expr::loadConstantAddress() const
+{
+    return nullptr;
+}
+
 gen::ConstantInt
 Expr::getConstantInt() const
 {

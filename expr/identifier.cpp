@@ -24,6 +24,12 @@ Identifier::create(UStr name, UStr id, const Type *type, lexer::Loc loc)
 }
 
 bool
+Identifier::hasConstantAddress() const
+{
+    return gen::hasConstantAddress(id.c_str());
+}
+
+bool
 Identifier::hasAddress() const
 {
     assert(type);
@@ -58,6 +64,14 @@ Identifier::loadValue() const
 	return loadAddress();
     }
     return gen::fetch(loadAddress(), type);
+}
+
+gen::Constant
+Identifier::loadConstantAddress() const
+{
+    assert(hasConstantAddress());
+    assert(id.c_str());
+    return gen::loadConstantAddress(id.c_str());
 }
 
 gen::Value

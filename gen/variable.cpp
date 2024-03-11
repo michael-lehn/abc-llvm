@@ -150,6 +150,25 @@ lookup(const char *ident)
     }
 }
 
+bool
+hasConstantAddress(const char *ident)
+{
+    return loadConstantAddress(ident);
+}
+
+Constant
+loadConstantAddress(const char *ident)
+{
+    assert(llvmModule);
+    if (auto var = llvmModule->getGlobalVariable(ident, true)) {
+	return var;
+    } else if (auto fn = llvmModule->getFunction(ident)) {
+	return fn;
+    } else {
+	return nullptr;
+    }
+}
+
 Value
 loadAddress(const char *ident)
 {

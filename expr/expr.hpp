@@ -32,6 +32,7 @@ class Expr
 	// for code generation
 	virtual gen::Constant loadConstant() const = 0;
 	virtual gen::Value loadValue() const = 0;
+	virtual gen::Constant loadConstantAddress() const;
 	virtual gen::Value loadAddress() const = 0;
 	virtual void condition(gen::Label trueLabel,
 			       gen::Label falseLabel) const = 0;
