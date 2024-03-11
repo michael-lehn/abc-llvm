@@ -2,10 +2,17 @@
 
 fn main()
 {
-    for (local i: size_t = 0; i < 5; ++i) {
-	printf("i = %d\n", i);
+    local val: array[10] of int;
+
+    for (local i: size_t = 0; i < 10; ++i) {
+	val[i] = i + 42;
     }
-    for (local i: int = 0; i < 10; ++i) {
-	printf("i = %d\n", i);
+
+    //local val2: array[10] of int = val;
+    local val2: array[11] of int;
+    val2 = *(-> array[11] of int)(-> void)&val;
+
+    for (local i: int = 0; i < 11; ++i) {
+	printf("val2[%d] = %d\n", i, val2[i]);
     }
 }

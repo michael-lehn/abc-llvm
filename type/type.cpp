@@ -100,6 +100,14 @@ Type::explicitCast(const Type *from, const Type *to)
     if (auto type = convert(from->getConstRemoved(), to->getConstRemoved())) {
 	// allow const-casts
 	return type;
+    } else if (from->isPointer() && to->isPointer()) {
+	if (!from->isNullptr() && from->refType()->isVoid()) {
+	    return to;
+	} else if (!to->isNullptr() && to->refType()->isVoid()) {
+	    return to;
+	} else {
+	    return nullptr;
+	}
     } else {
 	return nullptr;
     }

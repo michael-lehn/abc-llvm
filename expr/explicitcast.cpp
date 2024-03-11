@@ -22,14 +22,18 @@ ExplicitCast::create(ExprPtr &&expr, const Type *toType, lexer::Loc loc)
 {
     assert(expr->type);
     assert(toType);
+    std::cerr << "ExplicitCast::create: expr = " << expr << "\n";
     if (Type::equals(expr->type, toType)) {
+	std::cerr << "expr->type = " << expr->type << "\n";
+	std::cerr << "toType = " << toType << "\n";
 	return expr;
     } else {
 	auto loc = expr->loc;
 	auto type = Type::explicitCast(expr->type, toType);
 	if (!type) {
-	    error::out() << loc << ": error: can not cast " << expr->type
-		<< " to " << toType << "\n";
+	    error::out() << loc << ": error: can not cast an expression of "
+		<< "type '" << expr->type << "' to type '" << toType << "'\n";
+	    error::fatal();
 	    return nullptr;
 	}
 	auto p = new ExplicitCast{std::move(expr), toType, loc};

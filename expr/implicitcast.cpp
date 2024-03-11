@@ -28,8 +28,9 @@ ImplicitCast::create(ExprPtr &&expr, const Type *toType)
 	auto loc = expr->loc;
 	auto type = Type::convert(expr->type, toType);
 	if (!type) {
-	    error::out() << loc << ": error: can not convert " << expr->type
-		<< " to " << toType << "\n";
+	    error::out() << loc << ": error: can not convert an expression of "
+		" type '" << expr->type << "' to type '" << toType << "'\n";
+	    error::fatal();
 	    return nullptr;
 	}
 	auto p = new ImplicitCast{std::move(expr), type, loc};
