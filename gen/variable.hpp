@@ -27,6 +27,9 @@ Constant pointerIncrement(const abc::Type *type, Constant pointer,
 			  std::uint64_t offset);
 Value pointerIncrement(const abc::Type *type, Value pointer, Value offset);
 
+std::optional<Constant> pointerConstantDifference(const abc::Type *type,
+						  Value pointer1,
+						  Value pointer2);
 Value pointerDifference(const abc::Type *type, Value pointer1, Value pointer2);
 Value pointerToIndex(const abc::Type *type, Value pointer, std::size_t index);
 

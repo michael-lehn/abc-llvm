@@ -206,45 +206,26 @@ pointerIncrement(const abc::Type *type, Value pointer, Value offset)
     return llvmBuilder->CreateGEP(llvmType, pointer, idxList);
 }
 
+std::optional<Constant>
+pointerConstantDifference(const abc::Type *type, Value pointer1, Value pointer2)
+{
+    assert(llvmModule);
+    auto llvmType = convert(type);
+    auto dl = llvmModule->getDataLayout();
+    if (auto diff = pointer1->getPointerOffsetFrom(pointer2, dl)) {
+	return getConstantInt(diff.value() / dl.getTypeAllocSize(llvmType),
+			      abc::IntegerType::createPtrdiffType());
+    } else {
+	return std::nullopt;
+    }
+}
+
 Value
 pointerDifference(const abc::Type *type, Value pointer1, Value pointer2)
 {
     assert(llvmBuilder);
     assert(!functionBuildingInfo.bbClosed);
     auto llvmType = convert(type);
-
-    std::cerr << "gen::pointerDifference\n";
-    if (llvm::dyn_cast<llvm::Constant>(pointer1)) {
-	std::cerr << "pointer1 is constant\n";
-    } else {
-	std::cerr << "pointer1 NOT constant\n";
-    }
-    
-    auto cp1 = llvm::dyn_cast<llvm::Constant>(pointer1);
-    auto cp2 = llvm::dyn_cast<llvm::Constant>(pointer2);
-    llvm::GlobalValue *gv1 = nullptr, *gv2 = nullptr;
-    llvm::APInt gv1Offset, gv2Offset;
-    auto dl = llvmModule->getDataLayout();
-    if (cp1 && llvm::IsConstantOffsetFromGlobal(cp1, gv1, gv1Offset, dl)) {
-	std::cerr << "pointer1 is constant offset from global\n";
-    }
-    if (cp2 && llvm::IsConstantOffsetFromGlobal(cp2, gv2, gv2Offset, dl)) {
-	std::cerr << "pointer2 is constant offset from global\n";
-    }
-    if (gv1  && gv1 == gv2) {
-	std::cerr << "pointer1 and pointer2 point into same object\n";
-    } else {
-	std::cerr << "pointer1 and pointer2 point into different objects\n";
-    }
-
-    auto ptrDiff = llvmBuilder->CreatePtrDiff(llvmType, pointer1, pointer2);
-    auto ptrDiffInst = llvm::dyn_cast<llvm::Instruction>(ptrDiff);
-    if (ptrDiffInst && llvm::ConstantFoldInstruction(ptrDiffInst, dl)) {
-	std::cerr << "ConstantFoldInstruction: ok\n";
-    } else {
-	std::cerr << "ConstantFoldInstruction: failed\n";
-    }
-
     return llvmBuilder->CreatePtrDiff(llvmType, pointer1, pointer2);
 }
 

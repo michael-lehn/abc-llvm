@@ -441,6 +441,7 @@ AstGlobalVar::codegen()
 	gen::Constant initialValue = nullptr;
 	if (auto expr = var->getInitializerExpr()) {
 	    if (!expr->isConst()) {
+		error::out() << expr->loc << expr << "\n";
 		error::out() << expr->loc << ": error: initializer element "
 		    << "is not a compile-time constant\n";
 		error::fatal();

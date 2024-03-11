@@ -62,8 +62,12 @@ ImplicitCast::loadConstant() const
 {
     assert(isConst());
     if (type->isBool()) {
-	auto zero = gen::getConstantZero(expr->type);
-	return gen::instruction(gen::NE, expr->loadConstant(), zero);
+	auto value = expr->loadConstant();
+	if (value->isZeroValue()) {
+	    return gen::getFalse();
+	} else {
+	    return gen::getTrue();
+	}
     }
     return gen::cast(expr->loadConstant(), expr->type, type);
 }

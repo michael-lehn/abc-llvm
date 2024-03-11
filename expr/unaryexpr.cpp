@@ -70,6 +70,7 @@ UnaryExpr::isConst() const
 {
     switch (kind) {
 	case LOGICAL_NOT:
+	    return child->isConst();
 	case MINUS:
 	    return child->isConst();
 	case ADDRESS:
@@ -97,9 +98,13 @@ UnaryExpr::loadConstant() const
 	    assert(0);
 	    return nullptr;
 	case LOGICAL_NOT:
-	    return gen::instruction(gen::EQ,
-				    gen::getConstantZero(child->type),
-				    child->loadConstant());
+	    if (child->type->isPointer()) {
+		return gen::getTrue();
+	    } else {
+		return gen::instruction(gen::EQ,
+					gen::getConstantZero(child->type),
+					child->loadConstant());
+	    }
 	case MINUS:
 	    return gen::instruction(gen::SUB,
 				    gen::getConstantZero(type), 
@@ -118,7 +123,7 @@ UnaryExpr::loadValue() const
 
     switch (kind) {
 	case LOGICAL_NOT:
-	    return gen::instruction(gen::EQ,
+	    return gen::instruction(gen::NE,
 				    gen::getConstantZero(child->type),
 				    child->loadValue());
 	case ARROW_DEREF:

@@ -72,38 +72,44 @@ BinaryExpr::isLValue() const
     return kind == INDEX;
 }
 
-//-- for checking constness 
-
-bool
-BinaryExpr::isIntegerConstExpr() const
-{
-    assert(type);
-    return type->isInteger()
-	&& left->type->isInteger() && left->isConst()
-	&& right->type->isInteger() && right->isConst();
-}
-
-bool
-BinaryExpr::isArithmeticConstExpr() const
-{
-    return isIntegerConstExpr();
-}
-
-bool
-BinaryExpr::isAddressConstant() const
-{
-    assert(type);
-    return type->isPointer() && left->isConst() && right->isConst();
-}
-
 bool
 BinaryExpr::isConst() const
 {
     switch (kind) {
-	case ASSIGN:
-	    return false;
 	default:
-	    return isArithmeticConstExpr() || isAddressConstant();
+	    return false;
+	case ADD:
+	    if (type->isPointer()) {
+		return left->type->isPointer() && left->isConst()
+		    && right->type->isInteger() && right->isConst();
+	    } else {
+		return left->isConst() && right->isConst();
+	    }
+	case SUB:
+	case LESS:
+	case LESS_EQUAL:
+	case GREATER:
+	case GREATER_EQUAL:
+	case NOT_EQUAL:
+	case EQUAL:
+	    if (left->type->isPointer()) {
+		assert(right->type->isPointer());
+		assert(Type::equals(left->type->refType(),
+				    right->type->refType()));
+		auto refType = left->type->refType();
+		auto diff =  gen::pointerConstantDifference(refType,
+							    left->loadValue(),
+							    right->loadValue());
+		return diff.has_value();
+	    } else {
+		return left->isConst() && right->isConst();
+	    }
+	case MUL:
+	case DIV:
+	case MOD:
+	case LOGICAL_AND:
+	case LOGICAL_OR:
+	    return left->isConst() && right->isConst();
     }
 }
 
@@ -134,6 +140,22 @@ BinaryExpr::loadConstant() const
 					right->loadConstant());
 	    }
 	case SUB:
+	    if (left->type->isPointer()) {
+		// pointer - pointer
+		assert(right->type->isPointer());
+		assert(Type::equals(left->type->refType(),
+				    right->type->refType()));
+		auto refType = left->type->refType();
+		auto diff =  gen::pointerConstantDifference(refType,
+							    left->loadValue(),
+							    right->loadValue());
+		assert(diff.has_value());
+		return diff.value();
+	    } else {
+		return gen::instruction(getGenInstructionOp(kind, type),
+					left->loadConstant(),
+					right->loadConstant());
+	    }
 	case MUL:
 	case DIV:
 	case MOD:
@@ -146,9 +168,25 @@ BinaryExpr::loadConstant() const
 	case GREATER_EQUAL:
 	case NOT_EQUAL:
 	case EQUAL:
-	    return gen::instruction(getGenInstructionOp(kind, left->type),
-				    left->loadConstant(),
-				    right->loadConstant());
+	    if (left->type->isPointer()) {
+		// pointer - pointer
+		assert(right->type->isPointer());
+		assert(Type::equals(left->type->refType(),
+				    right->type->refType()));
+		auto refType = left->type->refType();
+		auto diff =  gen::pointerConstantDifference(refType,
+							    left->loadValue(),
+							    right->loadValue());
+		assert(diff.has_value());
+		auto ptrdiffType = IntegerType::createPtrdiffType();
+		return gen::instruction(getGenInstructionOp(kind, left->type),
+					diff.value(),
+					gen::getConstantZero(ptrdiffType));
+	    } else {
+		return gen::instruction(getGenInstructionOp(kind, left->type),
+					left->loadConstant(),
+					right->loadConstant());
+	    }
 	case LOGICAL_AND:
 	    if (left->loadConstant()->isZeroValue()) {
 		return gen::getFalse();

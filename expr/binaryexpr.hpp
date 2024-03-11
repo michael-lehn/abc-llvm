@@ -59,12 +59,6 @@ class BinaryExpr : public Expr
 	bool hasAddress() const override;
 	bool isLValue() const override;
 
-    private:
-	bool isIntegerConstExpr() const;
-	bool isArithmeticConstExpr() const;
-	bool isAddressConstant() const;
-
-    public:
 	bool isConst() const override;
 
 	// for code generation

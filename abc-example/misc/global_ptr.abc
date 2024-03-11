@@ -24,4 +24,12 @@ fn main()
     local diff2: ptrdiff_t = &val - &arr[1];
     printf("diff2 = %td\n", diff2);
 
+
+    //global diff3: ptrdiff_t = &arr[5] - &arr[0];
+    global diff3: bool = &arr[5];
+    printf("diff3 = %td\n", diff3);
+
+    local diff4: bool = &arr[5];
+    printf("diff4 = %td\n", diff4);
+
 }

@@ -68,7 +68,15 @@ Type::common(const Type *ty1, const Type *ty2)
 const Type *
 Type::convert(const Type *from, const Type *to)
 {
-    if (to->isInteger()) {
+    if (to->isBool()) {
+	if (from->isInteger()) {
+	    return to;
+	} else if (from->isPointer()) {
+	    return to;
+	} else {
+	    return nullptr;
+	}
+    } else if (to->isInteger()) {
 	if (from->isInteger()) {
 	    return to;
 	} else {
