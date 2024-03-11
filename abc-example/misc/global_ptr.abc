@@ -1,7 +1,12 @@
 @ <stdio.hdr>
 
 global val: int = 42;
-global p_val: -> int = &val + 1;
+//global p_val: -> int = &val + 1;
+global p_val: -> int = &(&val)[0];
+
+global arr: array[3] of int;
+global p_arr: -> int = &arr[0];
+
 
 fn main()
 {
@@ -9,4 +14,8 @@ fn main()
     printf("main: p_val = %p\n", p_val);
     p_val--;
     printf("main: p_val = %p\n", p_val);
+
+    printf("main: arr = %p, &arr[0] = %p\n", arr, &arr[0]);
+    printf("main: p_arr = %p\n", p_arr);
+
 }

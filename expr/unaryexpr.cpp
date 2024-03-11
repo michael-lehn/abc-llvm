@@ -41,6 +41,17 @@ UnaryExpr::create(Kind kind, ExprPtr &&child, lexer::Loc loc)
 }
 
 bool
+UnaryExpr::hasConstantAddress() const
+{
+    if (kind == ARROW_DEREF || kind == ASTERISK_DEREF) {
+	assert(hasAddress());
+	return child->isConst();
+    } else {
+	return false;
+    }
+}
+
+bool
 UnaryExpr::hasAddress() const
 {
     return isLValue();
@@ -160,6 +171,17 @@ UnaryExpr::loadValue() const
 	default:
 	    assert(0);
 	    return nullptr;
+    }
+}
+
+gen::Constant
+UnaryExpr::loadConstantAddress() const
+{
+    assert(hasConstantAddress());
+    if (kind == ARROW_DEREF || kind == ASTERISK_DEREF) {
+	return child->loadConstant();
+    } else {
+	return nullptr;
     }
 }
 

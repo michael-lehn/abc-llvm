@@ -55,6 +55,7 @@ class BinaryExpr : public Expr
 	const Kind kind;
 	const ExprPtr left, right;
 
+	virtual bool hasConstantAddress() const override;
 	bool hasAddress() const override;
 	bool isLValue() const override;
 
@@ -72,6 +73,7 @@ class BinaryExpr : public Expr
 	gen::Value handleArithmetricOperation(Kind kind) const;
     public:
 	gen::Value loadValue() const override;
+	gen::Constant loadConstantAddress() const override;
 	gen::Value loadAddress() const override;
 	void condition(gen::Label trueLabel,
 		       gen::Label falseLabel) const override;

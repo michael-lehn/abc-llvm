@@ -32,6 +32,7 @@ class UnaryExpr : public Expr
 	const Kind kind;
 	const ExprPtr child;
 
+	virtual bool hasConstantAddress() const override;
 	bool hasAddress() const override;
 	bool isLValue() const override;
 
@@ -46,6 +47,7 @@ class UnaryExpr : public Expr
 	// for code generation
 	gen::Constant loadConstant() const override;
 	gen::Value loadValue() const override;
+	gen::Constant loadConstantAddress() const override;
 	gen::Value loadAddress() const override;
 	void condition(gen::Label trueLabel,
 		       gen::Label falseLabel) const override;

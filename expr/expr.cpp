@@ -15,6 +15,7 @@ Expr::hasConstantAddress() const
 gen::Constant
 Expr::loadConstantAddress() const
 {
+    assert(hasConstantAddress());
     return nullptr;
 }
 

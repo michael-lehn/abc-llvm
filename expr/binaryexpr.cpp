@@ -48,6 +48,19 @@ BinaryExpr::create(Kind kind, ExprPtr &&left, ExprPtr &&right, lexer::Loc loc)
 }
 
 bool
+BinaryExpr::hasConstantAddress() const
+{
+    if (kind == INDEX && right->isConst()) {
+	if (left->type->isArray() && left->hasConstantAddress()) {
+	    return true;
+	} else if (left->type->isPointer() && left->isConst()) {
+	    return true;
+	}
+    }
+    return false;
+}
+
+bool
 BinaryExpr::hasAddress() const
 {
     return kind == INDEX;
@@ -269,14 +282,38 @@ BinaryExpr::loadValue() const
     }
 }
 
+gen::Constant
+BinaryExpr::loadConstantAddress() const
+{
+    assert(hasConstantAddress());
+    assert(kind == INDEX);
+    if (left->type->isArray()) {
+	auto offset = right->getUnsignedIntValue();
+	return gen::pointerIncrement(left->type->refType(),
+				     left->loadConstantAddress(),
+				     offset);
+    } else {
+	auto offset = right->getUnsignedIntValue();
+	return gen::pointerIncrement(left->type->refType(),
+				     left->loadConstant(),
+				     offset);
+    }
+}
+
 gen::Value
 BinaryExpr::loadAddress() const
 {
     assert(hasAddress());
     assert(kind == INDEX);
-    return gen::pointerIncrement(left->type->refType(),
-				 left->loadValue(),
-				 right->loadValue());
+    if (left->type->isArray()) {
+	return gen::pointerIncrement(left->type->refType(),
+				     left->loadAddress(),
+				     right->loadValue());
+    } else {
+	return gen::pointerIncrement(left->type->refType(),
+				     left->loadValue(),
+				     right->loadValue());
+    }
 }
 
 void
