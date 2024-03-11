@@ -143,6 +143,7 @@ AstList::print(int indent) const
 {
     for (const auto &n: node) {
 	n->print(indent);
+	error::out() << "\n";
     }
 }
 
@@ -203,7 +204,7 @@ AstFuncDecl::print(int indent) const
     if (!fnType->retType()->isVoid()) {
 	error::out() << ": " << fnType->retType();
     }
-    error::out() << ";\n\n";
+    error::out() << ";";
 }
 
 void
@@ -276,7 +277,7 @@ AstFuncDef::print(int indent) const
     if (body) {
 	body->print(indent + 4);
     }
-    error::out(indent) << "}\n\n";
+    error::out(indent) << "}";
 }
 
 void
@@ -384,7 +385,6 @@ AstExternVar::print(int indent) const
 	var->print(0);
 	error::out() << "; ";
     }
-    error::out() << "\n";
 }
 
 void
@@ -482,7 +482,6 @@ AstLocalVar::print(int indent) const
 	var->print(0);
 	error::out() << "; ";
     }
-    error::out() << "\n";
 }
 
 void
@@ -492,6 +491,9 @@ AstLocalVar::codegen()
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
 	gen::localVariableDefinition(var->varId.c_str(), var->varType);
+	if (auto expr = var->getInitializerExpr()) {
+	    gen::store(expr->loadValue(), gen::loadAddress(var->varId.c_str()));
+	}
     }
 }
 
@@ -509,7 +511,7 @@ AstReturn::print(int indent) const
     if (expr) {
 	error::out() << " " << expr;
     }
-    error::out() << ";\n";
+    error::out() << ";";
 }
 
 void
@@ -550,7 +552,7 @@ AstGoto::AstGoto(lexer::Loc loc, UStr labelName)
 void
 AstGoto::print(int indent) const
 {
-    error::out(indent) << "goto " << labelName.c_str() << ";\n";
+    error::out(indent) << "goto " << labelName.c_str() << ";";
 }
 
 void
@@ -575,7 +577,7 @@ AstLabel::AstLabel(lexer::Loc loc, UStr labelName)
 void
 AstLabel::print(int indent) const
 {
-    error::out(indent) << "label " << labelName.c_str() << ":\n";
+    error::out(indent) << "label " << labelName.c_str() << ":";
 }
 
 void
@@ -594,7 +596,7 @@ AstBreak::AstBreak(lexer::Loc loc)
 void
 AstBreak::print(int indent) const
 {
-    error::out(indent) << "break;\n";
+    error::out(indent) << "break;";
 }
 
 void
@@ -619,7 +621,7 @@ AstContinue::AstContinue(lexer::Loc loc)
 void
 AstContinue::print(int indent) const
 {
-    error::out(indent) << "continue;\n";
+    error::out(indent) << "continue;";
 }
 
 void
@@ -644,9 +646,9 @@ void
 AstExpr::print(int indent) const
 {
     if (expr) {
-	error::out(indent) << expr << ";\n";
+	error::out(indent) << expr << ";";
     } else {
-	error::out(indent) << ";\n";
+	error::out(indent) << ";";
     }
 }
 
@@ -686,7 +688,7 @@ AstIf::print(int indent) const
 	error::out(indent) << "} else {\n";
 	elseBody->print(indent + 4);
     }
-    error::out(indent) << "}\n";
+    error::out(indent) << "}";
 }
 
 void
@@ -790,7 +792,7 @@ AstSwitch::print(int indent) const
 	}
 	body.node[i]->print(indent + 8);
     }
-    error::out(indent) << "}\n";
+    error::out(indent) << "}";
 }
 
 void
@@ -848,7 +850,7 @@ AstWhile::print(int indent) const
 {
     error::out(indent) << "while (" << cond << ") {\n";
     body->print(indent + 4);
-    error::out(indent) << "}\n";
+    error::out(indent) << "}";
 }
 
 void
@@ -891,7 +893,7 @@ AstDoWhile::print(int indent) const
 {
     error::out(indent) << "do {\n";
     body->print(indent + 4);
-    error::out(indent) << "} while (" << cond << ");\n";
+    error::out(indent) << "} while (" << cond << ");";
 }
 
 void
@@ -950,8 +952,8 @@ AstFor::print(int indent) const
 	initAst->print(0);
     } else if (initExpr) {
 	error::out() << initExpr;
+	error::out() << "; ";
     }
-    error::out() << "; ";
     if (cond) {
 	error::out() << cond;
     }
@@ -961,7 +963,7 @@ AstFor::print(int indent) const
     }
     error::out() << ") {\n";
     body->print(indent + 4);
-    error::out(indent) << "}\n";
+    error::out(indent) << "}";
 }
 
 void
@@ -1032,7 +1034,7 @@ AstTypeDecl::AstTypeDecl(lexer::Token name, const Type *type)
 void
 AstTypeDecl::print(int indent) const
 {
-    error::out(indent) << "type " << name.val << ":" << type << "\n";
+    error::out(indent) << "type " << name.val << ":" << type << ";";
 }
 
 /*
@@ -1139,7 +1141,7 @@ AstEnumDecl::print(int indent) const
 		error::out() << enumConstant[i]->getUnsignedIntValue() << "\n";
 	    }
 	}
-	error::out(indent) << "}\n\n";
+	error::out(indent) << "};";
     }
 }
 
@@ -1228,7 +1230,7 @@ void
 AstStructDecl::print(int indent) const
 {
     if (!memberDecl.size()) {
-	error::out(indent) << "struct " << structTypeName.val << ";\n";
+	error::out(indent) << "struct " << structTypeName.val << ";";
     } else {
 	error::out(indent) << "struct " << structTypeName.val << "\n";
 	error::out(indent) << "{\n";
@@ -1248,10 +1250,7 @@ AstStructDecl::print(int indent) const
 		std::get<AstPtr>(decl.second)->print(indent + 8);
 	    }
 	}
-	error::out(indent) << "};\n";
-	if (indent==0) {
-	    error::out() << "\n";
-	}
+	error::out(indent) << "};";
     }
 }
 

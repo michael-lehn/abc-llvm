@@ -1,0 +1,11 @@
+@ <stdio.hdr>
+
+fn main()
+{
+    for (local i: size_t = 0; i < 5; ++i) {
+	printf("i = %d\n", i);
+    }
+    for (local i: int = 0; i < 10; ++i) {
+	printf("i = %d\n", i);
+    }
+}
