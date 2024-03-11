@@ -22,6 +22,8 @@ initDefaultType()
 		    IntegerType::createInt()->getAlias("long"));
     Symtab::addType(lexer::Loc{}, UStr::create("size_t"),
 		    IntegerType::createSizeType()->getAlias("size_t"));
+    Symtab::addType(lexer::Loc{}, UStr::create("ptrdiff_t"),
+		    IntegerType::createSizeType()->getAlias("ptrdiff_t"));
 
     Symtab::addType(lexer::Loc{}, UStr::create("i8"),
 		    IntegerType::createSigned(8));

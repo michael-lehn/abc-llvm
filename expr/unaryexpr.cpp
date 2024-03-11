@@ -86,8 +86,9 @@ UnaryExpr::loadConstant() const
 	    assert(0);
 	    return nullptr;
 	case LOGICAL_NOT:
-	    assert(0 && "Not implemented");
-	    return nullptr;
+	    return gen::instruction(gen::EQ,
+				    gen::getConstantZero(child->type),
+				    child->loadConstant());
 	case MINUS:
 	    return gen::instruction(gen::SUB,
 				    gen::getConstantZero(type), 
@@ -108,8 +109,8 @@ UnaryExpr::loadValue() const
     switch (kind) {
 	case LOGICAL_NOT:
 	    return gen::instruction(gen::EQ,
-				    child->loadValue(),
-				    gen::getConstantZero(child->type));
+				    gen::getConstantZero(child->type),
+				    child->loadValue());
 	case ARROW_DEREF:
 	case ASTERISK_DEREF:
 	    if (child->type->isNullptr()) {

@@ -72,6 +72,12 @@ IntegerType::createSizeType()
 }
 
 const Type *
+IntegerType::createPtrdiffType()
+{
+    return createSigned(8 * sizeof(std::ptrdiff_t));
+}
+
+const Type *
 IntegerType::createSigned(std::size_t numBits)
 {
     return create(numBits, true, false);
