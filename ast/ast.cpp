@@ -298,6 +298,13 @@ AstFuncDef::codegen()
 AstVar::AstVar(lexer::Token varName, const Type *varType)
     : varName{varName}, varType{varType}
 {
+    assert(varType);
+    if (!varType->hasSize()) {
+	error::out() << varName.loc
+	    << ": error: variable '" << varName.val
+	    << "' has incomplete type '" << varType << "'\n";
+	error::fatal();
+    }
     auto addDecl = Symtab::addDeclaration(varName.loc, varName.val, varType);
     if (addDecl.first) {
 	varId = addDecl.first->id;

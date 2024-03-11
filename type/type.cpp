@@ -1,6 +1,9 @@
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 
+#include "integertype.hpp"
+#include "pointertype.hpp"
 #include "type.hpp"
 #include "typealias.hpp"
 
@@ -32,6 +35,34 @@ Type::equals(const Type *ty1, const Type *ty2)
 	    && equals(ty1->refType(), ty2->refType());
     }
     return false;
+}
+
+const Type *
+Type::common(const Type *ty1, const Type *ty2)
+{
+    assert(ty1);
+    assert(ty2);
+
+    const Type *common = nullptr;
+    if (equals(ty1->getConstRemoved(), ty2->getConstRemoved())) {
+	common = ty1;
+    } else if (ty1->isArray() && ty2->isArray()) {
+	// both types are arrays but refernce type or dimension are different
+	if (equals(ty1->refType(), ty2->refType())) {
+	    common = PointerType::create(ty1->refType());
+	}
+    } else if (ty1->isInteger() && ty2->isInteger()) {
+	auto size = std::max(ty1->numBits(), ty2->numBits());
+	if (ty1->isUnsignedInteger() || ty2->isUnsignedInteger()) {
+	    common = IntegerType::createUnsigned(size);
+	} else {
+	    common = IntegerType::createSigned(size);
+	}
+    }
+    if (common && (ty1->hasConstFlag() || ty2->hasConstFlag())) {
+	common->getConst();
+    }
+    return common;
 }
 
 const Type *

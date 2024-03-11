@@ -1,5 +1,6 @@
 #include "expr/binaryexpr.hpp"
 #include "expr/callexpr.hpp"
+#include "expr/conditionalexpr.hpp"
 #include "expr/enumconstant.hpp"
 #include "expr/explicitcast.hpp"
 #include "expr/identifier.hpp"
@@ -23,6 +24,7 @@ namespace abc {
 using namespace lexer;
     
 static ExprPtr parseAssignment();
+static ExprPtr parseConditional();
 static ExprPtr parseBinary(int prec);
 static ExprPtr parsePrefix();
 static ExprPtr parsePostfix(ExprPtr &&expr);
@@ -88,7 +90,7 @@ getBinaryExprKind(TokenKind kind)
 static ExprPtr
 parseAssignment()
 {
-    auto expr = parseBinary(1);
+    auto expr = parseConditional();
     if (!expr) {
 	return nullptr;
     }
@@ -111,6 +113,46 @@ parseAssignment()
 	expr = BinaryExpr::create(getBinaryExprKind(tok.kind),
 				  std::move(expr),
 				  std::move(right), tok.loc);
+    }
+    return expr;
+}
+
+//------------------------------------------------------------------------------
+
+static ExprPtr
+parseConditional()
+{
+    auto expr = parseBinary(1);
+    if (!expr) {
+	return nullptr;
+    }
+
+    if (token.kind == TokenKind::THEN || token.kind == TokenKind::QUERY) {
+	auto tok = token;
+	auto thenElseStyle = tok.kind == TokenKind::THEN;
+	getToken();
+	
+	auto left = parseAssignment();
+	if (!left) {
+	    error::out() << token.loc << " expected non-empty expression"
+		<< std::endl;
+	    error::fatal();
+	}
+	if (thenElseStyle) {
+	    error::expected(TokenKind::ELSE);
+	} else {
+	    error::expected(TokenKind::COLON);
+	}
+	getToken();
+	auto right = parseConditional();
+	if (!right) {
+	    error::out() << token.loc << " expected non-empty expression"
+		<< std::endl;
+	    error::fatal();
+	}
+	expr = ConditionalExpr::create(std::move(expr), std::move(left),
+				       std::move(right), thenElseStyle,
+				       tok.loc);
     }
     return expr;
 }

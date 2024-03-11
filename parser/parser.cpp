@@ -336,6 +336,9 @@ static const Type *parseArrayType();
 static const Type *
 parseUnqualifiedType()
 {
+    Token fnName;
+    std::vector<Token> fnParamName;
+
     if (token.kind == TokenKind::IDENTIFIER) {
 	if (auto entry = Symtab::type(token.val, Symtab::AnyScope)) {
 	    getToken();
@@ -346,10 +349,8 @@ parseUnqualifiedType()
 	return type;
     } else if (auto type = parseArrayType()) {
 	return type;
-    /*
-    } else if (auto type = parseFunctionType()) {
+    } else if (auto type = parseFunctionType(fnName, fnParamName)) {
 	return type;
-    */
     } else {
 	return nullptr;
     }

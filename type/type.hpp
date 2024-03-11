@@ -21,6 +21,7 @@ class Type
 
 	// for type conversion
 	static bool equals(const Type *ty1, const Type *ty2);
+	static const Type *common(const Type *ty1, const Type *ty2);
 	static const Type *convert(const Type *from, const Type *to);
 	static const Type *explicitCast(const Type *from, const Type *to);
 

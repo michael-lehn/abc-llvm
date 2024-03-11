@@ -122,21 +122,21 @@ BinaryExpr::loadConstant() const
 				    left->loadConstant(),
 				    right->loadConstant());
 	case LOGICAL_AND:
-	    if (!left->loadConstant()->isZeroValue()
-		    && !right->loadConstant()->isZeroValue())
-	    { 
-		return gen::getTrue();
-	    } else {
+	    if (left->loadConstant()->isZeroValue()) {
 		return gen::getFalse();
 	    }
+	    if (right->loadConstant()->isZeroValue()) {
+		return gen::getFalse();
+	    }
+	    return gen::getTrue();
 	case LOGICAL_OR:
-	    if (!left->loadConstant()->isZeroValue()
-		    || !right->loadConstant()->isZeroValue())
-	    { 
+	    if (!left->loadConstant()->isZeroValue()) {
 		return gen::getTrue();
-	    } else {
-		return gen::getFalse();
 	    }
+	    if (!right->loadConstant()->isZeroValue()) {
+		return gen::getTrue();
+	    }
+	    return gen::getFalse();
     }
 }
 

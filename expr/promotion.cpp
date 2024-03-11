@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <iostream>
 
 #include "lexer/error.hpp"
@@ -47,10 +46,13 @@ call(ExprPtr &&fn, std::vector<ExprPtr> &&arg, lexer::Loc *loc)
 	if (i < paramType.size()) {
 	    arg[i] = ImplicitCast::create(std::move(arg[i]), paramType[i]);
 	} else {
-	    // TODO: Rules for converting vargs. For example:
+	    // Rules for converting vargs:
 	    // - If an array is passed as varg it will always converted to a
 	    //	 pointer (required to interface with C)
-	    // - ... maybe other things specified in C
+	    if (arg[i]->type->isArray()) {
+		auto argType = PointerType::create(arg[i]->type->refType());
+		arg[i] = ImplicitCast::create(std::move(arg[i]), argType);
+	    }
 	}
     }
     
@@ -105,16 +107,10 @@ binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 {
     assert(left->type->isInteger());
     assert(right->type->isInteger());
-    auto size = std::max(left->type->numBits(), right->type->numBits());
 
     // when mixing signed and unsigned: unsigned wins 
-    auto commonType = left->type->isUnsignedInteger()
-		   || right->type->isUnsignedInteger()
-	? IntegerType::createUnsigned(size)
-	: IntegerType::createSigned(size);
-    if (left->type->hasConstFlag() || right->type->hasConstFlag()) {
-	commonType = commonType->getConst();
-    }
+    auto commonType = Type::common(left->type, right->type);
+
 
     const Type *type = nullptr;
     const Type *newLeftType = nullptr;

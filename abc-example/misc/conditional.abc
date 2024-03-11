@@ -1,5 +1,6 @@
-@ <assert.hdr>
-@ <stdio.hdr>
+// @ <stdio.hdr>
+extern fn printf(fmt: -> const char, ...): int;
+extern fn scanf(fmt: -> char, ...): int;
 
 /*
  * I think a programming language should not provide too many alternatives
@@ -14,13 +15,15 @@ fn main()
 	  b: int;
 
     
+    
     printf("enter integer a: ");
     scanf("%d", &a);
 
     printf("enter integer b: ");
     scanf("%d", &b);
 
-
+    // Strings "true" and "false" have different dimension. Common type is
+    // therefor a pointer to the element type
     printf("%d > %d is %s\n", a, b, a > b ? "true" : "false");
 
     printf("conditional expression:  '%d > %d ? %d : %d' has value %d\n",
@@ -29,9 +32,14 @@ fn main()
     printf("conditional expression:  '%d > %d then %d else %d' has value %d\n",
 	   a, b, a, b, a > b then a else b); 
 
+    // Not allowed:
+    //	- Combinations of '?' and else
+    //  - Combinations of then and ':'
+    /*
     printf("conditional expression:  '%d > %d ? %d else %d' has value %d\n",
 	   a, b, a, b, a > b ? a else b); 
 
     printf("conditional expression:  '%d > %d then %d : %d' has value %u\n",
-	   a, b, a, b, a > b then  a : b); 
+	   a, b, a, b, a > b then  a : b);
+    */
 }
