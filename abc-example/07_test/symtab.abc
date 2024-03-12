@@ -1,0 +1,66 @@
+@ <assert.hdr>
+@ <stdio.hdr>
+@ <string.hdr>
+
+@ "symtab.hdr"
+
+enum SymtabConst : i32
+{
+    TAB_SIZE = 42,
+    IDENT_SIZE = 42,
+};
+
+struct Entry
+{
+    ident: array[IDENT_SIZE + 1] of char;
+    val: i64;
+};
+
+global symtab: array[TAB_SIZE] of Entry;
+global symtabEnd: u64;
+
+fn symtabContains(ident: -> const char): bool
+{
+    for (local i: size_t = 0; i < symtabEnd; ++i) {
+	if (!strcmp(ident, symtab[i].ident)) {
+	    return true;
+	}
+    }
+    return false;
+}
+
+fn symtabAdd(ident: -> const char, val: i64): i64
+{
+    // assert(symtabEnd <= TAB_SIZE);
+    strncpy(symtab[symtabEnd].ident, ident, IDENT_SIZE);
+    return symtab[symtabEnd++].val = val;
+}
+
+fn symtabGet(ident: -> const char): i64
+{
+    for (local i: size_t = 0; i < symtabEnd; ++i) {
+	if (!strcmp(ident, symtab[i].ident)) {
+	    return symtab[i].val;
+	}
+    }
+    // assert(0);
+    return 0; // never reached (in debug mode)
+}
+
+fn symtabSet(ident: -> const char, val: i64): i64
+{
+    for (local i: size_t = 0; i < symtabEnd; ++i) {
+	if (!strcmp(ident, symtab[i].ident)) {
+	    return symtab[i].val = val;
+	}
+    }
+    return symtabAdd(ident, val);
+}
+
+fn symtabPrint()
+{
+    for (local i: size_t = 0; i < symtabEnd; ++i) {
+	printf("%42s %5lld\n", symtab[i].ident, symtab[i].val);
+    }
+}
+

@@ -1,0 +1,70 @@
+@ <assert.hdr>
+@ <stdio.hdr>
+
+@ "gen.hdr"
+
+global usedReg: array[256] of bool;
+
+fn genRelease(reg: GenReg)
+{
+    // assert(usedReg[reg]);
+    usedReg[reg] = false;
+}
+
+fn getReg() :GenReg
+{
+    for (local i: size_t = 0; i < sizeof(usedReg) / sizeof(usedReg[0]); ++i) {
+	if (!usedReg[i]) {
+	    usedReg[i] = true;
+	    return i;
+	}
+    }
+    // assert(0); // out of registers
+    return 0;
+}
+
+fn genLoad(val: u64) : GenReg
+{
+    local result: GenReg = getReg();
+    printf("\tload 0x%016llx, %%%d\n", val, result);
+    return result;
+}
+
+fn genLoadAddr(ident: -> const char): GenReg
+{
+    local result: GenReg = getReg();
+    printf("\tload %s, %%%d\n", ident, result);
+    return result;
+}
+
+fn genFetch(reg: GenReg): GenReg
+{
+    local result: GenReg = getReg();
+    printf("\tfetch (%%%d), %%%d\n", reg, result);
+    return result;
+}
+
+fn genStore(val: GenReg, addr: GenReg)
+{
+    printf("\tstore %%%d, (%%%d)\n", val, addr);
+}
+
+fn genAluInstr(op: GEN_ALU_OP, left: GenReg, right: GenReg) : GenReg
+{
+    local result: GenReg = getReg();
+    switch (op) {
+	case GEN_ADD:
+	    printf("\tadd %%%d, %%%d, %%%d\n", left, right, result);
+	    break;
+	case GEN_SUB:
+	    printf("\tsub %%%d, %%%d, %%%d\n", left, right, result);
+	    break;
+	case GEN_MUL:
+	    printf("\tmul %%%d, %%%d, %%%d\n", left, right, result);
+	    break;
+	case GEN_DIV:
+	    printf("\tdiv %%%d, %%%d, %%%d\n", left, right, result);
+	    break;
+    }
+    return result;
+}

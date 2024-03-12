@@ -1,0 +1,9 @@
+@ <stdio.hdr>
+@ <assert.hdr>
+
+fn main()
+{
+    local i: int = 5;
+
+    assert(i + 4 - 9 && "Hallo");
+}

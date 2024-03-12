@@ -1,0 +1,41 @@
+@ <stdio.hdr>
+
+enum TokenKind : int
+{
+    BAD_TOKEN,
+    EOI,
+    IDENTIFIER,
+    DECIMAL_LITERAL,
+    HEXADECIMAL_LITERAL,
+    OCTAL_LITERAL,
+    PLUS,
+    MINUS,
+    ASTERISK,
+    SLASH,
+    LPAREN,
+    RPAREN,
+    SEMICOLON,
+    EQUAL,
+};
+
+enum LexerConst : i32
+{
+    TOKEN_VAL_MAX_LEN = 42,
+};
+
+type TokenVal: array[TOKEN_VAL_MAX_LEN + 1] of char;
+
+struct Token {
+    kind:   TokenKind;
+    loc:    struct TokenLoc {
+		from, to:   struct TokenPos {
+				line, col: int;
+			    };
+	    };
+    val:    TokenVal;
+    valLen: int;
+};
+
+extern token: Token;
+extern fn tokenKindStr(kind: TokenKind): -> char;
+extern fn getToken(): TokenKind;

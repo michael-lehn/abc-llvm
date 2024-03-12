@@ -1,0 +1,7 @@
+@ <stdio.hdr>
+
+extern fn symtabContains(ident: -> const char): bool;
+extern fn symtabAdd(ident: -> const char, val: i64): i64;
+extern fn symtabGet(ident: -> const char): i64;
+extern fn symtabSet(ident: -> const char, val: i64): i64;
+extern fn symtabPrint();
