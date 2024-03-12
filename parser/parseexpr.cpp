@@ -1,5 +1,6 @@
 #include "expr/binaryexpr.hpp"
 #include "expr/callexpr.hpp"
+#include "expr/characterliteral.hpp"
 #include "expr/conditionalexpr.hpp"
 #include "expr/enumconstant.hpp"
 #include "expr/explicitcast.hpp"
@@ -414,13 +415,7 @@ parsePrimary()
         return expr;
     } else if (token.kind == TokenKind::CHARACTER_LITERAL) {
 	getToken();
-	auto ty = parseIntType(); // parse suffix
-	if (!ty) {
-	    ty = IntegerType::createChar();
-	}
-	auto val = *tok.processedVal.c_str();
-	auto expr = IntegerLiteral::create(val, ty, tok.loc);
-        return expr;
+	return CharacterLiteral::create(tok.processedVal, tok.val, tok.loc);
     } else if (token.kind == TokenKind::STRING_LITERAL) {
 	std::string str{};
 	std::string strRaw{};

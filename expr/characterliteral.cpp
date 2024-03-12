@@ -1,0 +1,102 @@
+#include <charconv>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+
+#include "gen/constant.hpp"
+#include "gen/instruction.hpp"
+#include "lexer/error.hpp"
+#include "type/integertype.hpp"
+
+#include "characterliteral.hpp"
+
+//------------------------------------------------------------------------------
+
+namespace abc {
+
+CharacterLiteral::CharacterLiteral(unsigned processedVal, UStr val,
+				   lexer::Loc loc)
+    : Expr{loc, IntegerType::createChar()}, processedVal{processedVal}, val{val}
+{
+}
+
+ExprPtr
+CharacterLiteral::create(UStr processedVal, UStr val, lexer::Loc loc)
+{
+    assert(processedVal.c_str());
+    std::cerr << ">" << val << "<\n";
+    std::cerr << ">" << processedVal << "<\n";
+    std::cerr << ">" << int(processedVal.c_str()[0]) << "<\n";
+    std::cerr << ">" << int(processedVal.c_str()[1]) << "<\n";
+    std::cerr << "len = " << processedVal.length() << "\n";
+    assert(processedVal.length() == 1);
+    assert(val.c_str());
+    assert(val.length());
+    unsigned pval = *processedVal.c_str();
+    auto p = new CharacterLiteral{pval, val, loc};
+    return std::unique_ptr<CharacterLiteral>{p};
+}
+
+bool
+CharacterLiteral::hasAddress() const
+{
+    return false;
+}
+
+bool
+CharacterLiteral::isLValue() const
+{
+    return false;
+}
+
+bool
+CharacterLiteral::isConst() const
+{
+    return true;
+}
+
+// for code generation
+gen::Constant
+CharacterLiteral::loadConstant() const
+{
+    return gen::getConstantInt(processedVal, type);
+}
+
+gen::Value
+CharacterLiteral::loadValue() const
+{
+    return loadConstant();
+}
+
+gen::Value
+CharacterLiteral::loadAddress() const
+{
+    assert(0 && "CharacterLiteral has no address");
+    return nullptr;
+}
+
+void
+CharacterLiteral::condition(gen::Label trueLabel, gen::Label falseLabel) const
+{
+    auto zero = gen::getConstantZero(type);
+    auto cond = gen::instruction(gen::NE, loadValue(), zero);
+    gen::jumpInstruction(cond, trueLabel, falseLabel);
+}
+
+// for debugging and educational purposes
+void
+CharacterLiteral::print(int indent) const
+{
+    if (indent) {
+	std::cerr << std::setfill(' ') << std::setw(indent) << ' ';
+    }
+    std::cerr << val << " [ " << type << " ] " << std::endl;
+}
+
+void
+CharacterLiteral::printFlat(std::ostream &out, int prec) const
+{
+    out << val;
+}
+
+} // namespace abc

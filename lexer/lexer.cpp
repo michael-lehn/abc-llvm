@@ -151,7 +151,7 @@ getToken_()
 	auto str = parseStringLiteral();
 	return setToken(TokenKind::STRING_LITERAL, str);
     } else if (reader->ch == '\'') {
-	auto str = std::string{1, char(parseCharacterLiteral())};
+	std::string str{char(parseCharacterLiteral())};
 	return setToken(TokenKind::CHARACTER_LITERAL, str);
     } else if (reader->ch == '@') {
 	parseAddDirective();
