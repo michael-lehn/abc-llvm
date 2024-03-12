@@ -11,6 +11,7 @@
 #include "type/pointertype.hpp"
 #include "type/voidtype.hpp"
 
+#include "defaultdecl.hpp"
 #include "defaulttype.hpp"
 #include "parseexpr.hpp"
 #include "parser.hpp"
@@ -30,6 +31,7 @@ parser()
 {
     Symtab newScope;
     initDefaultType();
+    initDefaultDecl();
     getToken();
 
     auto top = std::make_unique<AstList>();

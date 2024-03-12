@@ -11,6 +11,8 @@
 
 namespace abc {
 
+bool output = true;
+
 ImplicitCast::ImplicitCast(ExprPtr &&expr, const Type *toType,
 			   lexer::Loc loc)
     : Expr{loc, toType}, expr{std::move(expr)}
@@ -36,6 +38,14 @@ ImplicitCast::create(ExprPtr &&expr, const Type *toType)
 	auto p = new ImplicitCast{std::move(expr), type, loc};
 	return std::unique_ptr<ImplicitCast>{p};
     }
+}
+
+bool
+ImplicitCast::setOutput(bool on)
+{
+    bool old = output;
+    output = on;
+    return old;
 }
 
 bool
@@ -112,9 +122,11 @@ ImplicitCast::print(int indent) const
 void
 ImplicitCast::printFlat(std::ostream &out, int prec) const
 {
-    out << "(/*implicit cast*/ ";
-    out << type;
-    out << ")";
+    if (output) {
+	out << "(/*implicit cast*/ ";
+	out << type;
+	out << ")";
+    }
     expr->printFlat(out, 14);
 }
 

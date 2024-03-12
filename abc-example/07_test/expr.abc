@@ -1,4 +1,3 @@
-@ <assert.hdr>
 @ <stdlib.hdr>
 @ <stdio.hdr>
 @ <string.hdr>
@@ -16,7 +15,7 @@ fn releaseExpr(expr: -> const Expr)
 	    releaseExpr(expr->binary.right);
 	    break;	
 	default:
-	    // assert(0);
+	    assert(0);
 	    break;
     }
 }
@@ -29,7 +28,7 @@ fn isIdentifierExpr(expr: -> const Expr): bool
 fn createLiteralExpr(val: i64): -> Expr
 {
     local expr: -> Expr = malloc(sizeof(*expr));
-    // assert(expr);
+    assert(expr);
     expr->kind = EXPR_PRIMARY;
     expr->primary.kind = EXPR_LITERAL;
     expr->primary.val = val;
@@ -39,7 +38,7 @@ fn createLiteralExpr(val: i64): -> Expr
 fn createIdentifierExpr(ident: -> char): -> Expr
 {
     local expr: -> Expr = malloc(sizeof(*expr));
-    // assert(expr);
+    assert(expr);
     expr->kind = EXPR_PRIMARY;
     expr->primary.kind = EXPR_IDENTIFIER;
     strncpy(expr->primary.ident, ident, TOKEN_VAL_MAX_LEN);
@@ -51,7 +50,7 @@ fn createBinaryExpr(op: BinaryExprKind,
 		    right: -> const Expr): -> Expr
 {
     local expr: -> Expr = malloc(sizeof(*expr));
-    // assert(expr);
+    assert(expr);
     expr->binary.op = op;
     expr->binary.left = left;
     expr->binary.right = right;
@@ -74,7 +73,7 @@ fn evalExpr(expr: -> const Expr): i64
 		    }
 		    return symtabGet(expr->primary.ident);
 		default:
-		    // assert(0);
+		    assert(0);
 	    }
 	case EXPR_BINARY:
 	    switch (expr->binary.op) {
@@ -83,7 +82,7 @@ fn evalExpr(expr: -> const Expr): i64
 			local left: -> const Expr = expr->binary.left;
 			local right: -> const Expr = expr->binary.right;
 
-			// assert(isIdentifierExpr(left));
+			assert(isIdentifierExpr(left));
 			return symtabSet(left->primary.ident, evalExpr(right));
 		    }
 		case EXPR_ADD:
@@ -99,17 +98,17 @@ fn evalExpr(expr: -> const Expr): i64
 		    return evalExpr(expr->binary.left)
 			 / evalExpr(expr->binary.right);
 		default:
-		    // assert(0);
+		    assert(0);
 	    }
 	    break;
 	default:
-	    // assert(0);
+	    assert(0);
     }
 }
 
 fn loadExprAddr(expr: -> const Expr): GenReg
 {
-    // assert(isIdentifierExpr(expr));
+    assert(isIdentifierExpr(expr));
     return genLoadAddr(expr->primary.ident);
 }
 
@@ -127,7 +126,7 @@ fn loadExpr(expr: -> const Expr): GenReg
 			return genFetch(addr);
 		    }
 		default:
-		    // assert(0);
+		    assert(0);
 	    }
 	case EXPR_BINARY:
 	    {
@@ -153,12 +152,12 @@ fn loadExpr(expr: -> const Expr): GenReg
 		    case EXPR_DIV:
 			return genAluInstr(GEN_DIV, left, right);
 		    default:
-			// assert(0);
+			assert(0);
 		}
 	    }
 	    break;
 	default:
-	    // assert(0);
+	    assert(0);
 	    ;
     }
 }
@@ -178,7 +177,7 @@ fn printExprWithIndent(indent: i32, expr: -> const Expr)
 		    printf("%s\n", expr->primary.ident);
 		    return;
 		default:
-		    // assert(0);
+		    assert(0);
 	    }
 	    return;
 	case EXPR_BINARY:
@@ -188,7 +187,7 @@ fn printExprWithIndent(indent: i32, expr: -> const Expr)
 	    return;
 	default:
 	    printf("expr->kind = %d\n", expr->kind);
-	    // assert(0);
+	    assert(0);
 	    return;
     }
 }

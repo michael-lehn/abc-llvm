@@ -1,4 +1,3 @@
-//@ <assert.hdr>
 @ <stdio.hdr>
 
 @ "lexer.hdr"
@@ -98,7 +97,7 @@ fn tokenReset()
 
 fn tokenUpdate(ch: int)
 {
-    // assert(token.valLen < TOKEN_VAL_MAX_LEN);
+    assert(token.valLen < TOKEN_VAL_MAX_LEN);
     token.loc.to.line = pos.line;
     token.loc.to.col = pos.col;
     token.val[token.valLen++] = ch;

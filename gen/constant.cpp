@@ -57,7 +57,7 @@ Constant
 getString(const char *str)
 {
     assert(llvmContext);
-    return llvm::ConstantDataArray::getString(*llvmContext, str, false);
+    return llvm::ConstantDataArray::getString(*llvmContext, str);
 }
 
 } // namespace gen

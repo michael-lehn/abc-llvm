@@ -1,3 +1,4 @@
+#include "expr/assertexpr.hpp"
 #include "expr/binaryexpr.hpp"
 #include "expr/callexpr.hpp"
 #include "expr/characterliteral.hpp"
@@ -452,6 +453,14 @@ parsePrimary()
 	}
 	getToken();
 	return sizeofExpr;
+    } else if (token.kind == TokenKind::ASSERT) {
+	getToken();
+	auto expr = parseExpression();
+	if (!expr) {
+	    error::out() << token.loc << " expected non-empty expression\n";
+	    error::fatal();
+	}
+	return AssertExpr::create(std::move(expr), tok.loc);
     } else if (token.kind == TokenKind::LPAREN) {
         getToken();
 	auto expr = parseExpression();

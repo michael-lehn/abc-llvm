@@ -1,20 +1,22 @@
-#ifndef EXPR_IMPLICITCAST_HPP
-#define EXPR_IMPLICITCAST_HPP
+#ifndef EXPR_ASSERTEXPR_HPP
+#define EXPR_ASSERTEXPR_HPP
+
+#include "lexer/token.hpp"
 
 #include "expr.hpp"
-#include "lexer/loc.hpp"
 
 namespace abc {
 
-class ImplicitCast : public Expr
+class AssertExpr : public Expr
 {
     protected:
-	ImplicitCast(ExprPtr &&expr, const Type *toType, lexer::Loc loc);
+	AssertExpr(ExprPtr &&expr, lexer::Loc loc);
 
     public:
-	static ExprPtr create(ExprPtr &&expr, const Type *toType);
-	static bool setOutput(bool on);
-	const ExprPtr expr;
+	static ExprPtr create(ExprPtr &&expr, lexer::Loc loc = lexer::Loc{});
+	static void setFunction(UStr name, const Type *fnType);
+
+	ExprPtr expr;
 
 	bool hasAddress() const override;
 	bool isLValue() const override;
@@ -36,4 +38,4 @@ class ImplicitCast : public Expr
 
 } // namespace abc
 
-#endif // EXPR_IMPLICITCAST_HPP
+#endif // EXPR_ASSERTEXPR_HPP

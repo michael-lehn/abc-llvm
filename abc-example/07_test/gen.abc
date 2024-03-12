@@ -1,4 +1,3 @@
-@ <assert.hdr>
 @ <stdio.hdr>
 
 @ "gen.hdr"
@@ -7,7 +6,7 @@ global usedReg: array[256] of bool;
 
 fn genRelease(reg: GenReg)
 {
-    // assert(usedReg[reg]);
+    assert(usedReg[reg]);
     usedReg[reg] = false;
 }
 
@@ -19,7 +18,7 @@ fn getReg() :GenReg
 	    return i;
 	}
     }
-    // assert(0); // out of registers
+    assert(0); // out of registers
     return 0;
 }
 

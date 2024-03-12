@@ -1,4 +1,3 @@
-@ <assert.hdr>
 @ <stdio.hdr>
 @ <string.hdr>
 
@@ -31,7 +30,7 @@ fn symtabContains(ident: -> const char): bool
 
 fn symtabAdd(ident: -> const char, val: i64): i64
 {
-    // assert(symtabEnd <= TAB_SIZE);
+    assert(symtabEnd <= TAB_SIZE);
     strncpy(symtab[symtabEnd].ident, ident, IDENT_SIZE);
     return symtab[symtabEnd++].val = val;
 }
@@ -43,7 +42,7 @@ fn symtabGet(ident: -> const char): i64
 	    return symtab[i].val;
 	}
     }
-    // assert(0);
+    assert(0);
     return 0; // never reached (in debug mode)
 }
 

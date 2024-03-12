@@ -1,7 +1,0 @@
-fn main()
-{
-    local a: int;
-
-    switch (a) {
-    }
-}
