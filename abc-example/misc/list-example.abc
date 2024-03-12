@@ -6,6 +6,10 @@ extern fn free(ptr: -> void);
 
 struct Node
 {
+    foo:
+	struct Foo {
+	    a, b: int;
+	};
     val: int;
     next: -> Node;
 };

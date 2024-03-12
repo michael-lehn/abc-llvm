@@ -792,6 +792,7 @@ AstSwitch::print(int indent) const
 	    error::out(indent + 4) << "default:\n";
 	}
 	body.node[i]->print(indent + 8);
+	error::out() << "\n";
     }
     error::out(indent) << "}";
 }
@@ -1249,6 +1250,7 @@ AstStructDecl::print(int indent) const
 	    } else {
 		error::out() << "\n";
 		std::get<AstPtr>(decl.second)->print(indent + 8);
+		error::out() << "\n";
 	    }
 	}
 	error::out(indent) << "};";

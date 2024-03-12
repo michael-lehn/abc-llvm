@@ -64,6 +64,14 @@ const Type *
 StructType::complete(std::vector<UStr> &&memberName,
 		     std::vector<const Type *> &&memberType)
 {
+    assert(memberName.size() == memberType.size());
+    auto &constStructType = structConstSet.at(id());
+    for (std::size_t i = 0; i < memberName.size(); ++i) {
+	constStructType.memberName_.push_back(memberName[i]);	
+	constStructType.memberType_.push_back(memberType[i]->getConst());	
+    }
+    constStructType.isComplete_ = true;
+
     memberName_ = std::move(memberName);
     memberType_ = std::move(memberType);
     isComplete_ = true;

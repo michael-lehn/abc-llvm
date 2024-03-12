@@ -28,19 +28,40 @@ Member::create(ExprPtr &&structure, UStr member, lexer::Loc loc)
 
     const Type *type = nullptr;
     std::size_t index = 0;
-    if (structureType->isStruct()) {
+    if (structureType->isStruct() && structureType->hasSize()) {
 	const auto &memberName = structureType->memberName();
 	const auto &memberType = structureType->memberType();
 	for (std::size_t i = 0; i < memberName.size(); ++i) {
 	    if (member == memberName[i]) {
 		type = memberType[i];
 		index = i;
+		break;
 	    }
 	}
+    } else if (structureType->isStruct() && !structureType->hasSize()) {
+	error::out() << loc << ": error: " << structureType
+	    << " is an incomplete struct\n";
+	error::fatal();
+	return nullptr;
+    } else {
+	error::out() << loc << ": error: type " << structureType
+	    << " is not a struct\n";
+	error::fatal();
+	return nullptr;
     }
     if (!type) {
 	error::out() << loc << ": error: " << structure << " of type "
 	    << structure->type << " has no member " << member << "\n";
+	if (structureType->isStruct()) {
+	    error::out() << "members are:\n";
+	    const auto &memberName = structureType->memberName();
+	    const auto &memberType = structureType->memberType();
+	    for (std::size_t i = 0; i < memberName.size(); ++i) {
+		error::out() << memberName[i] << " of type " << memberType[i]
+		    << "\n";
+	    }
+	}
+	error::fatal();
 	return nullptr;
     } else {
 	auto p = new Member{std::move(structure), member, type, index, loc};
