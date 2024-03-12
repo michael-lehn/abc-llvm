@@ -24,6 +24,14 @@ fn printList(list: -> Node)
     }
 }
 
+fn releaseList(list: -> Node)
+{
+    if (list) {
+	releaseList(list->next);
+    }
+    free(list);
+}
+
 fn main(): u8
 {
     local list: -> Node = nullptr;
@@ -41,6 +49,7 @@ fn main(): u8
 
     printf("Diese Zahlen wurden eingegeben: \n");
     printList(list);
+    releaseList(list);
 
     return 0;
 }
