@@ -10,7 +10,7 @@ fn main()
     printf("*** Compiler for Integer Expressions ***\n\n");
     printf("Use and identifier or integer literal\n");
     printf("Supported integer representation: dec, hex, oct\n");
-    printf("Operators: '=', '+', '-', '*'/\n");
+    printf("Operators: '=', '+', '-', '*', '/'\n");
     printf("Punctuators: '(', ')', ';'\n\n");
     printf("Enter ';' to evaluate the expression\n");
     printf("Enter '.' to exit\n\n");

@@ -4,6 +4,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/Target/TargetMachine.h"
 
 namespace gen {
 
@@ -17,6 +18,7 @@ extern std::unique_ptr<llvm::LLVMContext> llvmContext;
 extern std::unique_ptr<llvm::Module> llvmModule;
 extern std::unique_ptr<llvm::IRBuilder<>> llvmBuilder;
 extern llvm::BasicBlock *llvmBB;
+extern llvm::TargetMachine *targetMachine;
 
 extern const char *moduleName;
 
