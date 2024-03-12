@@ -789,6 +789,7 @@ parseSwitchStatement()
 	    break;
 	}
     }
+    switchStmt->complete();
 
     if (!error::expected(TokenKind::RBRACE)) {
 	return nullptr;

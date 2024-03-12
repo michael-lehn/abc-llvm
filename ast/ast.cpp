@@ -777,11 +777,22 @@ AstSwitch::append(AstPtr &&stmt)
 }
 
 void
+AstSwitch::complete()
+{
+    auto bs = body.size();
+    if ((casePos.size() && casePos.back() == bs)
+	    || (hasDefault && defaultPos == bs)) {
+	body.append(std::make_unique<AstExpr>(ExprPtr{}));
+    }
+}
+
+void
 AstSwitch::print(int indent) const
 {
     error::out(indent) << "switch (" << expr << ") {\n";
     for (std::size_t i = 0, casePosIndex = 0; i < body.size(); ++i) {
-	if (!casePos.size() || i < casePos[0]) {
+	if ((!casePos.size() || (casePos.size() && i < casePos[0]))
+		&& (!hasDefault || (hasDefault && i < defaultPos))) {
 	    error::out(indent + 4) << "// never reached\n";
 	}
 	if (casePosIndex < casePos.size() && i == casePos[casePosIndex]) {

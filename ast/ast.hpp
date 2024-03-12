@@ -287,6 +287,7 @@ class AstSwitch : public Ast
 	void appendCase(ExprPtr &&expr);
 	bool appendDefault();
 	void append(AstPtr &&stmt);
+	void complete();
 
 	void print(int indent) const override;
 	void codegen() override;
