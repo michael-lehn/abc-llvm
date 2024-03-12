@@ -686,10 +686,36 @@ AstIf::print(int indent) const
     error::out(indent) << "if (" << cond << ") {\n";
     thenBody->print(indent + 4);
     if (elseBody) {
-	error::out(indent) << "} else {\n";
-	elseBody->print(indent + 4);
+	if (auto astIf = dynamic_cast<const AstIf *>(elseBody.get())) {
+	    error::out(indent) << "} else ";
+	    astIf->printElseIfCase(indent);
+	} else {
+	    error::out(indent) << "} else {\n";
+	    elseBody->print(indent + 4);
+	    error::out(indent) << "}";
+	}
+    } else {
+	error::out(indent) << "}";
     }
-    error::out(indent) << "}";
+}
+
+void
+AstIf::printElseIfCase(int indent) const
+{
+    error::out() << "if (" << cond << ") {\n";
+    thenBody->print(indent + 4);
+    if (elseBody) {
+	if (auto astIf = dynamic_cast<const AstIf *>(elseBody.get())) {
+	    error::out(indent) << "} else ";
+	    astIf->printElseIfCase(indent);
+	} else {
+	    error::out(indent) << "} else {\n";
+	    elseBody->print(indent + 4);
+	    error::out(indent) << "}";
+	}
+    } else {
+	error::out(indent) << "}";
+    }
 }
 
 void

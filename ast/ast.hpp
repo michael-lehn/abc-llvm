@@ -264,6 +264,7 @@ class AstIf : public Ast
 	const AstPtr elseBody;
 
 	void print(int indent) const override;
+	void printElseIfCase(int indent) const;
 	void codegen() override;
 	void apply(std::function<bool(Ast *)> op) override;
 };
