@@ -534,6 +534,8 @@ parseInitializerExpression(const Type *type)
 {
     if (auto expr = parseExpression()) {
 	return std::make_unique<AstInitializerExpr>(type, std::move(expr));
+    } else if (auto expr = parseCompoundExpression(type)) {
+	return std::make_unique<AstInitializerExpr>(type, std::move(expr));
     }
     return nullptr;
 }

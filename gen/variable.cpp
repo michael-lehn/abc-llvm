@@ -122,11 +122,17 @@ localVariableDefinition(const char *ident, const abc::Type *varType)
     assert(!varType->isFunction());
     assert(functionBuildingInfo.fn);
 
+    auto llvmVarType = convert(varType);
+    if (localVariable.contains(ident)) {
+	auto val = localVariable.at(ident);
+	assert(val->getAllocatedType() == llvmVarType);
+	return val;
+    }
+
     // always allocate memory at entry of function
     auto fn = functionBuildingInfo.fn;
     llvm::IRBuilder<> tmpBuilder(&fn->getEntryBlock(),
 				 fn->getEntryBlock().begin());
-    auto llvmVarType = convert(varType);
     localVariable[ident] = tmpBuilder.CreateAlloca(llvmVarType, nullptr, ident);
     return localVariable[ident];
 }
@@ -187,6 +193,7 @@ Constant
 pointerIncrement(const abc::Type *type, Constant pointer, std::uint64_t offset)
 {
     assert(llvmBuilder);
+    assert(type);
     auto llvmType = convert(type);
 
     auto addr =  llvmBuilder->CreateConstGEP1_64(llvmType, pointer, offset);
@@ -198,6 +205,7 @@ pointerIncrement(const abc::Type *type, Value pointer, Value offset)
 {
     assert(llvmBuilder);
     assert(!functionBuildingInfo.bbClosed);
+    assert(type);
     auto llvmType = convert(type);
 
     std::vector<Value> idxList{1};
@@ -225,6 +233,7 @@ pointerDifference(const abc::Type *type, Value pointer1, Value pointer2)
 {
     assert(llvmBuilder);
     assert(!functionBuildingInfo.bbClosed);
+    assert(type);
     auto llvmType = convert(type);
     return llvmBuilder->CreatePtrDiff(llvmType, pointer1, pointer2);
 }
@@ -234,6 +243,7 @@ pointerToIndex(const abc::Type *type, Value pointer, std::size_t index)
 {
     assert(llvmBuilder);
     assert(!functionBuildingInfo.bbClosed);
+    assert(type);
     assert(type->isStruct());
     auto llvmType = convert(type);
 
@@ -249,6 +259,7 @@ fetch(Value addr, const abc::Type *type)
 {
     assert(llvmBuilder);
     assert(!functionBuildingInfo.bbClosed);
+    assert(type);
     auto llvmType = convert(type);
     return llvmBuilder->CreateLoad(llvmType, addr);
 }

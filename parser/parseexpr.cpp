@@ -2,6 +2,7 @@
 #include "expr/binaryexpr.hpp"
 #include "expr/callexpr.hpp"
 #include "expr/characterliteral.hpp"
+#include "expr/compoundexpr.hpp"
 #include "expr/conditionalexpr.hpp"
 #include "expr/enumconstant.hpp"
 #include "expr/explicitcast.hpp"
@@ -24,6 +25,40 @@
 namespace abc {
 
 using namespace lexer;
+
+//------------------------------------------------------------------------------
+
+ExprPtr
+parseCompoundExpression(const Type *type)
+{
+    if (token.kind != TokenKind::LBRACE) {
+	return nullptr;
+    }
+    auto tok = token;
+    getToken();
+
+    std::vector<ExprPtr> exprVec;
+    for (std::size_t i = 0; i < type->aggregateSize(); ++i) {
+	auto ty = type->aggregateType(i);
+	if (auto expr = parseExpression()) {
+	    exprVec.push_back(std::move(expr));
+	} else if (auto expr = parseCompoundExpression(ty)) {
+	    exprVec.push_back(std::move(expr));
+	} else {
+	    break;
+	}
+	if (token.kind != TokenKind::COMMA) {
+	    break;
+	}
+	getToken();
+    }
+
+    error::expected(TokenKind::RBRACE);
+    getToken();
+    return CompoundExpr::create(std::move(exprVec), type, tok.loc);
+}
+
+//------------------------------------------------------------------------------
     
 static ExprPtr parseAssignment();
 static ExprPtr parseConditional();

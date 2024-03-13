@@ -31,6 +31,9 @@ class Type
 	UStr ustr() const;
 	virtual std::size_t id() const;
 	bool hasConstFlag() const;
+	bool isScalar() const;
+	std::size_t aggregateSize() const;
+	const Type *aggregateType(std::size_t index) const;
 
 	// for type aliases
 	virtual bool isAlias() const;

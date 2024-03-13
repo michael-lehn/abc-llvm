@@ -10,6 +10,11 @@ ConstantInt getConstantInt(const char *val, const abc::Type *type,
 			   std::uint8_t radix = 10);
 ConstantInt getConstantInt(std::uint64_t val, const abc::Type *type);
 
+Constant getConstantArray(const std::vector<Constant> &val,
+			  const abc::Type *arrayType);
+Constant getConstantStruct(const std::vector<Constant> &val,
+			   const abc::Type *structType);
+
 Constant getConstantZero(const abc::Type *type);
 Constant getFalse();
 Constant getTrue();

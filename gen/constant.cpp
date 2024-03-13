@@ -29,6 +29,26 @@ getConstantInt(std::uint64_t val, const abc::Type *type)
     return llvm::ConstantInt::get(llvmType, val, type->isSignedInteger());
 }
 
+Constant getConstantArray(const std::vector<Constant> &val,
+			  const abc::Type *arrayType)
+{
+    assert(arrayType);
+    assert(arrayType->isArray());
+    auto llvmArrayType = llvm::dyn_cast<llvm::ArrayType>(convert(arrayType));
+    assert(llvmArrayType);
+    return llvm::ConstantArray::get(llvmArrayType, val);
+}
+
+Constant getConstantStruct(const std::vector<Constant> &val,
+			   const abc::Type *structType)
+{
+    assert(structType);
+    assert(structType->isStruct());
+    auto llvmStructType = llvm::dyn_cast<llvm::StructType>(convert(structType));
+    assert(llvmStructType);
+    return llvm::ConstantStruct::get(llvmStructType, val);
+}
+
 Constant
 getConstantZero(const abc::Type *type)
 {

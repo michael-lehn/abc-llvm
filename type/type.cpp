@@ -139,6 +139,43 @@ Type::hasConstFlag() const
     return isConst;
 }
 
+bool
+Type::isScalar() const
+{
+    return !isArray() && !isStruct();
+}
+
+std::size_t
+Type::aggregateSize() const
+{
+    if (isScalar()) {
+	return 1;
+    } else if (isArray()) {
+	return dim();
+    } else if (isStruct()) {
+	return memberType().size();
+    } else {
+	assert(0);
+    }
+}
+
+const Type *
+Type::aggregateType(std::size_t index) const
+{
+    assert(index < aggregateSize());
+
+    if (isScalar()) {
+	return this;
+    } else if (isArray()) {
+	return refType();
+    } else if (isStruct()) {
+	return memberType()[index];
+    } else {
+	assert(0);
+    }
+}
+
+
 // for type aliases
 bool
 Type::isAlias() const

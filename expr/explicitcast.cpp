@@ -22,10 +22,7 @@ ExplicitCast::create(ExprPtr &&expr, const Type *toType, lexer::Loc loc)
 {
     assert(expr->type);
     assert(toType);
-    std::cerr << "ExplicitCast::create: expr = " << expr << "\n";
     if (Type::equals(expr->type, toType)) {
-	std::cerr << "expr->type = " << expr->type << "\n";
-	std::cerr << "toType = " << toType << "\n";
 	return expr;
     } else {
 	auto loc = expr->loc;
