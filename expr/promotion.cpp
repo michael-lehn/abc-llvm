@@ -70,14 +70,18 @@ static BinaryResult binaryInt(BinaryExpr::Kind kind, ExprPtr &&left,
 			      ExprPtr &&right, lexer::Loc *loc);
 static BinaryResult binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left,
 			      ExprPtr &&right, lexer::Loc *loc);
-static BinaryResult binaryArr(BinaryExpr::Kind kind, ExprPtr &&left,
-			      ExprPtr &&right, lexer::Loc *loc);
+static BinaryResult binaryArray(BinaryExpr::Kind kind, ExprPtr &&left,
+			        ExprPtr &&right, lexer::Loc *loc);
+static BinaryResult binaryStruct(BinaryExpr::Kind kind, ExprPtr &&left,
+				 ExprPtr &&right, lexer::Loc *loc);
 
 BinaryResult
 binary(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right, lexer::Loc *loc)
 {
-    if (left->type->isArray() || right->type->isArray()) {
-	return binaryArr(kind, std::move(left), std::move(right), loc);
+    if (left->type->isStruct() || right->type->isStruct()) {
+	return binaryStruct(kind, std::move(left), std::move(right), loc);
+    } else if (left->type->isArray() || right->type->isArray()) {
+	return binaryArray(kind, std::move(left), std::move(right), loc);
     } else if (left->type->isPointer() || right->type->isPointer()) {
 	return binaryPtr(kind, std::move(left), std::move(right), loc);
     } else if (left->type->isInteger() && right->type->isInteger()) {
@@ -259,8 +263,8 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 }
 
 static BinaryResult
-binaryArr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
-	  lexer::Loc *loc)
+binaryArray(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
+	    lexer::Loc *loc)
 {
     //
     // Like in C: Arrays in an expression are treated as pointers.
@@ -300,6 +304,22 @@ binaryArr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	    }
 	    return binary(kind, std::move(left), std::move(right), loc);
     }
+}
+
+static BinaryResult
+binaryStruct(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
+	     lexer::Loc *loc)
+{
+    switch (kind) {
+	default:
+	    break;
+	case BinaryExpr::Kind::ASSIGN:
+	    if (Type::equals(left->type, right->type) && left->isLValue()) {
+		return std::make_tuple(std::move(left), std::move(right),
+				       left->type);
+	    }
+    }
+    return binaryErr(kind, std::move(left), std::move(right), loc);
 }
 
 /*

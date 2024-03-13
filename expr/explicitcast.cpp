@@ -20,6 +20,10 @@ ExplicitCast::ExplicitCast(ExprPtr &&expr, const Type *toType,
 ExprPtr
 ExplicitCast::create(ExprPtr &&expr, const Type *toType, lexer::Loc loc)
 {
+    if (!expr) {
+	error::out() << loc << ": error: expected non-empty expression\n";
+	error::fatal();
+    }
     assert(expr->type);
     assert(toType);
     if (Type::equals(expr->type, toType)) {

@@ -27,8 +27,8 @@ ExprPtr
 UnaryExpr::create(Kind kind, ExprPtr &&child, lexer::Loc loc)
 {
     if (!child) {
-	error::out() << loc << "error: expression expected after operator"
-	    << std::endl;
+	error::out() << loc << "error: expression expected after operator '"
+	    << kindStr(kind) << "'" << std::endl;
 	error::fatal();
 	return nullptr;
     }

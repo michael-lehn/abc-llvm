@@ -83,6 +83,12 @@ CompoundExpr::create(std::vector<ExprPtr> &&exprVec, const Type *type,
     return std::unique_ptr<CompoundExpr>{p};
 }
 
+void
+CompoundExpr::setDisplayOpt(DisplayOpt opt) const
+{
+    displayOpt = opt;
+}
+
 bool
 CompoundExpr::hasAddress() const
 {
@@ -135,7 +141,6 @@ CompoundExpr::loadConstant() const
 gen::Value
 CompoundExpr::loadValue() const
 {
-    initTmp();
     return gen::fetch(loadAddress(), type);
 }
 
@@ -166,6 +171,11 @@ CompoundExpr::print(int indent) const
 void
 CompoundExpr::printFlat(std::ostream &out, int prec) const
 {
+    if (displayOpt == PAREN) {
+	out << "(" << type << ")";
+    } else if (displayOpt == BRACE) {
+	out << type;
+    }
     out << "{";
     for (std::size_t i = 0; i < exprVec.size(); ++i) {
 	out << exprVec[i];

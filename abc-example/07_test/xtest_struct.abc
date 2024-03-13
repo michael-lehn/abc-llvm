@@ -14,5 +14,8 @@ global bar: int = {};
 
 fn main()
 {
-    local foo: Foo = {1, 2, {{}, 2}, {42}};
+    local foo2: Foo; // = {1, 2, {{}, 2}, {42}};
+    foo2 = foo;
+    foo2 = Foo{1};
+    foo2 = (Foo){2};
 }

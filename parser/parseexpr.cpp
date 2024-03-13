@@ -258,7 +258,14 @@ parsePrefix()
 		    return nullptr;
 		}
 		getToken();
-		return ExplicitCast::create(parsePrefix(), type, tok.loc);
+		if (auto expr = parseCompoundExpression(type)) {
+		    auto comp = dynamic_cast<const CompoundExpr *>(expr.get());
+		    assert(comp);
+		    comp->setDisplayOpt(CompoundExpr::PAREN);
+		    return expr;
+		} else {
+		    return ExplicitCast::create(parsePrefix(), type, tok.loc);
+		}
 	    } else {
 		// Ups, it was the '(' of a primary expression
 		auto expr = parseExpression();
@@ -416,9 +423,21 @@ parsePrimary()
     auto tok = token;
     if (tok.kind == TokenKind::IDENTIFIER) {
 	getToken();
-	if (/*auto type = */Symtab::type(tok.val, Symtab::AnyScope)) {
-	    assert(0 && "Not implemented");
-	    return nullptr;
+	if (auto sym = Symtab::type(tok.val, Symtab::AnyScope)) {
+	    tok = token;
+	    assert(sym->type);
+	    auto expr = parseCompoundExpression(sym->type);
+	    if (!expr) {
+		error::out() << tok.loc << ": expected compound expression "
+		    << "after type " << sym->type << "\n";
+		error::fatal();
+		return nullptr;
+	    } else {
+		auto comp = dynamic_cast<const CompoundExpr *>(expr.get());
+		assert(comp);
+		comp->setDisplayOpt(CompoundExpr::BRACE);
+		return expr;
+	    }
 	} else if (auto sym = Symtab::constant(tok.val, Symtab::AnyScope)) {
 	    auto expr = EnumConstant::create(tok.val,
 					     sym->expr->getSignedIntValue(),
