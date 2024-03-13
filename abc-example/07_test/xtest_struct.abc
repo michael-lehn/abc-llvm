@@ -1,0 +1,18 @@
+struct Foo
+{
+    a, b: int;
+    c:
+	struct Bar {
+	    a: char;
+	    b: u64;
+	};
+    d: array[10] of int;
+};
+
+global foo: Foo = {1, 2, {{}, 2}, {42}};
+global bar: int = {};
+
+fn main()
+{
+    local foo: Foo = {1, 2, {{}, 2}, {42}};
+}
