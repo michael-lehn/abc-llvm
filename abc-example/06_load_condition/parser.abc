@@ -1,9 +1,9 @@
-#include <stdio.hdr>
+@ <stdio.hdr>
 
-#include "error.hdr"
-#include "lexer.hdr"
-#include "parser.hdr"
-#include "symtab.hdr"
+@ "error.hdr"
+@ "lexer.hdr"
+@ "parser.hdr"
+@ "symtab.hdr"
 
 fn parseAssignmentExpression() : -> Expr;
 fn parseAdditiveExpression() : -> Expr;

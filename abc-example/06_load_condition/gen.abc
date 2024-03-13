@@ -1,8 +1,8 @@
-#include <assert.hdr>
-#include <stdio.hdr>
-#include <string.hdr>
+@ <assert.hdr>
+@ <stdio.hdr>
+@ <string.hdr>
 
-#include "gen.hdr"
+@ "gen.hdr"
 
 global usedReg: array[256] of bool;
 
@@ -50,10 +50,10 @@ fn genStore(val: GenReg, addr: GenReg)
     printf("\tstore %%%d, (%%%d)\n", val, addr);
 }
 
-fn getLabel(label: -> array[10] of char)
+fn getLabel(lab: -> array[10] of char)
 {
     global id: int;
-    snprintf(*label, 9, ".L%d", id++);
+    snprintf(*lab, 9, ".L%d", id++);
 }
 
 fn genAluInstr(op: GEN_ALU_OP, left: GenReg, right: GenReg) : GenReg

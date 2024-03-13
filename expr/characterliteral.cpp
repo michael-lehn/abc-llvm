@@ -24,11 +24,6 @@ ExprPtr
 CharacterLiteral::create(UStr processedVal, UStr val, lexer::Loc loc)
 {
     assert(processedVal.c_str());
-    std::cerr << ">" << val << "<\n";
-    std::cerr << ">" << processedVal << "<\n";
-    std::cerr << ">" << int(processedVal.c_str()[0]) << "<\n";
-    std::cerr << ">" << int(processedVal.c_str()[1]) << "<\n";
-    std::cerr << "len = " << processedVal.length() << "\n";
     assert(processedVal.length() == 1);
     assert(val.c_str());
     assert(val.length());

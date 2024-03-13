@@ -1,7 +1,7 @@
-#include <assert.hdr>
-#include <stdio.hdr>
+@ <assert.hdr>
+@ <stdio.hdr>
 
-#include "lexer.hdr"
+@ "lexer.hdr"
 
 global
     token: Token;

@@ -1,4 +1,4 @@
-#include "gen.hdr"
+@ "gen.hdr"
 
 fn main()
 {

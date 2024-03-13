@@ -1,8 +1,8 @@
-#include <stdio.hdr>
+@ <stdio.hdr>
 
-#include "expr.hdr"
-#include "lexer.hdr"
-#include "parser.hdr"
+@ "expr.hdr"
+@ "lexer.hdr"
+@ "parser.hdr"
 
 fn main()
 {

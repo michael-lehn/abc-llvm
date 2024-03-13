@@ -5,7 +5,14 @@
 
 namespace gen {
 
-void print(std::filesystem::path path);
+enum FileType
+{
+    ASSEMBLY_FILE,
+    OBJECT_FILE,
+    LLVM_FILE,
+};
+
+void print(std::filesystem::path path, FileType fileType = LLVM_FILE);
 
 } // namespace gen
 
