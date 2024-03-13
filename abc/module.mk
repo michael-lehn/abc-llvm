@@ -14,4 +14,7 @@ $(this).extra_libs += `llvm-config --ldflags --system-libs --libs all`
 # All files in source directory beginning with 'xtest' are optional targets
 # (built with 'make opt'). Here we here default targets (built with 'make').
 
+$(this).prg.cpp := \
+        abc.cpp
+
 $(this).install := abc

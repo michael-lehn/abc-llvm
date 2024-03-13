@@ -26,6 +26,8 @@ main(int argc, char *argv[])
 {
     std::filesystem::path infile;
     std::filesystem::path outfile;
+    bool createExecutable = true;
+    std::filesystem::path executable = "a.out";
     gen::FileType outputFileType = gen::OBJECT_FILE;
     bool printAst = false;
 
@@ -39,13 +41,16 @@ main(int argc, char *argv[])
 			printAst = true;
 		    } else if (!strcmp(argv[i], "--emit-llvm")) {
 			outputFileType = gen::LLVM_FILE;
+			createExecutable = false;
 		    }
 		    break;
 		case 'c':
 		    outputFileType = gen::OBJECT_FILE;
+		    createExecutable = false;
 		    break;
 		case 'S':
 		    outputFileType = gen::ASSEMBLY_FILE;
+		    createExecutable = false;
 		    break;
 		case 'o':
 		    if (outfile.empty() && !argv[i][2] && i + 1 < argc) {
@@ -82,6 +87,10 @@ main(int argc, char *argv[])
     if (infile.empty()) {
 	usage(argv[0]);
     }
+    if (createExecutable && !outfile.empty()) {
+	executable = outfile;
+	outfile.clear();
+    }
     if (outfile.empty()) {
 	switch (outputFileType) {
 	    case gen::ASSEMBLY_FILE:
@@ -98,7 +107,9 @@ main(int argc, char *argv[])
 		break;
 	}
     }
-
+    if (createExecutable) {
+	outfile = std::filesystem::temp_directory_path() / outfile;
+    }
 
     if (!abc::lexer::openInputfile(infile.c_str())) {
 	std::cerr << argv[0] << ": error: can not open '" << infile.c_str()
@@ -116,5 +127,17 @@ main(int argc, char *argv[])
 	gen::print(outfile.c_str(), outputFileType);
     } else {
 	std::exit(1);
+    }
+
+    if (createExecutable) {
+	std::string linker = "cc -o ";
+	linker += executable.c_str();
+	linker += " ";
+	linker += outfile.c_str();
+
+	if (std::system(linker.c_str())) {
+	    std::cerr << "linker error\n";
+	    std::exit(1);
+	}
     }
 }
