@@ -532,9 +532,12 @@ parseVariableDeclaration()
 static AstInitializerExprPtr
 parseInitializerExpression(const Type *type)
 {
-    if (auto expr = parseExpression()) {
+    // note: parseCompoundExpression has to be called before
+    //	 parseExpression. Because parseCompoundExpression catches
+    //	 string literals and treats them as a compound.
+    if (auto expr = parseCompoundExpression(type)) {
 	return std::make_unique<AstInitializerExpr>(type, std::move(expr));
-    } else if (auto expr = parseCompoundExpression(type)) {
+    } else if (auto expr = parseExpression()) {
 	return std::make_unique<AstInitializerExpr>(type, std::move(expr));
     }
     return nullptr;

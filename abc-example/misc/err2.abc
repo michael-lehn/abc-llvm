@@ -48,7 +48,7 @@ global g: Foo;
 fn main()
 {
     local a: array[5] of int;
-    printf("size = %zu\n", sizeof(:Foo));
+    printf("size = %zu\n", sizeof(Foo));
     
     local i: -> int;
 

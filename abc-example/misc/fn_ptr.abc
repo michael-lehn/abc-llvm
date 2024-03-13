@@ -13,9 +13,9 @@ fn bar(a: u64)
 fn sel(s: u8): -> fn(:u64)
 {
     if (s == 1) {
-	return foo;
+	return &foo;
     }
-    return bar;
+    return &bar;
 }
 
 fn main(): u8
@@ -26,9 +26,9 @@ fn main(): u8
     p = &foo;
     (*p)(42);		    // one way to use a function pointer
 
-    p = bar;
+    p = &bar;
     p->(13);		    // another way to use a function pointer
-    p(24);		    // ... or just like that (C style)
+    // TODO: p(24);		    // ... or just like that (C style)
 
     // p(12);		    // error: in ABC function pointers need to be
 			    //	      dereferenced
@@ -40,7 +40,10 @@ fn main(): u8
     sel(2)->(422);
 
     local s: -> fn(s: u8): -> fn(:u64);
-    s = sel;
-    s(1)(111);
-    s(2)(222);
+    s = &sel;
+    s->(1)->(111);
+    s->(2)->(222);
+
+    //TODO: s->(1)->(111);
+    //TODO: s->(2)->(222);
 }

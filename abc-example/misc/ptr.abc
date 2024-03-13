@@ -3,11 +3,11 @@
 fn printBytes(s: -> char, n: u64)
 {
     for (local i: u64 = 0; i < n; ++i) {
-	printf("%02x\n", i[s]);
+        printf("%02x\n", s[i]);
     }
     printf("now in reverse order:\n");
     for (local i: u64 = n; i--; ) {
-	printf("%02x\n", i[s]);
+	printf("%02x\n", s[i]);
     }
 }
 
@@ -35,7 +35,7 @@ fn main(): u8
     printBytes(s1, 15);
 
     printf("First 5 bytes of function 'printBytes':\n");
-    s1 = (-> char)printBytes;
+    s1 = (-> char)(-> void)&printBytes;
     printBytes(s1, 5);
 
     return 0;

@@ -19,7 +19,7 @@ src.abc := $(wildcard *.abc)
 cpp.abc := $(src.abc:%.abc=%.abc_p)
 asm.abc := $(src.abc:%.abc=%.s)
 obj.abc := $(src.abc:%.abc=%.o)
-bc.abc := $(src.abc:%.abc=%.bc)
+ll.abc := $(src.abc:%.abc=%.ll)
 target := $(src.abc:%.abc=%)
 
 dep := $(src.abc:%=$(dep.dir)/%.d)
@@ -37,8 +37,8 @@ all: $(target) $(obj.abc)
 %.s : %.abc
 	$(ABC) -S $(ABCFLAGS) $<
 
-%.bc : %.abc
-	$(ABC) -B $(ABCFLAGS) $<
+%.ll : %.abc
+	$(ABC) --emit-llvm $(ABCFLAGS) $<
 
 %.o : %.abc
 	$(ABC) -c $(ABCFLAGS) $<
@@ -59,7 +59,7 @@ $(dep.dir): ; mkdir -p $@
 
 .PHONY: clean
 clean:
-	$(RM) $(target) $(asm.abc) $(obj.abc) $(bc.abc) $(lib) $(cpp.abc) $(dep)
+	$(RM) $(target) $(asm.abc) $(obj.abc) $(ll.abc) $(lib) $(cpp.abc) $(dep)
 
 $(dep):
 -include $(dep)

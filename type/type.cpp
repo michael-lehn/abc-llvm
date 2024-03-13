@@ -33,6 +33,24 @@ Type::equals(const Type *ty1, const Type *ty2)
     } else if (ty1->isArray() && ty2->isArray()) {
 	return ty1->dim() == ty2->dim()
 	    && equals(ty1->refType(), ty2->refType());
+    } else if (ty1->isFunction() && ty2->isFunction()) {
+	if (!equals(ty1->retType(), ty2->retType())) {
+	    return false;
+	}
+	if (ty1->hasVarg() != ty2->hasVarg()) {
+	    return false;
+	}
+	const auto &paramType1 = ty1->paramType();
+	const auto &paramType2 = ty2->paramType();
+	if (paramType1.size() != paramType2.size()) {
+	    return false;
+	}
+	for (std::size_t i = 0; i < paramType1.size(); ++i) {
+	    if (!equals(paramType1[i], paramType2[i])) {
+		return false;
+	    }
+	}
+	return true;
     }
     return false;
 }
@@ -68,7 +86,9 @@ Type::common(const Type *ty1, const Type *ty2)
 const Type *
 Type::convert(const Type *from, const Type *to)
 {
-    if (to->isBool()) {
+    if (equals(from, to)) {
+	return to;
+    } else if (to->isBool()) {
 	if (from->isInteger()) {
 	    return to;
 	} else if (from->isPointer()) {

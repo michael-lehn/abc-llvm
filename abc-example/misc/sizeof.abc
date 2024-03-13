@@ -3,6 +3,6 @@
 fn main(): u8
 {
     printf("Size of string 'Hallo!' is %zu\n", sizeof("Hallo!"));
-    printf("Size of type u64 is %zu\n", sizeof(:u64));
+    printf("Size of type u64 is %zu\n", sizeof(u64));
     return 0;
 }

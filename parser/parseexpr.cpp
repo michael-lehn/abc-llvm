@@ -31,31 +31,49 @@ using namespace lexer;
 ExprPtr
 parseCompoundExpression(const Type *type)
 {
-    if (token.kind != TokenKind::LBRACE) {
+    assert(type);
+
+    auto tok = token;
+    std::vector<ExprPtr> exprVec;
+    if (type->isArray() && token.kind == TokenKind::STRING_LITERAL) {
+	// string literals are treated as compound expression. For example:
+	// "abc" is treated as {'a', 'b', 'c'}
+	std::string str{};
+	do {
+	    str += token.processedVal.c_str();
+	    getToken();
+	} while (token.kind == TokenKind::STRING_LITERAL);
+	for (char &c : str) {
+	    auto val = UStr::create(std::string{c});
+	    exprVec.push_back(CharacterLiteral::create(val, val, tok.loc));
+	}
+	return CompoundExpr::create(std::move(exprVec), type, tok.loc);
+    } else if (token.kind == TokenKind::LBRACE) {
+	getToken();
+	for (std::size_t i = 0; i < type->aggregateSize(); ++i) {
+	    auto ty = type->aggregateType(i);
+
+	    // note: parseCompoundExpression has to be called before
+	    //	 parseExpression. Because parseCompoundExpression catches
+	    //	 string literals and treats them as a compound.
+	    if (auto expr = parseCompoundExpression(ty)) {
+		exprVec.push_back(std::move(expr));
+	    } else if (auto expr = parseExpression()) {
+		exprVec.push_back(std::move(expr));
+	    } else {
+		break;
+	    }
+	    if (token.kind != TokenKind::COMMA) {
+		break;
+	    }
+	    getToken();
+	}
+	error::expected(TokenKind::RBRACE);
+	getToken();
+	return CompoundExpr::create(std::move(exprVec), type, tok.loc);
+    } else {
 	return nullptr;
     }
-    auto tok = token;
-    getToken();
-
-    std::vector<ExprPtr> exprVec;
-    for (std::size_t i = 0; i < type->aggregateSize(); ++i) {
-	auto ty = type->aggregateType(i);
-	if (auto expr = parseExpression()) {
-	    exprVec.push_back(std::move(expr));
-	} else if (auto expr = parseCompoundExpression(ty)) {
-	    exprVec.push_back(std::move(expr));
-	} else {
-	    break;
-	}
-	if (token.kind != TokenKind::COMMA) {
-	    break;
-	}
-	getToken();
-    }
-
-    error::expected(TokenKind::RBRACE);
-    getToken();
-    return CompoundExpr::create(std::move(exprVec), type, tok.loc);
 }
 
 //------------------------------------------------------------------------------

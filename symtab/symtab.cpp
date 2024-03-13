@@ -12,6 +12,7 @@ namespace abc {
 std::forward_list<std::unique_ptr<Symtab::ScopeNode>> Symtab::scope;
 std::size_t Symtab::scopeSize;
 UStr Symtab::scopePrefix;
+std::size_t idCount;
 
 Symtab::Symtab(UStr scopePrefix_)
 {
@@ -21,6 +22,7 @@ Symtab::Symtab(UStr scopePrefix_)
 
     if (scopePrefix_.c_str() || scopeSize == 0) {
 	scopePrefix = scopePrefix_;
+	idCount = 0;
     }
     scope.push_front(std::make_unique<ScopeNode>());
     ++scopeSize;
@@ -149,7 +151,7 @@ Symtab::getId(UStr name)
     if (scopeSize > 1) {
 	assert(scopePrefix.c_str());
 	std::stringstream ss;
-	ss << "." << scopePrefix.c_str() << "." << idStr << "." << scopeSize;
+	ss << "." << scopePrefix.c_str() << "." << idStr << "." << idCount++;
 	idStr = ss.str();
     }
     return UStr::create(idStr);
