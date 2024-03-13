@@ -52,8 +52,7 @@ all: $(target) $(obj.abc)
 	$(LINK.o) $^ -o $@
 
 % : %.abc $(lib)
-	$(ABC) $(ABCFLAGS) $^
-#	$(ABC) $(ABCFLAGS) $^ -o $@
+	$(ABC) $(ABCFLAGS) $^ -o $@
 
 $(dep.dir): ; mkdir -p $@
 
