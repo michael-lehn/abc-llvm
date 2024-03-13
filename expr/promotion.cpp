@@ -392,6 +392,7 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 		    << "'\n";
 		break;
 	    }
+	    // fall through
 	case UnaryExpr::PREFIX_DEC:
 	case UnaryExpr::POSTFIX_DEC:
 	    if (child->type->hasConstFlag()) {
