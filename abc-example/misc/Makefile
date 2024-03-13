@@ -1,5 +1,5 @@
-ABC := ../../bin/abc
-ABCFLAGS := -O3 -I ../include
+ABC := ../../build/abc/abc
+ABCFLAGS := -I ../include
 CPP := $(CC) -E -x c -traditional -Wno-endif-labels -I../include
 CPPFLAGS += -MT $(@:%.abc_p=%.o) -MMD -MP -MF $(dep.dir)/$(<F).d
 
