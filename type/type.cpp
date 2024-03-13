@@ -17,6 +17,9 @@ Type::Type(bool isConst, UStr name)
 bool
 Type::equals(const Type *ty1, const Type *ty2)
 {
+    if (ty1->hasConstFlag() != ty2->hasConstFlag()) {
+	return false;
+    }
     if (ty1->isVoid() && ty2->isVoid()) {
 	return true;
     } else if (ty1->isInteger() && ty2->isInteger()) {
@@ -106,17 +109,42 @@ Type::convert(const Type *from, const Type *to)
 	assert(!to->isNullptr());
 	if (from->isNullptr()) {
 	    return to;
-	} else if (equals(to->refType(), from->refType())) {
+	}
+	auto toRefTy = to->refType();
+	auto fromRefTy = from->refType();
+	if (!fromRefTy->hasConstFlag() && toRefTy->hasConstFlag()) {
+	    toRefTy = toRefTy->getConstRemoved();
+	}
+	if (equals(toRefTy, fromRefTy)) {
 	    return to;
-	} else if (to->refType()->isVoid() || from->refType()->isVoid()) {
+	} else if (toRefTy->isVoid() || fromRefTy->isVoid()) {
 	    return to;
 	} else {
 	    return nullptr;
 	}
-    } else if (to->isStruct() && equals(to, from)) {
-	return to;
-    } else if (to->isArray() && equals(to, from)) {
-	return to;
+    } else if (from->isStruct() && to->isStruct()) {
+	if (from->hasConstFlag() && !to->hasConstFlag()) {
+	    from = from->getConstRemoved();
+	}
+	if (equals(from, to)) {
+	    return to;
+	} else {
+	    return nullptr;
+	}
+    } else if (to->isArray() && from->isArray()) {
+	if (to->dim() != from->dim()) {
+	    return nullptr;
+	}
+	auto toRefTy = to->refType();
+	auto fromRefTy = from->refType();
+	if (fromRefTy->hasConstFlag() && !toRefTy->hasConstFlag()) {
+	    fromRefTy = fromRefTy->getConstRemoved();
+	}
+	if (equals(toRefTy, fromRefTy)) {
+	    return to;
+	} else {
+	    return nullptr;
+	}
     } else {
 	return nullptr;
     }
@@ -129,9 +157,16 @@ Type::explicitCast(const Type *from, const Type *to)
 	// allow const-casts
 	return type;
     } else if (from->isPointer() && to->isPointer()) {
-	if (!from->isNullptr() && from->refType()->isVoid()) {
+	if (from->isNullptr()) {
+	    return nullptr;
+	}
+	auto fromRefTy = from->refType()->getConstRemoved();
+	auto toRefTy = to->refType()->getConstRemoved();
+	if (equals(fromRefTy, toRefTy)) {
 	    return to;
-	} else if (!to->isNullptr() && to->refType()->isVoid()) {
+	} else if (from->refType()->isVoid()) {
+	    return to;
+	} else if (to->refType()->isVoid()) {
 	    return to;
 	} else {
 	    return nullptr;

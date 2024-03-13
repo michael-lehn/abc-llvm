@@ -127,10 +127,14 @@ binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	case BinaryExpr::Kind::MUL_ASSIGN:
 	case BinaryExpr::Kind::DIV_ASSIGN:
 	case BinaryExpr::Kind::MOD_ASSIGN:
-	    if (left->isLValue()) {
-		type = newLeftType = newRightType = left->type;
-	    } else {
+	    if (left->type->hasConstFlag()) {
+		error::out() << left->loc
+		    << ": error: assignment of read-only variable '"
+		    << left << "'\n";
+	    } else if (!left->isLValue()) {
 		error::out() << left->loc << ": error: not an LValue\n";
+	    } else {
+		type = newLeftType = newRightType = left->type;
 	    }
 	    break;
 	case BinaryExpr::Kind::ADD:
@@ -177,6 +181,19 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
     const Type *newRightType = nullptr;
 
     switch (kind) {
+	case BinaryExpr::ASSIGN:
+	    if (left->type->hasConstFlag()) {
+		error::out() << left->loc
+		    << ": error: assignment of read-only variable '"
+		    << left << "'\n";
+		break;
+	    } else if (!left->isLValue()) {
+		error::out() << left->loc << ": error: not an LValue\n";
+	    } else {
+		type = newLeftType = left->type;
+		newRightType = Type::convert(right->type, type);
+	    }
+	    break;
 	case BinaryExpr::Kind::INDEX:
 	    if (!right->type->isInteger()) {
 		error::out() << right->loc << ": integer expression expected\n";
@@ -191,14 +208,6 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		error::fatal();
 		return binaryErr(kind, std::move(left), std::move(right), loc);
 	    }
-	case BinaryExpr::ASSIGN:
-	    if (left->isLValue()) {
-		type = newLeftType = left->type;
-		newRightType = Type::convert(right->type, type);
-	    } else {
-		error::out() << left->loc << ": error: not an LValue\n";
-	    }
-	    break;
 	case BinaryExpr::Kind::ADD_ASSIGN:
 	    if (right->type->isInteger()) {
 		if (!left->isLValue()) {
@@ -282,17 +291,27 @@ binaryArray(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 				       elementType);
 	    }
 	case BinaryExpr::Kind::ASSIGN:
-	    if (Type::equals(left->type, right->type)) {
-		if (!left->isLValue()) {
-		    error::out() << left->loc << ": error: not an LValue\n";
-		} else {
-		    return std::make_tuple(std::move(left), std::move(right),
-					   left->type);
-		}
-	    } else if (left->type->isArray() && right->type->isArray()) {
-		return binaryErr(kind, std::move(left), std::move(right), loc);
+	    if (left->type->isPointer() && right->type->isArray()) {
+		auto newRightType = PointerType::create(right->type->refType());
+		right = ImplicitCast::create(std::move(right), newRightType);
+		return binary(kind, std::move(left), std::move(right), loc);
 	    }
-	    // fall through
+	    if (!left->type->isArray() || !right->type->isArray()) {
+		break;
+	    }
+	    if (left->type->hasConstFlag()) {
+		error::out() << left->loc
+		    << ": error: assignment of read-only variable '"
+		    << left << "'\n";
+		break;
+	    } else if (!left->isLValue()) {
+		error::out() << left->loc << ": error: not an LValue\n";
+		break;
+	    } else {
+		right = ImplicitCast::create(std::move(right), left->type);
+		return std::make_tuple(std::move(left), std::move(right),
+				       left->type);	
+	    }
 	default:
 	    if (left->type->isArray()) {
 		auto newLeftType = PointerType::create(left->type->refType());
@@ -304,22 +323,35 @@ binaryArray(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	    }
 	    return binary(kind, std::move(left), std::move(right), loc);
     }
+    return binaryErr(kind, std::move(left), std::move(right), loc);
 }
 
 static BinaryResult
 binaryStruct(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	     lexer::Loc *loc)
 {
+    const Type *newRightType = nullptr;
+
     switch (kind) {
 	default:
 	    break;
 	case BinaryExpr::Kind::ASSIGN:
-	    if (Type::equals(left->type, right->type) && left->isLValue()) {
-		return std::make_tuple(std::move(left), std::move(right),
-				       left->type);
+	    if (left->type->hasConstFlag()) {
+		error::out() << left->loc
+		    << ": error: assignment of read-only variable '"
+		    << left << "'\n";
+	    } else if (!left->isLValue()) {
+		error::out() << left->loc << ": error: not an LValue\n";
+	    } else {
+		newRightType = left->type;
 	    }
+	    break;
     }
-    return binaryErr(kind, std::move(left), std::move(right), loc);
+    if (!newRightType) { 
+	return binaryErr(kind, std::move(left), std::move(right), loc);
+    }
+    right = ImplicitCast::create(std::move(right), newRightType);
+    return std::make_tuple(std::move(left), std::move(right), left->type);
 }
 
 /*
@@ -353,9 +385,21 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 	    }
 	    break;
 	case UnaryExpr::PREFIX_INC:
-	case UnaryExpr::PREFIX_DEC:
 	case UnaryExpr::POSTFIX_INC:
+	    if (child->type->hasConstFlag()) {
+		error::out() << child->loc
+		    << ": error: increment of read-only variable '" << child
+		    << "'\n";
+		break;
+	    }
+	case UnaryExpr::PREFIX_DEC:
 	case UnaryExpr::POSTFIX_DEC:
+	    if (child->type->hasConstFlag()) {
+		error::out() << child->loc
+		    << ": error: decrement of read-only variable '" << child
+		    << "'\n";
+		break;
+	    }
 	    if (child->isLValue()) {
 		if (child->type->isInteger() || child->type->isPointer()) {
 		    type = newChildType = child->type;

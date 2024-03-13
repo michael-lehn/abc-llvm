@@ -11,16 +11,17 @@ struct Foo
 
 fn main()
 {
-    /*
     local
 	a: int,
 	b: const int = 2,
 	p: -> int = &a,
 	q: -> const int = &b;
 
+    // b++; // error
+    // b--; // error
+
     q = p;
-    p = q;
-    */
+    //p = q; // error
 
     local
 	foo: Foo,
@@ -28,13 +29,19 @@ fn main()
 	foobar: array[4] of const int;
 
     foo = bar;
+    // bar = foo; // error
+
     foo.a = 42;
     *(-> Foo)&bar = foo;
-/*
 
     printf("bar.a = %d\n", bar.a);
 
-    *:-> int(&foobar[0]) = 2;
+    *(-> int)(&foobar[0]) = 2;
     printf("foobar[%d] = %d\n", 0, foobar[0]);
-    */
+
+    local arr1: array[10] of const int;
+    local arr2: array[10] of int;
+
+    arr2 = arr1;
+    // arr1 = arr2; // error
 }

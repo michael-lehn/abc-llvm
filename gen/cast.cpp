@@ -31,6 +31,8 @@ cast(Value val, const abc::Type *fromType, const abc::Type *toType)
 	}
     } else if (fromType->isPointer() && toType->isPointer()) {
 	return val;
+    } else if (fromType->isArray() && toType->isArray()) {
+	return val;
     }
     std::cerr << "gen::cat: can not cast '" << fromType << "' to '" << toType
 	<< "'\n";
