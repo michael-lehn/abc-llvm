@@ -108,6 +108,10 @@ functionDefinitionEnd()
 	llvmBuilder->CreateRet(retVal);
     }
     llvm::verifyFunction(*functionBuildingInfo.fn);
+    if (llvmFPM) {
+	llvmFPM->run(*functionBuildingInfo.fn, *llvmFAM);
+	llvmFPM->run(*functionBuildingInfo.fn, *llvmFAM);
+    }
 
     functionBuildingInfo.fn = nullptr; 
     functionBuildingInfo.leave = nullptr; 

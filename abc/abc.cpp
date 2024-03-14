@@ -14,6 +14,7 @@ usage(const char *prog, int exit = 1)
     std::cerr << "usage: " << prog
 	<< "[ -o outfile ] "
 	<< "[ -c | -S | --emit-llvm ] "
+	<< "[ -O<level> ] "
 	<< "[ --help ] "
 	<< "[ --print-ast ] "
 	<< "[ -Idir... ] "
@@ -30,6 +31,7 @@ main(int argc, char *argv[])
     std::filesystem::path executable = "a.out";
     gen::FileType outputFileType = gen::OBJECT_FILE;
     bool printAst = false;
+    int optimizationLevel = 0;
 
     for (int i = 1; i < argc; ++i) {
 	if (argv[i][0] == '-') {
@@ -51,6 +53,9 @@ main(int argc, char *argv[])
 		case 'S':
 		    outputFileType = gen::ASSEMBLY_FILE;
 		    createExecutable = false;
+		    break;
+		case 'O':
+		    optimizationLevel = 3;
 		    break;
 		case 'o':
 		    if (outfile.empty() && !argv[i][2] && i + 1 < argc) {
@@ -117,7 +122,7 @@ main(int argc, char *argv[])
 	return 1;
     }
     abc::lexer::init();
-    gen::init(infile.stem().c_str());
+    gen::init(infile.stem().c_str(), optimizationLevel);
 
     if (auto ast = abc::parser()) {
 	if (printAst) {
