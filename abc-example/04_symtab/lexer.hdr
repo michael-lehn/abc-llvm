@@ -1,7 +1,4 @@
-#ifndef LEXER_HDR
-#define LEXER_HDR
-
-#include <stdio.hdr>
+@ <stdio.hdr>
 
 enum TokenKind : int
 {
@@ -40,5 +37,3 @@ struct Token {
 extern token: Token;
 extern fn tokenKindStr(kind: TokenKind): -> char;
 extern fn getToken(): TokenKind;
-
-#endif // LEXER_HDR

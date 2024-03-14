@@ -1,6 +1,6 @@
-#include <stdio.hdr>
+@ <stdio.hdr>
 
-#include "foo.hdr"
+@ "foo.hdr"
 
 global bar: i32 = 123;
 

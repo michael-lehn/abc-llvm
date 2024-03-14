@@ -1,8 +1,8 @@
-#include <assert.hdr>
-#include <stdlib.hdr>
-#include <stdio.hdr>
+@ <assert.hdr>
+@ <stdlib.hdr>
+@ <stdio.hdr>
 
-#include "expr.hdr"
+@ "expr.hdr"
 
 fn releaseExpr(expr: -> const Expr)
 {

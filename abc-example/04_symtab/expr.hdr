@@ -1,7 +1,4 @@
-#ifndef EXPR_HDR
-#define EXPR_HDR
-
-#include "lexer.hdr"
+@ "lexer.hdr"
 
 enum ExprKind : i32
 {
@@ -53,6 +50,3 @@ extern fn createBinaryExpr(op: BinaryExprKind,
 extern fn evalExpr(expr: -> const Expr): i64;
 
 extern fn printExpr(expr: -> const Expr);
-
-
-#endif // EXPR_HDR

@@ -1,6 +1,1 @@
-#ifndef PARSER_HDR
-#define PARSER_HDR
-
 extern fn parseExpression(val: -> int) : bool;
-
-#endif // PARSER_HDR

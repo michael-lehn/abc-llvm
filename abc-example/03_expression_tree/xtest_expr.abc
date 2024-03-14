@@ -1,6 +1,6 @@
-#include <stdio.hdr>
+@ <stdio.hdr>
 
-#include "expr.hdr"
+@ "expr.hdr"
 
 fn main()
 {

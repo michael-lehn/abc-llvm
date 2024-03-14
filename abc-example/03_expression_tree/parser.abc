@@ -1,7 +1,7 @@
-#include <stdio.hdr>
+@ <stdio.hdr>
 
-#include "lexer.hdr"
-#include "parser.hdr"
+@ "lexer.hdr"
+@ "parser.hdr"
 
 fn parseAdditiveExpression() : -> Expr;
 fn parseMultiplicativeExpression() : -> Expr;

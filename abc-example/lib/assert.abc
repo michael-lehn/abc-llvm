@@ -1,6 +1,6 @@
-#include <assert.hdr>
-#include <stdlib.hdr>
-#include <stdio.hdr>
+@ <assert.hdr>
+@ <stdlib.hdr>
+@ <stdio.hdr>
 
 fn __assert(msg: -> const char, file: -> const char, line: int): int
 {
