@@ -1,3 +1,7 @@
+#include "gen/constant.hpp"
+#include "gen/instruction.hpp"
+#include "lexer/error.hpp"
+
 #include "expr.hpp"
 
 namespace abc {
@@ -17,6 +21,18 @@ Expr::loadConstantAddress() const
 {
     assert(hasConstantAddress());
     return nullptr;
+}
+
+void
+Expr::condition(gen::Label trueLabel, gen::Label falseLabel) const
+{
+    if (!type->isScalar()) {
+	error::out() << loc << ": error: scalar required\n";
+	error::fatal();
+    }
+    auto zero = gen::getConstantZero(type);
+    auto cond = gen::instruction(gen::NE, loadValue(), zero);
+    gen::jumpInstruction(cond, trueLabel, falseLabel);
 }
 
 gen::ConstantInt

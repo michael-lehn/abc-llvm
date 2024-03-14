@@ -391,12 +391,7 @@ BinaryExpr::condition(gen::Label trueLabel, gen::Label falseLabel) const
 		return;
             }
 	default:
-	    {
-		auto zero = gen::getConstantZero(type);
-		auto cond = gen::instruction(gen::NE, loadValue(), zero);
-		gen::jumpInstruction(cond, trueLabel, falseLabel);
-		return;
-	    }
+	    Expr::condition(trueLabel, falseLabel);
     }
 }
 

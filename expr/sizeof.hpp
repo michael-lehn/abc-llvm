@@ -31,8 +31,6 @@ class Sizeof : public Expr
 	gen::Constant loadConstant() const override;
 	gen::Value loadValue() const override;
 	gen::Value loadAddress() const override;
-	void condition(gen::Label trueLabel,
-		       gen::Label falseLabel) const override;
 
 	// for debugging and educational purposes
 	void print(int indent) const override;

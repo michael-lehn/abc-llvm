@@ -91,14 +91,6 @@ ExplicitCast::loadAddress() const
     return nullptr;
 }
 
-void
-ExplicitCast::condition(gen::Label trueLabel, gen::Label falseLabel) const
-{
-    auto zero = gen::getConstantZero(type);
-    auto cond = gen::instruction(gen::NE, loadValue(), zero);
-    gen::jumpInstruction(cond, trueLabel, falseLabel);
-}
-
 // for debugging and educational purposes
 void
 ExplicitCast::print(int indent) const

@@ -86,14 +86,6 @@ IntegerLiteral::loadAddress() const
     return nullptr;
 }
 
-void
-IntegerLiteral::condition(gen::Label trueLabel, gen::Label falseLabel) const
-{
-    auto zero = gen::getConstantZero(type);
-    auto cond = gen::instruction(gen::NE, loadValue(), zero);
-    gen::jumpInstruction(cond, trueLabel, falseLabel);
-}
-
 // for debugging and educational purposes
 void
 IntegerLiteral::print(int indent) const

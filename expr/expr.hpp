@@ -35,7 +35,7 @@ class Expr
 	virtual gen::Constant loadConstantAddress() const;
 	virtual gen::Value loadAddress() const = 0;
 	virtual void condition(gen::Label trueLabel,
-			       gen::Label falseLabel) const = 0;
+			       gen::Label falseLabel) const;
 
 	// for debugging and educational purposes
 	virtual void print(int indent = 1) const = 0;

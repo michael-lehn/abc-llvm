@@ -209,11 +209,7 @@ UnaryExpr::condition(gen::Label trueLabel, gen::Label falseLabel) const
 		return;
 	    }
 	default:
-	    gen::jumpInstruction(gen::instruction(gen::NE,
-						  loadValue(),
-						  gen::getConstantZero(type)),
-				 trueLabel,
-				 falseLabel);
+	    Expr::condition(trueLabel, falseLabel);
     }
 }
 

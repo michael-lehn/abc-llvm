@@ -115,14 +115,6 @@ Member::loadAddress() const
     return gen::pointerToIndex(structureType, structureAddress, index);
 }
 
-void
-Member::condition(gen::Label trueLabel, gen::Label falseLabel) const
-{
-    auto zero = gen::getConstantZero(type);
-    auto cond = gen::instruction(gen::NE, loadValue(), zero);
-    gen::jumpInstruction(cond, trueLabel, falseLabel);
-}
-
 // for debugging and educational purposes
 void
 Member::print(int indent) const
