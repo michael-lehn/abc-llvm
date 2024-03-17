@@ -5,6 +5,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/StandardInstrumentations.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace gen {
@@ -24,6 +25,11 @@ extern llvm::TargetMachine *targetMachine;
 // for optimization
 extern std::unique_ptr<llvm::FunctionPassManager> llvmFPM;
 extern std::unique_ptr<llvm::FunctionAnalysisManager> llvmFAM;
+extern std::unique_ptr<llvm::FunctionAnalysisManager> llvmFAM;
+extern std::unique_ptr<llvm::CGSCCAnalysisManager> llvmCGAM;
+extern std::unique_ptr<llvm::ModuleAnalysisManager> llvmMAM;
+extern std::unique_ptr<llvm::PassInstrumentationCallbacks> llvmPIC;
+extern std::unique_ptr<llvm::StandardInstrumentations> llvmSI;
 
 extern const char *moduleName;
 

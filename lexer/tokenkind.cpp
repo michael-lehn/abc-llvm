@@ -22,10 +22,8 @@ TokenKindCStr(TokenKind kind)
 	case TokenKind::ASSERT: return "ASSERT";
 	case TokenKind::BREAK: return "BREAK";
 	case TokenKind::CASE: return "CASE";
-	case TokenKind::CAST: return "CAST";
 	case TokenKind::CONST: return "CONST";
 	case TokenKind::CONTINUE: return "CONTINUE";
-	case TokenKind::DECL: return "DECL";
 	case TokenKind::DEFAULT: return "DEFAULT";
 	case TokenKind::DO: return "DO";
 	case TokenKind::ELSE: return "ELSE";
@@ -42,7 +40,6 @@ TokenKindCStr(TokenKind kind)
 	case TokenKind::OF: return "OF";
 	case TokenKind::RETURN: return "RETURN";
 	case TokenKind::SIZEOF: return "SIZEOF";
-	case TokenKind::STATIC: return "STATIC";
 	case TokenKind::STRUCT: return "STRUCT";
 	case TokenKind::SWITCH: return "SWITCH";
 	case TokenKind::THEN: return "THEN";
@@ -104,10 +101,8 @@ getCStr(TokenKind kind)
 	case TokenKind::ASSERT: return "assert";
 	case TokenKind::BREAK: return "break";
 	case TokenKind::CASE: return "case";
-	case TokenKind::CAST: return "cast";
 	case TokenKind::CONST: return "const";
 	case TokenKind::CONTINUE: return "continue";
-	case TokenKind::DECL: return "decl";
 	case TokenKind::DEFAULT: return "default";
 	case TokenKind::DO: return "do";
 	case TokenKind::ELSE: return "else";
@@ -124,7 +119,6 @@ getCStr(TokenKind kind)
 	case TokenKind::OF: return "of";
 	case TokenKind::RETURN: return "return";
 	case TokenKind::SIZEOF: return "sizeof";
-	case TokenKind::STATIC: return "static";
 	case TokenKind::STRUCT: return "struct";
 	case TokenKind::SWITCH: return "switch";
 	case TokenKind::THEN: return "then";

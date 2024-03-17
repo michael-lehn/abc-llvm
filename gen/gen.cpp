@@ -1,7 +1,6 @@
 #include <iostream>
 
 #include "llvm/MC/TargetRegistry.h"
-#include "llvm/Passes/StandardInstrumentations.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/TargetParser/Host.h"
@@ -70,11 +69,6 @@ init(const char *name, int optimizationLevel)
 	assert(llvmFPM);
 	llvmFPM->addPass(llvm::SimplifyCFGPass());
 	assert(llvmFPM);
-
-	llvm::PassBuilder pb;
-	pb.registerModuleAnalyses(*llvmMAM);
-	pb.registerFunctionAnalyses(*llvmFAM);
-	pb.crossRegisterProxies(*llvmLAM, *llvmFAM, *llvmCGAM, *llvmMAM);
     }
 
     llvm::InitializeAllTargetInfos();
@@ -102,6 +96,16 @@ init(const char *name, int optimizationLevel)
 	    std::nullopt,
 	    llvm::CodeGenOpt::Level{optimizationLevel});
     llvmModule->setDataLayout(targetMachine->createDataLayout());
+
+    if (optimizationLevel > 0) {
+	llvm::PassBuilder pb{targetMachine};
+	pb.registerModuleAnalyses(*llvmMAM);
+	pb.registerLoopAnalyses(*llvmLAM);
+	pb.registerFunctionAnalyses(*llvmFAM);
+	pb.registerCGSCCAnalyses(*llvmCGAM);
+	pb.registerFunctionAnalyses(*llvmFAM);
+	pb.crossRegisterProxies(*llvmLAM, *llvmFAM, *llvmCGAM, *llvmMAM);
+    }
 }
 
 int

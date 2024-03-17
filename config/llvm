@@ -1,0 +1,2 @@
+CXX := g++
+llvm-config.cmd := llvm-config

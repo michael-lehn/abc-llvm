@@ -5,6 +5,6 @@ CPPFLAGS += -Wextra -Wall -I.
 
 include config/ar
 include config/nfs
--include config/cflags
+include config/llvm
 
 include zmk/make.mk

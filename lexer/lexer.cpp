@@ -68,10 +68,8 @@ init()
     keyword[UStr::create("assert")] = TokenKind::ASSERT;
     keyword[UStr::create("break")] = TokenKind::BREAK;
     keyword[UStr::create("case")] = TokenKind::CASE;
-    keyword[UStr::create("cast")] = TokenKind::CAST;
     keyword[UStr::create("const")] = TokenKind::CONST;
     keyword[UStr::create("continue")] = TokenKind::CONTINUE;
-    keyword[UStr::create("decl")] = TokenKind::DECL;
     keyword[UStr::create("default")] = TokenKind::DEFAULT;
     keyword[UStr::create("do")] = TokenKind::DO;
     keyword[UStr::create("else")] = TokenKind::ELSE;
@@ -88,7 +86,6 @@ init()
     keyword[UStr::create("of")] = TokenKind::OF;
     keyword[UStr::create("return")] = TokenKind::RETURN;
     keyword[UStr::create("sizeof")] = TokenKind::SIZEOF;
-    keyword[UStr::create("static")] = TokenKind::STATIC;
     keyword[UStr::create("struct")] = TokenKind::STRUCT;
     keyword[UStr::create("switch")] = TokenKind::SWITCH;
     keyword[UStr::create("then")] = TokenKind::THEN;

@@ -11,7 +11,7 @@ EXTRA_DIRS :=
 REFMAN :=
 
 BUILD :=
-VARIANT :=
+VARIANT := abc
 MODULE :=
 
 $(foreach v,$(wildcard */variant.mk */*/variant.mk),\
