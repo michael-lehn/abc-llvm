@@ -12,7 +12,7 @@ namespace abc { namespace lexer {
 Token token;
 
 static std::unordered_map<UStr, TokenKind> keyword;
-static std::set<UStr> includedFiles;
+static std::set<std::filesystem::path> includedFiles_;
 
 static bool isWhiteSpace(int ch);
 static bool isDecDigit(int ch);
@@ -63,6 +63,7 @@ isLetter(int ch)
 void
 init()
 {
+    includedFiles_.clear();
     keyword[UStr::create("array")] = TokenKind::ARRAY;
     keyword[UStr::create("assert")] = TokenKind::ASSERT;
     keyword[UStr::create("break")] = TokenKind::BREAK;
@@ -91,6 +92,12 @@ init()
     keyword[UStr::create("type")] = TokenKind::TYPE;
     keyword[UStr::create("union")] = TokenKind::UNION;
     keyword[UStr::create("while")] = TokenKind::WHILE;
+}
+
+const std::set<std::filesystem::path> &
+includedFiles()
+{
+    return includedFiles_;
 }
 
 static TokenKind
@@ -638,15 +645,15 @@ parseAddDirective()
 	if (macro::ignoreToken()) {
 	    return;
 	}
-	if (includedFiles.contains(token.processedVal)) {
+	if (includedFiles_.contains(token.processedVal.c_str())) {
 	    return;
 	}
-	includedFiles.insert(token.processedVal);
-	if (!openInputfile(token.processedVal.c_str(), false)) {
+	if (!openInputfile(token.processedVal.c_str())) {
 	    error::out() << token.loc
 		<< ": can not open file " << token.val << std::endl;
 	    error::fatal();
 	}
+	includedFiles_.insert(token.processedVal.c_str());
     } else if (token.kind == TokenKind::LESS) {
 	std::string str;
 	while (reader->ch != '>') {
@@ -654,12 +661,17 @@ parseAddDirective()
 	    nextCh();
 	}
 	nextCh();
-	auto path = UStr::create(str);
-	if (macro::ignoreToken() || includedFiles.contains(path)) {
+	auto path = searchFile(str);
+	if (path.empty()) {
+	    error::out() << token.loc
+		<< ": can not find file " << path << std::endl;
+	    error::fatal();
+	}
+	if (macro::ignoreToken() || includedFiles_.contains(path)) {
 	    return;
 	}
-	includedFiles.insert(path);
-	if (!openInputfile(path.c_str(), true)) {
+	includedFiles_.insert(path);
+	if (!openInputfile(path)) {
 	    error::out() << token.loc
 		<< ": can not open file " << path << std::endl;
 	    error::fatal();

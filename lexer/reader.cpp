@@ -1,7 +1,6 @@
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>
-#include <filesystem>
 
 #include "lexer.hpp"
 #include "reader.hpp"
@@ -76,37 +75,23 @@ nextCh()
     }
 }
 
-// if path is nullptr read from stdin
-bool
-openInputfile(const char *path_, bool search)
+std::filesystem::path
+searchFile(std::filesystem::path path)
 {
-    std::filesystem::path path;
-
-    if (path_) {
-	path = path_;
-
-	bool found = false;
-	if (search) {
-	    for (auto sp: searchPath) {
-		sp /= path;
-		std::ifstream f(sp.c_str());
-		if (f.good()) {
-		    found = true;
-		    path = sp;
-		    break;
-		}
-	    }
-	} else {
-	    std::ifstream f(path.c_str());
-	    if (f.good()) {
-		found = true;
-	    }
-	}
-	if (!found) {
-	    return false;
+    for (auto sp: searchPath) {
+	sp /= path;
+	std::ifstream f(sp.c_str());
+	if (f.good()) {
+	    return sp;
 	}
     }
+    return "";
+}
 
+// if path is nullptr read from stdin
+bool
+openInputfile(std::filesystem::path path)
+{
     if (reader) {
 	assert(reader->valid());
 	openReader.push_back(std::move(reader));
@@ -123,7 +108,7 @@ openInputfile(const char *path_, bool search)
 }
 
 void
-addSearchPath(const char *path)
+addSearchPath(std::filesystem::path path)
 {
     searchPath.push_back(path);
 }

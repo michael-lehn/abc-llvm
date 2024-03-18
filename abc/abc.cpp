@@ -1,6 +1,7 @@
 #include <cstring>
 #include <filesystem>
 #include <iostream>
+#include <fstream>
 
 #include "gen/gen.hpp"
 #include "gen/print.hpp"
@@ -16,10 +17,11 @@ usage(const char *prog, int exit = 1)
     std::cerr << "usage: " << prog
 	<< "[ -o outfile ] "
 	<< "[ -c | -S | --emit-llvm ] "
+	<< "[ -Idir... ] "
 	<< "[ -O<level> ] "
+	<< "[ -MD -MP -MT <target> -MF <file>] "
 	<< "[ --help ] "
 	<< "[ --print-ast ] "
-	<< "[ -Idir... ] "
 	<< "infile" << std::endl;
     std::exit(exit);
 }
@@ -34,11 +36,15 @@ main(int argc, char *argv[])
     gen::FileType outputFileType = gen::OBJECT_FILE;
     bool printAst = false;
     int optimizationLevel = 0;
+    bool createDep = false;
+    bool createPhonyDep = false;
+    std::filesystem::path depTarget;
+    std::filesystem::path depFile;
 
-#ifdef OS_SUPPORT
+#ifdef SUPPORT_OS
 #   define str(s) #s
 #   define xstr(s) str(s)
-    abc::lexer::macro::defineDirective(abc::UStr::create(xstr(OS_SUPPORT)));
+    abc::lexer::macro::defineDirective(abc::UStr::create(xstr(SUPPORT_OS)));
 #   undef str
 #   undef xstr
 #endif // OS_SUPPORT
@@ -85,6 +91,33 @@ main(int argc, char *argv[])
 			abc::lexer::addSearchPath(&argv[i][2]);
 		    } else {
 			usage(argv[0]);
+		    }
+		    break;
+		case 'M':
+		    switch (argv[i][2]) {
+			default:
+			    usage(argv[0]);
+			    break;
+			case 'D':
+			    createDep = true;
+			    break;
+			case 'P':
+			    createPhonyDep = true;
+			    break;
+			case 'T':
+			    if (i + 1 < argc) {
+				depTarget = argv[++i];
+			    } else {
+				usage(argv[0]);
+			    }
+			    break;
+			case 'F':
+			    if (i + 1 < argc) {
+				depFile = argv[++i];
+			    } else {
+				usage(argv[0]);
+			    }
+			    break;
 		    }
 		    break;
 		default:
@@ -153,6 +186,31 @@ main(int argc, char *argv[])
 	if (std::system(linker.c_str())) {
 	    std::cerr << "linker error\n";
 	    std::exit(1);
+	}
+    }
+
+    if (createDep) {
+	if (depFile.empty()) {
+	    depFile = infile.stem().replace_extension("d");
+	}
+	std::fstream fs;
+	fs.open(depFile, std::ios::out);
+	if (!fs.good()) {
+	    std::cerr << "Could not open file: " << depFile << "\n";
+	    std::exit(1);
+	}
+	if (depTarget.empty()) {
+	    depTarget = outfile;
+	}
+	fs << depTarget.c_str() << ": " << infile.c_str() << " ";
+	for (const auto &file: abc::lexer::includedFiles()) {
+	    fs << file.c_str() << " ";
+	}
+	fs << "\n";
+	if (createPhonyDep) {
+	    for (const auto &file: abc::lexer::includedFiles()) {
+		fs << file.c_str() << ":\n";
+	    }
 	}
     }
 }

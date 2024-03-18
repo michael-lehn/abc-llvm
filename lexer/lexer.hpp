@@ -1,6 +1,8 @@
 #ifndef LEXER_LEXER_HPP
 #define LEXER_LEXER_HPP
 
+#include <filesystem>
+
 #include "loc.hpp"
 #include "reader.hpp"
 #include "token.hpp"
@@ -8,10 +10,13 @@
 
 namespace abc { namespace lexer {
 
+void init();
+const std::set<std::filesystem::path> &includedFiles();
+
 extern Token token;
 
-void init();
 TokenKind getToken();
+
 
 } } // namespace lexer, abc
 

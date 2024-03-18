@@ -1,6 +1,7 @@
 #ifndef LEXER_READER_HPP
 #define LEXER_READER_HPP
 
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -29,9 +30,11 @@ struct ReaderInfo {
 
 extern std::unique_ptr<ReaderInfo> reader;
 
-// if path is nullptr read from stdin
-bool openInputfile(const char *path, bool search = false);
-void addSearchPath(const char *path);
+std::filesystem::path searchFile(std::filesystem::path path);
+
+// if path is empty read from stdin
+bool openInputfile(std::filesystem::path path);
+void addSearchPath(std::filesystem::path path);
 
 // read next character and update reader
 char nextCh();
