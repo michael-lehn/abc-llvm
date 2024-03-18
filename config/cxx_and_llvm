@@ -24,8 +24,12 @@ ifneq ($(check_llvm),0)
     $(error Command '$(llvm-config.cmd)' was not found)
 endif
 
-llvm-config.version = $(shell $(llvm-config.cmd) --version)
+llvm-config.version := $(shell $(llvm-config.cmd) --version)
+llvm-config.version.major = $(firstword $(subst ., ,$(llvm-config.version)))
+
 
 $(info llvm-config.version = $(firstword $(subst ., ,$(llvm-config.version))))
+
+CPPFLAGS += -DLLVM_MAJOR_VERSION=$(llvm-config.version.major)
 
 

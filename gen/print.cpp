@@ -34,7 +34,7 @@ print(std::filesystem::path path, FileType fileType)
 
     llvm::legacy::PassManager pass;
     auto llvmFileType = fileType == OBJECT_FILE
-#if _LIBCPP_VERSION >= 180000
+#if LLVM_MAJOR_VERSION >= 18
         ? llvm::CodeGenFileType::ObjectFile
         : llvm::CodeGenFileType::AssemblyFile;
 #else
