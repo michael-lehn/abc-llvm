@@ -3,6 +3,11 @@
 #include <string>
 #include <unordered_map>
 
+#ifdef SUPPORT_SOLARIS
+// has to be included as first llvm header
+#include "llvm/Support/Solaris/sys/regset.h"
+#endif // SUPPORT_SOLARIS
+
 #include "llvm/Analysis/ConstantFolding.h"
 
 #include "type/integertype.hpp"

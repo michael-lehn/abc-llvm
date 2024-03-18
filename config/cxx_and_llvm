@@ -1,0 +1,31 @@
+include config/os
+
+ifeq (Darwin,$(ostype))
+    CXX ?= clang++
+    llvm-config.cmd ?= llvm-config
+else ifeq (SunOS,$(ostype))
+    CXX ?= clang++
+    llvm-config.cmd ?= llvm-config
+    CPPFLAGS += -DSOLARIS
+    CPPFLAGS += -D_GLIBCXX_BITS_SPECFUN_H
+endif
+
+check_cxx := $(shell which $(CXX) > /dev/null; echo $$?)
+check_llvm := $(shell which $(llvm-config.cmd) > /dev/null; echo $$?)
+
+# $(info check_cxx=$(check_cxx))
+# $(info check_llvm=$(check_llvm))
+
+ifneq ($(check_cxx),0)
+    $(error C++ compiler '$(CXX)' was not found)
+endif
+
+ifneq ($(check_llvm),0)
+    $(error Command '$(llvm-config.cmd)' was not found)
+endif
+
+llvm-config.version = $(shell $(llvm-config.cmd) --version)
+
+$(info llvm-config.version = $(firstword $(subst ., ,$(llvm-config.version))))
+
+

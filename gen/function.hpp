@@ -1,6 +1,11 @@
 #ifndef GEN_FUNCTION
 #define GEN_FUNCTION
 
+#ifdef SUPPORT_SOLARIS
+// has to be included as first llvm header
+#include "llvm/Support/Solaris/sys/regset.h"
+#endif // SUPPORT_SOLARIS
+
 #include "llvm/IR/Function.h"
 
 #include "type/type.hpp"

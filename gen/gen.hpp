@@ -1,6 +1,11 @@
 #ifndef GEN_GEN_HPP
 #define GEN_GEN_HPP
 
+#ifdef SUPPORT_SOLARIS
+// has to be included as first llvm header
+#include "llvm/Support/Solaris/sys/regset.h"
+#endif // SUPPORT_SOLARIS
+
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/IRBuilder.h"

@@ -7,6 +7,11 @@
 #include "gentype.hpp"
 #include "gen.hpp"
 
+#ifdef SUPPORT_SOLARIS
+// has to be included as first llvm header
+#include "llvm/Support/Solaris/sys/regset.h"
+#endif // SUPPORT_SOLARIS
+
 #include "llvm/IR/DerivedTypes.h"
 
 namespace gen {

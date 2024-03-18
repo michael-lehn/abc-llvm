@@ -1,0 +1,15 @@
+ifeq ($(ostype),)
+
+ostype := $(firstword $(shell uname -a))
+
+# $(info ostype = $(ostype))
+
+ifeq ($(ostype),)
+    $(info config/llvm could not detect OS)
+else ifeq (Darwin,$(ostype))
+    $(info config/llvm detected macOS)
+else ifeq (SunOS,$(ostype))
+    $(info config/llvm detected solaris)
+endif
+
+endif

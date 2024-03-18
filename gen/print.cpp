@@ -1,6 +1,11 @@
 #include <iostream>
 #include <system_error>
 
+#ifdef SUPPORT_SOLARIS
+// has to be included as first llvm header
+#include "llvm/Support/Solaris/sys/regset.h"
+#endif // SUPPORT_SOLARIS
+
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Support/FileSystem.h"
 
@@ -29,8 +34,14 @@ print(std::filesystem::path path, FileType fileType)
 
     llvm::legacy::PassManager pass;
     auto llvmFileType = fileType == OBJECT_FILE
+#if _LIBCPP_VERSION >= 180000
+        ? llvm::CodeGenFileType::ObjectFile
+        : llvm::CodeGenFileType::AssemblyFile;
+#else
 	? llvm::CodeGenFileType::CGFT_ObjectFile
 	: llvm::CodeGenFileType::CGFT_AssemblyFile;
+#endif
+
 
     if (targetMachine->addPassesToEmitFile(pass, f, nullptr, llvmFileType)) {
 	llvm::errs() << "can't emit a file of this type";

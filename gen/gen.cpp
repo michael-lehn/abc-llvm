@@ -1,5 +1,10 @@
 #include <iostream>
 
+#ifdef SUPPORT_SOLARIS
+// has to be included as first llvm header
+#include "llvm/Support/Solaris/sys/regset.h"
+#endif // SUPPORT_SOLARIS
+
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/TargetSelect.h"
@@ -93,8 +98,7 @@ init(const char *name, int optimizationLevel)
 	    "",
 	    llvm::TargetOptions{},
 	    llvm::Reloc::PIC_,
-	    std::nullopt,
-	    llvm::CodeGenOpt::Level{optimizationLevel});
+	    std::nullopt);
     llvmModule->setDataLayout(targetMachine->createDataLayout());
 
     if (optimizationLevel > 0) {
