@@ -1,2 +1,11 @@
 CXX := g++
 llvm-config.cmd := llvm-config
+
+ostype := $(shell echo $$OSTYPE)
+
+ifeq ($(patsubst darwin%,,$(ostype)),)
+    $(info config/llvm detected macOS)
+else ifeq ($(patsubst solaris%,,$(ostype)),)
+    $(info config/llvm detected solaris)
+    CPPFLAGS += -D_GLIBCXX_BITS_SPECFUN_H
+endif
