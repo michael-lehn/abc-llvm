@@ -4,7 +4,6 @@ ifeq (Darwin,$(ostype))
     CXX ?= clang++
     llvm-config.cmd ?= llvm-config
 else ifeq (SunOS,$(ostype))
-    CC ?= clang
     CXX ?= clang++
     llvm-config.cmd ?= llvm-config
     CPPFLAGS += -DSUPPORT_SOLARIS
