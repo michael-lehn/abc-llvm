@@ -13,9 +13,13 @@ extern fn getchar(): int;
 extern fn putchar(ch : int);
 extern fn strtol(str: -> char, end: -> char, base: int): long;
 
-@define stdin __stdinp
-@define stdout __stdoutp
-@define stderr __stderrp
+@if defined __OS__Darwin__
+    @define stdin __stdinp
+    @define stdout __stdoutp
+    @define stderr __stderrp
+@elseif defined __OS_Solaris
+@else
+@endif
 
 struct FILE;
 extern stdin: -> FILE;

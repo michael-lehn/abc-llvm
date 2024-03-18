@@ -3,4 +3,3 @@ enum BoolConst : bool
     false,
     true
 };
-
