@@ -47,7 +47,7 @@ main(int argc, char *argv[])
     abc::lexer::macro::defineDirective(abc::UStr::create(xstr(SUPPORT_OS)));
 #   undef str
 #   undef xstr
-#endif // OS_SUPPORT
+#endif // SUPPORT_OS
 
     for (int i = 1; i < argc; ++i) {
 	if (argv[i][0] == '-') {
@@ -178,7 +178,15 @@ main(int argc, char *argv[])
     }
 
     if (createExecutable) {
+#ifdef SUPPORT_CC
+#   define str(s) #s
+#   define xstr(s) str(s)
+	std::string linker = xstr(SUPPORT_CC) " -o ";
+#   undef str
+#   undef xstr
+#else
 	std::string linker = "cc -o ";
+#endif // SUPPORT_CC
 	linker += executable.c_str();
 	linker += " ";
 	linker += outfile.c_str();

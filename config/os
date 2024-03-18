@@ -12,6 +12,7 @@ else ifeq (Darwin,$(ostype))
 else ifeq (SunOS,$(ostype))
     $(info config/llvm detected OS is Solaris)
     CPPFLAGS += -DSUPPORT_OS=__SunOS__
+    CPPFLAGS += -DSUPPORT_CC=clang
 endif
 
 endif
