@@ -5,8 +5,10 @@
 #include "gen/gen.hpp"
 #include "gen/print.hpp"
 #include "lexer/lexer.hpp"
+#include "lexer/macro.hpp"
 #include "lexer/reader.hpp"
 #include "parser/parser.hpp"
+
 
 void
 usage(const char *prog, int exit = 1)
@@ -32,6 +34,14 @@ main(int argc, char *argv[])
     gen::FileType outputFileType = gen::OBJECT_FILE;
     bool printAst = false;
     int optimizationLevel = 0;
+
+#ifdef OS_SUPPORT
+#   define str(s) #s
+#   define xstr(s) str(s)
+    abc::lexer::macro::defineDirective(abc::UStr::create(xstr(OS_SUPPORT)));
+#   undef str
+#   undef xstr
+#endif // OS_SUPPORT
 
     for (int i = 1; i < argc; ++i) {
 	if (argv[i][0] == '-') {

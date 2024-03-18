@@ -1,5 +1,5 @@
-#ifndef LEXER_USTR_HPP
-#define LEXER_USTR_HPP
+#ifndef UTIL_USTR_HPP
+#define UTIL_USTR_HPP
 
 #include <cstdint>
 #include <functional>
@@ -81,4 +81,4 @@ struct std::hash<abc::UStr>
 };
 
 
-#endif // LEXER_USTR_HPP
+#endif // UTIL_USTR_HPP

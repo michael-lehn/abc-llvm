@@ -47,6 +47,7 @@ TokenKindCStr(TokenKind kind)
 	case TokenKind::UNION: return "UNION";
 	case TokenKind::WHILE: return "WHILE";
 
+	case TokenKind::NEWLINE: return "NEWLINE";
 	case TokenKind::DOT: return "DOT";
 	case TokenKind::DOT3: return "DOT3";
 	case TokenKind::SEMICOLON: return "SEMICOLON";
@@ -126,6 +127,7 @@ getCStr(TokenKind kind)
 	case TokenKind::UNION: return "union";
 	case TokenKind::WHILE: return "while";
 
+	case TokenKind::NEWLINE: return "\\n";
 	case TokenKind::DOT: return ".";
 	case TokenKind::DOT3: return "...";
 	case TokenKind::SEMICOLON: return ";";

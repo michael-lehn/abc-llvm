@@ -48,6 +48,7 @@ enum class TokenKind {
     ENUM,
 
     // punctuators
+    NEWLINE,
     DOT,
     DOT3,
     SEMICOLON,

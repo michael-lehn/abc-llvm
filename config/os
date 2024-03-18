@@ -8,8 +8,10 @@ ifeq ($(ostype),)
     $(info config/llvm could not detect OS)
 else ifeq (Darwin,$(ostype))
     $(info config/llvm detected macOS)
+    CPPFLAGS += -DOS_SUPPORT=__Darwin__
 else ifeq (SunOS,$(ostype))
     $(info config/llvm detected solaris)
+    CPPFLAGS += -DOS_SUPPORT=__SunOS__
 endif
 
 endif

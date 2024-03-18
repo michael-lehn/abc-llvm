@@ -1,25 +1,24 @@
 #include <iostream>
 #include <string>
 
+#include "util/ustr.hpp"
+
 #include "error.hpp"
 #include "lexer.hpp"
-#include "util/ustr.hpp"
+#include "macro.hpp"
 
 namespace abc { namespace lexer {
 
 Token token;
 
 static std::unordered_map<UStr, TokenKind> keyword;
-static std::unordered_map<UStr, UStr> define;
 static std::set<UStr> includedFiles;
-
 
 static bool isWhiteSpace(int ch);
 static bool isDecDigit(int ch);
 static bool isOctDigit(int ch);
 static bool isLetter(int ch);
-static UStr applyDefine(UStr ident);
-static TokenKind getToken_();
+static TokenKind getToken_(bool skipNewline = true);
 static TokenKind setToken(TokenKind kind, std::string processed = "");
 
 static unsigned hexToVal(char ch);
@@ -94,19 +93,6 @@ init()
     keyword[UStr::create("while")] = TokenKind::WHILE;
 }
 
-static UStr
-applyDefine(UStr ident)
-{
-    auto val = ident;
-    while (define.contains(val)) {
-	val = define.at(val);
-	if (ident == val) {
-	    break;
-	}
-    }
-    return val;
-}
-
 static TokenKind
 setToken(TokenKind kind, std::string processed)
 {
@@ -122,21 +108,30 @@ setToken(TokenKind kind, std::string processed)
 TokenKind
 getToken()
 {
-    getToken_();
-    auto newVal = applyDefine(token.val);
-    if (token.kind == TokenKind::IDENTIFIER && keyword.contains(newVal)) {
-	token = Token(token.loc, keyword.at(newVal), newVal);
-    } else if (newVal != token.val) {
-	token = Token(token.loc, token.kind, newVal);
-    }
+    do {
+	UStr newVal;
+	do {
+	    getToken_();
+	    // if no replacement can be applied we found a new token
+	    if (!macro::expandMacro(token.val, newVal)) {
+		break;
+	    }
+	    // if it was replaced with an empty string get next token
+	} while (newVal.empty());
+	if (token.kind == TokenKind::IDENTIFIER && keyword.contains(newVal)) {
+	    token = Token(token.loc, keyword.at(newVal), newVal);
+	} else if (newVal != token.val) {
+	    token = Token(token.loc, token.kind, newVal);
+	}
+    } while (macro::ignoreToken());
     return token.kind;
 }
 
 TokenKind
-getToken_()
+getToken_(bool skipNewline)
 {
     // skip white spaces and newlines
-    while (isWhiteSpace(reader->ch) || reader->ch == '\n') {
+    while (isWhiteSpace(reader->ch) || (skipNewline && reader->ch == '\n')) {
         nextCh();
     }
 
@@ -185,6 +180,9 @@ getToken_()
             }
             return setToken(TokenKind::DECIMAL_LITERAL);
         }
+    } else if (reader->ch == '\n') {
+	nextCh();
+	return setToken(TokenKind::NEWLINE);
     } else if (reader->ch == '.') {
 	nextCh();
 	if (reader->ch == '.') {
@@ -593,33 +591,53 @@ parseCharacterLiteral()
 static void
 parseAddDirective()
 {
+    auto ifdefKw = UStr::create("ifdef");
+    auto endifKw = UStr::create("endif");
     auto defineKw = UStr::create("define");
 
     // ch == '@'
     nextCh();
     getToken_();
-    if (token.kind == TokenKind::IDENTIFIER && token.val == defineKw) {
-	getToken_();
+    if (token.kind == TokenKind::IDENTIFIER && token.val == ifdefKw) {
+	getToken_(false);
+	if (token.kind != TokenKind::IDENTIFIER) {
+	    error::out() << token.loc
+		<< ": expected identifier" << std::endl;
+	    error::fatal();
+	}
+	if (!macro::ifndefDirective(token.val)) {
+	    error::out() << token.loc
+		<< ": sorry, nested @ifdef are not supported" << std::endl;
+	    error::fatal();
+	}
+    } else if (token.kind == TokenKind::IDENTIFIER && token.val == endifKw) {
+	macro::endifDirective();
+    } else if (token.kind == TokenKind::IDENTIFIER && token.val == defineKw) {
+	getToken_(false);
 	if (token.kind != TokenKind::IDENTIFIER) {
 	    error::out() << token.loc
 		<< ": expected identifier" << std::endl;
 	    error::fatal();
 	}
 	auto from = token.val;
-	if (define.contains(from)) {
+	getToken_(false);
+	UStr to;
+	if (token.kind == TokenKind::IDENTIFIER) {
+	    to = token.val;
+	} else if (token.kind != TokenKind::NEWLINE) {
+	    error::out() << token.loc
+		<< ": expected identifier or newline" << std::endl;
+	    error::fatal();
+	}
+	if (!macro::defineDirective(from, to)) {
 	    error::out() << token.loc
 		<< ": macro '" << from << "' already defined" << std::endl;
 	    error::fatal();
 	}
-	getToken_();
-	if (token.kind != TokenKind::IDENTIFIER) {
-	    error::out() << token.loc
-		<< ": expected identifier" << std::endl;
-	    error::fatal();
-	}
-	auto to = token.val;
-	define[from] = to;
     } else if (token.kind == TokenKind::STRING_LITERAL) {
+	if (macro::ignoreToken()) {
+	    return;
+	}
 	if (includedFiles.contains(token.processedVal)) {
 	    return;
 	}
@@ -637,7 +655,7 @@ parseAddDirective()
 	}
 	nextCh();
 	auto path = UStr::create(str);
-	if (includedFiles.contains(path)) {
+	if (macro::ignoreToken() || includedFiles.contains(path)) {
 	    return;
 	}
 	includedFiles.insert(path);
@@ -648,7 +666,7 @@ parseAddDirective()
 	}
     } else {
 	error::out() << token.loc
-	    << ": expected 'define' of filename" << std::endl;
+	    << ": expected directive or filename" << std::endl;
 	error::fatal();
     }
 }
