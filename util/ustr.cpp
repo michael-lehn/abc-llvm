@@ -17,6 +17,12 @@ UStr::UStr(const std::string &s)
 {
 }
 
+void
+UStr::init()
+{
+    ustrSet.clear();
+}
+
 UStr
 UStr::create(const char *s)
 {

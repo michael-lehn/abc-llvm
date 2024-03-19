@@ -29,6 +29,12 @@ VoidType::create(bool constFlag, UStr name)
     return &*voidSet.insert(ty).first;
 }
 
+void 
+VoidType::init()
+{
+    voidSet.clear();
+}
+
 const Type *
 VoidType::create()
 {

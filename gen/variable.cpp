@@ -143,6 +143,13 @@ localVariableDefinition(const char *ident, const abc::Type *varType)
 }
 
 void
+forgetAllVariables()
+{
+    stringMap.clear();
+    forgetAllLocalVariables();
+}
+
+void
 forgetAllLocalVariables()
 {
     localVariable.clear();

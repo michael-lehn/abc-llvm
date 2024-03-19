@@ -11,7 +11,9 @@ class VoidType : public Type
 	VoidType(bool constFlag, UStr name);
 
 	static const Type *create(bool constFlag, UStr name);
+
     public:
+	static void init();
 	static const Type *create();
 
 	const Type *getConst() const override;

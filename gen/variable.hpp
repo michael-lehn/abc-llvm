@@ -17,6 +17,7 @@ Value loadStringAddress(const char *str);
 Value localVariableDefinition(const char *ident, const abc::Type *varType);
 
 
+void forgetAllVariables();
 void forgetAllLocalVariables();
 
 bool hasConstantAddress(const char *ident);

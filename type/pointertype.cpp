@@ -35,6 +35,12 @@ PointerType::create(const Type *refType, bool constFlag)
     return &*pointerSet.insert(ty).first;
 }
 
+void 
+PointerType::init()
+{
+    pointerSet.clear();
+}
+
 const Type *
 PointerType::create(const Type *refType)
 {

@@ -19,6 +19,7 @@ class TypeAlias : public Type
 	const Type *type;
 
     public:
+	static void init();
 	static const Type *create(UStr name, const Type *type);
 
 	bool isAlias() const override;

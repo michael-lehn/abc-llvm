@@ -40,6 +40,12 @@ ArrayType::create(const Type *refType, std::size_t dim, bool constFlag)
     return &*arraySet.insert(ty).first;
 }
 
+void 
+ArrayType::init()
+{
+    arraySet.clear();
+}
+
 const Type *
 ArrayType::create(const Type *refType, std::size_t dim)
 {

@@ -16,6 +16,7 @@ class StructType : public Type
 	std::vector<const Type *> memberType_;
 
     public:
+	static void init();
 	static Type *createIncomplete(UStr name);
 
 	std::size_t id() const override;

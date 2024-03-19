@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "macro.hpp"
 
 namespace abc { namespace lexer { namespace macro {
@@ -6,6 +8,12 @@ static std::unordered_map<UStr, UStr> define;
 static bool insideIfdef;
 static bool ignoreToken_;
 
+void
+init()
+{
+    define.clear();
+    insideIfdef = ignoreToken_ = false;
+}
 
 bool
 ignoreToken()

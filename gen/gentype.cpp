@@ -21,6 +21,12 @@ static std::unordered_map<const abc::Type *, llvm::Type *> typeMap;
 static std::vector<llvm::Type *>
     convert(const std::vector<const abc::Type *> &type);
 
+void
+initTypeMap()
+{
+    typeMap.clear();
+}
+
 llvm::Type *
 convert(const abc::Type *abcType)
 {

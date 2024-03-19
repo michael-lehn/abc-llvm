@@ -21,6 +21,7 @@ class FunctionType : public Type
 				  bool varg, bool constFlag, UStr alias);
 
     public:
+	static void init();
 	static const Type *create(const Type *ret,
 				  std::vector<const Type *> &&arg,
 				  bool varg = false);

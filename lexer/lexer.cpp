@@ -664,7 +664,7 @@ parseAddDirective()
 	auto path = searchFile(str);
 	if (path.empty()) {
 	    error::out() << token.loc
-		<< ": can not find file " << path << std::endl;
+		<< ": can not find file " << str << std::endl;
 	    error::fatal();
 	}
 	if (macro::ignoreToken() || includedFiles_.contains(path)) {

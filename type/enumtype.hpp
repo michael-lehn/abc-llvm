@@ -18,6 +18,7 @@ class EnumType : public Type
 	std::vector<std::int64_t> constValue;
 
     public:
+	static void init();
 	static Type *createIncomplete(UStr name, const Type *intType);
 
 	std::size_t id() const override;

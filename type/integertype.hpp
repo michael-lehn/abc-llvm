@@ -17,6 +17,7 @@ class IntegerType : public Type
 				  bool constFlag);
 
     public:
+	static void init();
 	static const Type *createBool();
 	static const Type *createChar();
 	static const Type *createInt();

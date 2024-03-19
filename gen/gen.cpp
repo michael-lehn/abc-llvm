@@ -15,6 +15,8 @@
 #include "llvm/Transforms/Scalar/SimplifyCFG.h"
 
 #include "gen.hpp"
+#include "gentype.hpp"
+#include "variable.hpp"
 
 namespace gen {
 
@@ -24,14 +26,11 @@ std::unique_ptr<llvm::IRBuilder<>> llvmBuilder;
 llvm::BasicBlock *llvmBB;
 llvm::TargetMachine *targetMachine;
 
-// for optimization
-std::unique_ptr<llvm::FunctionPassManager> llvmFPM;
-std::unique_ptr<llvm::LoopAnalysisManager> llvmLAM;
-std::unique_ptr<llvm::FunctionAnalysisManager> llvmFAM;
-std::unique_ptr<llvm::CGSCCAnalysisManager> llvmCGAM;
-std::unique_ptr<llvm::ModuleAnalysisManager> llvmMAM;
-std::unique_ptr<llvm::PassInstrumentationCallbacks> llvmPIC;
-std::unique_ptr<llvm::StandardInstrumentations> llvmSI;
+/*
+std::vector<std::unique_ptr<llvm::LLVMContext>> llvmContextOld;
+std::vector<std::unique_ptr<llvm::Module>> llvmModuleOld;
+std::vector<std::unique_ptr<llvm::IRBuilder<>>> llvmBuilderOld;
+*/
 
 
 const char *moduleName;
@@ -40,41 +39,23 @@ static int optimizationLevel;
 void
 init(const char *name, int optimizationLevel)
 {
+    forgetAllVariables();
+    initTypeMap();
     moduleName = name ? name : "llvm";
-    llvmContext = std::make_unique<llvm::LLVMContext>();
+    /*
+    if (llvmContext) {
+	llvmContextOld.push_back(std::move(llvmContext));
+	llvmModuleOld.push_back(std::move(llvmModule));
+	llvmBuilderOld.push_back(std::move(llvmBuilder));
+    }
+    */
+
+    if (!llvmContext) {
+	llvmContext = std::make_unique<llvm::LLVMContext>();
+    }
     llvmModule = std::make_unique<llvm::Module>(moduleName, *llvmContext);
     llvmBuilder = std::make_unique<llvm::IRBuilder<>>(*llvmContext);
-
-    if (optimizationLevel > 0) {
-	assert(!llvmFPM);
-
-	llvmFPM = std::make_unique<llvm::FunctionPassManager>();
-	assert(llvmFPM);
-	llvmLAM = std::make_unique<llvm::LoopAnalysisManager>();
-	assert(llvmLAM);
-	llvmFAM = std::make_unique<llvm::FunctionAnalysisManager>();
-	assert(llvmFAM);
-	llvmCGAM = std::make_unique<llvm::CGSCCAnalysisManager>();
-	assert(llvmCGAM);
-	llvmMAM = std::make_unique<llvm::ModuleAnalysisManager>();
-	assert(llvmMAM);
-	llvmPIC = std::make_unique<llvm::PassInstrumentationCallbacks>();
-	assert(llvmPIC);
-	llvmSI = std::make_unique<llvm::StandardInstrumentations>(
-			*llvmContext, /*DebugLogging*/ true);
-	assert(llvmSI);
-
-	llvmSI->registerCallbacks(*llvmPIC, llvmMAM.get());
-	assert(llvmSI);
-	llvmFPM->addPass(llvm::InstCombinePass());
-	assert(llvmFPM);
-	llvmFPM->addPass(llvm::ReassociatePass());
-	assert(llvmFPM);
-	llvmFPM->addPass(llvm::GVNPass());
-	assert(llvmFPM);
-	llvmFPM->addPass(llvm::SimplifyCFGPass());
-	assert(llvmFPM);
-    }
+    llvmBB = nullptr;
 
     llvm::InitializeAllTargetInfos();
     llvm::InitializeNativeTarget();
@@ -100,16 +81,6 @@ init(const char *name, int optimizationLevel)
 	    llvm::Reloc::PIC_,
 	    std::nullopt);
     llvmModule->setDataLayout(targetMachine->createDataLayout());
-
-    if (optimizationLevel > 0) {
-	llvm::PassBuilder pb{targetMachine};
-	pb.registerModuleAnalyses(*llvmMAM);
-	pb.registerLoopAnalyses(*llvmLAM);
-	pb.registerFunctionAnalyses(*llvmFAM);
-	pb.registerCGSCCAnalyses(*llvmCGAM);
-	pb.registerFunctionAnalyses(*llvmFAM);
-	pb.crossRegisterProxies(*llvmLAM, *llvmFAM, *llvmCGAM, *llvmMAM);
-    }
 }
 
 int

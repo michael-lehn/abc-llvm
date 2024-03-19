@@ -41,6 +41,12 @@ IntegerType::create(std::size_t numBits, bool signed_, bool constFlag)
     return &*intSet.insert(ty).first;
 }
 
+void 
+IntegerType::init()
+{
+    intSet.clear();
+}
+
 const Type *
 IntegerType::createBool()
 {

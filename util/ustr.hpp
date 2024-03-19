@@ -20,6 +20,7 @@ class UStr
 
     public:
 
+	static void init();
 	static UStr create(const char *s);
 	static UStr create(const std::string &s);
 

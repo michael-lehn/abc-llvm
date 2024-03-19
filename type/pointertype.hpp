@@ -14,6 +14,7 @@ class PointerType : public Type
 	static const Type *create(const Type *refType, bool constFlag);
 
     public:
+	static void init();
 	static const Type *create(const Type *refType);
 
 	const Type *getConst() const override;

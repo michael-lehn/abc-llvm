@@ -31,6 +31,12 @@ NullptrType::create(bool constFlag, UStr name)
     return &*nullptrSet.insert(ty).first;
 }
 
+void 
+NullptrType::init()
+{
+    nullptrSet.clear();
+}
+
 const Type *
 NullptrType::create()
 {

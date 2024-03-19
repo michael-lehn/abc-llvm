@@ -5,6 +5,7 @@
 
 namespace abc { namespace lexer { namespace macro {
 
+void init();
 bool ignoreToken();
 bool ifndefDirective(const UStr identifier);
 void endifDirective();

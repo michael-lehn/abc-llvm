@@ -8,8 +8,8 @@
 
 namespace abc {
 
-static std::unordered_map<std::size_t, EnumType> enumSet;
-static std::unordered_map<std::size_t, EnumType> enumConstSet;
+static std::unordered_map<std::size_t, EnumType> enumMap;
+static std::unordered_map<std::size_t, EnumType> enumConstMap;
 
 //------------------------------------------------------------------------------
 
@@ -19,16 +19,23 @@ EnumType::EnumType(std::size_t id, UStr name, const Type *intType,
 {
 }
 
+void 
+EnumType::init()
+{
+    enumMap.clear();
+    enumConstMap.clear();
+}
+
 Type *
 EnumType::createIncomplete(UStr name, const Type *intType)
 {
     static std::size_t count;
     auto id = count++;
 
-    enumSet.emplace(id, EnumType{id, name, intType, false});
-    enumConstSet.emplace(id, EnumType{id, name, intType, true});
+    enumMap.emplace(id, EnumType{id, name, intType, false});
+    enumConstMap.emplace(id, EnumType{id, name, intType, true});
 
-    return &enumSet.at(id);
+    return &enumMap.at(id);
 }
 
 std::size_t
@@ -40,13 +47,13 @@ EnumType::id() const
 const Type *
 EnumType::getConst() const
 {
-    return &enumConstSet.at(id_);
+    return &enumConstMap.at(id_);
 }
 
 const Type *
 EnumType::getConstRemoved() const
 {
-    return &enumSet.at(id_);
+    return &enumMap.at(id_);
 }
 
 bool

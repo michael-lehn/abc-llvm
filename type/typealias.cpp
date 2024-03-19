@@ -13,6 +13,13 @@ TypeAlias::TypeAlias(std::size_t id, UStr name, const Type *type,
 {
 }
 
+void 
+TypeAlias::init()
+{
+    aliasSet.clear();
+    aliasConstSet.clear();
+}
+
 const Type *
 TypeAlias::create(UStr name, const Type *type)
 {

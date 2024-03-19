@@ -36,6 +36,12 @@ FunctionType::create(const Type *ret, std::vector<const Type *> &&param,
     return &*fnSet.insert(ty).first;
 }
 
+void 
+FunctionType::init()
+{
+    fnSet.clear();
+}
+
 const Type *
 FunctionType::create(const Type *ret, std::vector<const Type *> &&param,
 		     bool varg)

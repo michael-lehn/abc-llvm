@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <iostream>
 #include <fstream>
+#include <vector>
 
 #include "gen/gen.hpp"
 #include "gen/print.hpp"
@@ -9,7 +10,27 @@
 #include "lexer/macro.hpp"
 #include "lexer/reader.hpp"
 #include "parser/parser.hpp"
+#include "type/inittypesystem.hpp"
 
+#ifdef SUPPORT_CC
+#   define str(s) #s
+#   define xstr(s) str(s)
+    std::string ccCmd = xstr(SUPPORT_CC);
+#   undef str
+#   undef xstr
+#else
+    std::string ccCmd = "cc";
+#endif // SUPPORT_CC
+
+#ifdef SUPPORT_OS
+#   define str(s) #s
+#   define xstr(s) str(s)
+    std::string supportOs = xstr(SUPPORT_OS);
+#   undef str
+#   undef xstr
+#else
+    std::string supportOs;
+#endif // SUPPORT_OS
 
 void
 usage(const char *prog, int exit = 1)
@@ -29,7 +50,7 @@ usage(const char *prog, int exit = 1)
 int
 main(int argc, char *argv[])
 {
-    std::filesystem::path infile;
+    std::vector<std::filesystem::path> infile;
     std::filesystem::path outfile;
     bool createExecutable = true;
     std::filesystem::path executable = "a.out";
@@ -40,15 +61,7 @@ main(int argc, char *argv[])
     bool createPhonyDep = false;
     std::filesystem::path depTarget;
     std::filesystem::path depFile;
-
-#ifdef SUPPORT_OS
-#   define str(s) #s
-#   define xstr(s) str(s)
-    abc::lexer::macro::defineDirective(abc::UStr::create(xstr(SUPPORT_OS)));
-#   undef str
-#   undef xstr
-#endif // SUPPORT_OS
-
+    
     for (int i = 1; i < argc; ++i) {
 	if (argv[i][0] == '-') {
 	    switch (argv[i][1]) {
@@ -125,68 +138,109 @@ main(int argc, char *argv[])
 		    break;
 	    }
 	} else {
-	    if (infile.empty()) {
-		infile = argv[i];
-	    } else {
-		usage(argv[0]);
-	    }
+	    infile.push_back(argv[i]);
 	}
     }
     if (infile.empty()) {
-	usage(argv[0]);
-    }
-    if (createExecutable && !outfile.empty()) {
-	executable = outfile;
-	outfile.clear();
-    }
-    if (outfile.empty()) {
-	switch (outputFileType) {
-	    case gen::ASSEMBLY_FILE:
-		outfile = infile.filename().replace_extension("s");
-		break;
-	    case gen::OBJECT_FILE:
-		outfile = infile.filename().replace_extension("o");
-		break;
-	    case gen::LLVM_FILE:
-		outfile = infile.filename().replace_extension("ll");
-		break;
-	    default:
-		assert(0);
-		break;
-	}
-    }
-    if (createExecutable) {
-	outfile = std::filesystem::temp_directory_path() / outfile;
-    }
-
-    if (!abc::lexer::openInputfile(infile.c_str())) {
-	std::cerr << argv[0] << ": error: can not open '" << infile.c_str()
-	    << "'\n";
-	return 1;
-    }
-    abc::lexer::init();
-    gen::init(infile.stem().c_str(), optimizationLevel);
-
-    if (auto ast = abc::parser()) {
-	if (printAst) {
-	    ast->print();
-	}
-	ast->codegen();
-	gen::print(outfile.c_str(), outputFileType);
-    } else {
+	std::cerr << argv[0] << ": error: no input files\n";
 	std::exit(1);
     }
+    if (!outfile.empty()) {
+	if (createExecutable) {
+	    executable = outfile;
+	    outfile.clear();
+	} else if (infile.size() > 1) {
+	    std::cerr << argv[0] << ": error: cannot specify ";
+	    switch (outputFileType) {
+		case gen::LLVM_FILE:
+		    std::cerr << "--emit-llvm";
+		    break;
+		case gen::OBJECT_FILE:
+		    std::cerr << "-o";
+		    break;
+		case gen::ASSEMBLY_FILE:
+		    std::cerr << "-S";
+		    break;
+	    }
+	    std::cerr << " when generating multiple output files\n";
+	    std::exit(1);
+	}
+    }
+
+    bool useDefaultOutfile = outfile.empty();
+    for (std::size_t i = 0; i < infile.size(); ++i) {
+	if (useDefaultOutfile) {
+	    switch (outputFileType) {
+		case gen::ASSEMBLY_FILE:
+		    outfile = infile[i].filename().replace_extension("s");
+		    break;
+		case gen::OBJECT_FILE:
+		    outfile = infile[i].filename().replace_extension("o");
+		    break;
+		case gen::LLVM_FILE:
+		    outfile = infile[i].filename().replace_extension("ll");
+		    break;
+		default:
+		    assert(0);
+		    break;
+	    }
+	}
+	if (createExecutable) {
+	    outfile = std::filesystem::temp_directory_path() / outfile;
+	}
+
+	abc::initTypeSystem();
+	gen::init(infile[i].stem().c_str(), optimizationLevel);
+	abc::lexer::init();
+	abc::lexer::macro::init();
+
+	if (!abc::lexer::openInputfile(infile[i].c_str())) {
+	    std::cerr << argv[0] << ": error: can not open '"
+		<< infile[i].c_str() << "'\n";
+	    return 1;
+	}
+	if (!supportOs.empty()) {
+	    abc::lexer::macro::defineDirective(abc::UStr::create(supportOs));
+	}
+
+	if (auto ast = abc::parser()) {
+	    if (printAst) {
+		ast->print();
+	    }
+	    ast->codegen();
+	    gen::print(outfile.c_str(), outputFileType);
+	} else {
+	    std::exit(1);
+	}
+
+	if (createDep) {
+	    if (depFile.empty()) {
+		depFile = infile[i].stem().replace_extension("d");
+	    }
+	    std::fstream fs;
+	    fs.open(depFile, std::ios::out);
+	    if (!fs.good()) {
+		std::cerr << "Could not open file: " << depFile << "\n";
+		std::exit(1);
+	    }
+	    if (depTarget.empty()) {
+		depTarget = outfile;
+	    }
+	    fs << depTarget.c_str() << ": " << infile[i].c_str() << " ";
+	    for (const auto &file: abc::lexer::includedFiles()) {
+		fs << file.c_str() << " ";
+	    }
+	    fs << "\n";
+	    if (createPhonyDep) {
+		for (const auto &file: abc::lexer::includedFiles()) {
+		    fs << file.c_str() << ":\n";
+		}
+	    }
+	}
+    }
 
     if (createExecutable) {
-#ifdef SUPPORT_CC
-#   define str(s) #s
-#   define xstr(s) str(s)
-	std::string linker = xstr(SUPPORT_CC) " -o ";
-#   undef str
-#   undef xstr
-#else
-	std::string linker = "cc -o ";
-#endif // SUPPORT_CC
+	std::string linker = ccCmd + " -o ";
 	linker += executable.c_str();
 	linker += " ";
 	linker += outfile.c_str();
@@ -197,28 +251,4 @@ main(int argc, char *argv[])
 	}
     }
 
-    if (createDep) {
-	if (depFile.empty()) {
-	    depFile = infile.stem().replace_extension("d");
-	}
-	std::fstream fs;
-	fs.open(depFile, std::ios::out);
-	if (!fs.good()) {
-	    std::cerr << "Could not open file: " << depFile << "\n";
-	    std::exit(1);
-	}
-	if (depTarget.empty()) {
-	    depTarget = outfile;
-	}
-	fs << depTarget.c_str() << ": " << infile.c_str() << " ";
-	for (const auto &file: abc::lexer::includedFiles()) {
-	    fs << file.c_str() << " ";
-	}
-	fs << "\n";
-	if (createPhonyDep) {
-	    for (const auto &file: abc::lexer::includedFiles()) {
-		fs << file.c_str() << ":\n";
-	    }
-	}
-    }
 }

@@ -18,6 +18,13 @@ StructType::StructType(std::size_t id, UStr name, bool constFlag)
 {
 }
 
+void 
+StructType::init()
+{
+    structSet.clear();
+    structConstSet.clear();
+}
+
 Type *
 StructType::createIncomplete(UStr name)
 {

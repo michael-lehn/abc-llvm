@@ -17,6 +17,7 @@ class ArrayType : public Type
 				  bool constFlag);
 
     public:
+	static void init();
 	static const Type *create(const Type *refType, std::size_t dim);
 
 	const Type *getConst() const override;

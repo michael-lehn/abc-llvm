@@ -27,15 +27,6 @@ extern std::unique_ptr<llvm::IRBuilder<>> llvmBuilder;
 extern llvm::BasicBlock *llvmBB;
 extern llvm::TargetMachine *targetMachine;
 
-// for optimization
-extern std::unique_ptr<llvm::FunctionPassManager> llvmFPM;
-extern std::unique_ptr<llvm::FunctionAnalysisManager> llvmFAM;
-extern std::unique_ptr<llvm::FunctionAnalysisManager> llvmFAM;
-extern std::unique_ptr<llvm::CGSCCAnalysisManager> llvmCGAM;
-extern std::unique_ptr<llvm::ModuleAnalysisManager> llvmMAM;
-extern std::unique_ptr<llvm::PassInstrumentationCallbacks> llvmPIC;
-extern std::unique_ptr<llvm::StandardInstrumentations> llvmSI;
-
 extern const char *moduleName;
 
 void init(const char *name = nullptr, int optimizationLevel = 0);

@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>
+#include <iostream>
 
 #include "lexer.hpp"
 #include "reader.hpp"
@@ -16,9 +17,7 @@ ReaderInfo::ReaderInfo()
 ReaderInfo::ReaderInfo(const char *path)
     : ch{0}, path{UStr::create(path)}, val{} , infile{path}, in{nullptr}
 {
-    if (infile.is_open()) {
-	in = &infile;
-    }
+    in = infile.is_open() ? &infile : nullptr;
 }
 
 bool
