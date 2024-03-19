@@ -3,6 +3,9 @@ include config/os
 ifeq (Darwin,$(ostype))
     CXX ?= clang++
     llvm-config.cmd ?= llvm-config
+else ifeq (Linux,$(ostype))
+    CXX ?= clang++-17
+    llvm-config.cmd ?= llvm-config-17
 else ifeq (SunOS,$(ostype))
     CXX ?= clang++
     llvm-config.cmd ?= llvm-config
