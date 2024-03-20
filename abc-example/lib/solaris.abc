@@ -1,0 +1,10 @@
+@ <stdio.hdr>
+
+global __SunOS__no_warning_for_no_symbols: int;
+
+@ifdef __SunOS__
+extern __iob: array[3] of FILE;
+global stdin: -> FILE = &__iob[0];
+global stdout: -> FILE = &__iob[1];
+global stderr: -> FILE = &__iob[2];
+@endif
