@@ -46,7 +46,7 @@ usage(const char *prog, int exit = 1)
 	<< "[ -MD -MP -MT <target> -MF <file>] "
 	<< "[ --help ] "
 	<< "[ --print-ast ] "
-	<< "infile" << std::endl;
+	<< "infile..." << std::endl;
     std::exit(exit);
 }
 
