@@ -79,13 +79,11 @@ functionDefinitionBegin(const char *ident, const abc::Type *fnType,
     functionBuildingInfo.retVal = nullptr;
     functionBuildingInfo.bbClosed = false;
 
-    std::cerr << ">> ok: ident = " << ident << "\n";
     for (std::size_t i = 0; i < param.size(); ++i) {
 	//std::cerr << ">> i = " << i << "\n";
 	auto addr = localVariableDefinition(param[i], fnType->paramType()[i]);
 	store(fn->getArg(i), addr);
     }
-    std::cerr << "<< ok\n";
 
     if (!retType->isVoid()) {
 	functionBuildingInfo.retVal = localVariableDefinition(".retVal",

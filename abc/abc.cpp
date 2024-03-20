@@ -39,6 +39,8 @@ usage(const char *prog, int exit = 1)
 	<< "[ -o outfile ] "
 	<< "[ -c | -S | --emit-llvm ] "
 	<< "[ -Idir... ] "
+	<< "[ -Ldir... ] "
+	<< "[ -llibrary ] "
 	<< "[ -O<level> ] "
 	<< "[ -MD -MP -MT <target> -MF <file>] "
 	<< "[ --help ] "
@@ -54,7 +56,9 @@ main(int argc, char *argv[])
     std::filesystem::path outfile;
     bool createExecutable = true;
     std::filesystem::path executable = "a.out";
+    std::vector<std::filesystem::path> objFile;
     gen::FileType outputFileType = gen::OBJECT_FILE;
+    std::string ldFlags;
     bool printAst = false;
     int optimizationLevel = 0;
     bool createDep = false;
@@ -87,10 +91,10 @@ main(int argc, char *argv[])
 		    optimizationLevel = 3;
 		    break;
 		case 'o':
-		    if (outfile.empty() && !argv[i][2] && i + 1 < argc) {
+		    if (!argv[i][2] && i + 1 < argc) {
 			outfile = argv[i + 1];
 			++i;
-		    } else if (outfile.empty() && argv[i][2]) {
+		    } else if (argv[i][2]) {
 			outfile = &argv[i][2];
 		    } else {
 			usage(argv[0]);
@@ -102,6 +106,27 @@ main(int argc, char *argv[])
 			++i;
 		    } else if (argv[i][2]) {
 			abc::lexer::addSearchPath(&argv[i][2]);
+		    } else {
+			usage(argv[0]);
+		    }
+		    break;
+		case 'l':
+		    ldFlags += " -l";
+		    if (!argv[i][2] && i + 1 < argc) {
+			ldFlags += argv[i + 1];
+			++i;
+		    } else if (argv[i][2]) {
+			ldFlags += &argv[i][2];
+		    } else {
+			usage(argv[0]);
+		    }
+		    break;
+		case 'L':
+		    ldFlags += " -L";
+		    if (!argv[i][2] && i + 1 < argc) {
+			ldFlags += argv[i + 1];
+		    } else if (argv[i][2]) {
+			ldFlags += &argv[i][2];
 		    } else {
 			usage(argv[0]);
 		    }
@@ -209,6 +234,9 @@ main(int argc, char *argv[])
 	    }
 	    ast->codegen();
 	    gen::print(outfile.c_str(), outputFileType);
+	    if (outputFileType == gen::OBJECT_FILE) {
+		objFile.push_back(outfile);
+	    }
 	} else {
 	    std::exit(1);
 	}
@@ -242,8 +270,11 @@ main(int argc, char *argv[])
     if (createExecutable) {
 	std::string linker = ccCmd + " -o ";
 	linker += executable.c_str();
-	linker += " ";
-	linker += outfile.c_str();
+	for (const auto &obj: objFile) {
+	    linker += " ";
+	    linker += obj.c_str();
+	}
+	linker += ldFlags;
 
 	if (std::system(linker.c_str())) {
 	    std::cerr << "linker error\n";
