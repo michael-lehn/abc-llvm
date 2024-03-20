@@ -1,11 +1,9 @@
-ABC := ../../build/abc/abc
-ABCFLAGS := -I ../include
+CC := ../../build/abc/abc
+CFLAGS := -I ../include
 DEPFLAGS = -MD -MF $(dep.dir)/$(<F).d \
 	   -MT $(@:$(cpp.dir)/%.abc_cpp=$(obj.dir)/%.o) -MP
 
-src.c := $(wildcard *.c)
-obj.o := $(src.c:%.c=%.o)
-lib := $(obj.o)
+LDFLAGS += -L../lib -labc
 
 dep.dir := dep
 asm.dir := asm
@@ -29,13 +27,13 @@ dep := $(src.abc:%=$(dep.dir)/%.d) \
 all: $(target) $(xobj)
 
 $(asm.dir)/%.s :%.abc | $(asm.dir)
-	$(ABC) -S $(ABCFLAGS) $<
+	$(CC) -S $(CFLAGS) $<
 
 %.bc : %.abc
-	$(ABC) -B $(ABCFLAGS) $<
+	$(CC) -B $(CFLAGS) $<
 
 $(obj.dir)/%.o : %.abc | $(obj.dir) $(dep.dir)
-	$(ABC) -c $(ABCFLAGS) $(DEPFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) $(DEPFLAGS) $< -o $@
 
 x% : $(asm.dir)/x%.s
 x% : $(obj.dir)/x%.o
@@ -43,7 +41,6 @@ x% : $(obj.dir)/x%.o $(obj.abc)
 	$(LINK.o) $^ -o $@
 
 $(dep.dir): ; mkdir -p $@
-$(cpp.dir): ; mkdir -p $@
 $(asm.dir): ; mkdir -p $@
 $(obj.dir): ; mkdir -p $@
 
