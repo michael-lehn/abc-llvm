@@ -1,5 +1,5 @@
 CC := ../../build/abc/abc
-CFLAGS := -I ../include
+CFLAGS := -O3 -I ../include
 DEPFLAGS = -MD -MF $(dep.dir)/$(<F).d \
 	   -MT $(@:$(cpp.dir)/%.abc_cpp=$(obj.dir)/%.o) -MP
 

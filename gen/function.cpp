@@ -7,6 +7,7 @@
 #endif // SUPPORT_SOLARIS
 
 #include "llvm/IR/Verifier.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #include "constant.hpp"
 #include "function.hpp"
@@ -103,6 +104,14 @@ functionDefinitionEnd()
 
     bool wellFormed = true;
 
+    auto checkReturn = getLabel("checkReturn");
+    if (!functionBuildingInfo.bbClosed) {
+	jumpInstruction(checkReturn);
+    }
+
+    llvm::EliminateUnreachableBlocks(*functionBuildingInfo.fn);
+
+    /*
     // https://stackoverflow.com/a/53634733/909565
     for (auto &bb : *functionBuildingInfo.fn) {
 	auto *terminator = bb.getTerminator();
@@ -115,10 +124,16 @@ functionDefinitionEnd()
 	wellFormed = false;
 	llvmBuilder->CreateUnreachable();
     }
+    */
 
-    if (!functionBuildingInfo.bbClosed) {
-	jumpInstruction(functionBuildingInfo.leave);
+    defineLabel(checkReturn);
+    if (checkReturn->hasNPredecessorsOrMore(1)) {
+	wellFormed = functionBuildingInfo.fn->getReturnType()->isVoidTy();
+	if (!wellFormed) {
+	    llvmBuilder->CreateUnreachable();
+	}
     }
+    jumpInstruction(functionBuildingInfo.leave);
 
     defineLabel(functionBuildingInfo.leave);
     if (functionBuildingInfo.retType->isVoid()) {

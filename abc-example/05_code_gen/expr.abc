@@ -75,6 +75,7 @@ fn evalExpr(expr: -> const Expr): i64
 		    return symtabGet(expr->primary.ident);
 		default:
 		    assert(0);
+		    return 0;
 	    }
 	case EXPR_BINARY:
 	    switch (expr->binary.op) {
@@ -100,10 +101,12 @@ fn evalExpr(expr: -> const Expr): i64
 			 / evalExpr(expr->binary.right);
 		default:
 		    assert(0);
+		    return 0;
 	    }
 	    break;
 	default:
 	    assert(0);
+	    return 0;
     }
 }
 
@@ -128,6 +131,7 @@ fn loadExpr(expr: -> const Expr): GenReg
 		    }
 		default:
 		    assert(0);
+		    return 0;
 	    }
 	case EXPR_BINARY:
 	    {
@@ -154,11 +158,13 @@ fn loadExpr(expr: -> const Expr): GenReg
 			return genAluInstr(GEN_DIV, left, right);
 		    default:
 			assert(0);
+			return 0;
 		}
 	    }
 	    break;
 	default:
 	    assert(0);
+	    return 0;
     }
 }
 
