@@ -37,6 +37,7 @@ usage(const char *prog, int exit = 1)
 {
     std::cerr << "usage: " << prog
 	<< "[ -o outfile ] "
+	<< "[ -v ] "
 	<< "[ -c | -S | --emit-llvm ] "
 	<< "[ -Idir... ] "
 	<< "[ -Ldir... ] "
@@ -65,6 +66,7 @@ main(int argc, char *argv[])
     bool createPhonyDep = false;
     std::filesystem::path depTarget;
     std::filesystem::path depFile;
+    bool verbose = false;
     
     for (int i = 1; i < argc; ++i) {
 	if (argv[i][0] == '-') {
@@ -78,6 +80,9 @@ main(int argc, char *argv[])
 			outputFileType = gen::LLVM_FILE;
 			createExecutable = false;
 		    }
+		    break;
+		case 'v':
+		    verbose = true;
 		    break;
 		case 'c':
 		    outputFileType = gen::OBJECT_FILE;
@@ -227,6 +232,9 @@ main(int argc, char *argv[])
 		asmCmd +=  outfile.c_str();
 		asmCmd += " ";
 		asmCmd += infile[i].c_str();
+		if (verbose) {
+		    std::cerr << asmCmd.c_str() << "\n";
+		}
 		if (std::system(asmCmd.c_str())) {
 		    std::exit(1);
 		}
@@ -259,6 +267,22 @@ main(int argc, char *argv[])
 		ast->print();
 	    }
 	    ast->codegen();
+	    if (verbose) {
+		std::cerr << argv[0];
+		switch (outputFileType) {
+		    case gen::ASSEMBLY_FILE:
+			std::cerr << " -S ";
+			break;
+		    case gen::OBJECT_FILE:
+			std::cerr << " -c ";
+			break;
+		    case gen::LLVM_FILE:
+			std::cerr << " --emit-llvm ";
+			break;
+		}
+		std::cerr << infile[i].c_str();
+		std::cerr << " -o " << outfile.c_str() << "\n";
+	    }
 	    gen::print(outfile.c_str(), outputFileType);
 	    if (outputFileType == gen::OBJECT_FILE) {
 		objFile.push_back(outfile);
@@ -294,15 +318,18 @@ main(int argc, char *argv[])
     }
 
     if (createExecutable) {
-	std::string linker = ccCmd + " -o ";
-	linker += executable.c_str();
+	std::string linkerCmd = ccCmd + " -o ";
+	linkerCmd += executable.c_str();
 	for (const auto &obj: objFile) {
-	    linker += " ";
-	    linker += obj.c_str();
+	    linkerCmd += " ";
+	    linkerCmd += obj.c_str();
 	}
-	linker += ldFlags;
+	linkerCmd += ldFlags;
 
-	if (std::system(linker.c_str())) {
+	if (verbose) {
+	    std::cerr << linkerCmd.c_str() << "\n";
+	}
+	if (std::system(linkerCmd.c_str())) {
 	    std::cerr << "linker error\n";
 	    std::exit(1);
 	}
