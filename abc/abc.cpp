@@ -213,6 +213,33 @@ main(int argc, char *argv[])
 	if (createExecutable) {
 	    outfile = std::filesystem::temp_directory_path() / outfile;
 	}
+	if (infile[i].extension() == ".o") {
+	    objFile.push_back(infile[i]);
+	    continue;
+	}
+	if (infile[i].extension() == ".s") {
+	    if (outputFileType == gen::LLVM_FILE) {
+		std::cerr << argv[0] << ": error: can not convert "
+		    << infile[i] << " to " << outfile << "\n";
+		std::exit(1);
+	    } else if (outputFileType == gen::OBJECT_FILE) {
+		std::string asmCmd = ccCmd + " -c -o ";
+		asmCmd +=  outfile.c_str();
+		asmCmd += " ";
+		asmCmd += infile[i].c_str();
+		if (std::system(asmCmd.c_str())) {
+		    std::exit(1);
+		}
+		objFile.push_back(outfile);
+		continue;
+	    }
+	    continue;
+	}
+	if (infile[i].extension() != ".abc") {
+	    ldFlags += " ";
+	    ldFlags += infile[i];
+	    continue;
+	}
 
 	abc::initTypeSystem();
 	gen::init(infile[i].stem().c_str(), optimizationLevel);
@@ -222,7 +249,7 @@ main(int argc, char *argv[])
 	if (!abc::lexer::openInputfile(infile[i].c_str())) {
 	    std::cerr << argv[0] << ": error: can not open '"
 		<< infile[i].c_str() << "'\n";
-	    return 1;
+	    std::exit(1);
 	}
 	if (!supportOs.empty()) {
 	    abc::lexer::macro::defineDirective(abc::UStr::create(supportOs));
@@ -281,5 +308,4 @@ main(int argc, char *argv[])
 	    std::exit(1);
 	}
     }
-
 }
