@@ -26,13 +26,6 @@ std::unique_ptr<llvm::IRBuilder<>> llvmBuilder;
 llvm::BasicBlock *llvmBB;
 llvm::TargetMachine *targetMachine;
 
-/*
-std::vector<std::unique_ptr<llvm::LLVMContext>> llvmContextOld;
-std::vector<std::unique_ptr<llvm::Module>> llvmModuleOld;
-std::vector<std::unique_ptr<llvm::IRBuilder<>>> llvmBuilderOld;
-*/
-
-
 const char *moduleName;
 static int optimizationLevel;
 
@@ -42,13 +35,6 @@ init(const char *name, int optimizationLevel)
     forgetAllVariables();
     initTypeMap();
     moduleName = name ? name : "llvm";
-    /*
-    if (llvmContext) {
-	llvmContextOld.push_back(std::move(llvmContext));
-	llvmModuleOld.push_back(std::move(llvmModule));
-	llvmBuilderOld.push_back(std::move(llvmBuilder));
-    }
-    */
 
     if (!llvmContext) {
 	llvmContext = std::make_unique<llvm::LLVMContext>();

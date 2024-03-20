@@ -63,6 +63,7 @@ isLetter(int ch)
 void
 init()
 {
+    macro::init();
     includedFiles_.clear();
     keyword[UStr::create("array")] = TokenKind::ARRAY;
     keyword[UStr::create("assert")] = TokenKind::ASSERT;

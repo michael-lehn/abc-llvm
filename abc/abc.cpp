@@ -244,7 +244,6 @@ main(int argc, char *argv[])
 	abc::initTypeSystem();
 	gen::init(infile[i].stem().c_str(), optimizationLevel);
 	abc::lexer::init();
-	abc::lexer::macro::init();
 
 	if (!abc::lexer::openInputfile(infile[i].c_str())) {
 	    std::cerr << argv[0] << ": error: can not open '"
