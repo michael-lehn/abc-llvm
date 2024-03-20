@@ -27,6 +27,22 @@ print(std::filesystem::path path, FileType fileType)
 	std::exit(1);
     }
 
+    llvm::LoopAnalysisManager LAM;
+    llvm::FunctionAnalysisManager FAM;
+    llvm::CGSCCAnalysisManager CGAM;
+    llvm::ModuleAnalysisManager MAM;
+
+    llvm::PassBuilder PB{targetMachine};
+    PB.registerModuleAnalyses(MAM);
+    PB.registerCGSCCAnalyses(CGAM);
+    PB.registerFunctionAnalyses(FAM);
+    PB.registerLoopAnalyses(LAM);
+    PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
+
+    llvm::ModulePassManager MPM
+	= PB.buildPerModuleDefaultPipeline(getOptimizationLevel());
+    MPM.run(*llvmModule, MAM);
+
     if (fileType == LLVM_FILE) {
 	llvmModule->print(f, nullptr);
 	return;

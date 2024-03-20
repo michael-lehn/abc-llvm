@@ -37,7 +37,7 @@ void functionDefinitionBegin(const char *ident, const abc::Type *fnType,
 			     const std::vector<const char *> &arg,
 			     bool externalLinkage);
 
-void functionDefinitionEnd();
+bool functionDefinitionEnd();
 
 Value functionCall(Value fnAddr, const abc::Type *fnType,
 		   const std::vector<Value> &arg);

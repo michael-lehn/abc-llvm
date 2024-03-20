@@ -6,9 +6,10 @@
 #include "llvm/Support/Solaris/sys/regset.h"
 #endif // SUPPORT_SOLARIS
 
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/IRBuilder.h"
+#include "llvm/Passes/OptimizationLevel.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/StandardInstrumentations.h"
 #include "llvm/Target/TargetMachine.h"
@@ -29,8 +30,9 @@ extern llvm::TargetMachine *targetMachine;
 
 extern const char *moduleName;
 
-void init(const char *name = nullptr, int optimizationLevel = 0);
-int  getOptimizationLevel();
+void init(const char *name = nullptr,
+	  llvm::OptimizationLevel optLevel = llvm::OptimizationLevel::O0);
+llvm::OptimizationLevel  getOptimizationLevel();
 
 } // namespace gen
 

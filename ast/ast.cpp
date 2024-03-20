@@ -290,7 +290,10 @@ AstFuncDef::codegen()
     if (body) {
 	body->codegen();
     }
-    gen::functionDefinitionEnd();
+    if (!gen::functionDefinitionEnd()) {
+	error::out() << fnName.loc << ": warning: non-void function does not "
+	    << "return a value in all control paths\n";
+    }
 }
 
 /*

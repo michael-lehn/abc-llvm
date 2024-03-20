@@ -94,18 +94,33 @@ functionDefinitionBegin(const char *ident, const abc::Type *fnType,
     }
 }
 
-void
+bool
 functionDefinitionEnd()
 {
     assert(llvmBuilder);
     assert(functionBuildingInfo.fn);
     assert(functionBuildingInfo.leave);
 
+    bool wellFormed = true;
+
+    // https://stackoverflow.com/a/53634733/909565
+    for (auto &bb : *functionBuildingInfo.fn) {
+	auto *terminator = bb.getTerminator();
+	if (terminator != nullptr) {
+	    continue; // Well-formed
+	}
+	if (functionBuildingInfo.fn->getReturnType()->isVoidTy()) {
+	    continue; // Ok, return gets generated below
+	}
+	wellFormed = false;
+	llvmBuilder->CreateUnreachable();
+    }
+
     if (!functionBuildingInfo.bbClosed) {
 	jumpInstruction(functionBuildingInfo.leave);
     }
-    defineLabel(functionBuildingInfo.leave);
 
+    defineLabel(functionBuildingInfo.leave);
     if (functionBuildingInfo.retType->isVoid()) {
 	llvmBuilder->CreateRetVoid();
     } else {
@@ -113,6 +128,7 @@ functionDefinitionEnd()
 			    functionBuildingInfo.retType);
 	llvmBuilder->CreateRet(retVal);
     }
+
     llvm::verifyFunction(*functionBuildingInfo.fn);
 
     functionBuildingInfo.fn = nullptr; 
@@ -120,6 +136,7 @@ functionDefinitionEnd()
     functionBuildingInfo.retType = nullptr;
     functionBuildingInfo.retVal = nullptr;
     functionBuildingInfo.bbClosed = true;
+    return wellFormed;
 }
 
 Value

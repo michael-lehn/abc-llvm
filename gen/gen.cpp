@@ -27,11 +27,12 @@ llvm::BasicBlock *llvmBB;
 llvm::TargetMachine *targetMachine;
 
 const char *moduleName;
-static int optimizationLevel;
+static llvm::OptimizationLevel optimizationLevel;
 
 void
-init(const char *name, int optimizationLevel)
+init(const char *name, llvm::OptimizationLevel optLevel)
 {
+    optimizationLevel = optLevel;
     forgetAllVariables();
     initTypeMap();
     moduleName = name ? name : "llvm";
@@ -69,7 +70,7 @@ init(const char *name, int optimizationLevel)
     llvmModule->setDataLayout(targetMachine->createDataLayout());
 }
 
-int
+llvm::OptimizationLevel
 getOptimizationLevel()
 {
     return optimizationLevel;

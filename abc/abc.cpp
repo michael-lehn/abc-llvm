@@ -39,6 +39,7 @@ usage(const char *prog, int exit = 1)
 	<< "[ -o outfile ] "
 	<< "[ -v ] "
 	<< "[ -c | -S | --emit-llvm ] "
+	<< "[  -O0 | -O1 | -O2 | -O3 | -Os | -Oz ] "
 	<< "[ -Idir... ] "
 	<< "[ -Ldir... ] "
 	<< "[ -llibrary ] "
@@ -61,12 +62,12 @@ main(int argc, char *argv[])
     gen::FileType outputFileType = gen::OBJECT_FILE;
     std::string ldFlags;
     bool printAst = false;
-    int optimizationLevel = 0;
     bool createDep = false;
     bool createPhonyDep = false;
     std::filesystem::path depTarget;
     std::filesystem::path depFile;
     bool verbose = false;
+    llvm::OptimizationLevel optLevel = llvm::OptimizationLevel::O0;
     
     for (int i = 1; i < argc; ++i) {
 	if (argv[i][0] == '-') {
@@ -81,6 +82,31 @@ main(int argc, char *argv[])
 			createExecutable = false;
 		    }
 		    break;
+		case 'O':
+		    switch (argv[i][2]) {
+			default:
+			    usage(argv[0]);
+			    break;
+			case '0':
+			    optLevel = llvm::OptimizationLevel::O0;
+			    break;
+			case '1':
+			    optLevel = llvm::OptimizationLevel::O1;
+			    break;
+			case '2':
+			    optLevel = llvm::OptimizationLevel::O2;
+			    break;
+			case '3':
+			    optLevel = llvm::OptimizationLevel::O3;
+			    break;
+			case 's':
+			    optLevel = llvm::OptimizationLevel::Os;
+			    break;
+			case 'z':
+			    optLevel = llvm::OptimizationLevel::Oz;
+			    break;
+		    }
+		    break;
 		case 'v':
 		    verbose = true;
 		    break;
@@ -91,9 +117,6 @@ main(int argc, char *argv[])
 		case 'S':
 		    outputFileType = gen::ASSEMBLY_FILE;
 		    createExecutable = false;
-		    break;
-		case 'O':
-		    optimizationLevel = 3;
 		    break;
 		case 'o':
 		    if (!argv[i][2] && i + 1 < argc) {
@@ -250,7 +273,7 @@ main(int argc, char *argv[])
 	}
 
 	abc::initTypeSystem();
-	gen::init(infile[i].stem().c_str(), optimizationLevel);
+	gen::init(infile[i].stem().c_str(), optLevel);
 	abc::lexer::init();
 
 	if (!abc::lexer::openInputfile(infile[i].c_str())) {
