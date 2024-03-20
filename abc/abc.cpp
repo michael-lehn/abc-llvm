@@ -35,7 +35,7 @@
 void
 usage(const char *prog, int exit = 1)
 {
-    std::cerr << "usage: " << prog
+    std::cerr << "usage: " << prog << " "
 	<< "[ -o outfile ] "
 	<< "[ -v ] "
 	<< "[ -c | -S | --emit-llvm ] "
