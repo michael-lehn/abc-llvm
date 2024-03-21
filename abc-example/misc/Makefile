@@ -47,8 +47,8 @@ all: $(target) $(obj.abc)
 % : %.o $(lib)
 	$(LINK.o) $^ -o $@
 
-% : %.abc $(lib)
-	$(LINK.c)  $^ -o $@
+# % : %.abc $(lib)
+# 	$(LINK.c)  $^ -o $@
 
 $(dep.dir): ; mkdir -p $@
 
