@@ -14,6 +14,18 @@ void warning();
 
 bool expected(lexer::TokenKind kind);
 
+enum Color
+{
+    NORMAL,
+    BOLD, // normal bold
+    RED,
+    BLUE,
+    BOLD_RED,
+    BOLD_BLUE,
+};
+
+std::string setColor(Color color);
+
 std::ostream& location(const lexer::Loc &loc);
 
 } } // namespace error, abc

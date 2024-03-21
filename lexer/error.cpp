@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
+#include <unordered_map>
 
 #include "error.hpp"
 #include "lexer.hpp"
@@ -39,6 +40,21 @@ expected(lexer::TokenKind kind)
 	return false;
     }
     return true;
+}
+
+static std::unordered_map<Color, std::string> colorMap = {
+    { NORMAL, "\033[0m"},
+    { BOLD, "\033[0m" "\033[1;10m"},
+    { RED, "\033[0;31m"},
+    { BLUE, "\033[0;34m"},
+    { BOLD_RED, "\033[1;31m"},
+    { BOLD_BLUE, "\033[1;31m"},
+};
+
+std::string
+setColor(Color color)
+{
+    return colorMap.at(color);
 }
 
 static std::string
@@ -94,15 +110,6 @@ location(const lexer::Loc &loc)
 	    }
 	}
 	out << std::endl;
-    }
-    if (loc.from.line) {
-	if (loc.path.c_str()) {
-	    out << loc.path.c_str() << ":";
-	}
-	out << loc.from.line << '.' << loc.from.col << '-'
-	    << loc.to.line << '.' << loc.to.col;
-    } else {
-	out << "[internally created location]";
     }
     return out;
 }

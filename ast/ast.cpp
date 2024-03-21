@@ -334,11 +334,17 @@ AstVar::AstVar(lexer::Token varName, const Type *varType)
     auto addDecl = Symtab::addDeclaration(varName.loc, varName.val, varType);
     if (!addDecl.second) {
 	error::location(varName.loc);
-	error::out() << varName.loc << ": error: variable '" << varName.val
-	    << " already defined in this scope\n";
+	error::out() << error::setColor(error::BOLD) << varName.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error:"
+	    << error::setColor(error::BOLD)
+	    << " variable '" << varName.val
+	    << "' already defined in this scope\n"
+	    << error::setColor(error::NORMAL);
 	auto pev = Symtab::variable(varName.val, Symtab::CurrentScope);
 	error::location(pev->loc);
-	error::out() << ": previous definition\n";
+	error::out() << error::setColor(error::BOLD) << pev->loc
+	    << ": previous definition\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
     }
     if (addDecl.first) {
