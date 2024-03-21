@@ -39,8 +39,13 @@ parser()
 	top->append(std::move(decl));
     }
     if (token.kind != TokenKind::EOI) {
-	error::out() << token.loc << ": error: unexpected "
-	    << token.val.c_str() << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "unexpected "
+	    << token.val.c_str() << "\n"
+	    << error::setColor(error::NORMAL);
 	return nullptr;
     }
     getToken();
@@ -113,8 +118,12 @@ parseFunctionDeclarationOrDefinition()
 
     auto fnBody = parseBlock();
     if (!fnBody) {
-	error::out() << token.loc << ": expected ';' or compound statement"
-	    << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "expected ';' or compound statement\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -244,9 +253,12 @@ parseExternDeclaration()
     auto varDecl = parseExternVariableDeclaration();
 
     if (!fnType && !varDecl) {
-	error::out() << token.loc
-	    << ": error: expected extern function or variable declaration"
-	    << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "expected extern function or variable declaration\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }

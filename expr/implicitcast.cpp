@@ -31,8 +31,12 @@ ImplicitCast::create(ExprPtr &&expr, const Type *toType)
 	auto type = Type::convert(expr->type, toType);
 	if (!type) {
 	    error::location(loc);
-	    error::out() << loc << ": error: can not convert an expression of "
-		" type '" << expr->type << "' to type '" << toType << "'\n";
+	    error::out() << error::setColor(error::BOLD) << loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "can not convert an expression of "
+		" type '" << expr->type << "' to type '" << toType << "'\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return nullptr;
 	}

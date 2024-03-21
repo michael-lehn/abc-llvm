@@ -40,29 +40,41 @@ Member::create(ExprPtr &&structure, UStr member, lexer::Loc loc)
 	}
     } else if (structureType->isStruct() && !structureType->hasSize()) {
 	error::location(loc);
-	error::out() << loc << ": error: " << structureType
-	    << " is an incomplete struct\n";
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "'" << structureType
+	    << "' is an incomplete struct\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     } else {
 	error::location(loc);
-	error::out() << loc << ": error: type " << structureType
-	    << " is not a struct\n";
+	error::out() << error::setColor(error::BOLD) << loc
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "type " << structureType << " is not a struct\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
     if (!type) {
 	error::location(loc);
-	error::out() << loc << ": error: " << structure << " of type "
-	    << structure->type << " has no member " << member << "\n";
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << structure << " of type "
+	    << structure->type << " has no member " << member << "\n"
+	    << error::setColor(error::NORMAL);
 	if (structureType->isStruct()) {
-	    error::out() << "members are:\n";
+	    error::out() << error::setColor(error::BOLD) << "members are:\n";
 	    const auto &memberName = structureType->memberName();
 	    const auto &memberType = structureType->memberType();
 	    for (std::size_t i = 0; i < memberName.size(); ++i) {
 		error::out() << memberName[i] << " of type " << memberType[i]
 		    << "\n";
 	    }
+	    error::out() << error::setColor(error::NORMAL);
 	}
 	error::fatal();
 	return nullptr;

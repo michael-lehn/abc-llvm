@@ -129,11 +129,17 @@ Symtab::add(UStr name, symtab::Entry &&entry)
 	auto &found = scope.front()->at(name);
 	if (entry != found) {
 	    error::location(entry.loc);
-	    error::out() << entry.loc
-		<< ": error: incompatible redefinition\n";
+	    error::out() << error::setColor(error::BOLD) << entry.loc << ": "
+		<< ": " << error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "incompatible redefinition\n"
+		<< error::setColor(error::NORMAL);
 	    error::location(found.loc);
-	    error::out() << found.loc
-		<< ": error: previous definition\n";
+	    error::out() << error::setColor(error::BOLD) << found.loc << ": "
+		<< ": " << error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "previous definition\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return {nullptr, false};
 	}

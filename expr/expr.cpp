@@ -28,7 +28,11 @@ Expr::condition(gen::Label trueLabel, gen::Label falseLabel) const
 {
     if (!type->isScalar()) {
 	error::location(loc);
-	error::out() << loc << ": error: scalar required\n";
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "error: scalar required\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
     }
     auto zero = gen::getConstantZero(type);

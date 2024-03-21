@@ -250,8 +250,11 @@ parseBinary(int prec)
 	    auto right = parseBinary(p + 1);
             if (!right) {
 		error::location(token.loc);
-		error::out() << token.loc
-		    << ": error: expected non-empty expression\n";
+		error::out() << error::setColor(error::BOLD) << token.loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "expected non-empty expression\n"
+		    << error::setColor(error::NORMAL);
 		error::fatal();
             }
 	    expr = BinaryExpr::create(op, std::move(expr), std::move(right),
@@ -469,7 +472,11 @@ parsePrimary()
 	    return expr;
 	} else {
 	    error::location(tok.loc);
-	    error::out() << tok.loc << ": error undefined identifier\n";
+	    error::out() << error::setColor(error::BOLD) << tok.loc << ": "
+		<< ": " << error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "undefined identifier\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return nullptr;
 	}

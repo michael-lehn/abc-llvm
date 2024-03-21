@@ -22,7 +22,11 @@ ExplicitCast::create(ExprPtr &&expr, const Type *toType, lexer::Loc loc)
 {
     if (!expr) {
 	error::location(loc);
-	error::out() << loc << ": error: expected non-empty expression\n";
+	error::out() << error::setColor(error::BOLD) << loc
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << ": expected non-empty expression\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
     }
     assert(expr->type);
@@ -34,8 +38,12 @@ ExplicitCast::create(ExprPtr &&expr, const Type *toType, lexer::Loc loc)
 	auto type = Type::explicitCast(expr->type, toType);
 	if (!type) {
 	    error::location(loc);
-	    error::out() << loc << ": error: can not cast an expression of "
-		<< "type '" << expr->type << "' to type '" << toType << "'\n";
+	    error::out() << error::setColor(error::BOLD) << loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "can not cast an expression of "
+		<< "type '" << expr->type << "' to type '" << toType << "'\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return nullptr;
 	}

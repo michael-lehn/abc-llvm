@@ -68,12 +68,16 @@ CompoundExpr::create(std::vector<ExprPtr> &&exprVec, const Type *type,
 
     if (exprVec.size() > type->aggregateSize()) {
 	error::location(exprVec[type->aggregateSize()]->loc);
-	error::out() << exprVec[type->aggregateSize()]->loc
-	    << ": error: excess elements in "
+	error::out() << error::setColor(error::BOLD)
+	    << exprVec[type->aggregateSize()]->loc << ": "
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << ": excess elements in "
 	    << (type->isScalar() ? "scalar"
 				 : type->isArray() ? "array"
 						   : "struct")
-	    << " initializer\n";
+	    << " initializer\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
     }
     for (std::size_t i = 0; i < exprVec.size(); ++i) {

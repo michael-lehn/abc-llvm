@@ -128,11 +128,18 @@ binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	case BinaryExpr::Kind::DIV_ASSIGN:
 	case BinaryExpr::Kind::MOD_ASSIGN:
 	    if (left->type->hasConstFlag()) {
-		error::out() << left->loc
-		    << ": error: assignment of read-only variable '"
-		    << left << "'\n";
+		error::out() << error::setColor(error::BOLD) << left->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << ": assignment of read-only variable '"
+		    << left << "'\n"
+		    << error::setColor(error::NORMAL);
 	    } else if (!left->isLValue()) {
-		error::out() << left->loc << ": error: not an LValue\n";
+		error::out() << error::setColor(error::BOLD) << left->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << " not an LValue\n"
+		    << error::setColor(error::NORMAL);
 	    } else {
 		type = newLeftType = newRightType = left->type;
 	    }
@@ -183,12 +190,19 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
     switch (kind) {
 	case BinaryExpr::ASSIGN:
 	    if (left->type->hasConstFlag()) {
-		error::out() << left->loc
-		    << ": error: assignment of read-only variable '"
-		    << left << "'\n";
+		error::out() << error::setColor(error::BOLD) << left->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "assignment of read-only variable '"
+		    << left << "'\n"
+		    << error::setColor(error::NORMAL);
 		break;
 	    } else if (!left->isLValue()) {
-		error::out() << left->loc << ": error: not an LValue\n";
+		error::out() << error::setColor(error::BOLD) << left->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "not an LValue\n"
+		    << error::setColor(error::NORMAL);
 	    } else {
 		type = newLeftType = left->type;
 		newRightType = Type::convert(right->type, type);
@@ -196,7 +210,11 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	    break;
 	case BinaryExpr::Kind::INDEX:
 	    if (!right->type->isInteger()) {
-		error::out() << right->loc << ": integer expression expected\n";
+		error::out() << error::setColor(error::BOLD) << right->loc 
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "integer expression expected\n"
+		    << error::setColor(error::NORMAL);
 		error::fatal();
 		return binaryErr(kind, std::move(left), std::move(right), loc);
 	    } else if (!left->type->isNullptr()) {
@@ -207,14 +225,22 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		return std::make_tuple(std::move(left), std::move(right),
 				       elementType);
 	    } else {
-		error::out() << left->loc << ": dereferencing nullptr\n";
+		error::out() << error::setColor(error::BOLD) << left->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << ": dereferencing nullptr\n"
+		    << error::setColor(error::NORMAL);
 		error::fatal();
 		return binaryErr(kind, std::move(left), std::move(right), loc);
 	    }
 	case BinaryExpr::Kind::ADD_ASSIGN:
 	    if (right->type->isInteger()) {
 		if (!left->isLValue()) {
-		    error::out() << left->loc << ": error: not an LValue\n";
+		    error::out() << error::setColor(error::BOLD) << left->loc
+			<< ": " << error::setColor(error::BOLD_RED) << "error: "
+			<< error::setColor(error::BOLD)
+			<< ": not an LValue\n"
+			<< error::setColor(error::NORMAL);
 		} else {
 		    type = newLeftType = left->type;
 		    newRightType = right->type;
@@ -224,7 +250,11 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	case BinaryExpr::Kind::SUB_ASSIGN:
 	    if (right->type->isPointer()) {
 		if (!left->isLValue()) {
-		    error::out() << left->loc << ": error: not an LValue\n";
+		    error::out() << error::setColor(error::BOLD) << left->loc
+			<< ": " << error::setColor(error::BOLD_RED) << "error: "
+			<< error::setColor(error::BOLD)
+			<< "not an LValue\n"
+			<< error::setColor(error::NORMAL);
 		} else {
 		    type = IntegerType::createSigned(64);
 		    newLeftType = left->type;
@@ -285,7 +315,11 @@ binaryArray(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
     switch (kind) {
 	case BinaryExpr::Kind::INDEX:
 	    if (!right->type->isInteger()) {
-		error::out() << right->loc << ": integer expression expected\n";
+		error::out() << error::setColor(error::BOLD) << right->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << ": integer expression expected\n"
+		    << error::setColor(error::NORMAL);
 		error::fatal();
 		return binaryErr(kind, std::move(left), std::move(right), loc);
 	    } else {
@@ -306,13 +340,20 @@ binaryArray(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	    }
 	    if (left->type->hasConstFlag()) {
 		error::location(left->loc);
-		error::out() << left->loc
-		    << ": error: assignment of read-only variable '"
-		    << left << "'\n";
+		error::out() << error::setColor(error::BOLD) << left->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "assignment of read-only variable '"
+		    << left << "'\n"
+		    << error::setColor(error::NORMAL);
 		break;
 	    } else if (!left->isLValue()) {
 		error::location(left->loc);
-		error::out() << left->loc << ": error: not an LValue\n";
+		error::out() << error::setColor(error::BOLD) << left->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "not an LValue\n"
+		    << error::setColor(error::NORMAL);
 		break;
 	    } else {
 		right = ImplicitCast::create(std::move(right), left->type);
@@ -345,12 +386,19 @@ binaryStruct(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	case BinaryExpr::Kind::ASSIGN:
 	    if (left->type->hasConstFlag()) {
 		error::location(left->loc);
-		error::out() << left->loc
-		    << ": error: assignment of read-only variable '"
-		    << left << "'\n";
+		error::out() << error::setColor(error::BOLD) << left->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "assignment of read-only variable '"
+		    << left << "'\n"
+		    << error::setColor(error::NORMAL);
 	    } else if (!left->isLValue()) {
 		error::location(left->loc);
-		error::out() << left->loc << ": error: not an LValue\n";
+		error::out() << error::setColor(error::BOLD) << left->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "not an LValue\n"
+		    << error::setColor(error::NORMAL);
 	    } else {
 		newRightType = left->type;
 	    }
@@ -397,9 +445,11 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 	case UnaryExpr::POSTFIX_INC:
 	    if (child->type->hasConstFlag()) {
 		error::location(child->loc);
-		error::out() << child->loc
-		    << ": error: increment of read-only variable '" << child
-		    << "'\n";
+		error::out() << error::setColor(error::BOLD) << child->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "increment of read-only variable '" << child << "'\n"
+		    << error::setColor(error::NORMAL);
 		break;
 	    }
 	    // fall through
@@ -407,9 +457,11 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 	case UnaryExpr::POSTFIX_DEC:
 	    if (child->type->hasConstFlag()) {
 		error::location(child->loc);
-		error::out() << child->loc
-		    << ": error: decrement of read-only variable '" << child
-		    << "'\n";
+		error::out() << error::setColor(error::BOLD) << child->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "decrement of read-only variable '" << child << "'\n"
+		    << error::setColor(error::NORMAL);
 		break;
 	    }
 	    if (child->isLValue()) {
@@ -445,9 +497,12 @@ unaryErr(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 {
     if (loc) {
 	error::location(*loc);
-	error::out() << *loc
-	    << ": error: operator can not be applied to operand " << child
-	    << " of type '" << child->type << "'" << std::endl;
+	error::out() << error::setColor(error::BOLD) << *loc << ": "
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "operator can not be applied to operand " << child
+	    << " of type '" << child->type << "'\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
     }
     return std::make_pair(std::move(child), nullptr);

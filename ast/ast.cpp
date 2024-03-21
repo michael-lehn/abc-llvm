@@ -74,8 +74,11 @@ createFindLabel(std::unordered_map<UStr, gen::Label> &label)
 	if (auto astLabel = dynamic_cast<AstLabel *>(ast)) {
 	    if (label.contains(astLabel->labelName)) {
 		error::location(astLabel->loc);
-		error::out() << astLabel->loc
-		    << ": error: label already defined within function\n";
+		error::out() << error::setColor(error::BOLD) << astLabel->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "label already defined within function\n"
+		    << error::setColor(error::NORMAL);
 		error::fatal();
 	    } else {
 		label[astLabel->labelName] = astLabel->label;
@@ -93,8 +96,11 @@ createSetGotoLabel(const std::unordered_map<UStr, gen::Label> &label)
 	if (auto astLabel = dynamic_cast<AstGoto *>(ast)) {
 	    if (!label.contains(astLabel->labelName)) {
 		error::location(astLabel->loc);
-		error::out() << astLabel->loc
-		    << ": error: label not defined within function\n";
+		error::out() << error::setColor(error::BOLD) << astLabel->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << ": error: label not defined within function\n"
+		    << error::setColor(error::NORMAL);
 		error::fatal();
 	    } else {
 		astLabel->label = label.at(astLabel->labelName);
@@ -294,8 +300,12 @@ AstFuncDef::codegen()
     }
     if (!gen::functionDefinitionEnd()) {
 	error::location(fnName.loc);
-	error::out() << fnName.loc << ": error: non-void function does not "
-	    << "return a value in all control paths\n";
+	error::out() << error::setColor(error::BOLD) << fnName.loc
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "non-void function does not return a value in all control "
+	    << "paths\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
     }
 }
@@ -326,9 +336,12 @@ AstVar::AstVar(lexer::Token varName, const Type *varType)
     assert(varType);
     if (!varType->hasSize()) {
 	error::location(varName.loc);
-	error::out() << varName.loc
-	    << ": error: variable '" << varName.val
-	    << "' has incomplete type '" << varType << "'\n";
+	error::out() << error::setColor(error::BOLD) << varName.loc << ": "
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "variable '" << varName.val << "' has incomplete type '"
+	    << varType << "'\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
     }
     auto addDecl = Symtab::addDeclaration(varName.loc, varName.val, varType);
@@ -465,8 +478,11 @@ AstGlobalVar::codegen()
 	if (auto expr = var->getInitializerExpr()) {
 	    if (!expr->isConst()) {
 		error::location(expr->loc);
-		error::out() << expr->loc << ": error: initializer element "
-		    << "is not a compile-time constant\n";
+		error::out() << error::setColor(error::BOLD) << expr->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "initializer element is not a compile-time constant\n"
+		    << error::setColor(error::NORMAL);
 		error::fatal();
 	    } else {
 		initialValue = expr->loadConstant();
@@ -550,8 +566,11 @@ AstReturn::codegen()
     if (retType->isVoid()) {
 	if (expr) {
 	    error::location(expr->loc);
-	    error::out() << expr->loc
-		<< ": error: void function should not return a value\n";
+	    error::out() << error::setColor(error::BOLD) << expr->loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< ": void function should not return a value\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return;
 	}
@@ -559,8 +578,11 @@ AstReturn::codegen()
     } else {
 	if (!expr) {
 	    error::location(expr->loc);
-	    error::out() << expr->loc
-		<< ": error: non-void function should return a value\n";
+	    error::out() << error::setColor(error::BOLD) << expr->loc << ": "
+		<< ": " << error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< ": non-void function should return a value\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return;
 	}
@@ -587,8 +609,12 @@ AstGoto::codegen()
 {
     if (!label) {
 	error::location(loc);
-	error::out() << loc << ": error: no label '" << labelName.c_str()
-	    << "' within function\n";
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << " no label '" << labelName.c_str()
+	    << "' within function\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
     } else {
 	gen::jumpInstruction(label);
@@ -632,8 +658,11 @@ AstBreak::codegen()
 {
     if (!label) {
 	error::location(loc);
-	error::out() << loc
-	    << ": error: break statement not within loop or switch\n";
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << ": break statement not within loop or switch\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return;
     }
@@ -658,7 +687,11 @@ AstContinue::codegen()
 {
     if (!label) {
 	error::location(loc);
-	error::out() << loc << ": error: continue statement not within loop\n";
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "continue statement not within loop\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return;
     }
@@ -805,9 +838,12 @@ AstSwitch::appendCase(ExprPtr &&caseExpr_)
 {
     if (!caseExpr_ || !caseExpr_->isConst() || !caseExpr_->type->isInteger()) {
 	error::location(caseExpr_->loc);
-	error::out() << caseExpr_->loc
-	    << ": error: case expression has "
-	    << "to be a constant integer expression\n";
+	error::out() << error::setColor(error::BOLD) << caseExpr_->loc << ": "
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << ": case expression has "
+	    << "to be a constant integer expression\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
     }
     caseExpr_ = ImplicitCast::create(std::move(caseExpr_), expr->type);
@@ -1085,8 +1121,12 @@ AstTypeDecl::AstTypeDecl(lexer::Token name, const Type *type)
 	// identical alias for type
 	if (found->type->getUnalias() != type) {
 	    error::location(name.loc);
-	    error::out() << name.loc << ": error: redefinition of '"
-		<< name.val << "\n";
+	    error::out() << error::setColor(error::BOLD) << name.loc << ": "
+		<< ": " << error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "redefinition of '"
+		<< name.val << "\n"
+		<< error::setColor(error::NORMAL);
 	    error::out() << found->loc
 		<< ": note: previous definition is here\n";
 	    error::fatal();
@@ -1116,8 +1156,11 @@ AstEnumDecl::AstEnumDecl(lexer::Token name, const Type *intType)
 {
     if (!intType->isInteger() || intType->isEnum()) {
 	error::location(enumTypeName.loc);
-	error::out() << enumTypeName.loc
-	    << ": error: enum type has to be an integer type\n";
+	error::out() << error::setColor(error::BOLD) << enumTypeName.loc << ": "
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << ": enum type has to be an integer type\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
     }
 
@@ -1126,10 +1169,15 @@ AstEnumDecl::AstEnumDecl(lexer::Token name, const Type *intType)
 	// enum type
 	if (!found->type->isEnum() || found->type->hasSize()) {
 	    error::location(name.loc);
-	    error::out() << name.loc << ": error: redefinition of '"
-		<< name.val << "\n";
-	    error::out() << found->loc
-		<< ": note: previous definition is here\n";
+	    error::out() << error::setColor(error::BOLD) << name.loc << ": "
+		<< ": " << error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "redefinition of '"
+		<< name.val << "\n"
+		<< error::setColor(error::NORMAL);
+	    error::out() << error::setColor(error::BOLD) << found->loc
+		<< ": note: previous definition is here\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	} else {
 	    // grrh, const_cast! But we have to complete the type ...
@@ -1233,10 +1281,15 @@ AstStructDecl::AstStructDecl(lexer::Token name)
 	// struct type
 	if (!found->type->isStruct() || found->type->hasSize()) {
 	    error::location(name.loc);
-	    error::out() << name.loc << ": error: redefinition of '"
-		<< name.val << "\n";
-	    error::out() << found->loc
-		<< ": note: previous definition is here\n";
+	    error::out() << error::setColor(error::BOLD) << name.loc << ": "
+		<< ": " << error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "redefinition of '"
+		<< name.val << "\n"
+		<< error::setColor(error::NORMAL);
+	    error::out() << error::setColor(error::BOLD) << found->loc
+		<< ": note: previous definition is here\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	} else {
 	    // grrh, const_cast! But we have to complete the type ...

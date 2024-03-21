@@ -29,12 +29,22 @@ ConditionalExpr::create(ExprPtr cond, ExprPtr trueExpr, ExprPtr falseExpr,
     assert(falseExpr->type);
     auto type = Type::common(trueExpr->type, falseExpr->type);
     if (!type) {
-	error::out() << loc << ": error: can not combine expressions of type '"
-	    << trueExpr->type << "' and type '" << falseExpr->type << "'\n";
-	error::out() << trueExpr->loc << ": note: type '"
-	    << trueExpr->type << "'\n";
-	error::out() << falseExpr->loc << ": note: type '"
-	    << falseExpr->type << "'\n";
+	error::location(loc);
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "can not combine expressions of type '"
+	    << trueExpr->type << "' and type '" << falseExpr->type << "'\n"
+	    << error::setColor(error::NORMAL);
+	error::location(trueExpr->loc);
+	error::out() << error::setColor(error::BOLD) << trueExpr->loc
+	    << ": note: type '"
+	    << trueExpr->type << "'\n"
+	    << error::setColor(error::NORMAL);
+	error::location(falseExpr->loc);
+	error::out() << error::setColor(error::BOLD) << falseExpr->loc
+	    << ": note: type '" << falseExpr->type << "'\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     } else {
