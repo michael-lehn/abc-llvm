@@ -36,7 +36,7 @@ all: $(target) $(obj.abc)
 %.ll : %.abc
 	$(CC) --emit-llvm $(CFLAGS) $<
 
-%.o : %.abc
+%.o : %.abc | $(dep.dir)
 	$(CC) -c $(CFLAGS) $(DEPFLAGS) $< -o $@
 
 %.o : %.s
