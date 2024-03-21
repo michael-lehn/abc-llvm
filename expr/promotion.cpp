@@ -305,11 +305,13 @@ binaryArray(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		break;
 	    }
 	    if (left->type->hasConstFlag()) {
+		error::location(left->loc);
 		error::out() << left->loc
 		    << ": error: assignment of read-only variable '"
 		    << left << "'\n";
 		break;
 	    } else if (!left->isLValue()) {
+		error::location(left->loc);
 		error::out() << left->loc << ": error: not an LValue\n";
 		break;
 	    } else {
@@ -342,10 +344,12 @@ binaryStruct(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	    break;
 	case BinaryExpr::Kind::ASSIGN:
 	    if (left->type->hasConstFlag()) {
+		error::location(left->loc);
 		error::out() << left->loc
 		    << ": error: assignment of read-only variable '"
 		    << left << "'\n";
 	    } else if (!left->isLValue()) {
+		error::location(left->loc);
 		error::out() << left->loc << ": error: not an LValue\n";
 	    } else {
 		newRightType = left->type;
@@ -392,6 +396,7 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 	case UnaryExpr::PREFIX_INC:
 	case UnaryExpr::POSTFIX_INC:
 	    if (child->type->hasConstFlag()) {
+		error::location(child->loc);
 		error::out() << child->loc
 		    << ": error: increment of read-only variable '" << child
 		    << "'\n";
@@ -401,6 +406,7 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 	case UnaryExpr::PREFIX_DEC:
 	case UnaryExpr::POSTFIX_DEC:
 	    if (child->type->hasConstFlag()) {
+		error::location(child->loc);
 		error::out() << child->loc
 		    << ": error: decrement of read-only variable '" << child
 		    << "'\n";
@@ -438,6 +444,7 @@ static UnaryResult
 unaryErr(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 {
     if (loc) {
+	error::location(*loc);
 	error::out() << *loc
 	    << ": error: operator can not be applied to operand " << child
 	    << " of type '" << child->type << "'" << std::endl;

@@ -21,6 +21,7 @@ ExprPtr
 ExplicitCast::create(ExprPtr &&expr, const Type *toType, lexer::Loc loc)
 {
     if (!expr) {
+	error::location(loc);
 	error::out() << loc << ": error: expected non-empty expression\n";
 	error::fatal();
     }
@@ -32,6 +33,7 @@ ExplicitCast::create(ExprPtr &&expr, const Type *toType, lexer::Loc loc)
 	auto loc = expr->loc;
 	auto type = Type::explicitCast(expr->type, toType);
 	if (!type) {
+	    error::location(loc);
 	    error::out() << loc << ": error: can not cast an expression of "
 		<< "type '" << expr->type << "' to type '" << toType << "'\n";
 	    error::fatal();

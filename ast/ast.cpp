@@ -73,6 +73,7 @@ createFindLabel(std::unordered_map<UStr, gen::Label> &label)
     {
 	if (auto astLabel = dynamic_cast<AstLabel *>(ast)) {
 	    if (label.contains(astLabel->labelName)) {
+		error::location(astLabel->loc);
 		error::out() << astLabel->loc
 		    << ": error: label already defined within function\n";
 		error::fatal();
@@ -91,6 +92,7 @@ createSetGotoLabel(const std::unordered_map<UStr, gen::Label> &label)
     {
 	if (auto astLabel = dynamic_cast<AstGoto *>(ast)) {
 	    if (!label.contains(astLabel->labelName)) {
+		error::location(astLabel->loc);
 		error::out() << astLabel->loc
 		    << ": error: label not defined within function\n";
 		error::fatal();
@@ -291,6 +293,7 @@ AstFuncDef::codegen()
 	body->codegen();
     }
     if (!gen::functionDefinitionEnd()) {
+	error::location(fnName.loc);
 	error::out() << fnName.loc << ": error: non-void function does not "
 	    << "return a value in all control paths\n";
 	error::fatal();
@@ -322,6 +325,7 @@ AstVar::AstVar(lexer::Token varName, const Type *varType)
 {
     assert(varType);
     if (!varType->hasSize()) {
+	error::location(varName.loc);
 	error::out() << varName.loc
 	    << ": error: variable '" << varName.val
 	    << "' has incomplete type '" << varType << "'\n";
@@ -445,7 +449,7 @@ AstGlobalVar::codegen()
 	gen::Constant initialValue = nullptr;
 	if (auto expr = var->getInitializerExpr()) {
 	    if (!expr->isConst()) {
-		error::out() << expr->loc << expr << "\n";
+		error::location(expr->loc);
 		error::out() << expr->loc << ": error: initializer element "
 		    << "is not a compile-time constant\n";
 		error::fatal();
@@ -524,11 +528,13 @@ AstReturn::codegen()
 {
     assert(retType);
     if (!gen::bbOpen()) {
+	error::location(loc);
 	error::out() << loc << ": warning: return statement not reachabel\n";
 	return;
     }
     if (retType->isVoid()) {
 	if (expr) {
+	    error::location(expr->loc);
 	    error::out() << expr->loc
 		<< ": error: void function should not return a value\n";
 	    error::fatal();
@@ -537,6 +543,7 @@ AstReturn::codegen()
 	gen::returnInstruction(nullptr);
     } else {
 	if (!expr) {
+	    error::location(expr->loc);
 	    error::out() << expr->loc
 		<< ": error: non-void function should return a value\n";
 	    error::fatal();
@@ -564,6 +571,7 @@ void
 AstGoto::codegen()
 {
     if (!label) {
+	error::location(loc);
 	error::out() << loc << ": error: no label '" << labelName.c_str()
 	    << "' within function\n";
 	error::fatal();
@@ -608,6 +616,7 @@ void
 AstBreak::codegen()
 {
     if (!label) {
+	error::location(loc);
 	error::out() << loc
 	    << ": error: break statement not within loop or switch\n";
 	error::fatal();
@@ -633,6 +642,7 @@ void
 AstContinue::codegen()
 {
     if (!label) {
+	error::location(loc);
 	error::out() << loc << ": error: continue statement not within loop\n";
 	error::fatal();
 	return;
@@ -779,6 +789,7 @@ void
 AstSwitch::appendCase(ExprPtr &&caseExpr_)
 {
     if (!caseExpr_ || !caseExpr_->isConst() || !caseExpr_->type->isInteger()) {
+	error::location(caseExpr_->loc);
 	error::out() << caseExpr_->loc
 	    << ": error: case expression has "
 	    << "to be a constant integer expression\n";
@@ -1058,6 +1069,7 @@ AstTypeDecl::AstTypeDecl(lexer::Token name, const Type *type)
 	// if <name> is already a type declaration it has to be an
 	// identical alias for type
 	if (found->type->getUnalias() != type) {
+	    error::location(name.loc);
 	    error::out() << name.loc << ": error: redefinition of '"
 		<< name.val << "\n";
 	    error::out() << found->loc
@@ -1088,6 +1100,7 @@ AstEnumDecl::AstEnumDecl(lexer::Token name, const Type *intType)
     : enumTypeName{name}, intType{intType}
 {
     if (!intType->isInteger() || intType->isEnum()) {
+	error::location(enumTypeName.loc);
 	error::out() << enumTypeName.loc
 	    << ": error: enum type has to be an integer type\n";
 	error::fatal();
@@ -1097,6 +1110,7 @@ AstEnumDecl::AstEnumDecl(lexer::Token name, const Type *intType)
 	// if <name> is already a type declaration it has to be an incomplete
 	// enum type
 	if (!found->type->isEnum() || found->type->hasSize()) {
+	    error::location(name.loc);
 	    error::out() << name.loc << ": error: redefinition of '"
 		<< name.val << "\n";
 	    error::out() << found->loc
@@ -1203,6 +1217,7 @@ AstStructDecl::AstStructDecl(lexer::Token name)
 	// if <name> is already a type declaration it has to be an incomplete
 	// struct type
 	if (!found->type->isStruct() || found->type->hasSize()) {
+	    error::location(name.loc);
 	    error::out() << name.loc << ": error: redefinition of '"
 		<< name.val << "\n";
 	    error::out() << found->loc

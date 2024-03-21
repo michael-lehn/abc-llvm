@@ -39,17 +39,20 @@ Member::create(ExprPtr &&structure, UStr member, lexer::Loc loc)
 	    }
 	}
     } else if (structureType->isStruct() && !structureType->hasSize()) {
+	error::location(loc);
 	error::out() << loc << ": error: " << structureType
 	    << " is an incomplete struct\n";
 	error::fatal();
 	return nullptr;
     } else {
+	error::location(loc);
 	error::out() << loc << ": error: type " << structureType
 	    << " is not a struct\n";
 	error::fatal();
 	return nullptr;
     }
     if (!type) {
+	error::location(loc);
 	error::out() << loc << ": error: " << structure << " of type "
 	    << structure->type << " has no member " << member << "\n";
 	if (structureType->isStruct()) {

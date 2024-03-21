@@ -27,6 +27,7 @@ void
 Expr::condition(gen::Label trueLabel, gen::Label falseLabel) const
 {
     if (!type->isScalar()) {
+	error::location(loc);
 	error::out() << loc << ": error: scalar required\n";
 	error::fatal();
     }

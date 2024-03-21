@@ -249,6 +249,7 @@ parseBinary(int prec)
             getToken();
 	    auto right = parseBinary(p + 1);
             if (!right) {
+		error::location(token.loc);
 		error::out() << token.loc
 		    << ": error: expected non-empty expression\n";
 		error::fatal();
@@ -467,6 +468,7 @@ parsePrimary()
 	    auto expr = Identifier::create(tok.val, sym->id, ty, tok.loc);
 	    return expr;
 	} else {
+	    error::location(tok.loc);
 	    error::out() << tok.loc << ": error undefined identifier\n";
 	    error::fatal();
 	    return nullptr;

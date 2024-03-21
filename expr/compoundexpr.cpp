@@ -67,6 +67,7 @@ CompoundExpr::create(std::vector<ExprPtr> &&exprVec, const Type *type,
     assert(type->hasSize());
 
     if (exprVec.size() > type->aggregateSize()) {
+	error::location(exprVec[type->aggregateSize()]->loc);
 	error::out() << exprVec[type->aggregateSize()]->loc
 	    << ": error: excess elements in "
 	    << (type->isScalar() ? "scalar"

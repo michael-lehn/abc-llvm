@@ -128,8 +128,10 @@ Symtab::add(UStr name, symtab::Entry &&entry)
     if (scope.front()->contains(name)) {
 	auto &found = scope.front()->at(name);
 	if (entry != found) {
+	    error::location(entry.loc);
 	    error::out() << entry.loc
 		<< ": error: incompatible redefinition\n";
+	    error::location(found.loc);
 	    error::out() << found.loc
 		<< ": error: previous definition\n";
 	    error::fatal();

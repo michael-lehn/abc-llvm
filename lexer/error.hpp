@@ -4,6 +4,7 @@
 #include <ostream>
 
 #include "lexer.hpp"
+#include "loc.hpp"
 
 namespace abc { namespace error {
 
@@ -12,6 +13,8 @@ void fatal();
 void warning();
 
 bool expected(lexer::TokenKind kind);
+
+std::ostream& location(const lexer::Loc &loc);
 
 } } // namespace error, abc
 
