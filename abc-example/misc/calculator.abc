@@ -162,7 +162,8 @@ fn getToken(): TokenKind
                 nextCh();
             }
             return tokenSet(OCTAL_LITERAL);
-        } else if (isDecDigit(ch)) {
+        } else {
+	    assert(isDecDigit(ch));
             while (isDecDigit(ch)) {
 		tokenUpdate(ch);
                 nextCh();

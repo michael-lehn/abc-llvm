@@ -1,7 +1,9 @@
-ABC := ../../build/abc/abc
-ABCFLAGS := -I ../include
-CPP := $(CC) -E -x c -traditional -Wno-endif-labels -I../include
-CPPFLAGS += -MT $(@:%.abc_p=%.o) -MMD -MP -MF $(dep.dir)/$(<F).d
+CC := ../../build/abc/abc
+CFLAGS := -O3 -I ../include
+DEPFLAGS = -MD -MF $(dep.dir)/$(<F).d \
+           -MT $(@:$(cpp.dir)/%.abc_cpp=$(obj.dir)/%.o) -MP
+
+LDFLAGS += -L../lib -labc
 
 # Uncomment to directly link with ld on MacOS
 
@@ -16,7 +18,6 @@ lib := $(obj.o)
 dep.dir := dep
 
 src.abc := $(wildcard *.abc)
-cpp.abc := $(src.abc:%.abc=%.abc_p)
 asm.abc := $(src.abc:%.abc=%.s)
 obj.abc := $(src.abc:%.abc=%.o)
 ll.abc := $(src.abc:%.abc=%.ll)
@@ -29,19 +30,14 @@ dep := $(src.abc:%=$(dep.dir)/%.d)
 .PHONY: all
 all: $(target) $(obj.abc)
 
-# %.abc_p : %.abc | $(dep.dir)
-%.abc_p : %.abc
-	$(CPP) $(CPPFLAGS) -o $@ $< 
-
-#%.s : %.abc_p
 %.s : %.abc
-	$(ABC) -S $(ABCFLAGS) $<
+	$(CC) -S $(CFLAGS) $<
 
 %.ll : %.abc
-	$(ABC) --emit-llvm $(ABCFLAGS) $<
+	$(CC) --emit-llvm $(CFLAGS) $<
 
 %.o : %.abc
-	$(ABC) -c $(ABCFLAGS) $<
+	$(CC) -c $(CFLAGS) $(DEPFLAGS) $< -o $@
 
 %.o : %.s
 	$(AS) -o $@ $<
@@ -52,7 +48,7 @@ all: $(target) $(obj.abc)
 	$(LINK.o) $^ -o $@
 
 % : %.abc $(lib)
-	$(ABC) $(ABCFLAGS) $^ -o $@
+	$(LINK.c)  $^ -o $@
 
 $(dep.dir): ; mkdir -p $@
 

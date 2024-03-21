@@ -201,6 +201,9 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		return binaryErr(kind, std::move(left), std::move(right), loc);
 	    } else if (!left->type->isNullptr()) {
 		auto elementType = left->type->refType();
+
+		right = ImplicitCast::create(std::move(right),
+					    IntegerType::createSizeType());
 		return std::make_tuple(std::move(left), std::move(right),
 				       elementType);
 	    } else {
@@ -287,6 +290,8 @@ binaryArray(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		return binaryErr(kind, std::move(left), std::move(right), loc);
 	    } else {
 		auto elementType = left->type->refType();
+		right = ImplicitCast::create(std::move(right),
+					    IntegerType::createSizeType());
 		return std::make_tuple(std::move(left), std::move(right),
 				       elementType);
 	    }

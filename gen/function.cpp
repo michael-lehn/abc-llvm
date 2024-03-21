@@ -13,6 +13,7 @@
 #include "function.hpp"
 #include "gentype.hpp"
 #include "gen.hpp"
+#include "gentype.hpp"
 #include "instruction.hpp"
 #include "label.hpp"
 #include "variable.hpp"
@@ -79,6 +80,7 @@ functionDefinitionBegin(const char *ident, const abc::Type *fnType,
     functionBuildingInfo.retType = retType;
     functionBuildingInfo.retVal = nullptr;
     functionBuildingInfo.bbClosed = false;
+    functionBuildingInfo.isMain = !strcmp(ident, "main");
 
     for (std::size_t i = 0; i < param.size(); ++i) {
 	//std::cerr << ">> i = " << i << "\n";
@@ -89,8 +91,12 @@ functionDefinitionBegin(const char *ident, const abc::Type *fnType,
     if (!retType->isVoid()) {
 	functionBuildingInfo.retVal = localVariableDefinition(".retVal",
 							      retType);
-	if (!strcmp(ident, "main")) {
+	if (functionBuildingInfo.isMain) {
 	    store(getConstantInt("0", retType), functionBuildingInfo.retVal);
+	} else {
+	    auto llvmRetType = convert(retType);
+	    store(llvm::UndefValue::get(llvmRetType),
+			     functionBuildingInfo.retVal);
 	}
     }
 }
@@ -128,12 +134,14 @@ functionDefinitionEnd()
 
     defineLabel(checkReturn);
     if (checkReturn->hasNPredecessorsOrMore(1)) {
-	wellFormed = functionBuildingInfo.fn->getReturnType()->isVoidTy();
+	wellFormed = functionBuildingInfo.isMain
+		  || functionBuildingInfo.fn->getReturnType()->isVoidTy();
 	if (!wellFormed) {
 	    llvmBuilder->CreateUnreachable();
 	}
     }
     jumpInstruction(functionBuildingInfo.leave);
+    llvm::EliminateUnreachableBlocks(*functionBuildingInfo.fn);
 
     defineLabel(functionBuildingInfo.leave);
     if (functionBuildingInfo.retType->isVoid()) {
@@ -151,6 +159,7 @@ functionDefinitionEnd()
     functionBuildingInfo.retType = nullptr;
     functionBuildingInfo.retVal = nullptr;
     functionBuildingInfo.bbClosed = true;
+    functionBuildingInfo.isMain = false;
     return wellFormed;
 }
 

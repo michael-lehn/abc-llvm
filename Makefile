@@ -1,5 +1,5 @@
 CFLAGS += 
-CXXFLAGS += -std=c++20
+CXXFLAGS += -std=c++20 -ftrapv
 CPPFLAGS += -Wextra -Wall -I.
 
 

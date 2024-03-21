@@ -15,7 +15,7 @@ src.abc := $(filter-out $(xsrc.abc),$(wildcard *.abc))
 asm.abc := $(src.abc:%.abc=$(asm.dir)/%.s)
 obj.abc := $(src.abc:%.abc=$(obj.dir)/%.o)
 xobj := $(xsrc.abc:%.abc=$(obj.dir)/%.o)
-bc.abc := $(src.abc:%.abc=%.bc)
+ll.abc := $(src.abc:%.abc=%.ll)
 target := $(patsubst %.abc,%,$(xsrc.abc))
 
 dep := $(src.abc:%=$(dep.dir)/%.d) \
@@ -29,8 +29,8 @@ all: $(target) $(xobj)
 $(asm.dir)/%.s :%.abc | $(asm.dir)
 	$(CC) -S $(CFLAGS) $<
 
-%.bc : %.abc
-	$(CC) -B $(CFLAGS) $<
+%.ll : %.abc
+	$(CC) --emit-llvm $(CFLAGS) $<
 
 $(obj.dir)/%.o : %.abc | $(obj.dir) $(dep.dir)
 	$(CC) -c $(CFLAGS) $(DEPFLAGS) $< -o $@

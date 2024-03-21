@@ -21,6 +21,7 @@ struct FunctionBuildingInfo
     const abc::Type *retType = nullptr;
     Value retVal = nullptr;
     bool bbClosed = true;
+    bool isMain = false;
 };
 
 extern FunctionBuildingInfo functionBuildingInfo;
