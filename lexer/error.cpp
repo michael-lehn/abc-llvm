@@ -34,8 +34,12 @@ bool
 expected(lexer::TokenKind kind)
 {
     if (lexer::token.kind != kind) {
-	out() << lexer::token.loc << ": expected '" << kind << "'"
-	    << std::endl;
+	error::location(lexer::token.loc);
+	out() << error::setColor(error::BOLD) << lexer::token.loc << ": "
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "expected '" << kind << "'\n"
+	    << error::setColor(error::NORMAL);
 	fatal();
 	return false;
     }

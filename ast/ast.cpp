@@ -345,6 +345,7 @@ AstVar::AstVar(lexer::Token varName, const Type *varType)
 	error::fatal();
     }
     auto addDecl = Symtab::addDeclaration(varName.loc, varName.val, varType);
+    /*
     if (!addDecl.second) {
 	error::location(varName.loc);
 	error::out() << error::setColor(error::BOLD) << varName.loc << ": "
@@ -360,6 +361,7 @@ AstVar::AstVar(lexer::Token varName, const Type *varType)
 	    << error::setColor(error::NORMAL);
 	error::fatal();
     }
+    */
     if (addDecl.first) {
 	varId = addDecl.first->id;
     }
