@@ -220,8 +220,12 @@ parseConditional()
 	
 	auto left = parseAssignmentExpression();
 	if (!left) {
-	    error::out() << token.loc << " expected non-empty expression"
-		<< std::endl;
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "expected non-empty expression\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	}
 	if (thenElseStyle) {
@@ -232,8 +236,12 @@ parseConditional()
 	getToken();
 	auto right = parseConditional();
 	if (!right) {
-	    error::out() << token.loc << " expected non-empty expression"
-		<< std::endl;
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "expected non-empty expression\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	}
 	expr = ConditionalExpr::create(std::move(expr), std::move(left),
@@ -377,11 +385,14 @@ parsePostfix(ExprPtr &&expr)
     }
 
     if (!expr) {
-	error::out() << token.loc
-	    << ": postfix operator '" << token.kind << "' requires"
-	    << " non-empty expression" << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "postfix operator '" << token.kind << "' requires"
+	    << " non-empty expression\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
-
     }
 
     auto tok = token;
@@ -422,8 +433,12 @@ parsePostfix(ExprPtr &&expr)
 					  std::move(index), tok.loc);
 		return parsePostfix(std::move(expr));
 	    } else {
-		error::out() << token.loc << " expected non-empty expression"
-		    << std::endl;
+		error::location(token.loc);
+		error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		    << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "expected non-empty expression\n"
+		    << error::setColor(error::NORMAL);
 		error::fatal();
 		return nullptr;
 	    }
@@ -481,8 +496,13 @@ parsePrimary()
 	    assert(sym->type);
 	    auto expr = parseCompoundExpression(sym->type);
 	    if (!expr) {
-		error::out() << tok.loc << ": expected compound expression "
-		    << "after type " << sym->type << "\n";
+		error::location(token.loc);
+		error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		    << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "expected compound expression "
+		    << "after type " << sym->type << "\n"
+		    << error::setColor(error::NORMAL);
 		error::fatal();
 		return nullptr;
 	    } else {
@@ -556,7 +576,12 @@ parsePrimary()
 	} else if (auto expr = parseExpressionList()) {
 	    sizeofExpr = Sizeof::create(std::move(expr), tok.loc);
 	} else {
-	    error::out() << token.loc << " expected type or expression\n";
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "expected type or expression\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return nullptr;
 	}
@@ -569,7 +594,12 @@ parsePrimary()
 	getToken();
 	auto expr = parseExpressionList();
 	if (!expr) {
-	    error::out() << token.loc << " expected non-empty expression\n";
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "expected non-empty expression\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	}
 	return AssertExpr::create(std::move(expr), tok.loc);
@@ -577,7 +607,12 @@ parsePrimary()
         getToken();
 	auto expr = parseExpressionList();
         if (!expr) {
-	    error::out() << token.loc << " expected non-empty expression\n";
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "expected non-empty expression\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	}
 	error::expected(TokenKind::RPAREN);

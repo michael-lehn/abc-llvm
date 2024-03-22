@@ -331,21 +331,22 @@ AstInitializerExpr::print(int indent) const
 /*
  * AstVar
  */
-AstVar::AstVar(lexer::Token varName, lexer::Loc varTypeLoc, const Type *varType)
+AstVar::AstVar(lexer::Token varName, lexer::Loc varTypeLoc, const Type *varType,
+	       bool define)
     : varName{varName}, varTypeLoc{varTypeLoc}, varType{varType}
 {
-    getId();
+    getId(define);
 }
 
 AstVar::AstVar(std::vector<lexer::Token> &&varName, lexer::Loc varTypeLoc,
-	       const Type *varType)
+	       const Type *varType, bool define)
     : varName{std::move(varName)}, varTypeLoc{varTypeLoc}, varType{varType}
 {
-    getId();
+    getId(define);
 }
 
 void
-AstVar::getId()
+AstVar::getId(bool define)
 {
     assert(varType);
     assert(!varName.empty());
@@ -359,10 +360,13 @@ AstVar::getId()
 	error::fatal();
     }
     for (std::size_t i = 0; i < varName.size(); ++i) {
-	auto addDecl = Symtab::addDeclaration(varName[i].loc, varName[i].val,
-					      varType);
+	auto addDecl = define
+	    ? Symtab::addDefinition(varName[i].loc, varName[i].val, varType)
+	    : Symtab::addDeclaration(varName[i].loc, varName[i].val, varType);
 	if (addDecl.first) {
 	    varId.push_back(addDecl.first->id);
+	} else if (define) {
+	    std::cerr << "already defined\n";
 	}
     }
 }

@@ -88,6 +88,29 @@ Symtab::addDeclaration(lexer::Loc loc, UStr name, const Type *type)
 }
 
 std::pair<symtab::Entry *, bool>
+Symtab::addDefinition(lexer::Loc loc, UStr name, const Type *type)
+{
+    auto decl = addDeclaration(loc, name, type);
+    if (!decl.first->setDefinitionFlag()) {
+	error::location(loc);
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << name << " already defined in this scope.\n"
+	    << error::setColor(error::NORMAL);
+	assert(decl.first);
+	error::location(decl.first->loc);
+	error::out() << error::setColor(error::BOLD) << decl.first->loc
+	    << ": defined here.\n"
+	    << error::setColor(error::NORMAL);
+	error::fatal();
+
+	return {nullptr, false};
+    }
+    return decl;
+}
+
+std::pair<symtab::Entry *, bool>
 Symtab::addType(lexer::Loc loc, UStr name, const Type *type)
 {
     auto id = getId(name);

@@ -442,7 +442,8 @@ parseExternVariableDeclaration()
 	}
 	astList->append(std::make_unique<AstVar>(std::move(varName),
 						 varTypeLoc,
-						 varType));
+						 varType,
+						 false));
 	if (token.kind != TokenKind::COMMA) {
 	    break;
 	}
@@ -475,66 +476,50 @@ parseIdentifierList(std::vector<Token> &identifier)
 }
 
 //------------------------------------------------------------------------------
-static AstPtr parseGlobalVariableDeclaration();
+static AstListPtr parseVariableDefinitionList();
 
 /*
- * global-variable-definition = global-variable-declaration ";"
+ * global-variable-definition = "global" variable-definition-list
  */
 static AstPtr
 parseGlobalVariableDefinition()
 {
-    auto def = parseGlobalVariableDeclaration();
+    if (token.kind != TokenKind::GLOBAL) {
+	return nullptr;
+    }
+    getToken();
+    auto def = parseVariableDefinitionList();
     if (!def) {
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "expected global variable definition list\n"
+	    << error::setColor(error::NORMAL);
+	error::fatal();
 	return nullptr;
     }
     if (!error::expected(TokenKind::SEMICOLON)) {
 	return nullptr;
     }
     getToken();
-    return def;
-}
-
-//------------------------------------------------------------------------------
-static AstListPtr parseVariableDeclarationList();
-
-/*
- * global-variable-declaration = "global" variable-declaration-list
- */
-static AstPtr
-parseGlobalVariableDeclaration()
-{
-    if (token.kind != TokenKind::GLOBAL) {
-	return nullptr;
-    }
-    getToken();
-    auto def = parseVariableDeclarationList();
-    if (!def) {
-	error::location(token.loc);
-	error::out() << error::setColor(error::BOLD) << token.loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << "expected global variable declaration list\n"
-	    << error::setColor(error::NORMAL);
-	error::fatal();
-	return nullptr;
-    }
     return std::make_unique<AstGlobalVar>(std::move(def));
 }
 
 //------------------------------------------------------------------------------
-static AstVarPtr parseVariableDeclaration();
+static AstVarPtr parseVariableDefinition();
 
 /*
- * variable-declaration-list = variable-declaration { "," variable-declaration }
+ * variable-definition-list = variable-definition { "," variable-definition }
  */
 static AstListPtr
-parseVariableDeclarationList()
+parseVariableDefinitionList()
 {
     auto astList = std::make_unique<AstList>();
 
     for (bool first = true; ; first = false) {
-	auto decl = parseVariableDeclaration();
-	if (!decl) {
+	auto def = parseVariableDefinition();
+	if (!def) {
 	    if (!first) {
 		error::location(token.loc);
 		error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -546,7 +531,7 @@ parseVariableDeclarationList()
 	    }
 	    return nullptr;
 	}
-	astList->append(std::move(decl));
+	astList->append(std::move(def));
 	if (token.kind != TokenKind::COMMA) {
 	    break;
 	}
@@ -559,11 +544,11 @@ parseVariableDeclarationList()
 static AstInitializerExprPtr parseInitializerExpression(const Type *type);
 
 /*
- * variable-declaration = identifier-list ":" type
+ * variable-definition = identifier-list ":" type
  *			  [ "=" initializer-expression ]
  */
 static AstVarPtr
-parseVariableDeclaration()
+parseVariableDefinition()
 {
     std::vector<Token> varName;
     if (!parseIdentifierList(varName)) {
@@ -587,7 +572,8 @@ parseVariableDeclaration()
     }
     auto astVar = std::make_unique<AstVar>(std::move(varName),
 					   varTypeLoc,
-					   varType);
+					   varType,
+					   true);
     if (token.kind == TokenKind::EQUAL) {
 	getToken();
 	auto initializerType = astVar->varName.size() > 1
@@ -654,37 +640,17 @@ parseDeclaration()
 }
 
 //------------------------------------------------------------------------------
-static AstPtr parseLocalVariableDeclaration();
-
 /*
- * local-variable-definition = local-variable-declaration ";"
+ * local-variable-definition = "local" variable-definition-list
  */
 static AstPtr
 parseLocalVariableDefinition()
-{
-    auto def = parseLocalVariableDeclaration();
-    if (!def) {
-	return nullptr;
-    }
-    if (!error::expected(TokenKind::SEMICOLON)) {
-	return nullptr;
-    }
-    getToken();
-    return def;
-}
-
-//------------------------------------------------------------------------------
-/*
- * local-variable-declaration = "local" variable-declaration-list
- */
-static AstPtr
-parseLocalVariableDeclaration()
 {
     if (token.kind != TokenKind::LOCAL) {
 	return nullptr;
     }
     getToken();
-    auto def = parseVariableDeclarationList();
+    auto def = parseVariableDefinitionList();
     if (!def) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -695,6 +661,10 @@ parseLocalVariableDeclaration()
 	error::fatal();
 	return nullptr;
     }
+    if (!error::expected(TokenKind::SEMICOLON)) {
+	return nullptr;
+    }
+    getToken();
     return std::make_unique<AstLocalVar>(std::move(def));
 }
 

@@ -29,7 +29,7 @@ makeExternVarDecl()
     auto varName = makeIdentifierToken("foo");
     auto varType = abc::IntegerType::createSigned(32);
     auto varDecl = std::make_unique<abc::AstVar>(varName, abc::lexer::Loc{},
-						 varType);
+						 varType, false);
     varDeclList->append(std::move(varDecl));
     return std::make_unique<abc::AstExternVar>(std::move(varDeclList));
 }

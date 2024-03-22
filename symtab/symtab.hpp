@@ -34,6 +34,9 @@ class Symtab
 	    addDeclaration(lexer::Loc loc, UStr name, const Type *type);
 
 	static std::pair<symtab::Entry *, bool>
+	    addDefinition(lexer::Loc loc, UStr name, const Type *type);
+
+	static std::pair<symtab::Entry *, bool>
 	    addType(lexer::Loc loc, UStr name, const Type *type);
 
 	static std::pair<symtab::Entry *, bool>

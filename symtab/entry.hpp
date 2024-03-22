@@ -19,6 +19,8 @@ class Entry
 	Entry(Kind kind, lexer::Loc loc, UStr id, const Type *type);
 	Entry(lexer::Loc loc, UStr id, const Expr *expr);
 
+	bool definitionFlag = false;
+
     public:
 	static Entry createVarEntry(lexer::Loc loc, UStr id, const Type *type);
 	static Entry createTypeEntry(lexer::Loc loc, UStr id, const Type *type);
@@ -33,6 +35,8 @@ class Entry
 	bool typeDeclaration() const;
 	bool variableDeclaration() const;
 	bool expressionDeclaration() const;
+
+	bool setDefinitionFlag();
 
 	friend bool operator!=(const Entry &a, const Entry &b);
 };

@@ -52,6 +52,17 @@ Entry::expressionDeclaration() const
 }
 
 bool
+Entry::setDefinitionFlag()
+{
+    assert(variableDeclaration());
+    if (definitionFlag) {
+	return false;
+    }
+    definitionFlag = true;
+    return true;
+}
+
+bool
 operator!=(const Entry &a, const Entry &b)
 {
     if (a.kind != b.kind) {
