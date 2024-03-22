@@ -7,7 +7,8 @@
 namespace abc {
     
 ExprPtr parseCompoundExpression(const Type *type);
-ExprPtr parseExpression();
+ExprPtr parseExpressionList();
+ExprPtr parseAssignmentExpression();
 
 } // namespace abc
 

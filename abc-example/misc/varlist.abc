@@ -10,7 +10,7 @@ fn main()
 {
     local a, b: array[4] of int = {"AB"};
 
-    for (local i, j: int = {0, 1}; i < 3; ++i) {
+    for (local i, j: int = {0, 1}; i < 3; ++i, j += 2) {
 	printf("i = %d, j = %d\n", i, j);
     }
 

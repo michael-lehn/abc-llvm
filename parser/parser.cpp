@@ -600,8 +600,8 @@ parseVariableDeclaration()
 		<< error::setColor(error::BOLD_RED) << "error: "
 		<< error::setColor(error::BOLD)
 		<< (initializerType->isScalar()
-			? ": expression of initializer list expected\n"
-			: ": initializer list expected\n")
+			? "expression of initializer list expected\n"
+			: "initializer list expected\n")
 		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return nullptr;
@@ -620,14 +620,12 @@ static AstInitializerExprPtr
 parseInitializerExpression(const Type *type)
 {
     // note: parseCompoundExpression has to be called before
-    //	 parseExpression. Because parseCompoundExpression catches
-    //	 string literals and treats them as a compound.
+    //	     parseAssignmentExpression. Because parseCompoundExpression catches
+    //	     string literals and treats them as a compound.
     if (auto expr = parseCompoundExpression(type)) {
 	return std::make_unique<AstInitializerExpr>(type, std::move(expr));
-    } else if (type->isScalar()) {
-	if (auto expr = parseExpression()) {
-	    return std::make_unique<AstInitializerExpr>(type, std::move(expr));
-	}
+    } else if (auto expr = parseAssignmentExpression()) {
+	return std::make_unique<AstInitializerExpr>(type, std::move(expr));
     }
     return nullptr;
 }
@@ -788,7 +786,7 @@ parseIfStatement()
 	return nullptr;
     }
     getToken();
-    auto ifCond = parseExpression();
+    auto ifCond = parseExpressionList();
     if (!ifCond) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -857,7 +855,7 @@ parseSwitchStatement()
 	return nullptr;
     }
     getToken();
-    auto switchExpr = parseExpression();
+    auto switchExpr = parseExpressionList();
     if (!switchExpr) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -883,7 +881,7 @@ parseSwitchStatement()
     while (true) {
 	if (token.kind == TokenKind::CASE) {
 	    getToken();
-	    auto expr = parseExpression();
+	    auto expr = parseExpressionList();
 	    if (!expr) {
 		error::location(token.loc);
 		error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -934,7 +932,7 @@ parseWhileStatement()
 	return nullptr;
     }
     getToken();
-    auto whileCond = parseExpression();
+    auto whileCond = parseExpressionList();
     if (!whileCond) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -991,7 +989,7 @@ parseDoWhileStatement()
 	return nullptr;
     }
     getToken();
-    auto doWhileCond = parseExpression();
+    auto doWhileCond = parseExpressionList();
     if (!doWhileCond) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -1040,19 +1038,19 @@ parseForStatement()
     ExprPtr forInitExpr;
     if (!(forInitDecl = parseLocalVariableDefinition())) {
 	if (!(forInitDecl = parseGlobalVariableDefinition())) {
-	    forInitExpr = parseExpression();
+	    forInitExpr = parseExpressionList();
 	    if (!error::expected(TokenKind::SEMICOLON)) {
 		return nullptr;
 	    }
 	    getToken();
 	}
     }
-    auto forCond = parseExpression();
+    auto forCond = parseExpressionList();
     if (!error::expected(TokenKind::SEMICOLON)) {
 	return nullptr;
     }
     getToken();
-    auto forUpdate = parseExpression();
+    auto forUpdate = parseExpressionList();
     if (!error::expected(TokenKind::RPAREN)) {
 	return nullptr;
     }
@@ -1091,7 +1089,7 @@ parseReturnStatement()
     }
     auto tok = token;
     getToken();
-    auto expr = parseExpression();
+    auto expr = parseExpressionList();
     if (!error::expected(TokenKind::SEMICOLON)) {
 	return nullptr;
     }
@@ -1186,7 +1184,7 @@ parseLabelDefinition()
 static AstPtr
 parseExpressionStatement()
 {
-    auto expr = parseExpression();
+    auto expr = parseExpressionList();
     if (expr) {
 	error::expected(TokenKind::SEMICOLON);
     }
@@ -1345,7 +1343,7 @@ parseEnumConstantList(AstEnumDeclPtr &enumDecl)
 	getToken();
 	if (token.kind == TokenKind::EQUAL) {
 	    getToken();
-	    auto expr = parseExpression();
+	    auto expr = parseAssignmentExpression();
 	    if (!expr) {
 		error::location(token.loc);
 		error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -1554,7 +1552,7 @@ parseArrayDimAndType()
 	return nullptr;
     }
     getToken();
-    auto dimExpr = parseExpression();
+    auto dimExpr = parseAssignmentExpression();
     if (!dimExpr || !dimExpr->isConst() || !dimExpr->type->isInteger()) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "

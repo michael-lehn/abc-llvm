@@ -6,6 +6,7 @@
 #include "expr/conditionalexpr.hpp"
 #include "expr/enumconstant.hpp"
 #include "expr/explicitcast.hpp"
+#include "expr/exprlist.hpp"
 #include "expr/identifier.hpp"
 #include "expr/integerliteral.hpp"
 #include "expr/member.hpp"
@@ -27,7 +28,6 @@ namespace abc {
 using namespace lexer;
 
 //------------------------------------------------------------------------------
-
 ExprPtr
 parseCompoundExpression(const Type *type)
 {
@@ -54,11 +54,11 @@ parseCompoundExpression(const Type *type)
 	    auto ty = type->aggregateType(i);
 
 	    // note: parseCompoundExpression has to be called before
-	    //	 parseExpression. Because parseCompoundExpression catches
-	    //	 string literals and treats them as a compound.
+	    //	     parseAssignmentExpression. Because parseCompoundExpression
+	    //	     catches string literals and treats them as a compound.
 	    if (auto expr = parseCompoundExpression(ty)) {
 		exprVec.push_back(std::move(expr));
-	    } else if (auto expr = parseExpression()) {
+	    } else if (auto expr = parseAssignmentExpression()) {
 		exprVec.push_back(std::move(expr));
 	    } else {
 		break;
@@ -78,7 +78,6 @@ parseCompoundExpression(const Type *type)
 
 //------------------------------------------------------------------------------
     
-static ExprPtr parseAssignment();
 static ExprPtr parseConditional();
 static ExprPtr parseBinary(int prec);
 static ExprPtr parsePrefix();
@@ -86,9 +85,37 @@ static ExprPtr parsePostfix(ExprPtr &&expr);
 static ExprPtr parsePrimary();
 
 ExprPtr
-parseExpression()
+parseExpressionList()
 {
-    return parseAssignment();
+    auto expr = parseAssignmentExpression();
+    if (!expr) {
+	return nullptr;
+    }
+    if (token.kind == TokenKind::COMMA) {
+	std::vector<ExprPtr> exprVec;
+	exprVec.push_back(std::move(expr));
+
+	while (true) {
+	    getToken();
+	    expr = parseAssignmentExpression();
+	    if (!expr) {
+		error::location(token.loc);
+		error::out() << error::setColor(error::BOLD) << token.loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "expected non-empty assignment expression\n"
+		    << error::setColor(error::NORMAL);
+		error::fatal();
+		return nullptr;
+	    }
+	    exprVec.push_back(std::move(expr));
+	    if (token.kind != TokenKind::COMMA) {
+		break;
+	    }
+	}
+	expr = ExprList::create(std::move(exprVec));
+    }
+    return expr;
 }
 
 //------------------------------------------------------------------------------
@@ -142,8 +169,8 @@ getBinaryExprKind(TokenKind kind)
     }
 }
 
-static ExprPtr
-parseAssignment()
+ExprPtr
+parseAssignmentExpression()
 {
     auto expr = parseConditional();
     if (!expr) {
@@ -159,10 +186,14 @@ parseAssignment()
 	auto tok = token;
         getToken();
 	
-	auto right = parseAssignment();
+	auto right = parseAssignmentExpression();
 	if (!right) {
-	    error::out() << token.loc
-		<< " expected non-empty assignment expression" << std::endl;
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "expected non-empty assignment expression\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	}
 	expr = BinaryExpr::create(getBinaryExprKind(tok.kind),
@@ -187,7 +218,7 @@ parseConditional()
 	auto thenElseStyle = tok.kind == TokenKind::THEN;
 	getToken();
 	
-	auto left = parseAssignment();
+	auto left = parseAssignmentExpression();
 	if (!left) {
 	    error::out() << token.loc << " expected non-empty expression"
 		<< std::endl;
@@ -290,7 +321,7 @@ parsePrefix()
 		}
 	    } else {
 		// Ups, it was the '(' of a primary expression
-		auto expr = parseExpression();
+		auto expr = parseAssignmentExpression();
 		if (!error::expected(TokenKind::RPAREN)) {
 		    return nullptr;
 		}
@@ -369,7 +400,7 @@ parsePostfix(ExprPtr &&expr)
 	    {
 		// parse argument list
 		std::vector<ExprPtr> arg;
-		while (auto a = parseExpression()) {
+		while (auto a = parseAssignmentExpression()) {
 		    arg.push_back(std::move(a));
 		    if (token.kind != TokenKind::COMMA) {
 			break;
@@ -384,7 +415,7 @@ parsePostfix(ExprPtr &&expr)
 	    }
 	case TokenKind::LBRACKET:
 	    getToken();
-	    if (auto index = parseExpression()) {
+	    if (auto index = parseExpressionList()) {
 		error::expected(TokenKind::RBRACKET);
 		getToken();
 		expr = BinaryExpr::create(BinaryExpr::INDEX, std::move(expr),
@@ -522,7 +553,7 @@ parsePrimary()
 	ExprPtr sizeofExpr;
 	if (auto type = parseType()) {
 	    sizeofExpr = Sizeof::create(type, tok.loc);
-	} else if (auto expr = parseExpression()) {
+	} else if (auto expr = parseExpressionList()) {
 	    sizeofExpr = Sizeof::create(std::move(expr), tok.loc);
 	} else {
 	    error::out() << token.loc << " expected type or expression\n";
@@ -536,7 +567,7 @@ parsePrimary()
 	return sizeofExpr;
     } else if (token.kind == TokenKind::ASSERT) {
 	getToken();
-	auto expr = parseExpression();
+	auto expr = parseExpressionList();
 	if (!expr) {
 	    error::out() << token.loc << " expected non-empty expression\n";
 	    error::fatal();
@@ -544,7 +575,7 @@ parsePrimary()
 	return AssertExpr::create(std::move(expr), tok.loc);
     } else if (token.kind == TokenKind::LPAREN) {
         getToken();
-	auto expr = parseExpression();
+	auto expr = parseExpressionList();
         if (!expr) {
 	    error::out() << token.loc << " expected non-empty expression\n";
 	    error::fatal();
