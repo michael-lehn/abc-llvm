@@ -31,11 +31,7 @@ CompoundExpr::initTmp() const
 
     std::vector<gen::Value> val{type->aggregateSize()};
     for (std::size_t i = 0; i < type->aggregateSize(); ++i) {
-	if (i < exprVec.size()) {
-	    val[i] = exprVec[i]->loadValue();
-	} else {
-	    val[i] = gen::getConstantZero(type->aggregateType(i));
-	}
+	val[i] = loadValue(i);
     }
 
     if (type->isScalar()) {
@@ -154,6 +150,27 @@ CompoundExpr::loadAddress() const
 {
     initTmp();
     return gen::loadAddress(tmpId.c_str());
+}
+
+gen::Constant
+CompoundExpr::loadConstant(std::size_t index) const
+{
+    assert(index < type->aggregateSize());
+    if (index < exprVec.size()) {
+	return exprVec[index]->loadConstant();
+    } else {
+	return gen::getConstantZero(type->aggregateType(index));
+    }
+}
+
+gen::Value
+CompoundExpr::loadValue(std::size_t index) const
+{
+    if (index < exprVec.size()) {
+	return exprVec[index]->loadValue();
+    } else {
+	return gen::getConstantZero(type->aggregateType(index));
+    }
 }
 
 // for debugging and educational purposes

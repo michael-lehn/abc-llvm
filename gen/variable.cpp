@@ -29,7 +29,7 @@ static Value lookup(const char *ident);
 //------------------------------------------------------------------------------
 
 void
-externalVariableiDeclaration(const char *ident, const abc::Type *varType)
+externalVariableDeclaration(const char *ident, const abc::Type *varType)
 {
     assert(llvmModule);
     assert(!varType->isFunction());

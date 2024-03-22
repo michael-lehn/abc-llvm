@@ -42,6 +42,9 @@ class CompoundExpr : public Expr
 	gen::Value loadValue() const override;
 	gen::Value loadAddress() const override;
 
+	gen::Constant loadConstant(std::size_t index) const;
+	gen::Value loadValue(std::size_t index) const;
+
 	// for debugging and educational purposes
 	void print(int indent) const override;
 

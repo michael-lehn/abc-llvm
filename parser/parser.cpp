@@ -41,7 +41,7 @@ parser()
     if (token.kind != TokenKind::EOI) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
-	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD_RED) << "error: "
 	    << error::setColor(error::BOLD)
 	    << "unexpected "
 	    << token.val.c_str() << "\n"
@@ -120,7 +120,7 @@ parseFunctionDeclarationOrDefinition()
     if (!fnBody) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
-	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD_RED) << "error: "
 	    << error::setColor(error::BOLD)
 	    << "expected ';' or compound statement\n"
 	    << error::setColor(error::NORMAL);
@@ -159,7 +159,12 @@ parseFunctionType(Token &fnName, std::vector<Token> &fnParamName)
     std::vector<const Type *> fnParamType;
     bool hasVarg = false;
     if (!parseFunctionParameterList(fnParamName, fnParamType, hasVarg)) {
-	error::out() << token.loc << ": expected parameter list" << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << ": expected parameter list\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -172,7 +177,12 @@ parseFunctionType(Token &fnName, std::vector<Token> &fnParamName)
 	getToken();
 	fnRetType = parseType();
 	if (!fnRetType) {
-	    error::out() << token.loc << ": expected return type" << std::endl;
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "expected return type\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return nullptr;
 	}
@@ -211,8 +221,12 @@ parseFunctionParameterList(std::vector<Token> &paramName,
 	getToken();
 	auto ty = parseType();
 	if (!ty) {
-	    error::out() << token.loc
-		<< ": expected parameter type" << std::endl;
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "expected parameter type\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return false;
 	}
@@ -255,7 +269,7 @@ parseExternDeclaration()
     if (!fnType && !varDecl) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
-	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD_RED) << "error: "
 	    << error::setColor(error::BOLD)
 	    << "expected extern function or variable declaration\n"
 	    << error::setColor(error::NORMAL);
@@ -324,8 +338,12 @@ parseType()
 	getToken();
 	auto type = parseUnqualifiedType();
 	if (!type) {
-	    error::out() << token.loc << ": unqualified type expected"
-		<< std::endl;
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "unqualified type expected\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return nullptr;
 	}
@@ -390,39 +408,70 @@ parseStatementOrDeclarationList()
 }
 
 //------------------------------------------------------------------------------
+static bool parseIdentifierList(std::vector<Token> &identifier);
+
 /*
- * extern-variable-declaration = identifier ":" type { "," identifier ":" type }
+ * extern-variable-declaration = identifier-list ":" type
+ *				 { "," identifier-list ":" type }
  */
 static AstListPtr
 parseExternVariableDeclaration()
 {
-    if (token.kind != TokenKind::IDENTIFIER) {
-	return nullptr;
-    }
-    
     auto astList = std::make_unique<AstList>();
 
-    while (token.kind == TokenKind::IDENTIFIER) {
-	auto varName = token;
-	getToken();
+    while (true) {
+	std::vector<Token> varName;
+	if (!parseIdentifierList(varName)) {
+	    return nullptr;
+	}
 	if (!error::expected(TokenKind::COLON)) {
 	    return nullptr;
 	}
 	getToken();
+	auto varTypeLoc = token.loc;
 	auto varType = parseType();
 	if (!varType) {
-	    error::out() << token.loc << ": expected variable type"
-		<< std::endl;
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "expected variable type\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return nullptr;
 	}
-	astList->append(std::make_unique<AstVar>(varName, varType));
+	astList->append(std::make_unique<AstVar>(std::move(varName),
+						 varTypeLoc,
+						 varType));
 	if (token.kind != TokenKind::COMMA) {
 	    break;
 	}
 	getToken();
     }
     return astList;
+}
+
+//------------------------------------------------------------------------------
+/*
+ * identifier-list = identifier { "," identifier }
+ */
+static bool
+parseIdentifierList(std::vector<Token> &identifier)
+{
+    if (token.kind != TokenKind::IDENTIFIER) {
+	return false;
+    }
+    identifier.clear();
+    while (true) {
+	error::expected(TokenKind::IDENTIFIER);
+	identifier.push_back(token);
+	getToken();
+	if (token.kind != TokenKind::COMMA) {
+	    break;
+	}
+	getToken();
+    }
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -460,8 +509,12 @@ parseGlobalVariableDeclaration()
     getToken();
     auto def = parseVariableDeclarationList();
     if (!def) {
-	error::out() << token.loc
-	    << ": expected global variable declaration list" << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "expected global variable declaration list\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -483,8 +536,12 @@ parseVariableDeclarationList()
 	auto decl = parseVariableDeclaration();
 	if (!decl) {
 	    if (!first) {
-		error::out() << token.loc << ": expected variable declaration"
-		    << std::endl;
+		error::location(token.loc);
+		error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		    << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << ": expected variable declaration\n"
+		    << error::setColor(error::NORMAL);
 		error::fatal();
 	    }
 	    return nullptr;
@@ -502,32 +559,50 @@ parseVariableDeclarationList()
 static AstInitializerExprPtr parseInitializerExpression(const Type *type);
 
 /*
- * variable-declaration = identifier ":" type [ "=" initializer-expression ]
+ * variable-declaration = identifier-list ":" type
+ *			  [ "=" initializer-expression ]
  */
 static AstVarPtr
 parseVariableDeclaration()
 {
-    if (token.kind != TokenKind::IDENTIFIER) {
+    std::vector<Token> varName;
+    if (!parseIdentifierList(varName)) {
 	return nullptr;
     }
-    auto varName = token;
-    getToken();
     if (!error::expected(TokenKind::COLON)) {
 	return nullptr;
     }
     getToken();
+    auto varTypeLoc = token.loc;
     auto varType = parseType();
     if (!varType) {
-	error::out() << token.loc << ": expected variable type" << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "expected variable type\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
-    auto astVar = std::make_unique<AstVar>(varName, varType);
+    auto astVar = std::make_unique<AstVar>(std::move(varName),
+					   varTypeLoc,
+					   varType);
     if (token.kind == TokenKind::EQUAL) {
 	getToken();
-	auto initializer = parseInitializerExpression(varType);
+	auto initializerType = astVar->varName.size() > 1
+	    ? ArrayType::create(varType, astVar->varName.size())
+	    : varType;
+	auto initializer = parseInitializerExpression(initializerType);
 	if (!initializer) {
-	    error::out() << token.loc << ": initializer expected" << std::endl;
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< (initializerType->isScalar()
+			? ": expression of initializer list expected\n"
+			: ": initializer list expected\n")
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return nullptr;
 	}
@@ -549,8 +624,10 @@ parseInitializerExpression(const Type *type)
     //	 string literals and treats them as a compound.
     if (auto expr = parseCompoundExpression(type)) {
 	return std::make_unique<AstInitializerExpr>(type, std::move(expr));
-    } else if (auto expr = parseExpression()) {
-	return std::make_unique<AstInitializerExpr>(type, std::move(expr));
+    } else if (type->isScalar()) {
+	if (auto expr = parseExpression()) {
+	    return std::make_unique<AstInitializerExpr>(type, std::move(expr));
+	}
     }
     return nullptr;
 }
@@ -611,8 +688,12 @@ parseLocalVariableDeclaration()
     getToken();
     auto def = parseVariableDeclarationList();
     if (!def) {
-	error::out() << token.loc
-	    << ": expected local variable declaration list" << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "expected local variable declaration list\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -709,7 +790,12 @@ parseIfStatement()
     getToken();
     auto ifCond = parseExpression();
     if (!ifCond) {
-	error::out() << token.loc << ": expression expected" << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << ": expression expected\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -719,8 +805,12 @@ parseIfStatement()
     getToken();
     auto thenBody = parseCompoundStatement();
     if (!thenBody) {
-	error::out() << token.loc << ": compound statement expected"
-	    << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << ": compound statement expected\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -731,8 +821,12 @@ parseIfStatement()
 	    elseBody = parseIfStatement();
 	}
 	if (!elseBody) {
-	    error::out() << token.loc << ": compound statement expected"
-		<< std::endl;
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "compound statement expected\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return nullptr;
 	}
@@ -765,7 +859,12 @@ parseSwitchStatement()
     getToken();
     auto switchExpr = parseExpression();
     if (!switchExpr) {
-	error::out() << token.loc << ": expression expected" << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << ": expression expected\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -786,8 +885,12 @@ parseSwitchStatement()
 	    getToken();
 	    auto expr = parseExpression();
 	    if (!expr) {
-		error::out() << token.loc << ": expression expected"
-		    << std::endl;
+		error::location(token.loc);
+		error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		    << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << ": expression expected\n"
+		    << error::setColor(error::NORMAL);
 		error::fatal();
 	    }
 	    if (!error::expected(TokenKind::COLON)) {
@@ -833,7 +936,12 @@ parseWhileStatement()
     getToken();
     auto whileCond = parseExpression();
     if (!whileCond) {
-	error::out() << token.loc << ": expression expected" << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << ": expression expected\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -843,8 +951,12 @@ parseWhileStatement()
     getToken();
     auto whileBody = parseCompoundStatement();
     if (!whileBody) {
-	error::out() << token.loc << ": compound statement expected"
-	    << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << ": compound statement expected\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -862,8 +974,12 @@ parseDoWhileStatement()
     getToken();
     auto doWhileBody = parseCompoundStatement();
     if (!doWhileBody) {
-	error::out() << token.loc << ": compound statement expected"
-	    << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << ": compound statement expected\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -877,7 +993,12 @@ parseDoWhileStatement()
     getToken();
     auto doWhileCond = parseExpression();
     if (!doWhileCond) {
-	error::out() << token.loc << ": expression expected" << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << ": expression expected\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -945,8 +1066,12 @@ parseForStatement()
 				   std::move(forUpdate));
     auto forBody = parseBlock();
     if (!forBody) {
-	error::out() << token.loc << ": compound statement expected"
-	    << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << ": compound statement expected\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -1084,8 +1209,12 @@ parseTypeDeclaration()
     }
     getToken();
     if (token.kind != TokenKind::IDENTIFIER) {
-	error::out() << token.loc << ": identifier for type expected"
-	    << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "identifier for type expected\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -1097,8 +1226,12 @@ parseTypeDeclaration()
     getToken();
     auto type = parseType();
     if (!type) {
-	error::out() << token.loc << ": type expected"
-	    << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "type expected\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
     }
     if (!error::expected(TokenKind::SEMICOLON)) {
@@ -1133,7 +1266,12 @@ parseEnumDeclaration()
 	getToken();
 	type = parseType();
 	if (!type) {
-	    error::out() << token.loc << ": integer type expected" << std::endl;
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "integer type expected\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return nullptr;
 	}
@@ -1145,8 +1283,12 @@ parseEnumDeclaration()
     } else if (parseEnumConstantDeclaration(enumDecl)) {
 	enumDecl->complete();
     } else {
-	error::out() << token.loc
-	    << ": ';' or declaration of enum constants expected" << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "';' or declaration of enum constants expected\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -1167,8 +1309,12 @@ parseEnumConstantDeclaration(AstEnumDeclPtr &enumDecl)
     }
     getToken();
     if (!parseEnumConstantList(enumDecl)) {
-	error::out() << token.loc
-	    << ": list of enum constants expected" << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "list of enum constants expected\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return false;
     }
@@ -1201,8 +1347,12 @@ parseEnumConstantList(AstEnumDeclPtr &enumDecl)
 	    getToken();
 	    auto expr = parseExpression();
 	    if (!expr) {
-		error::out() << token.loc << ": expression expected"
-		    << std::endl;
+		error::location(token.loc);
+		error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		    << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "expression expected\n"
+		    << error::setColor(error::NORMAL);
 		error::fatal();
 		return false;
 	    }
@@ -1247,8 +1397,12 @@ parseStructDeclaration()
 	structDecl->complete();
 	return structDecl;
     }
-    error::out() << token.loc
-	<< ": ';' or struct member declaration expected" << std::endl;
+    error::location(token.loc);
+    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	<< error::setColor(error::BOLD_RED) << "error: "
+	<< error::setColor(error::BOLD)
+	<< "';' or struct member declaration expected\n"
+	<< error::setColor(error::NORMAL);
     error::fatal();
     return nullptr;
 }
@@ -1326,8 +1480,12 @@ parseStructMemberList(AstStructDecl *structDecl)
 	structDecl->add(std::move(memberName), std::move(ast));
 	return true;
     } else {
-	error::out() << token.loc << ": expected type or struct declaration"
-	    << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "expected type or struct declaration\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return false;
     }
@@ -1346,8 +1504,12 @@ parsePointerType()
     getToken();
     auto type = parseType();
     if (!type) {
-	error::out() << token.loc << ": type expected"
-	    << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "type expected\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -1369,7 +1531,12 @@ parseArrayType()
     getToken();
     auto type = parseArrayDimAndType();
     if (!type) {
-	error::out() << token.loc << ": array dimension expected" << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "array dimension expected\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -1389,16 +1556,23 @@ parseArrayDimAndType()
     getToken();
     auto dimExpr = parseExpression();
     if (!dimExpr || !dimExpr->isConst() || !dimExpr->type->isInteger()) {
-	error::out() << token.loc
-	    << ": constant integer expression expected for array dimension"
-	    << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "constant integer expression expected for array dimension\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
     auto dim = dimExpr->getSignedIntValue();
     if (dim < 0) {
-	error::out() << token.loc << ": dimension can not be negative"
-	    << std::endl;
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "dimension can not be negative\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -1410,15 +1584,24 @@ parseArrayDimAndType()
 	getToken();
 	auto type = parseType();
 	if (!type) {
-	    error::out() << token.loc << ": type expected" << std::endl;
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "type expected\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	}
 	return ArrayType::create(type, dim);
     } else {
 	auto type = parseArrayDimAndType();
 	if (!type) {
-	    error::out() << token.loc
-		<< ": expected 'of' or array dimension" << std::endl;
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "expected 'of' or array dimension\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return nullptr;
 	}

@@ -7,7 +7,7 @@
 
 namespace gen {
 
-void externalVariableiDeclaration(const char *ident, const abc::Type *varType);
+void externalVariableDeclaration(const char *ident, const abc::Type *varType);
 
 void globalVariableDefinition(const char *ident, const abc::Type *varType,
 			      Constant initialValue, bool externalLinkage);

@@ -108,16 +108,21 @@ class AstVar : public Ast
 {
     private:
 	AstInitializerExprPtr initializerExpr;
+	void getId();
 
     public:
-	AstVar(lexer::Token varName, const Type *varType);
+	AstVar(lexer::Token varName, lexer::Loc varTypeLoc,
+	       const Type *varType);
+	AstVar(std::vector<lexer::Token> &&varName, lexer::Loc varTypeLoc,
+	       const Type *varType);
 
 	void addInitializerExpr(AstInitializerExprPtr &&initializerExpr_);
 	const Expr *getInitializerExpr() const;
 
-	const lexer::Token varName;
+	const std::vector<lexer::Token> varName;
+	const lexer::Loc varTypeLoc;
 	const Type * const varType;
-	UStr varId;
+	std::vector<UStr> varId;
 
 	void print(int indent) const override;
 };

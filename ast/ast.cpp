@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "expr/expr.hpp"
+#include "expr/compoundexpr.hpp"
 #include "expr/implicitcast.hpp"
 #include "gen/function.hpp"
 #include "gen/instruction.hpp"
@@ -330,40 +331,39 @@ AstInitializerExpr::print(int indent) const
 /*
  * AstVar
  */
-AstVar::AstVar(lexer::Token varName, const Type *varType)
-    : varName{varName}, varType{varType}
+AstVar::AstVar(lexer::Token varName, lexer::Loc varTypeLoc, const Type *varType)
+    : varName{varName}, varTypeLoc{varTypeLoc}, varType{varType}
+{
+    getId();
+}
+
+AstVar::AstVar(std::vector<lexer::Token> &&varName, lexer::Loc varTypeLoc,
+	       const Type *varType)
+    : varName{std::move(varName)}, varTypeLoc{varTypeLoc}, varType{varType}
+{
+    getId();
+}
+
+void
+AstVar::getId()
 {
     assert(varType);
+    assert(!varName.empty());
     if (!varType->hasSize()) {
-	error::location(varName.loc);
-	error::out() << error::setColor(error::BOLD) << varName.loc << ": "
-	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	error::location(varTypeLoc);
+	error::out() << error::setColor(error::BOLD) << varTypeLoc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
 	    << error::setColor(error::BOLD)
-	    << "variable '" << varName.val << "' has incomplete type '"
-	    << varType << "'\n"
+	    << "type '" << varType << "' is incomplete\n"
 	    << error::setColor(error::NORMAL);
 	error::fatal();
     }
-    auto addDecl = Symtab::addDeclaration(varName.loc, varName.val, varType);
-    /*
-    if (!addDecl.second) {
-	error::location(varName.loc);
-	error::out() << error::setColor(error::BOLD) << varName.loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error:"
-	    << error::setColor(error::BOLD)
-	    << " variable '" << varName.val
-	    << "' already defined in this scope\n"
-	    << error::setColor(error::NORMAL);
-	auto pev = Symtab::variable(varName.val, Symtab::CurrentScope);
-	error::location(pev->loc);
-	error::out() << error::setColor(error::BOLD) << pev->loc
-	    << ": previous definition\n"
-	    << error::setColor(error::NORMAL);
-	error::fatal();
-    }
-    */
-    if (addDecl.first) {
-	varId = addDecl.first->id;
+    for (std::size_t i = 0; i < varName.size(); ++i) {
+	auto addDecl = Symtab::addDeclaration(varName[i].loc, varName[i].val,
+					      varType);
+	if (addDecl.first) {
+	    varId.push_back(addDecl.first->id);
+	}
     }
 }
 
@@ -386,7 +386,14 @@ AstVar::getInitializerExpr() const
 void
 AstVar::print(int indent) const
 {
-    error::out(indent) << varName.val << ": " << varType;
+    error::out(indent) << "";
+    for (std::size_t i = 0; i < varName.size(); ++i) {
+	error::out() << varName[i].val;
+	if (i + 1 < varName.size()) {
+	    error::out(indent) << ", ";
+	}
+    }
+    error::out(indent) << ": " << varType;
     if (initializerExpr) {
 	error::out() << " = ";
 	initializerExpr->print(0);
@@ -431,9 +438,8 @@ AstExternVar::codegen()
     for (const auto &decl : declList->node) {
 	auto var = dynamic_cast<const AstVar *>(decl.get());
 	assert(var);
-	if (var->varId.c_str()) {
-	    gen::externalVariableiDeclaration(var->varId.c_str(),
-					      var->varType);
+	for (const auto &id: var->varId) {
+	    gen::externalVariableDeclaration(id.c_str(), var->varType);
 	}
     }
 }
@@ -476,22 +482,32 @@ AstGlobalVar::codegen()
     for (const auto &item : decl.node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
-	gen::Constant initialValue = nullptr;
-	if (auto expr = var->getInitializerExpr()) {
-	    if (!expr->isConst()) {
-		error::location(expr->loc);
-		error::out() << error::setColor(error::BOLD) << expr->loc
-		    << ": " << error::setColor(error::BOLD_RED) << "error: "
-		    << error::setColor(error::BOLD)
-		    << "initializer element is not a compile-time constant\n"
-		    << error::setColor(error::NORMAL);
-		error::fatal();
-	    } else {
-		initialValue = expr->loadConstant();
+	auto initializer = var->getInitializerExpr();
+	if (initializer && !initializer->isConst()) {
+	    error::location(initializer->loc);
+	    error::out() << error::setColor(error::BOLD) << initializer->loc
+		<< ": " << error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "initializer is not a compile-time constant\n"
+		<< error::setColor(error::NORMAL);
+	    error::fatal();
+	}
+	if (var->varId.size() == 1) {
+	    auto initialValue = initializer
+		? initializer->loadConstant()
+		: nullptr;
+	    gen::globalVariableDefinition(var->varId[0].c_str(), var->varType,
+					  initialValue, false);
+	} else {
+	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
+	    assert(compExpr);
+	    for (std::size_t i = 0; i < var->varId.size(); ++i) {
+		gen::globalVariableDefinition(var->varId[i].c_str(),
+					      var->varType,
+					      compExpr->loadConstant(i),
+					      false);
 	    }
 	}
-	gen::globalVariableDefinition(var->varId.c_str(), var->varType,
-				      initialValue, false);
     }
 }
 
@@ -532,9 +548,22 @@ AstLocalVar::codegen()
     for (const auto &item : decl.node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
-	gen::localVariableDefinition(var->varId.c_str(), var->varType);
-	if (auto expr = var->getInitializerExpr()) {
-	    gen::store(expr->loadValue(), gen::loadAddress(var->varId.c_str()));
+	auto initializer = var->getInitializerExpr();
+	if (var->varId.size() == 1) {
+	    gen::localVariableDefinition(var->varId[0].c_str(), var->varType);
+	    if (initializer) {
+		gen::store(initializer->loadValue(),
+			   gen::loadAddress(var->varId[0].c_str()));
+	    }
+	} else {
+	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
+	    assert(compExpr);
+	    for (std::size_t i = 0; i < var->varId.size(); ++i) {
+		gen::localVariableDefinition(var->varId[i].c_str(),
+					     var->varType);
+		gen::store(compExpr->loadValue(i),
+			   gen::loadAddress(var->varId[i].c_str()));
+	    }
 	}
     }
 }
@@ -581,7 +610,7 @@ AstReturn::codegen()
 	if (!expr) {
 	    error::location(expr->loc);
 	    error::out() << error::setColor(error::BOLD) << expr->loc << ": "
-		<< ": " << error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD_RED) << "error: "
 		<< error::setColor(error::BOLD)
 		<< ": non-void function should return a value\n"
 		<< error::setColor(error::NORMAL);
@@ -661,7 +690,7 @@ AstBreak::codegen()
     if (!label) {
 	error::location(loc);
 	error::out() << error::setColor(error::BOLD) << loc << ": "
-	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD_RED) << "error: "
 	    << error::setColor(error::BOLD)
 	    << ": break statement not within loop or switch\n"
 	    << error::setColor(error::NORMAL);
@@ -690,7 +719,7 @@ AstContinue::codegen()
     if (!label) {
 	error::location(loc);
 	error::out() << error::setColor(error::BOLD) << loc << ": "
-	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD_RED) << "error: "
 	    << error::setColor(error::BOLD)
 	    << "continue statement not within loop\n"
 	    << error::setColor(error::NORMAL);
@@ -841,7 +870,7 @@ AstSwitch::appendCase(ExprPtr &&caseExpr_)
     if (!caseExpr_ || !caseExpr_->isConst() || !caseExpr_->type->isInteger()) {
 	error::location(caseExpr_->loc);
 	error::out() << error::setColor(error::BOLD) << caseExpr_->loc << ": "
-	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD_RED) << "error: "
 	    << error::setColor(error::BOLD)
 	    << ": case expression has "
 	    << "to be a constant integer expression\n"
@@ -1124,7 +1153,7 @@ AstTypeDecl::AstTypeDecl(lexer::Token name, const Type *type)
 	if (found->type->getUnalias() != type) {
 	    error::location(name.loc);
 	    error::out() << error::setColor(error::BOLD) << name.loc << ": "
-		<< ": " << error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD_RED) << "error: "
 		<< error::setColor(error::BOLD)
 		<< "redefinition of '"
 		<< name.val << "\n"
@@ -1159,9 +1188,9 @@ AstEnumDecl::AstEnumDecl(lexer::Token name, const Type *intType)
     if (!intType->isInteger() || intType->isEnum()) {
 	error::location(enumTypeName.loc);
 	error::out() << error::setColor(error::BOLD) << enumTypeName.loc << ": "
-	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD_RED) << "error: "
 	    << error::setColor(error::BOLD)
-	    << ": enum type has to be an integer type\n"
+	    << "enum type has to be an integer type\n"
 	    << error::setColor(error::NORMAL);
 	error::fatal();
     }
@@ -1172,7 +1201,7 @@ AstEnumDecl::AstEnumDecl(lexer::Token name, const Type *intType)
 	if (!found->type->isEnum() || found->type->hasSize()) {
 	    error::location(name.loc);
 	    error::out() << error::setColor(error::BOLD) << name.loc << ": "
-		<< ": " << error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD_RED) << "error: "
 		<< error::setColor(error::BOLD)
 		<< "redefinition of '"
 		<< name.val << "\n"
@@ -1284,7 +1313,7 @@ AstStructDecl::AstStructDecl(lexer::Token name)
 	if (!found->type->isStruct() || found->type->hasSize()) {
 	    error::location(name.loc);
 	    error::out() << error::setColor(error::BOLD) << name.loc << ": "
-		<< ": " << error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD_RED) << "error: "
 		<< error::setColor(error::BOLD)
 		<< "redefinition of '"
 		<< name.val << "\n"
