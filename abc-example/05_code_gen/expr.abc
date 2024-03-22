@@ -172,7 +172,7 @@ fn binaryExprKindStr(kind: BinaryExprKind): -> char;
 
 fn printExprWithIndent(indent: i32, expr: -> const Expr)
 {
-    printf("%*s%", indent, "");
+    printf("%*s%", indent, " ");
     switch (expr->kind) {
 	case EXPR_PRIMARY:
 	    switch (expr->primary.kind) {
