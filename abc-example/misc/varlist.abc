@@ -1,0 +1,23 @@
+@ <stdio.hdr>
+
+extern a, b, c: int;
+global a: int = 1;
+global b, c: int = {2, 3};
+
+global a2, b2: array[4] of int = {{1,2}};
+
+fn main()
+{
+    local a, b: array[4] of int = {"AB"};
+
+    for (local i, j: int = {0, 1}; i < 3; ++i) {
+	printf("i = %d, j = %d\n", i, j);
+    }
+
+    for (local i: int = 0; i < 4; ++i) {
+	printf("a[%d] = %d\n", i, a[i]);
+    }
+    for (local i: int = 0; i < 4; ++i) {
+	printf("b[%d] = %d\n", i, b[i]);
+    }
+}
