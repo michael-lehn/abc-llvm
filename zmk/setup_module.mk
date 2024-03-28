@@ -55,6 +55,6 @@ $(module.lib) : $(module.lib)($($(module.name).lib.obj))
 
 $(build.dir)$(module.dir)%: $(build.dir)$(module.dir)%.o $(module.lib) \
 				$($(module.name).requires.lib)
-	$(LINK.cc) -o $$@ $$^ $($(module.name).extern.lib)
+	$(LINK.cc) -o $$@ $$< -Wl,--start-group $(module.lib) $($(module.name).requires.lib) -Wl,--end-group $($(module.name).extern.lib)
 
 endef
