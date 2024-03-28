@@ -1,0 +1,29 @@
+@ <stdabc.hdr>
+
+enum StdIO_Constants : int
+{
+    EOF = -1,
+};
+
+extern fn printf(fmt: -> const char, ...): int;
+extern fn snprintf(dest: -> char, size: size_t, fmt: -> const char, ...): int;
+
+extern fn scanf(fmt: -> char, ...): int;
+extern fn getchar(): int;
+extern fn putchar(ch : int);
+extern fn strtol(str: -> char, end: -> char, base: int): long;
+
+struct FILE;
+
+extern fn fopen(path: -> char, mode: -> char): -> FILE;
+extern fn fprintf(stream: -> FILE, fmt: -> char, ...): int;
+extern fn fclose(stream: -> FILE): int;
+
+@ifdef __Darwin__
+    @define stdin __stdinp
+    @define stdout __stdoutp
+    @define stderr __stderrp
+@endif
+extern stdin: -> FILE;
+extern stdout: -> FILE;
+extern stderr: -> FILE;

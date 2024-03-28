@@ -1,0 +1,12 @@
+@ <stdabc.hdr>
+
+/*
+ * assert hack:
+ *
+ * assert(expr) is internally expaned to __assert(...)
+ *
+ * __assert is internally declared by the compiler as follows
+ *
+ * extern fn __assert(msg: -> const char, file: -> const char, line: int): bool;
+ *
+ */

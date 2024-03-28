@@ -1,20 +1,14 @@
-$(this).requires.lib := \
-	parser/libparser.a \
-	ast/libast.a \
-	symtab/libsymtab.a \
-	expr/libexpr.a \
-	lexer/liblexer.a \
-	gen/libgen.a \
-	type/libtype.a \
-	util/libutil.a
+abc.requires.lib := \
+	$(build.dir)ast/libast.a \
+	$(build.dir)gen/libgen.a \
+	$(build.dir)expr/libexpr.a \
+	$(build.dir)type/libtype.a \
+	$(build.dir)lexer/liblexer.a \
+	$(build.dir)parser/libparser.a \
+	$(build.dir)symtab/libsymtab.a \
+	$(build.dir)util/libutil.a
 
-$(this).CPPFLAGS += -Wno-unused-parameter -I `$(llvm-config.cmd) --includedir`
-$(this).extra_libs += `$(llvm-config.cmd) --ldflags --system-libs --libs all`
+abc.prg.cpp += abc/abc.cpp
 
-# All files in source directory beginning with 'xtest' are optional targets
-# (built with 'make opt'). Here we here default targets (built with 'make').
-
-$(this).prg.cpp := \
-        abc.cpp
-
-$(this).install := abc
+abc.CPPFLAGS += -Wno-unused-parameter -I `$(llvm-config.cmd) --includedir`
+abc.extern.lib += `$(llvm-config.cmd) --ldflags --system-libs --libs all`

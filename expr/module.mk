@@ -1,13 +1,9 @@
-$(this).requires.lib := \
-	gen/libgen.a \
-	lexer/liblexer.a \
-	type/libtype.a \
-	util/libutil.a
+expr.requires.lib := \
+	$(build.dir)gen/libgen.a \
+	$(build.dir)type/libtype.a \
+	$(build.dir)lexer/liblexer.a \
+	$(build.dir)util/libutil.a
 
-$(this).CPPFLAGS += -Wno-unused-parameter -I `$(llvm-config.cmd) --includedir`
-$(this).extra_libs += `$(llvm-config.cmd) --ldflags --system-libs --libs all`
+expr.CPPFLAGS += -Wno-unused-parameter -I `$(llvm-config.cmd) --includedir`
+expr.extern.lib += `$(llvm-config.cmd) --ldflags --system-libs --libs all`
 
-# All files in source directory beginning with 'xtest' are optional targets
-# (built with 'make opt'). Here we here default targets (built with 'make').
-
-$(this).install := xtest_expr

@@ -1,14 +1,11 @@
-$(this).requires.lib := \
-	lexer/liblexer.a \
-	expr/libexpr.a \
-	gen/libgen.a \
-	type/libtype.a \
-	util/libutil.a
+symtab.requires.lib := \
+	$(build.dir)gen/libgen.a \
+	$(build.dir)expr/libexpr.a \
+	$(build.dir)type/libtype.a \
+	$(build.dir)lexer/liblexer.a \
+	$(build.dir)util/libutil.a
 
-$(this).CPPFLAGS += -Wno-unused-parameter -I `$(llvm-config.cmd) --includedir`
-$(this).extra_libs += `$(llvm-config.cmd) --ldflags --system-libs --libs all`
 
-# All files in source directory beginning with 'xtest' are optional targets
-# (built with 'make opt'). Here we here default targets (built with 'make').
+symtab.CPPFLAGS += -Wno-unused-parameter -I `$(llvm-config.cmd) --includedir`
+symtab.extern.lib += `$(llvm-config.cmd) --ldflags --system-libs --libs all`
 
-$(this).install := xtest_symtab

@@ -23,7 +23,8 @@ print(std::filesystem::path path, FileType fileType)
     auto f = llvm::raw_fd_ostream{path.c_str(), ec, llvm::sys::fs::OF_None};
 
     if (ec) {
-	llvm::errs() << "Could not open file: " << ec.message();
+	llvm::errs() << "Could not open file: " << path << ". "
+	    << ec.message() << "\n";
 	std::exit(1);
     }
 

@@ -42,7 +42,7 @@ main(int argc, char *argv[])
 	}
     }
     infile.empty()
-	? lexer::openInputfile(nullptr)
+	? lexer::openInputfile("")
 	: lexer::openInputfile(infile.c_str());
 
     do {
