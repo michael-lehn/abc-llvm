@@ -1,4 +1,4 @@
-ABC := $(build.dir)/abc/abc
+ABC := $(build.dir)abc/abc
 
 abc-lib.name := abc
 abc-lib.dir := abc-lib/
@@ -10,7 +10,7 @@ ABCFLAGS := -I abc-include
 DEPFLAGS = -MD -MP -MT '$@'
 
 $(abc-lib.name).lib.abc := \
-	$(wildcard $(abc-lib.dir)/*.abc)
+	$(wildcard $(abc-lib.dir)*.abc)
 $(abc-lib.name).lib.obj := \
 	$(patsubst %,$(build.dir)%,\
 		$($(abc-lib.name).lib.abc:%.abc=%.o))
