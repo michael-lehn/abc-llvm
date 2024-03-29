@@ -128,9 +128,14 @@ all: $(ABC) $(abc-std-lib)
 
 opt: $(prg.cpp.exe) $(prg.cpp.o)
 
+.PHONY: install
 install: $(ABC) $(abc-std-lib) | $(PREFIX)/bin/ $(LIBDIR) $(INCLUDEDIR)
 	cp abc-include/* $(INCLUDEDIR)
 	cp $(abc-std-lib) $(LIBDIR)
 	cp $(ABC) $(PREFIX)/bin/
+
+.PHONY: clean
+clean:
+	$(RM) -rf $(build.dir)
 
 -include $(src.d)
