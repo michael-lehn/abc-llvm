@@ -1,6 +1,8 @@
 ifdef PREFIX
     CPPFLAGS += -DABC_PREFIX=$(PREFIX)
     $(file > $(build.dir)prefix,$(PREFIX))
+    $(shell rm -f $(build.dir)libdir)
+    $(shell rm -f $(build.dir)includedir)
 endif
 
 ifdef LIBDIR
