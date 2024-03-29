@@ -6,6 +6,7 @@
 #include "error.hpp"
 #include "lexer.hpp"
 #include "macro.hpp"
+#include "reader.hpp"
 
 namespace abc { namespace lexer {
 

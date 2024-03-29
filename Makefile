@@ -104,7 +104,7 @@ $(abc-llvm-lib) : $(abc-llvm-lib)($(lib.cpp.o))
 	$(RANLIB) $@
 
 $(build.dir)% : $(build.dir)%.o $(abc-llvm-lib)
-	$(LINK.cc) -o $@ $<
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $< $(LDFLAGS) $(TARGET_ARCH) -o $@
 
 $(build.dir)%.o : %.abc $(ABC) | $(build.subdir)
 	$(ABC) -c $(ABCFLAGS) $< -o $@ -MF $(@:%.o=%.d) -MT '$@' -MD -MP
