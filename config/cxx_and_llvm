@@ -21,12 +21,14 @@ check_llvm := $(shell which $(llvm-config) > /dev/null; echo $$?)
 
 ifneq ($(check_cxx),0)
     $(info C++ compiler CXX=$(CXX) was not found)
-    $(error You can specify the compiler with: make CXX=<c++ compiler>)
+    $(info You can specify the compiler with: make CXX=<c++ compiler>)
+    $(error)
 endif
 
 ifneq ($(check_llvm),0)
     $(info Command llvm-config=$(llvm-config) was not found)
-    $(error Specify llvm-config with: make llvm-config=<your llvm-config>)
+    $(info Specify llvm-config with: make llvm-config=<your llvm-config>)
+    $(error)
 endif
 
 llvm-config.version := $(shell $(llvm-config) --version)
