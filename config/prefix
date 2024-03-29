@@ -13,6 +13,7 @@ ifdef INCLUDEDIR
     $(file > $(build.dir)includedir,$(INCLUDEDIR))
 endif
 
+$(shell mkdir -p $(build.dir))
 ifeq (,$(wildcard $(build.dir)prefix)) 
     $(file > $(build.dir)prefix,$(HOME))
 endif
