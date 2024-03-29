@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "lexer.hpp"
+#include "reader.hpp"
 
 void
 usage(const char *prog)

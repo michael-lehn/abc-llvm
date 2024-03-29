@@ -3,7 +3,6 @@ CPPFLAGS += -Wextra -Wall
 RANLIB := ranlib
 
 build.dir := build/
-abc-llvm-lib := $(build.dir)libabc-llvm.a
 abc-std-lib := $(build.dir)libstdabc.a
 
 include config/ar
@@ -14,7 +13,6 @@ ABC := $(build.dir)abc/abc
 ABCFLAGS := -I abc-include
 
 CPPFLAGS += -Wno-unused-parameter -I `$(llvm-config) --includedir`
-LDFLAGS += $(abc-llvm-lib)
 LDFLAGS += `$(llvm-config) --ldflags --system-libs --libs all`
 
 
@@ -97,14 +95,8 @@ $(build.dir)abc/abc.o : abc/abc.cpp \
 $(build.dir)%.o : %.cpp | $(build.subdir)
 	$(COMPILE.cpp) -I. -o $@ -MT '$@' -MMD -MP $<
 
-$(abc-llvm-lib)(%.o): $(build.dir)%.o | $(build.dir)
-	$(AR) $(ARFLAGS) $@ $<
-
-$(abc-llvm-lib) : $(abc-llvm-lib)($(lib.cpp.o))
-	$(RANLIB) $@
-
-$(build.dir)% : $(build.dir)%.o $(abc-llvm-lib)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $< $(LDFLAGS) $(TARGET_ARCH) -o $@
+$(build.dir)% : $(build.dir)%.o $(lib.cpp.o)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $^ $(LDFLAGS) $(TARGET_ARCH) -o $@
 
 $(build.dir)%.o : %.abc $(ABC) | $(build.subdir)
 	$(ABC) -c $(ABCFLAGS) $< -o $@ -MF $(@:%.o=%.d) -MT '$@' -MD -MP
@@ -116,7 +108,7 @@ $(abc-std-lib) : $(abc-std-lib)($(lib.abc.o))
 	$(RANLIB) $@
 
 
-%/: ; mkdir -p $@
+%/: ; @mkdir -p $@
 
 $(info PREFIX=$(PREFIX))
 $(info LIBDIR=$(LIBDIR))
@@ -124,9 +116,7 @@ $(info INCLUDEDIR=$(INCLUDEDIR))
 
 .DEFAULT_GOAL := all
 .PHONY: all
-all: $(ABC) $(abc-std-lib)
-
-opt: $(prg.cpp.exe) $(prg.cpp.o)
+all: $(ABC) $(abc-std-lib) $(prg.cpp.exe) $(lib.cpp.o) $(prg.cpp.o)
 
 .PHONY: install
 install: $(ABC) $(abc-std-lib) | $(PREFIX)/bin/ $(LIBDIR) $(INCLUDEDIR)
