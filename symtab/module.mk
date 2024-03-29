@@ -1,6 +1,6 @@
 symtab.requires.lib := \
-	$(build.dir)gen/libgen.a \
 	$(build.dir)expr/libexpr.a \
+	$(build.dir)gen/libgen.a \
 	$(build.dir)type/libtype.a \
 	$(build.dir)lexer/liblexer.a \
 	$(build.dir)util/libutil.a
