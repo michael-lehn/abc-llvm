@@ -1,46 +1,136 @@
 CXXFLAGS += -std=c++20 -ftrapv
 CPPFLAGS += -Wextra -Wall
-
-
 RANLIB := ranlib
-build.dir := build/
 
-targets :=
-module.list :=
-dep.files := 
+build.dir := build/
+abc-llvm-lib := $(build.dir)libabc-llvm.a
+abc-std-lib := $(build.dir)libstdabc.a
 
 include config/ar
 include config/cxx_and_llvm
-include zmk/setup_module.mk
+include config/prefix
 
-#
-# Scan all modules
-#
-$(foreach m,$(wildcard */module.mk),\
- 	$(eval \
-		$(call setup_module,$(m))))
+ABC := $(build.dir)abc/abc
+ABCFLAGS := -I abc-include
+
+CPPFLAGS += -Wno-unused-parameter -I `$(llvm-config.cmd) --includedir`
+LDFLAGS += $(abc-llvm-lib)
+LDFLAGS += `$(llvm-config.cmd) --ldflags --system-libs --libs all`
 
 
-#
-# List of required build directories
-#
-mk.build.dir := $(sort $(dir $(obj.files)))
+src.cpp := \
+	$(wildcard abc/*.cpp) \
+	$(wildcard ast/*.cpp) \
+	$(wildcard expr/*.cpp) \
+	$(wildcard gen/*.cpp) \
+	$(wildcard lexer/*.cpp) \
+	$(wildcard parser/*.cpp) \
+	$(wildcard symtab/*.cpp) \
+	$(wildcard type/*.cpp) \
+	$(wildcard util/*.cpp)
 
-#
-# List of libraries
-#
-lib.list :=
-$(foreach m,$(module.list),\
-	$(if $($(m).lib.cpp),\
-		$(eval lib.list += lib$(m).a)))
+src.abc := \
+	$(wildcard abc-lib/*.abc)
+
+src.o := \
+	$(patsubst %,$(build.dir)%,\
+		$(src.cpp:.cpp=.o)) \
+	$(patsubst %,$(build.dir)%,\
+		$(src.abc:.abc=.o))
+
+src.d := \
+	$(src.o:.o=.d)
+
+build.subdir := \
+	$(sort $(dir $(src.o)))
+
+prg.cpp := \
+	$(wildcard abc/xtest*.cpp) abc/abc.cpp \
+	$(wildcard ast/xtest*.cpp) \
+	$(wildcard expr/xtest*.cpp) \
+	$(wildcard gen/xtest*.cpp) \
+	$(wildcard lexer/xtest*.cpp) \
+	$(wildcard parser/xtest*.cpp) \
+	$(wildcard symtab/xtest*.cpp) \
+	$(wildcard type/xtest*.cpp) \
+	$(wildcard util/xtest*.cpp)
+
+prg.abc :=
+
+lib.cpp := \
+	$(filter-out $(prg.cpp), $(src.cpp))
+
+lib.abc := \
+	$(filter-out $(prg.abc), $(src.abc))
+
+prg.cpp.o := \
+	$(patsubst %,$(build.dir)%,\
+		$(prg.cpp:.cpp=.o))
+
+prg.abc.o := \
+	$(patsubst %,$(build.dir)%,\
+		$(prg.abc:.abc=.o))
+
+prg.cpp.exe := \
+	$(patsubst %,$(build.dir)%,\
+		$(prg.cpp:.cpp=))
+
+prg.abc.exe := \
+	$(patsubst %,$(build.dir)%,\
+		$(prg.abc:.abc=))
+
+lib.cpp.o := \
+	$(patsubst %,$(build.dir)%,\
+		$(lib.cpp:.cpp=.o))
+
+lib.abc.o := \
+	$(patsubst %,$(build.dir)%,\
+		$(lib.abc:.abc=.o))
+
+$(build.dir)abc/abc.o : abc/abc.cpp \
+		$(build.dir)prefix \
+		$(build.dir)libdir \
+		$(build.dir)includedir \
+		| $(build.subdir)
+	$(COMPILE.cpp) -I. -o $@ -MT '$@' -MMD -MP $<
+
+$(build.dir)%.o : %.cpp | $(build.subdir)
+	$(COMPILE.cpp) -I. -o $@ -MT '$@' -MMD -MP $<
+
+$(abc-llvm-lib)(%.o): $(build.dir)%.o | $(build.dir)
+	$(AR) $(ARFLAGS) $@ $<
+
+$(abc-llvm-lib) : $(abc-llvm-lib)($(lib.cpp.o))
+	$(RANLIB) $@
+
+$(build.dir)% : $(build.dir)%.o $(abc-llvm-lib)
+	$(LINK.cc) -o $@ $<
+
+$(build.dir)%.o : %.abc $(ABC) | $(build.subdir)
+	$(ABC) -c $(ABCFLAGS) $< -o $@ -MF $(@:%.o=%.d) -MT '$@' -MD -MP
+
+$(abc-std-lib)(%.o) : $(build.dir)%.o | $(build.dir)
+	$(AR) $(ARFLAGS) $@ $<
+
+$(abc-std-lib) : $(abc-std-lib)($(lib.abc.o))
+	$(RANLIB) $@
 
 
 %/: ; mkdir -p $@
 
+$(info PREFIX=$(PREFIX))
+$(info LIBDIR=$(LIBDIR))
+$(info INCLUDEDIR=$(INCLUDEDIR))
+
 .DEFAULT_GOAL := all
 .PHONY: all
-all: $(targets)
+all: $(ABC) $(abc-std-lib)
 
-$(info dep.files = $(dep.files))
+opt: $(prg.cpp.exe) $(prg.cpp.o)
 
--include $(dep.files)
+install: $(ABC) $(abc-std-lib) | $(PREFIX)/bin/ $(LIBDIR) $(INCLUDEDIR)
+	cp abc-include/* $(INCLUDEDIR)
+	cp $(abc-std-lib) $(LIBDIR)
+	cp $(ABC) $(PREFIX)/bin/
+
+-include $(src.d)

@@ -1,0 +1,29 @@
+ifdef PREFIX
+    CPPFLAGS += -DABC_PREFIX=$(PREFIX)
+    $(file > $(build.dir)prefix,$(PREFIX))
+endif
+
+ifdef LIBDIR
+    CPPFLAGS += -DABC_LIBDIR=$(LIBDIR)
+    $(file > $(build.dir)libdir,$(LIBDIR))
+endif
+
+ifdef INCLUDEDIR
+    CPPFLAGS += -DABC_INCLUDEDIR=$(INCLUDEDIR)
+    $(file > $(build.dir)includedir,$(INCLUDEDIR))
+endif
+
+ifeq (,$(wildcard $(build.dir)prefix)) 
+    $(file > $(build.dir)prefix,$(HOME))
+endif
+PREFIX := $(file < $(build.dir)prefix)/
+
+ifeq (,$(wildcard $(build.dir)libdir)) 
+    $(file > $(build.dir)libdir,$(PREFIX)/lib)
+endif
+LIBDIR := $(file < $(build.dir)libdir)/
+
+ifeq (,$(wildcard $(build.dir)includedir)) 
+    $(file > $(build.dir)includedir,$(PREFIX)/include/abc)
+endif
+INCLUDEDIR := $(file < $(build.dir)includedir)/

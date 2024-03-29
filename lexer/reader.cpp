@@ -112,4 +112,10 @@ addSearchPath(std::filesystem::path path)
     searchPath.push_back(path);
 }
 
+const std::vector<std::filesystem::path> &
+getSearchPath()
+{
+    return searchPath;
+}
+
 } } // namespace lexer, abc

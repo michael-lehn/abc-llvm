@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <iostream>
@@ -31,6 +32,36 @@
 #else
     std::string supportOs;
 #endif // SUPPORT_OS
+
+#ifdef ABC_PREFIX
+#   define str(s) #s
+#   define xstr(s) str(s)
+    std::filesystem::path abcPrefix = xstr(ABC_PREFIX);
+#   undef str
+#   undef xstr
+#else
+    std::filesystem::path abcPrefix = std::getenv("HOME");
+#endif
+
+#ifdef ABC_LIBDIR
+#   define str(s) #s
+#   define xstr(s) str(s)
+    std::filesystem::path abcLibDir = xstr(ABC_LIBDIR);
+#   undef str
+#   undef xstr
+#else
+    std::filesystem::path abcLibDir = abcPrefix / "lib";
+#endif
+
+#ifdef ABC_INCLUDEDIR
+#   define str(s) #s
+#   define xstr(s) str(s)
+    std::filesystem::path abcIncludeDir = xstr(ABC_INCLUDEDIR);
+#   undef str
+#   undef xstr
+#else
+    std::filesystem::path abcIncludeDir = abcPrefix / "include" / "abc";
+#endif
 
 void
 usage(const char *prog, int exit = 1)
@@ -194,6 +225,8 @@ main(int argc, char *argv[])
 	    infile.push_back(argv[i]);
 	}
     }
+    abc::lexer::addSearchPath(abcIncludeDir);
+    
     if (infile.empty()) {
 	std::cerr << argv[0] << ": error: no input files\n";
 	std::exit(1);
@@ -285,27 +318,30 @@ main(int argc, char *argv[])
 	    abc::lexer::macro::defineDirective(abc::UStr::create(supportOs));
 	}
 
+	if (verbose) {
+	    std::cerr << argv[0];
+	    for (const auto &p: abc::lexer::getSearchPath()) {
+		std::cerr << " -I " << p;
+	    }
+	    switch (outputFileType) {
+		case gen::ASSEMBLY_FILE:
+		    std::cerr << " -S ";
+		    break;
+		case gen::OBJECT_FILE:
+		    std::cerr << " -c ";
+		    break;
+		case gen::LLVM_FILE:
+		    std::cerr << " --emit-llvm ";
+		    break;
+	    }
+	    std::cerr << infile[i].c_str();
+	    std::cerr << " -o " << outfile.c_str() << "\n";
+	}
 	if (auto ast = abc::parser()) {
 	    if (printAst) {
 		ast->print();
 	    }
 	    ast->codegen();
-	    if (verbose) {
-		std::cerr << argv[0];
-		switch (outputFileType) {
-		    case gen::ASSEMBLY_FILE:
-			std::cerr << " -S ";
-			break;
-		    case gen::OBJECT_FILE:
-			std::cerr << " -c ";
-			break;
-		    case gen::LLVM_FILE:
-			std::cerr << " --emit-llvm ";
-			break;
-		}
-		std::cerr << infile[i].c_str();
-		std::cerr << " -o " << outfile.c_str() << "\n";
-	    }
 	    gen::print(outfile.c_str(), outputFileType);
 	    if (outputFileType == gen::OBJECT_FILE) {
 		objFile.push_back(outfile);
@@ -348,6 +384,9 @@ main(int argc, char *argv[])
 	    linkerCmd += obj.c_str();
 	}
 	linkerCmd += ldFlags;
+	linkerCmd += " -L ";
+	linkerCmd += abcLibDir;
+	linkerCmd += " -lstdabc ";
 
 	if (verbose) {
 	    std::cerr << linkerCmd.c_str() << "\n";

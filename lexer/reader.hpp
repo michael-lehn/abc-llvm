@@ -35,6 +35,7 @@ std::filesystem::path searchFile(std::filesystem::path path);
 // if path is empty read from stdin
 bool openInputfile(std::filesystem::path path);
 void addSearchPath(std::filesystem::path path);
+const std::vector<std::filesystem::path> &getSearchPath();
 
 // read next character and update reader
 char nextCh();

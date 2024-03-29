@@ -41,7 +41,7 @@ fn main(): u8
 	printf("Gib eine Zahl ein oder breche ab mit 'x': ");
 
 	local i: int; 
-	if (!scanf("%d", &i)) {
+	if (scanf("%d", &i) != 1) {
 	    break;
 	}
 	list = insertInList(list, i);

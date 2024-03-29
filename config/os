@@ -7,13 +7,13 @@ ostype := $(firstword $(shell uname -a))
 ifeq ($(ostype),)
     $(info config/llvm could not detect OS)
 else ifeq (Darwin,$(ostype))
-    $(info config/llvm detected OS is Darwin)
+    $(info config/os detected OS is Darwin)
     CPPFLAGS += -DSUPPORT_OS=__Darwin__
 else ifeq (Linux,$(ostype))
-    $(info config/llvm detected OS is Linux)
+    $(info config/os detected OS is Linux)
     CPPFLAGS += -DSUPPORT_OS=__Linux__
 else ifeq (SunOS,$(ostype))
-    $(info config/llvm detected OS is Solaris)
+    $(info config/os detected OS is Solaris)
     CPPFLAGS += -DSUPPORT_OS=__SunOS__
     CPPFLAGS += -DSUPPORT_CC=clang
 endif
