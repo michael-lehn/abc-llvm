@@ -2,32 +2,34 @@ include config/os
 
 ifeq (Darwin,$(ostype))
     CXX ?= clang++
-    llvm-config.cmd ?= llvm-config
+    llvm-config ?= llvm-config
 else ifeq (Linux,$(ostype))
     CXX ?= clang++-17
-    llvm-config.cmd ?= llvm-config-17
+    llvm-config ?= llvm-config-17
 else ifeq (SunOS,$(ostype))
     CXX ?= clang++
-    llvm-config.cmd ?= llvm-config
+    llvm-config ?= llvm-config
     CPPFLAGS += -DSUPPORT_SOLARIS
     CPPFLAGS += -D_GLIBCXX_BITS_SPECFUN_H
 endif
 
 check_cxx := $(shell which $(CXX) > /dev/null; echo $$?)
-check_llvm := $(shell which $(llvm-config.cmd) > /dev/null; echo $$?)
+check_llvm := $(shell which $(llvm-config) > /dev/null; echo $$?)
 
 # $(info check_cxx=$(check_cxx))
 # $(info check_llvm=$(check_llvm))
 
 ifneq ($(check_cxx),0)
-    $(error C++ compiler '$(CXX)' was not found)
+    $(info C++ compiler CXX=$(CXX) was not found)
+    $(error You can specify the compiler with: make CXX=<c++ compiler>)
 endif
 
 ifneq ($(check_llvm),0)
-    $(error Command '$(llvm-config.cmd)' was not found)
+    $(info Command llvm-config=$(llvm-config) was not found)
+    $(error Specify llvm-config with: make llvm-config=<your llvm-config>)
 endif
 
-llvm-config.version := $(shell $(llvm-config.cmd) --version)
+llvm-config.version := $(shell $(llvm-config) --version)
 llvm-config.version.major = $(firstword $(subst ., ,$(llvm-config.version)))
 
 

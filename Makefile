@@ -13,9 +13,9 @@ include config/prefix
 ABC := $(build.dir)abc/abc
 ABCFLAGS := -I abc-include
 
-CPPFLAGS += -Wno-unused-parameter -I `$(llvm-config.cmd) --includedir`
+CPPFLAGS += -Wno-unused-parameter -I `$(llvm-config) --includedir`
 LDFLAGS += $(abc-llvm-lib)
-LDFLAGS += `$(llvm-config.cmd) --ldflags --system-libs --libs all`
+LDFLAGS += `$(llvm-config) --ldflags --system-libs --libs all`
 
 
 src.cpp := \
