@@ -1,30 +1,26 @@
-# abc-llvm
+# ABC: A Bloody Compiler for A Better C
 
-The ABC programming language is specifically crafted as a teaching language,
-with a primary focus on educating individuals about the intricacies of C
-programming. It aims to provide a functional equivalence to C while
-prioritizing teachability as its core principle.
+The ABC programming language is meticulously designed as a teaching language, specifically tailored to educate individuals about the intricacies of C programming while emphasizing teachability as its fundamental principle.
 
-In the realm of C instruction, the most daunting aspects often revolve around
-pointers and memory management, whether dealing with global, local, or dynamic
-memory. These concepts pose significant challenges, exacerbated by the
-syntactic complexities and semantic inconsistencies inherent in traditional C
-declarations. Such intricacies tend to distract students from grasping the
-fundamental concepts, hindering their learning process.
+Beyond being a tool for mastering C, ABC serves as a platform for understanding why C (or ABC) may not always be the optimal choice for a project and exploring alternative languages better suited to specific needs. Proficiency in ABC equips learners with the essential programming skills needed to swiftly adapt to these alternatives.
 
-To address these challenges, ABC adopts a Pascal-like syntax for declarations
-and maintains consistent semantics throughout the language. By simplifying
-declaration syntax and ensuring semantic coherence, ABC minimizes unnecessary
-distractions and enables students to focus on mastering the underlying
-principles of memory management and pointer manipulation. In this regard, ABC
-strives to be not just a programming language, but a tool for educators to
-deliver a more effective and engaging learning experience.
+## Better in what respect?
 
-By providing a clear and intuitive syntax coupled with coherent semantics, ABC
-aims to be more than just a teaching language—it aims to be A Better C,
-empowering students to overcome the hurdles of C programming with confidence
-and clarity.
+In the realm of C instruction, the challenges of pointers and memory management loom large, whether dealing with global, local, or dynamic memory. The syntactic complexities and semantic inconsistencies inherent in traditional C declarations often hinder students' comprehension of fundamental concepts.
 
+ABC addresses these challenges by adopting a Pascal-like syntax for declarations and maintaining consistent semantics throughout the language. By streamlining declaration syntax and ensuring semantic coherence, ABC minimizes distractions, allowing students to focus on mastering the principles of memory management and pointer manipulation. In this way, ABC transcends being merely a programming language; it becomes a tool for educators to deliver a more effective and engaging learning experience.
+
+With its clear syntax and coherent semantics, ABC aspires to be more than a teaching language—it aims to be *A Better C*, empowering students to navigate the complexities of C programming with confidence and clarity.
+
+## Why C (or ABC) and not ...?
+
+The past decade has witnessed the emergence of numerous programming languages—such as Rust, Zig, Go, and Odin—each touted as superior alternatives to C (or C++). These languages address specific problems commonly encountered in C programming and offer distinct solutions, each prioritizing different aspects of programming.
+
+Some languages may prioritize memory management, leading to features like garbage collection, while others prioritize performance, eschewing such mechanisms. Variations in the handling of unsafe pointers also reflect differing priorities among languages.
+
+However, discussions about garbage collectors and safe pointers can seem abstract without firsthand experience. In C (and consequently, ABC), learners confront the very problems for which these features provide solutions, laying a solid foundation for understanding and appreciating the design decisions in alternative languages.
+
+# How ABC addresses problems in teaching C
 
 ## Declarations in C and ABC
 
