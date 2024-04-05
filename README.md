@@ -1,8 +1,32 @@
 # abc-llvm
 
-A Bloody Compiler (with LLVM backend)
+The ABC programming language is specifically crafted as a teaching language,
+with a primary focus on educating individuals about the intricacies of C
+programming. It aims to provide a functional equivalence to C while
+prioritizing teachability as its core principle.
 
-The ABC language is essentially C with Pascal-like syntax for declarations.
+In the realm of C instruction, the most daunting aspects often revolve around
+pointers and memory management, whether dealing with global, local, or dynamic
+memory. These concepts pose significant challenges, exacerbated by the
+syntactic complexities and semantic inconsistencies inherent in traditional C
+declarations. Such intricacies tend to distract students from grasping the
+fundamental concepts, hindering their learning process.
+
+To address these challenges, ABC adopts a Pascal-like syntax for declarations
+and maintains consistent semantics throughout the language. By simplifying
+declaration syntax and ensuring semantic coherence, ABC minimizes unnecessary
+distractions and enables students to focus on mastering the underlying
+principles of memory management and pointer manipulation. In this regard, ABC
+strives to be not just a programming language, but a tool for educators to
+deliver a more effective and engaging learning experience.
+
+By providing a clear and intuitive syntax coupled with coherent semantics, ABC
+aims to be more than just a teaching language—it aims to be A Better C,
+empowering students to overcome the hurdles of C programming with confidence
+and clarity.
+
+
+## Declarations in C and ABC
 
 For comparison, these declarations in C:
 ```c
