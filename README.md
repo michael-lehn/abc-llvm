@@ -32,7 +32,7 @@ navigate C programming's intricacies with confidence and clarity.
 ## Why C (or ABC) and not ...?
 
 The last decade has witnessed the emergence of numerous programming
-languages—like Rust, Zig, Go, and Odin—each positioned as a superior
+languages—like Rust, Zig, Go, Hare,and Odin—each positioned as a superior
 alternative to C (or C++). These languages address specific C programming
 challenges and offer distinct solutions, prioritizing different aspects of
 programming.
