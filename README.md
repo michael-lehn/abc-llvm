@@ -1,24 +1,71 @@
 # ABC: A Bloody Compiler for A Better C
 
-The ABC programming language is meticulously designed as a teaching language, specifically tailored to educate individuals about the intricacies of C programming while emphasizing teachability as its fundamental principle.
+The ABC programming language is meticulously crafted as a teaching tool,
+specifically designed to impart a deep understanding of C programming while
+prioritizing teachability.
 
-Beyond being a tool for mastering C, ABC serves as a platform for understanding why C (or ABC) may not always be the optimal choice for a project and exploring alternative languages better suited to specific needs. Proficiency in ABC equips learners with the essential programming skills needed to swiftly adapt to these alternatives.
+Beyond serving as a vehicle for mastering C, ABC acts as a springboard for
+exploring why C (or ABC) might not always be the optimal choice for a project,
+and for delving into alternative languages better suited to specific
+requirements. Proficiency in ABC equips learners with the foundational
+programming skills necessary to readily adapt to these alternatives.
 
 ## Better in what respect?
 
-In the realm of C instruction, the challenges of pointers and memory management loom large, whether dealing with global, local, or dynamic memory. The syntactic complexities and semantic inconsistencies inherent in traditional C declarations often hinder students' comprehension of fundamental concepts.
+In the realm of C instruction, challenges surrounding pointers and memory
+management are paramount, whether grappling with global, local, or dynamic
+memory. Traditional C's syntactic complexities and semantic inconsistencies
+often obscure fundamental concepts, impeding student comprehension.
 
-ABC addresses these challenges by adopting a Pascal-like syntax for declarations and maintaining consistent semantics throughout the language. By streamlining declaration syntax and ensuring semantic coherence, ABC minimizes distractions, allowing students to focus on mastering the principles of memory management and pointer manipulation. In this way, ABC transcends being merely a programming language; it becomes a tool for educators to deliver a more effective and engaging learning experience.
+ABC tackles these challenges head-on by adopting a Pascal-like syntax for
+declarations and maintaining semantic coherence throughout the language. By
+simplifying declaration syntax and ensuring consistency, ABC minimizes
+distractions, enabling students to focus on mastering memory management and
+pointer manipulation principles. In this capacity, ABC transcends being just a
+programming language; it becomes a catalyst for educators to deliver a more
+effective and engaging learning experience.
 
-With its clear syntax and coherent semantics, ABC aspires to be more than a teaching language—it aims to be *A Better C*, empowering students to navigate the complexities of C programming with confidence and clarity.
+With its lucid syntax and coherent semantics, ABC strives to be more than a
+mere teaching language—it aspires to be *A Better C*, empowering students to
+navigate C programming's intricacies with confidence and clarity.
 
 ## Why C (or ABC) and not ...?
 
-The past decade has witnessed the emergence of numerous programming languages—such as Rust, Zig, Go, and Odin—each touted as superior alternatives to C (or C++). These languages address specific problems commonly encountered in C programming and offer distinct solutions, each prioritizing different aspects of programming.
+The last decade has witnessed the emergence of numerous programming
+languages—like Rust, Zig, Go, and Odin—each positioned as a superior
+alternative to C (or C++). These languages address specific C programming
+challenges and offer distinct solutions, prioritizing different aspects of
+programming.
 
-Some languages may prioritize memory management, leading to features like garbage collection, while others prioritize performance, eschewing such mechanisms. Variations in the handling of unsafe pointers also reflect differing priorities among languages.
+Some emphasize memory management, incorporating features like garbage
+collection, while others prioritize performance, eschewing such mechanisms.
+Variations in handling unsafe pointers also reflect differing language
+priorities.
 
-However, discussions about garbage collectors and safe pointers can seem abstract without firsthand experience. In C (and consequently, ABC), learners confront the very problems for which these features provide solutions, laying a solid foundation for understanding and appreciating the design decisions in alternative languages.
+However, discussions about garbage collectors and safe pointers may seem
+abstract without practical experience. In C (and consequently, ABC), learners
+confront the very problems these features solve, laying a solid foundation for
+understanding and appreciating design decisions in alternative languages.
+
+## How to use ABC to learn programming?
+
+Programming intertwines with hardware and tooling like compilers, and often
+spans multiple domains, including operating systems. For C-like languages,
+understanding these connections is crucial and can be achieved through two main
+avenues:
+
+- Building hardware: Starting with logic gates, learners progress to building
+  their own computers using essentials like Field Programmable Gate Arrays
+  (FPGAs).
+
+- Writing a simple compiler: A tutorial will be provided to guide learners
+  through building their own compiler from scratch, facilitating understanding
+  of key programming concepts.
+
+These approaches may initially seem daunting, but with focused attention on
+essentials, learners can effectively navigate and master them. A comprehensive
+stack of learning materials is available to support learners in these
+endeavors.
 
 # How ABC addresses problems in teaching C
 
