@@ -37,10 +37,10 @@ alternative to C (or C++). These languages address specific C programming
 challenges and offer distinct solutions, prioritizing different aspects of
 programming.
 
-Some emphasize memory management, incorporating features like garbage
-collection, while others prioritize performance, eschewing such mechanisms.
-Variations in handling unsafe pointers also reflect differing language
-priorities.
+Some emphasize memory management, incorporating features like garbage collection,
+borrow checker, or linear types, while others prioritize performance, eschewing
+such mechanisms. Variations in handling unsafe pointers also reflect differing
+language priorities.
 
 However, discussions about garbage collectors and safe pointers may seem
 abstract without practical experience. In C (and consequently, ABC), learners
