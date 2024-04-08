@@ -17,7 +17,7 @@ endif
 
 $(shell mkdir -p $(build.dir))
 ifeq (,$(wildcard $(build.dir)prefix)) 
-    $(file > $(build.dir)prefix,$(HOME))
+    $(file > $(build.dir)prefix,/usr/local)
 endif
 PREFIX := $(file < $(build.dir)prefix)/
 

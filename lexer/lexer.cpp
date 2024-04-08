@@ -32,7 +32,7 @@ static void parseAddDirective();
 static bool
 isWhiteSpace(int ch)
 {
-    return ch == ' ' || ch == '\t';
+    return ch == ' ' || ch == '\t' || ch == '\r';
 }
 
 static bool

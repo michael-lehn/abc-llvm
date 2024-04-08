@@ -4,8 +4,8 @@ ifeq (Darwin,$(ostype))
     CXX ?= clang++
     llvm-config ?= llvm-config
 else ifeq (Linux,$(ostype))
-    CXX ?= clang++-17
-    llvm-config ?= llvm-config-17
+    CXX ?= clang++-18
+    llvm-config ?= llvm-config-18
 else ifeq (SunOS,$(ostype))
     CXX ?= clang++
     llvm-config ?= llvm-config
