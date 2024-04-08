@@ -40,7 +40,7 @@
 #   undef str
 #   undef xstr
 #else
-    std::filesystem::path abcPrefix = std::getenv("HOME");
+    std::filesystem::path abcPrefix = "/usr/local";
 #endif
 
 #ifdef ABC_LIBDIR
