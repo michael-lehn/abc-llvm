@@ -108,7 +108,7 @@ setToken(TokenKind kind, std::string processed)
     auto loc = Loc{reader->path, reader->start, reader->pos};
     auto val = UStr::create(reader->val);
 
-    token = processed.empty()
+    token = processed.empty() && kind != TokenKind::STRING_LITERAL
 	? Token(loc, kind, val)
 	: Token(loc, kind, val, UStr::create(processed));
     return kind;
