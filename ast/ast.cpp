@@ -922,7 +922,7 @@ AstSwitch::print(int indent) const
 		&& (!hasDefault || (hasDefault && i < defaultPos))) {
 	    error::out(indent + 4) << "// never reached\n";
 	}
-	if (casePosIndex < casePos.size() && i == casePos[casePosIndex]) {
+	while (casePosIndex < casePos.size() && i == casePos[casePosIndex]) {
 	    error::out(indent + 4) << "case " << caseExpr[casePosIndex++]
 		<< ":\n";
 	}
@@ -958,7 +958,7 @@ AstSwitch::codegen()
     gen::jumpInstruction(expr->loadValue(), defaultLabel, caseLabel);
 
     for (std::size_t i = 0, casePosIndex = 0; i < body.size(); ++i) {
-	if (casePosIndex < casePos.size() && i == casePos[casePosIndex]) {
+	while (casePosIndex < casePos.size() && i == casePos[casePosIndex]) {
 	    gen::defineLabel(caseLabel[casePosIndex++].second);
 	}
 	if (hasDefault && i == defaultPos) {

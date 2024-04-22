@@ -111,6 +111,8 @@ main(int argc, char *argv[])
 		    } else if (!strcmp(argv[i], "--emit-llvm")) {
 			outputFileType = gen::LLVM_FILE;
 			createExecutable = false;
+		    } else {
+			usage(argv[0], 0);
 		    }
 		    break;
 		case 'O':

@@ -831,7 +831,7 @@ parseSwitchStatement()
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
 	    << error::setColor(error::BOLD_RED) << "error: "
 	    << error::setColor(error::BOLD)
-	    << ": expression expected\n"
+	    << "expression expected\n"
 	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
@@ -857,7 +857,7 @@ parseSwitchStatement()
 		error::out() << error::setColor(error::BOLD) << token.loc << ": "
 		    << error::setColor(error::BOLD_RED) << "error: "
 		    << error::setColor(error::BOLD)
-		    << ": expression expected\n"
+		    << "expression expected\n"
 		    << error::setColor(error::NORMAL);
 		error::fatal();
 	    }
