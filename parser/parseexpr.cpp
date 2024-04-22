@@ -47,6 +47,8 @@ parseCompoundExpression(const Type *type)
 	    auto val = UStr::create(std::string{c});
 	    exprVec.push_back(CharacterLiteral::create(val, val, tok.loc));
 	}
+	exprVec.push_back(IntegerLiteral::create(0, IntegerType::createChar(),
+						 tok.loc));
 	return CompoundExpr::create(std::move(exprVec), type, tok.loc);
     } else if (token.kind == TokenKind::LBRACE) {
 	getToken();
