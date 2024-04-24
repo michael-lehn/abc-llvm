@@ -96,10 +96,15 @@ binaryErr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	  lexer::Loc *loc)
 {
     if (loc) {
-	error::out() << *loc << ": operator can not be applied to operand '"
+	error::location(*loc);
+	error::out() << error::setColor(error::BOLD) << *loc
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "operator can not be applied to operand '"
 	    << left << "' of type '" << left->type
 	    << "' and  operand '" << right << "' of type '" << right->type
-	    << "'" << std::endl;
+	    << "'\n"
+	    << error::setColor(error::NORMAL);
 	error::fatal();
     }
     return std::make_tuple(std::move(left), std::move(right), nullptr);
@@ -283,8 +288,8 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	case BinaryExpr::Kind::LESS_EQUAL:
 	    {
 		type = IntegerType::createBool();
-		newLeftType = left->type;
-		newRightType = right->type;
+		newLeftType = newRightType
+		    = Type::common(left->type, right->type);
 	    }
 	    break;
 	case BinaryExpr::Kind::LOGICAL_AND:
