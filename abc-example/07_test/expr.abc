@@ -104,6 +104,9 @@ fn evalExpr(expr: -> const Expr): i64
 	default:
 	    assert(0);
     }
+    // never reached
+    assert(0);
+    return 0;
 }
 
 fn loadExprAddr(expr: -> const Expr): GenReg
@@ -160,6 +163,9 @@ fn loadExpr(expr: -> const Expr): GenReg
 	    assert(0);
 	    ;
     }
+    // never reached
+    assert(0);
+    return 0;
 }
 
 fn binaryExprKindStr(kind: BinaryExprKind): -> char;

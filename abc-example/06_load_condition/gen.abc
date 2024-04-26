@@ -52,7 +52,7 @@ fn genStore(val: GenReg, addr: GenReg)
 
 fn getLabel(lab: -> array[10] of char)
 {
-    global id: int;
+    static id: int;
     snprintf(*lab, 9, ".L%d", id++);
 }
 

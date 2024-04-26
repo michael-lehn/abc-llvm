@@ -116,6 +116,9 @@ fn loadExpr(expr: -> const Expr): GenReg
 	default:
 	    assert(0);
     }
+    // never reached
+    assert(0);
+    return 0;
 }
 
 fn binaryExprKindStr(kind: BinaryExprKind): -> char;

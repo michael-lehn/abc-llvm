@@ -26,7 +26,7 @@ fn main()
 
 
     //global diff3: ptrdiff_t = &arr[5] - &arr[0];
-    global diff3: bool = &arr[5];
+    static diff3: bool = &arr[5];
     printf("diff3 = %td\n", diff3);
 
     local diff4: bool = &arr[5];

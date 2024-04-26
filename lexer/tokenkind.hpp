@@ -25,6 +25,7 @@ enum class TokenKind {
     FN,
     RETURN,
     GLOBAL,
+    STATIC,
     LOCAL,
     EXTERN,
     FOR,

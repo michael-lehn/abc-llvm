@@ -4,13 +4,13 @@ global val: u64 = 12 + 1;
 
 fn foo()
 {
-    global val: u64 = 34;
+    static val: u64 = 34;
     printf("foo: val = %llu\n", val++);
 }
 
 fn bar()
 {
-    global val: u64 = 56;
+    static val: u64 = 56;
     printf("bar: val = %llu\n", val++);
 }
 

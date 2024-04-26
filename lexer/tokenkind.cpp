@@ -32,6 +32,7 @@ TokenKindCStr(TokenKind kind)
 	case TokenKind::FN: return "FN";
 	case TokenKind::FOR: return "FOR";
 	case TokenKind::GLOBAL: return "GLOBAL";
+	case TokenKind::STATIC: return "STATIC";
 	case TokenKind::GOTO: return "GOTO";
 	case TokenKind::IF: return "IF";
 	case TokenKind::LABEL: return "LABEL";
@@ -112,6 +113,7 @@ getCStr(TokenKind kind)
 	case TokenKind::FN: return "fn";
 	case TokenKind::FOR: return "for";
 	case TokenKind::GLOBAL: return "global";
+	case TokenKind::STATIC: return "static";
 	case TokenKind::GOTO: return "goto";
 	case TokenKind::IF: return "if";
 	case TokenKind::LABEL: return "label";

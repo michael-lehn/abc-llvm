@@ -6,7 +6,7 @@ global bar: i32 = 123;
 
 fn dummy()
 {
-    global bar: int = 123456;
+    static bar: int = 123456;
     printf("called dummy() in foo.abc, here bar = %d\n", bar);
 }
 

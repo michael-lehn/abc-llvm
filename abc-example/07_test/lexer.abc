@@ -151,6 +151,9 @@ fn getToken(): TokenKind
                 nextCh();
             }
             return tokenSet(DECIMAL_LITERAL);
+	} else {
+	    assert(0);
+	    return tokenSet(BAD_TOKEN);
 	}
     } else if (ch == '+') {
 	tokenUpdate(ch);

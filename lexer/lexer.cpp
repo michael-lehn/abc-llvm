@@ -80,6 +80,7 @@ init()
     keyword[UStr::create("fn")] = TokenKind::FN;
     keyword[UStr::create("for")] = TokenKind::FOR;
     keyword[UStr::create("global")] = TokenKind::GLOBAL;
+    keyword[UStr::create("static")] = TokenKind::STATIC;
     keyword[UStr::create("goto")] = TokenKind::GOTO;
     keyword[UStr::create("if")] = TokenKind::IF;
     keyword[UStr::create("label")] = TokenKind::LABEL;

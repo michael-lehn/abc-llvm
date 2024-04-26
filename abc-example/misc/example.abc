@@ -42,7 +42,7 @@ global x: FooBar;
 fn main(argc: i32): i32
 {
     type Foo: i64;
-    global a: Foo;
+    static a: Foo;
     a = A;
 
     struct FooBar {

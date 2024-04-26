@@ -105,6 +105,8 @@ fn evalExpr(expr: -> const Expr): i64
 	default:
 	    assert(0);
     }
+    // never reached
+    return 0;
 }
 
 fn binaryExprKindStr(kind: BinaryExprKind): -> char;

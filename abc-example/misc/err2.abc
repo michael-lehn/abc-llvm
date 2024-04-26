@@ -6,7 +6,7 @@ fn foo()
     type Foo: -> int;
     local n: int;
     local p: Foo;
-    global a: int;
+    static a: int;
 
     n = 42;
     p = &n;

@@ -504,6 +504,76 @@ AstGlobalVar::codegen()
 					  initialValue, false);
 	} else {
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
+	    assert(!initializer || compExpr);
+	    for (std::size_t i = 0; i < var->varId.size(); ++i) {
+		auto initialValue = initializer
+		    ? compExpr->loadConstant(i)
+		    : nullptr;
+		gen::globalVariableDefinition(var->varId[i].c_str(),
+					      var->varType,
+					      initialValue,
+					      false);
+	    }
+	}
+    }
+}
+
+/*
+ * AstStaticVar
+ */
+AstStaticVar::AstStaticVar(AstListPtr &&decl)
+    : decl{std::move(*decl)}
+{
+}
+
+void
+AstStaticVar::print(int indent) const
+{
+    error::out(indent) << "static ";
+    if (decl.size() > 1) {
+	error::out() << "\n";
+	for (std::size_t i = 0; const auto &item : decl.node) {
+	    auto var = dynamic_cast<const AstVar *>(item.get());
+	    var->print(indent + 4);
+	    if (i + 1< decl.size()) {
+		error::out() << ", ";
+	    } else {
+		error::out() << "; ";
+	    }
+	    ++i;
+	}
+    } else {
+	auto var = dynamic_cast<const AstVar *>(decl.node[0].get());
+	var->print(0);
+	error::out() << "; ";
+    }
+    error::out() << "\n";
+}
+
+void
+AstStaticVar::codegen()
+{
+    for (const auto &item : decl.node) {
+	auto var = dynamic_cast<const AstVar *>(item.get());
+	assert(var);
+	auto initializer = var->getInitializerExpr();
+	if (initializer && !initializer->isConst()) {
+	    error::location(initializer->loc);
+	    error::out() << error::setColor(error::BOLD) << initializer->loc
+		<< ": " << error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "initializer is not a compile-time constant\n"
+		<< error::setColor(error::NORMAL);
+	    error::fatal();
+	}
+	if (var->varId.size() == 1) {
+	    auto initialValue = initializer
+		? initializer->loadConstant()
+		: nullptr;
+	    gen::globalVariableDefinition(var->varId[0].c_str(), var->varType,
+					  initialValue, false);
+	} else {
+	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
 	    assert(compExpr);
 	    for (std::size_t i = 0; i < var->varId.size(); ++i) {
 		gen::globalVariableDefinition(var->varId[i].c_str(),

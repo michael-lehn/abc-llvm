@@ -56,6 +56,7 @@ parser()
 static AstPtr parseFunctionDeclarationOrDefinition();
 static AstPtr parseExternDeclaration();
 static AstPtr parseGlobalVariableDefinition();
+static AstPtr parseStaticVariableDefinition();
 static AstPtr parseTypeDeclaration();
 static AstPtr parseStructDeclaration();
 static AstPtr parseEnumDeclaration();
@@ -64,6 +65,7 @@ static AstPtr parseEnumDeclaration();
  * top-level-declaration = function-declaration-or-definition
  *			 | extern-declaration
  *			 | global-variable-definition
+ *			 | static-variable-definition
  *			 | type-declaration
  *			 | enum-declaration
  *			 | struct-declaration
@@ -76,6 +78,7 @@ parseTopLevelDeclaration()
     (ast = parseFunctionDeclarationOrDefinition())
     || (ast = parseExternDeclaration())
     || (ast = parseGlobalVariableDefinition())
+    || (ast = parseStaticVariableDefinition())
     || (ast = parseTypeDeclaration())
     || (ast = parseEnumDeclaration())
     || (ast = parseStructDeclaration());
@@ -507,6 +510,36 @@ parseGlobalVariableDefinition()
 }
 
 //------------------------------------------------------------------------------
+
+/*
+ * global-variable-definition = "global" variable-definition-list
+ */
+static AstPtr
+parseStaticVariableDefinition()
+{
+    if (token.kind != TokenKind::STATIC) {
+	return nullptr;
+    }
+    getToken();
+    auto def = parseVariableDefinitionList();
+    if (!def) {
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "expected static variable definition list\n"
+	    << error::setColor(error::NORMAL);
+	error::fatal();
+	return nullptr;
+    }
+    if (!error::expected(TokenKind::SEMICOLON)) {
+	return nullptr;
+    }
+    getToken();
+    return std::make_unique<AstStaticVar>(std::move(def));
+}
+
+//------------------------------------------------------------------------------
 static AstVarPtr parseVariableDefinition();
 
 /*
@@ -634,7 +667,7 @@ parseDeclaration()
     (ast = parseTypeDeclaration())
 	|| (ast = parseEnumDeclaration())
 	|| (ast = parseStructDeclaration())
-	|| (ast = parseGlobalVariableDefinition())
+	|| (ast = parseStaticVariableDefinition())
 	|| (ast = parseLocalVariableDefinition());
     return ast;
 }

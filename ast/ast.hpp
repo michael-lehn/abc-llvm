@@ -157,6 +157,19 @@ class AstGlobalVar : public Ast
 
 //------------------------------------------------------------------------------
 
+class AstStaticVar : public Ast
+{
+    public:
+	AstStaticVar(AstListPtr &&decl);
+
+	const AstList decl;
+
+	void print(int indent) const override;
+	void codegen() override;
+};
+
+//------------------------------------------------------------------------------
+
 class AstLocalVar : public Ast
 {
     public:
