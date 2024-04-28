@@ -1385,27 +1385,26 @@ parseStructDeclaration()
     if (!error::expected(TokenKind::IDENTIFIER)) {
 	return nullptr;
     }
-    auto tok = token;
+    auto structTypeName = token;
     getToken();
 
-    if (token.kind == TokenKind::SEMICOLON) {
-	getToken();
-	return std::make_unique<AstStructDecl>(tok);
-    }
+    auto structDecl = std::make_unique<AstStructDecl>(structTypeName);
 
-    auto structDecl = std::make_unique<AstStructDecl>(tok);
-    if (parseStructMemberDeclaration(structDecl.get())) {
-	structDecl->complete();
-	return structDecl;
+    if (token.kind == TokenKind::SEMICOLON) {
+        getToken();
+    } else if (parseStructMemberDeclaration(structDecl.get())) {
+        structDecl->complete();
+    } else {
+        error::location(token.loc);
+        error::out() << error::setColor(error::BOLD) << token.loc << ": "
+            << error::setColor(error::BOLD_RED) << "error: "
+            << error::setColor(error::BOLD)
+            << "';' or struct member declaration expected\n"
+            << error::setColor(error::NORMAL);
+        error::fatal();
+        structDecl = nullptr;
     }
-    error::location(token.loc);
-    error::out() << error::setColor(error::BOLD) << token.loc << ": "
-	<< error::setColor(error::BOLD_RED) << "error: "
-	<< error::setColor(error::BOLD)
-	<< "';' or struct member declaration expected\n"
-	<< error::setColor(error::NORMAL);
-    error::fatal();
-    return nullptr;
+    return structDecl;
 }
 
 //------------------------------------------------------------------------------
