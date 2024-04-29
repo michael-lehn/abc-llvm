@@ -631,12 +631,14 @@ AstLocalVar::codegen()
 	    }
 	} else {
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
-	    assert(compExpr);
+	    assert(!initializer || compExpr);
 	    for (std::size_t i = 0; i < var->varId.size(); ++i) {
 		gen::localVariableDefinition(var->varId[i].c_str(),
 					     var->varType);
-		gen::store(compExpr->loadValue(i),
-			   gen::loadAddress(var->varId[i].c_str()));
+		if (initializer) {
+		    gen::store(compExpr->loadValue(i),
+			       gen::loadAddress(var->varId[i].c_str()));
+		}
 	    }
 	}
     }
