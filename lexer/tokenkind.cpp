@@ -79,9 +79,13 @@ TokenKindCStr(TokenKind kind)
 	case TokenKind::NOT: return "NOT";
 	case TokenKind::NOT_EQUAL: return "NOT_EQUAL";
 	case TokenKind::GREATER: return "GREATER";
+	case TokenKind::GREATER2: return "GREATER2";
 	case TokenKind::GREATER_EQUAL: return "GREATER_EQUAL";
+	case TokenKind::GREATER2_EQUAL: return "GREATER2_EQUAL";
 	case TokenKind::LESS: return "LESS";
+	case TokenKind::LESS2: return "LESS2";
 	case TokenKind::LESS_EQUAL: return "LESS_EQUAL";
+	case TokenKind::LESS2_EQUAL: return "LESS2_EQUAL";
 	case TokenKind::AND: return "AND";
 	case TokenKind::AND2: return "AND2";
 	case TokenKind::OR: return "OR";
@@ -160,9 +164,13 @@ getCStr(TokenKind kind)
 	case TokenKind::NOT: return "!";
 	case TokenKind::NOT_EQUAL: return "!=";
 	case TokenKind::GREATER: return ">";
+	case TokenKind::GREATER2: return ">>";
 	case TokenKind::GREATER_EQUAL: return ">=";
+	case TokenKind::GREATER2_EQUAL: return ">>=";
 	case TokenKind::LESS: return "<";
+	case TokenKind::LESS2: return "<<";
 	case TokenKind::LESS_EQUAL: return "<=";
+	case TokenKind::LESS2_EQUAL: return "<<=";
 	case TokenKind::AND: return "&";
 	case TokenKind::AND2: return "&&";
 	case TokenKind::OR: return "|";

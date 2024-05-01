@@ -149,6 +149,16 @@ getBinaryExprKind(TokenKind kind)
 	    return BinaryExpr::Kind::DIV_ASSIGN;
 	case TokenKind::PERCENT_EQUAL:
 	    return BinaryExpr::Kind::MOD_ASSIGN;
+	case TokenKind::AND_EQUAL:
+	    return BinaryExpr::Kind::BITWISE_AND_ASSIGN;
+	case TokenKind::OR_EQUAL:
+	    return BinaryExpr::Kind::BITWISE_OR_ASSIGN;
+	case TokenKind::CARET_EQUAL:
+	    return BinaryExpr::Kind::BITWISE_XOR_ASSIGN;
+	case TokenKind::LESS2_EQUAL:
+	    return BinaryExpr::Kind::BITWISE_LEFT_SHIFT_ASSIGN;
+	case TokenKind::GREATER2_EQUAL:
+	    return BinaryExpr::Kind::BITWISE_RIGHT_SHIFT_ASSIGN;
 	case TokenKind::EQUAL2:
 	    return BinaryExpr::Kind::EQUAL;
 	case TokenKind::NOT_EQUAL:
@@ -161,10 +171,20 @@ getBinaryExprKind(TokenKind kind)
 	    return BinaryExpr::Kind::GREATER;
 	case TokenKind::GREATER_EQUAL:
 	    return BinaryExpr::Kind::GREATER_EQUAL;
+	case TokenKind::AND:
+	    return BinaryExpr::Kind::BITWISE_AND;
 	case TokenKind::AND2:
 	    return BinaryExpr::Kind::LOGICAL_AND;
+	case TokenKind::OR:
+	    return BinaryExpr::Kind::BITWISE_OR;
 	case TokenKind::OR2:
 	    return BinaryExpr::Kind::LOGICAL_OR;
+	case TokenKind::CARET:
+	    return BinaryExpr::Kind::BITWISE_XOR;
+	case TokenKind::LESS2:
+	    return BinaryExpr::Kind::BITWISE_LEFT_SHIFT;
+	case TokenKind::GREATER2:
+	    return BinaryExpr::Kind::BITWISE_RIGHT_SHIFT;
 	default:
 	    assert(0);
 	    return BinaryExpr::Kind::ADD; // never reached
@@ -183,7 +203,12 @@ parseAssignmentExpression()
         || token.kind == TokenKind::MINUS_EQUAL
         || token.kind == TokenKind::ASTERISK_EQUAL
         || token.kind == TokenKind::SLASH_EQUAL
-        || token.kind == TokenKind::PERCENT_EQUAL)
+        || token.kind == TokenKind::PERCENT_EQUAL
+        || token.kind == TokenKind::AND_EQUAL
+        || token.kind == TokenKind::OR_EQUAL
+        || token.kind == TokenKind::CARET_EQUAL
+        || token.kind == TokenKind::LESS2_EQUAL
+        || token.kind == TokenKind::GREATER2_EQUAL)
     {
 	auto tok = token;
         getToken();
@@ -262,14 +287,19 @@ tokenKindPrec(TokenKind kind)
 	case TokenKind::ASTERISK: return 13;
 	case TokenKind::SLASH: return 13;
 	case TokenKind::PERCENT: return 13;
-	case TokenKind::PLUS: return 11;
-	case TokenKind::MINUS: return 11;
+	case TokenKind::PLUS: return 12;
+	case TokenKind::MINUS: return 12;
+	case TokenKind::LESS2: return 11;
+	case TokenKind::GREATER2: return 11;
 	case TokenKind::GREATER: return 10;
 	case TokenKind::GREATER_EQUAL: return 10;
 	case TokenKind::LESS: return 10;
 	case TokenKind::LESS_EQUAL: return 10;
 	case TokenKind::EQUAL2: return 9;
 	case TokenKind::NOT_EQUAL: return 9;
+	case TokenKind::AND: return 8;
+	case TokenKind::CARET: return 7;
+	case TokenKind::OR: return 6;
 	case TokenKind::AND2: return 5;
 	case TokenKind::OR2: return 4;
 	default: return 0;

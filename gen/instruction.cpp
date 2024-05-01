@@ -51,6 +51,14 @@ instruction(InstructionOp op, Value left, Value right)
 	    return llvmBuilder->CreateAnd(left, right);
     	case OR:
 	    return llvmBuilder->CreateOr(left, right);
+    	case XOR:
+	    return llvmBuilder->CreateXor(left, right);
+    	case SHL:
+	    return llvmBuilder->CreateShl(left, right);
+    	case LSHR:
+	    return llvmBuilder->CreateLShr(left, right);
+    	case ASHR:
+	    return llvmBuilder->CreateAShr(left, right);
 	default:
 	    assert(0);
 	    return nullptr;

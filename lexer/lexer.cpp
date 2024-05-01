@@ -233,6 +233,10 @@ getToken_(bool skipNewline)
 	return setToken(TokenKind::RBRACKET);
     } else if (reader->ch == '^') {
 	nextCh();
+	if (reader->ch == '=') {
+	    nextCh();
+	    return setToken(TokenKind::CARET_EQUAL);
+	}
 	return setToken(TokenKind::CARET);
     } else if (reader->ch == '+') {
 	nextCh();
@@ -322,25 +326,47 @@ getToken_(bool skipNewline)
 	if (reader->ch == '=') {
 	    nextCh();
 	    return setToken(TokenKind::GREATER_EQUAL);
+	} else if (reader->ch == '>') {
+	    nextCh();
+	    if (reader->ch == '=') {
+		nextCh();
+		return setToken(TokenKind::GREATER2_EQUAL);
+	    }
+	    return setToken(TokenKind::GREATER2);
+	} else {
+	    return setToken(TokenKind::GREATER);
 	}
-	return setToken(TokenKind::GREATER);
     } else if (reader->ch == '<') {
 	nextCh();
 	if (reader->ch == '=') {
 	    nextCh();
 	    return setToken(TokenKind::LESS_EQUAL);
+	} else if (reader->ch == '<') {
+	    nextCh();
+	    if (reader->ch == '=') {
+		nextCh();
+		return setToken(TokenKind::LESS2_EQUAL);
+	    }
+	    return setToken(TokenKind::LESS2);
+	} else {
+	    return setToken(TokenKind::LESS);
 	}
-	return setToken(TokenKind::LESS);
     } else if (reader->ch == '&') {
 	nextCh();
-	if (reader->ch == '&') {
+	if (reader->ch == '=') {
+	    nextCh();
+	    return setToken(TokenKind::AND_EQUAL);
+	} else if (reader->ch == '&') {
 	    nextCh();
 	    return setToken(TokenKind::AND2);
 	}
 	return setToken(TokenKind::AND);
     } else if (reader->ch == '|') {
 	nextCh();
-	if (reader->ch == '|') {
+	if (reader->ch == '=') {
+	    nextCh();
+	    return setToken(TokenKind::OR_EQUAL);
+	} else if (reader->ch == '|') {
 	    nextCh();
 	    return setToken(TokenKind::OR2);
 	}

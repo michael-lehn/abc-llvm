@@ -28,6 +28,10 @@ enum InstructionOp {
     ULE,
     AND,
     OR,
+    XOR,
+    SHL, // shift left
+    LSHR, // logical shift right
+    ASHR, // arithmetic shift right
 };
 
 Value instruction(InstructionOp op, Value left, Value right);

@@ -107,6 +107,11 @@ BinaryExpr::isConst() const
 	case MUL:
 	case DIV:
 	case MOD:
+	case BITWISE_AND:
+	case BITWISE_OR:
+	case BITWISE_XOR:
+	case BITWISE_LEFT_SHIFT:
+	case BITWISE_RIGHT_SHIFT:
 	case LOGICAL_AND:
 	case LOGICAL_OR:
 	    return left->isConst() && right->isConst();
@@ -159,6 +164,11 @@ BinaryExpr::loadConstant() const
 	case MUL:
 	case DIV:
 	case MOD:
+	case BITWISE_AND:
+	case BITWISE_OR:
+	case BITWISE_XOR:
+	case BITWISE_LEFT_SHIFT:
+	case BITWISE_RIGHT_SHIFT:
 	    return gen::instruction(getGenInstructionOp(kind, type),
 				    left->loadConstant(),
 				    right->loadConstant());
@@ -243,6 +253,11 @@ BinaryExpr::handleArithmetricOperation(Kind kind) const
 	case MUL:
 	case DIV:
 	case MOD:
+	case BITWISE_AND:
+	case BITWISE_OR:
+	case BITWISE_XOR:
+	case BITWISE_LEFT_SHIFT:
+	case BITWISE_RIGHT_SHIFT:
 	    return gen::instruction(getGenInstructionOp(kind, type),
 				    left->loadValue(),
 				    right->loadValue());
@@ -275,11 +290,31 @@ BinaryExpr::loadValue() const
 	case MOD_ASSIGN:
 	    return gen::store(handleArithmetricOperation(MOD),
 			      left->loadAddress());
+	case BITWISE_AND_ASSIGN:
+	    return gen::store(handleArithmetricOperation(BITWISE_AND),
+			      left->loadAddress());
+	case BITWISE_OR_ASSIGN:
+	    return gen::store(handleArithmetricOperation(BITWISE_OR),
+			      left->loadAddress());
+	case BITWISE_XOR_ASSIGN:
+	    return gen::store(handleArithmetricOperation(BITWISE_XOR),
+			      left->loadAddress());
+	case BITWISE_LEFT_SHIFT_ASSIGN:
+	    return gen::store(handleArithmetricOperation(BITWISE_LEFT_SHIFT),
+			      left->loadAddress());
+	case BITWISE_RIGHT_SHIFT_ASSIGN:
+	    return gen::store(handleArithmetricOperation(BITWISE_RIGHT_SHIFT),
+			      left->loadAddress());
 	case ADD:
 	case SUB:
 	case MUL:
 	case DIV:
 	case MOD:
+	case BITWISE_AND:
+	case BITWISE_OR:
+	case BITWISE_XOR:
+	case BITWISE_LEFT_SHIFT:
+	case BITWISE_RIGHT_SHIFT:
 	    return handleArithmetricOperation(kind);
 	case LESS:
 	case LESS_EQUAL:
@@ -418,8 +453,23 @@ BinaryExpr::printFlat(std::ostream &out, int prec) const
 	    right->printFlat(out, 16);
 	    out << "]";
 	    break;
+	case BITWISE_AND:
+	    ::printFlat(out, prec, 8, left.get(), right.get(), "&");
+	    break;
+	case BITWISE_OR:
+	    ::printFlat(out, prec, 6, left.get(), right.get(), "|");
+	    break;
+	case BITWISE_XOR:
+	    ::printFlat(out, prec, 7, left.get(), right.get(), "^");
+	    break;
+	case BITWISE_LEFT_SHIFT:
+	    ::printFlat(out, prec, 11, left.get(), right.get(), "<<");
+	    break;
+	case BITWISE_RIGHT_SHIFT:
+	    ::printFlat(out, prec, 11, left.get(), right.get(), ">>");
+	    break;
 	case ADD:
-	    ::printFlat(out, prec, 11, left.get(), right.get(), "+");
+	    ::printFlat(out, prec, 12, left.get(), right.get(), "+");
 	    break;
 	case ASSIGN:
 	    ::printFlat(out, prec, 2, left.get(), right.get(), "=");
@@ -438,6 +488,21 @@ BinaryExpr::printFlat(std::ostream &out, int prec) const
 	    break;
 	case MOD_ASSIGN:
 	    ::printFlat(out, prec, 2, left.get(), right.get(), "%=");
+	    break;
+	case BITWISE_AND_ASSIGN:
+	    ::printFlat(out, prec, 2, left.get(), right.get(), "&=");
+	    break;
+	case BITWISE_OR_ASSIGN:
+	    ::printFlat(out, prec, 2, left.get(), right.get(), "|=");
+	    break;
+	case BITWISE_XOR_ASSIGN:
+	    ::printFlat(out, prec, 2, left.get(), right.get(), "^=");
+	    break;
+	case BITWISE_LEFT_SHIFT_ASSIGN:
+	    ::printFlat(out, prec, 2, left.get(), right.get(), "<<=");
+	    break;
+	case BITWISE_RIGHT_SHIFT_ASSIGN:
+	    ::printFlat(out, prec, 2, left.get(), right.get(), ">>=");
 	    break;
 	case EQUAL:
 	    ::printFlat(out, prec, 9, left.get(), right.get(), "==");
@@ -464,7 +529,7 @@ BinaryExpr::printFlat(std::ostream &out, int prec) const
 	    ::printFlat(out, prec, 4, left.get(), right.get(), "||");
 	    break;
 	case SUB:
-	    ::printFlat(out, prec, 11, left.get(), right.get(), "-");
+	    ::printFlat(out, prec, 12, left.get(), right.get(), "-");
 	    break;
 	case MUL:
 	    ::printFlat(out, prec, 13, left.get(), right.get(), "*");
@@ -502,6 +567,16 @@ getGenInstructionOp(abc::BinaryExpr::Kind kind, const abc::Type *type)
 	    return type->isSignedInteger() ? gen::SDIV : gen::UDIV;
 	case abc::BinaryExpr::Kind::MOD:
 	    return type->isSignedInteger() ? gen::SMOD : gen::UMOD;
+	case abc::BinaryExpr::Kind::BITWISE_AND:
+	    return gen::AND;
+	case abc::BinaryExpr::Kind::BITWISE_OR:
+	    return gen::OR;
+	case abc::BinaryExpr::Kind::BITWISE_XOR:
+	    return gen::XOR;
+	case abc::BinaryExpr::Kind::BITWISE_LEFT_SHIFT:
+	    return gen::SHL;
+	case abc::BinaryExpr::Kind::BITWISE_RIGHT_SHIFT:
+	    return type->isSignedInteger() ? gen::ASHR : gen::LSHR;
 	case abc::BinaryExpr::Kind::EQUAL:
 	    return gen::EQ;
 	case abc::BinaryExpr::Kind::NOT_EQUAL:
@@ -530,6 +605,16 @@ kindStr(abc::BinaryExpr::Kind kind)
     switch (kind) {
 	case abc::BinaryExpr::ADD: return "+";
 	case abc::BinaryExpr::ASSIGN: return "=";
+	case abc::BinaryExpr::ADD_ASSIGN: return "+=";
+	case abc::BinaryExpr::SUB_ASSIGN: return "-=";
+	case abc::BinaryExpr::MUL_ASSIGN: return "*=";
+	case abc::BinaryExpr::DIV_ASSIGN: return "/=";
+	case abc::BinaryExpr::MOD_ASSIGN: return "%=";
+	case abc::BinaryExpr::BITWISE_AND_ASSIGN: return "&=";
+	case abc::BinaryExpr::BITWISE_OR_ASSIGN: return "|=";
+	case abc::BinaryExpr::BITWISE_XOR_ASSIGN: return "^=";
+	case abc::BinaryExpr::BITWISE_LEFT_SHIFT_ASSIGN: return "<<=";
+	case abc::BinaryExpr::BITWISE_RIGHT_SHIFT_ASSIGN: return ">>=";
 	case abc::BinaryExpr::EQUAL: return "==";
 	case abc::BinaryExpr::NOT_EQUAL: return "!=";
 	case abc::BinaryExpr::GREATER: return ">";
@@ -542,6 +627,11 @@ kindStr(abc::BinaryExpr::Kind kind)
 	case abc::BinaryExpr::MUL: return "*";
 	case abc::BinaryExpr::DIV: return "/";
 	case abc::BinaryExpr::MOD: return "%";
+	case abc::BinaryExpr::BITWISE_AND: return "&";
+	case abc::BinaryExpr::BITWISE_OR: return "|";
+	case abc::BinaryExpr::BITWISE_XOR: return "^";
+	case abc::BinaryExpr::BITWISE_LEFT_SHIFT: return "<<";
+	case abc::BinaryExpr::BITWISE_RIGHT_SHIFT: return ">>";
 	default: return "?? (binary)";
     }
 }

@@ -66,6 +66,12 @@ IntegerType::createInt()
 }
 
 const Type *
+IntegerType::createUnsigned()
+{
+    return createUnsigned(8 * sizeof(unsigned));
+}
+
+const Type *
 IntegerType::createLong()
 {
     return createSigned(8 * sizeof(long));

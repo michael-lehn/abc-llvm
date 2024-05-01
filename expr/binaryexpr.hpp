@@ -23,6 +23,11 @@ class BinaryExpr : public Expr
 	    MUL_ASSIGN,
 	    DIV_ASSIGN,
 	    MOD_ASSIGN,
+	    BITWISE_AND_ASSIGN,
+	    BITWISE_OR_ASSIGN,
+	    BITWISE_XOR_ASSIGN,
+	    BITWISE_LEFT_SHIFT_ASSIGN,
+	    BITWISE_RIGHT_SHIFT_ASSIGN,
 
 	    // arithmetic
 	    ADD,
@@ -30,6 +35,11 @@ class BinaryExpr : public Expr
 	    MUL,
 	    DIV,
 	    MOD,
+	    BITWISE_AND,
+	    BITWISE_OR,
+	    BITWISE_XOR,
+	    BITWISE_LEFT_SHIFT,
+	    BITWISE_RIGHT_SHIFT,
 
 	    // logical arithmetic
 	    EQUAL,

@@ -1,0 +1,34 @@
+@ <stdio.hdr>
+
+fn main()
+{
+    local a, b: int = {1 + 2 + 8, 1 + 4};
+
+    printf("a = %d\n", a);
+    printf("b = %d\n", b);
+
+    printf("a & b = %d\n", a & b);
+    printf("a | b = %d\n", a | b);
+    printf("a ^ b = %d\n", a ^ b);
+    printf("a << 2 = %d\n", a << 2);
+    printf("a >> 2 = %d\n", a >> 2);
+
+    local s: int = -1;
+    local u: unsigned = -1;
+
+    local numBits: size_t = sizeof(int) * 8 - 1;
+
+    printf("signed: s = %x, s >> %zu = %x\n", s, numBits, s >> numBits);
+    printf("unsigned: u = %x, u >> %zu = %x\n", u, numBits, u >> numBits);
+
+    printf("a = %d. after a &= 5: a = %d\n", a = 11, a &= 5);
+    printf("a = %d. after a |= 5: a = %d\n", a = 11, a |= 5);
+    printf("a = %d. after a ^= 5: a = %d\n", a = 11, a ^= 5);
+    printf("a = %d. after a <<= 1: a = %d\n", a = 11, a <<= 1);
+    printf("a = %d. after a >>= 1: a = %d\n", a = 11, a >>= 1);
+
+    printf("signed: s = %x, after s >>= %zu: s = %x\n",
+	   s = -1, numBits, s >>= numBits);
+    printf("unsigned: u = %x, after u >>= %zu: u = %x\n",
+	   u = -1, numBits, u >>= numBits);
+}

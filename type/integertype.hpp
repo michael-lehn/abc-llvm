@@ -21,6 +21,7 @@ class IntegerType : public Type
 	static const Type *createBool();
 	static const Type *createChar();
 	static const Type *createInt();
+	static const Type *createUnsigned();
 	static const Type *createLong();
 	static const Type *createSizeType();
 	static const Type *createPtrdiffType();

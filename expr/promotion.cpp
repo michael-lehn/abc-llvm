@@ -132,6 +132,11 @@ binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	case BinaryExpr::Kind::MUL_ASSIGN:
 	case BinaryExpr::Kind::DIV_ASSIGN:
 	case BinaryExpr::Kind::MOD_ASSIGN:
+	case BinaryExpr::Kind::BITWISE_AND_ASSIGN:
+	case BinaryExpr::Kind::BITWISE_OR_ASSIGN:
+	case BinaryExpr::Kind::BITWISE_XOR_ASSIGN:
+	case BinaryExpr::Kind::BITWISE_LEFT_SHIFT_ASSIGN:
+	case BinaryExpr::Kind::BITWISE_RIGHT_SHIFT_ASSIGN:
 	    if (left->type->hasConstFlag()) {
 		error::out() << error::setColor(error::BOLD) << left->loc
 		    << ": " << error::setColor(error::BOLD_RED) << "error: "
@@ -146,7 +151,14 @@ binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		    << " not an LValue\n"
 		    << error::setColor(error::NORMAL);
 	    } else {
-		type = newLeftType = newRightType = left->type;
+		type = newLeftType = left->type;
+		if (kind != BinaryExpr::Kind::BITWISE_LEFT_SHIFT_ASSIGN
+		 && kind != BinaryExpr::Kind::BITWISE_RIGHT_SHIFT_ASSIGN)
+		{
+		    newRightType = left->type;
+		} else {
+		    newRightType = right->type;
+		}
 	    }
 	    break;
 	case BinaryExpr::Kind::ADD:
@@ -154,7 +166,15 @@ binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	case BinaryExpr::Kind::MUL:
 	case BinaryExpr::Kind::DIV:
 	case BinaryExpr::Kind::MOD:
+	case BinaryExpr::Kind::BITWISE_AND:
+	case BinaryExpr::Kind::BITWISE_OR:
+	case BinaryExpr::Kind::BITWISE_XOR:
 	    type = newLeftType = newRightType = commonType;
+	    break;
+	case BinaryExpr::Kind::BITWISE_LEFT_SHIFT:
+	case BinaryExpr::Kind::BITWISE_RIGHT_SHIFT:
+	    type = newLeftType = left->type;
+	    newRightType = right->type;
 	    break;
 	case BinaryExpr::Kind::EQUAL:
 	case BinaryExpr::Kind::NOT_EQUAL:
