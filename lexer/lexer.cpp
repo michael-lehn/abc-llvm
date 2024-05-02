@@ -1,5 +1,6 @@
 #include <cassert>
 #include <iostream>
+#include <optional>
 #include <string>
 
 #include "util/ustr.hpp"
