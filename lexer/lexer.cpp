@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 #include <string>
 
@@ -26,6 +27,8 @@ static unsigned hexToVal(char ch);
 static std::string parseStringLiteral();
 static unsigned parseCharacterLiteral();
 static void parseAddDirective();
+static void parseDecimalFloatingConstant();
+static void parseHexadecimalFloatingConstant();
 
 //------------------------------------------------------------------------------
 
@@ -164,32 +167,103 @@ getToken_(bool skipNewline)
         }
         return setToken(TokenKind::IDENTIFIER);
     } else if (isDecDigit(reader->ch)) {
+	enum {OCTAL, DECIMAL, HEXADECIMAL} repr;
+	bool octal_to_float = false;
+
+	std::optional<TokenKind> literalKind;
+
         // parse literal
         if (reader->ch == '0') {
             nextCh();
-            if (reader->ch == 'x') {
+            if (reader->ch == 'x' || reader->ch == 'X') {
+		repr = HEXADECIMAL;
                 nextCh();
-		std::string processed = "";
-                if (isHexDigit(reader->ch)) {
-                    while (isHexDigit(reader->ch)) {
-			processed += reader->ch;
-                        nextCh();
-                    }
-                    return setToken(TokenKind::HEXADECIMAL_LITERAL, processed);
-                }
-                return setToken(TokenKind::BAD);
-            }
-	    std::string processed = "";
-            while (isOctDigit(reader->ch)) {
-                nextCh();
-            }
-            return setToken(TokenKind::OCTAL_LITERAL, processed);
+                if (!isHexDigit(reader->ch)) {
+		    error::out() << token.loc
+			<<  ": invalid hexadecimal constant" << std::endl;
+		    error::fatal();
+		    return setToken(TokenKind::BAD);
+		}
+		do {
+		    nextCh();
+		} while (isHexDigit(reader->ch));
+            } else {
+		repr = OCTAL;
+		while (isOctDigit(reader->ch)) {
+		    nextCh();
+		}
+		if (isDecDigit(reader->ch)) {
+		    // could be the beginning of a floating-constant
+		    octal_to_float = true;
+		    repr = DECIMAL;
+		    do {
+			nextCh();
+		    } while (isDecDigit(reader->ch));
+		}
+	    }
         } else {
+	    repr = DECIMAL;
             while (isDecDigit(reader->ch)) {
                 nextCh();
             }
-            return setToken(TokenKind::DECIMAL_LITERAL);
         }
+	switch (reader->ch) {
+	    case '.':
+		if (repr == DECIMAL || repr == OCTAL) {
+		    octal_to_float = false; // already taken care of
+		    parseDecimalFloatingConstant();
+		    literalKind = TokenKind::FLOAT_LITERAL; // TODO: DEC...
+		} else {
+		    parseHexadecimalFloatingConstant();
+		    literalKind = TokenKind::FLOAT_LITERAL; // TODO: HEX...
+		}
+		break;
+
+	    case 'p':
+	    case 'P':
+		if (repr != HEXADECIMAL) {
+		    break;
+		}
+		/* hexadecimal floating constant */
+		parseHexadecimalFloatingConstant();
+		literalKind = TokenKind::FLOAT_LITERAL; // TODO: HEX...
+		break;
+
+	    case 'e':
+	    case 'E':
+		/* decimal floating point constant */
+		octal_to_float = false; // already taken care of
+		if (repr != DECIMAL && repr != OCTAL) {
+		    break;
+		}
+		parseDecimalFloatingConstant();
+		literalKind = TokenKind::FLOAT_LITERAL; // TODO: DEC...
+		break;
+	    default:
+		break;
+	}
+	if (octal_to_float) {
+	    // leading 0 with non-octal digits following
+	    // which did not turn into a decimal floating constant
+	    error::out() << token.loc
+		<<  ": invalid octal constant" << std::endl;
+	    error::fatal();
+	    return setToken(TokenKind::BAD);
+	}
+	if (!literalKind) {
+	    switch (repr) {
+		case HEXADECIMAL:
+		    literalKind = TokenKind::HEXADECIMAL_LITERAL;
+		    break;
+		case OCTAL:
+		    literalKind = TokenKind::OCTAL_LITERAL;
+		    break;
+		case DECIMAL:
+		    literalKind = TokenKind::DECIMAL_LITERAL;
+		    break;
+	    }
+	}
+	return setToken(*literalKind);
     } else if (reader->ch == '\n') {
 	nextCh();
 	return setToken(TokenKind::NEWLINE);
@@ -710,6 +784,16 @@ parseAddDirective()
 	    << ": expected directive or filename" << std::endl;
 	error::fatal();
     }
+}
+
+static void
+parseDecimalFloatingConstant()
+{
+}
+
+static void
+parseHexadecimalFloatingConstant()
+{
 }
 
 } } // namespace lexer, abc

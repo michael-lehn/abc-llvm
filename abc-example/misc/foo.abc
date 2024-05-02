@@ -1,12 +1,5 @@
-@ <stdio.hdr>
-
-fn foo()
-{
-    printf("foo\n");
-}
-
 fn main(): u8
 {
-    foo();
-    printf("hello, world!\n");
+    local a: int;
+    12;
 }

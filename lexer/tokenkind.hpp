@@ -16,6 +16,7 @@ enum class TokenKind {
     OCTAL_LITERAL,
     STRING_LITERAL,
     CHARACTER_LITERAL,
+    FLOAT_LITERAL,
 
     // keywords
     ASSERT,

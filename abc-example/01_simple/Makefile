@@ -3,7 +3,7 @@ CFLAGS := -O3 -I ../include
 DEPFLAGS = -MD -MF $(dep.dir)/$(<F).d \
 	   -MT $(@:$(cpp.dir)/%.abc_cpp=$(obj.dir)/%.o) -MP
 
-LDFLAGS += -L../lib -labc
+LDFLAGS += -L../lib 
 
 dep.dir := dep
 asm.dir := asm

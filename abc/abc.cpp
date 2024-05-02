@@ -388,7 +388,7 @@ main(int argc, char *argv[])
 	linkerCmd += ldFlags;
 	linkerCmd += " -L ";
 	linkerCmd += abcLibDir;
-	linkerCmd += " -lstdabc ";
+	linkerCmd += " -labc ";
 
 	if (verbose) {
 	    std::cerr << linkerCmd.c_str() << "\n";
