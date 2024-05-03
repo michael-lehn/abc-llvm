@@ -123,19 +123,22 @@ TokenKind
 getToken()
 {
     do {
-	UStr newVal;
-	do {
-	    getToken_();
-	    // if no replacement can be applied we found a new token
-	    if (!macro::expandMacro(token.val, newVal)) {
+	while (true) {
+	    if (macro::hasToken()) {
+		token = macro::getToken();
 		break;
+	    } else {
+		getToken_();
+		if (!macro::expandMacro(token)) {
+		    break;
+		}
 	    }
-	    // if it was replaced with an empty string get next token
-	} while (newVal.empty());
-	if (token.kind == TokenKind::IDENTIFIER && keyword.contains(newVal)) {
-	    token = Token(token.loc, keyword.at(newVal), newVal);
-	} else if (newVal != token.val) {
-	    token = Token(token.loc, token.kind, newVal);
+	}
+
+	// check if an identifier is actually a keyword
+	if (token.kind == TokenKind::IDENTIFIER
+		&& keyword.contains(token.val)) {
+	    token = Token(token.loc, keyword.at(token.val), token.val);
 	}
     } while (macro::ignoreToken());
     return token.kind;
@@ -716,7 +719,7 @@ parseAddDirective()
 		<< ": expected identifier" << std::endl;
 	    error::fatal();
 	}
-	if (!macro::ifndefDirective(token.val)) {
+	if (!macro::ifndefDirective(token)) {
 	    error::out() << token.loc
 		<< ": sorry, nested @ifdef are not supported" << std::endl;
 	    error::fatal();
@@ -730,21 +733,19 @@ parseAddDirective()
 		<< ": expected identifier" << std::endl;
 	    error::fatal();
 	}
-	auto from = token.val;
+	auto from = token;
 	getToken_(false);
-	UStr to;
-	if (token.kind == TokenKind::IDENTIFIER) {
-	    to = token.val;
-	} else if (token.kind != TokenKind::NEWLINE) {
-	    error::out() << token.loc
-		<< ": expected identifier or newline" << std::endl;
-	    error::fatal();
+	std::vector<Token> to;
+	while (token.kind != TokenKind::NEWLINE) {
+	    to.push_back(token);
+	    getToken_(false);
 	}
-	if (!macro::defineDirective(from, to)) {
+	if (!macro::defineDirective(from, std::move(to))) {
 	    error::out() << token.loc
 		<< ": macro '" << from << "' already defined" << std::endl;
 	    error::fatal();
 	}
+
     } else if (token.kind == TokenKind::STRING_LITERAL) {
 	if (macro::ignoreToken()) {
 	    return;

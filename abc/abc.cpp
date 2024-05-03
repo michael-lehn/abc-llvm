@@ -317,7 +317,10 @@ main(int argc, char *argv[])
 	    std::exit(1);
 	}
 	if (!supportOs.empty()) {
-	    abc::lexer::macro::defineDirective(abc::UStr::create(supportOs));
+	    abc::lexer::Token macro{abc::lexer::Loc{},
+				    abc::lexer::TokenKind::IDENTIFIER,
+				    abc::UStr::create(supportOs)};
+	    abc::lexer::macro::defineDirective(macro);
 	}
 
 	if (verbose) {

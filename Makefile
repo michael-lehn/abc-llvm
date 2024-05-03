@@ -3,7 +3,7 @@ CPPFLAGS += -Wextra -Wall
 RANLIB := ranlib
 
 build.dir := build/
-abc-std-lib := $(build.dir)libstdabc.a
+abc-std-lib := $(build.dir)libabc.a
 
 include config/ar
 include config/cxx_and_llvm

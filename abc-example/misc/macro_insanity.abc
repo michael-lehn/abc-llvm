@@ -1,0 +1,21 @@
+@ <stdio.hdr>
+
+// "useful" macro
+@define PRId16 "hd"
+
+global X: int = 4;
+global Y: int = 5;
+
+// VAL will expand to {X, X}
+@define X Y, Y
+@define Y X
+@define A X
+@define VAL {A}
+
+
+fn main()
+{
+    local a, b: i16 = VAL;
+    printf("a = %" PRId16 "\n", a);
+    printf("b = %" PRId16 "\n", b);
+}

@@ -1,16 +1,22 @@
 #ifndef LEXER_MACRO_HPP
 #define LEXER_MACRO_HPP
 
+#include <vector>
+
+#include "token.hpp"
 #include "util/ustr.hpp"
 
 namespace abc { namespace lexer { namespace macro {
 
 void init();
 bool ignoreToken();
-bool ifndefDirective(const UStr identifier);
+bool ifndefDirective(Token identifier);
 void endifDirective();
-bool defineDirective(const UStr identifier, const UStr replacement = UStr{});
-bool expandMacro(UStr identifier, UStr &replacement);
+bool defineDirective(Token identifier, std::vector<Token> &&replacement = {});
+bool expandMacro(Token identifier);
+
+bool hasToken();
+Token getToken();
 
 } } } // namespace macro, lexer, abc
 

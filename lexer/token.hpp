@@ -32,6 +32,8 @@ class Token
 
 std::ostream &operator<<(std::ostream &out, const Token &token);
 
+bool operator==(const abc::lexer::Token &x, const abc::lexer::Token &y);
+
 } } // namespace lexer, abc
 
 #endif // LEXER_TOKEN_HPP

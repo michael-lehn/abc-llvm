@@ -14,4 +14,11 @@ operator<<(std::ostream &out, const Token &token)
     return out;
 }
 
+bool
+operator==(const abc::lexer::Token &x, const abc::lexer::Token &y)
+{
+    return x.kind == y.kind && x.val == y.val;
+}
+
+
 } } // namespace lexer, abc
