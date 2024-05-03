@@ -62,12 +62,11 @@ fn evalExpr(expr: -> const Expr): i64
 			 / evalExpr(expr->binary.right);
 		default:
 		    assert(0);
-		    break;
+		    return 0; // never reached
 	    }
-	    break;
 	default:
 	    assert(0);
-	    break;
+	    return 0; // never reached
     }
 }
 
