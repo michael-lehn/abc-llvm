@@ -194,7 +194,7 @@ Of course this triggers an error from the compiler. But it is hard to see from t
 macro.abc:5.11-5.12: error: expected local variable declaration list
 ```
 
-Sure, the error message actually could show the code the compiler got from the preprocessor. But using the preprocessor should not be attractive. If you want to use symbols for literals use languages features, e.g. enum constants or constant expressions. Don't use a preprocessor.
+Sure, the error message actually could show the code the compiler got from the preprocessor. But using the preprocessor should not be attractive. If you want to use symbols for literals use languages features, e.g. enum constants or constant expressions. Intead of macro functions use inline functions. Don't use a preprocessor.
 
 # Language Description
 
