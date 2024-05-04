@@ -108,6 +108,14 @@ $(abc-std-lib) : $(abc-std-lib)($(lib.abc.o))
 	$(RANLIB) $@
 
 
+#-- generate files: E.g. headers like inttypes.hdr
+
+gen := $(build.dir)/inttypes.hdr
+
+$(build.dir)/inttypes.hdr: $(build.dir)/util/xtest_gen_inttypes_hdr
+	$(build.dir)/util/xtest_gen_inttypes_hdr > $@
+
+
 %/: ; @mkdir -p $@
 
 $(info PREFIX=$(PREFIX))
@@ -116,11 +124,12 @@ $(info INCLUDEDIR=$(INCLUDEDIR))
 
 .DEFAULT_GOAL := all
 .PHONY: all
-all: $(ABC) $(abc-std-lib) $(prg.cpp.exe) $(lib.cpp.o) $(prg.cpp.o)
+all: $(ABC) $(abc-std-lib) $(prg.cpp.exe) $(lib.cpp.o) $(prg.cpp.o) $(gen)
 
 .PHONY: install
 install: $(ABC) $(abc-std-lib) | $(PREFIX)/bin/ $(LIBDIR) $(INCLUDEDIR)
 	cp abc-include/* $(INCLUDEDIR)
+	cp $(build.dir)/*.hdr $(INCLUDEDIR)
 	cp $(abc-std-lib) $(LIBDIR)
 	cp $(ABC) $(PREFIX)/bin/
 

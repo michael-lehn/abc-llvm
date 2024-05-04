@@ -1,0 +1,12 @@
+@ <stdio.hdr>
+@ <inttypes.hdr>
+
+fn main()
+{
+    printf("using PRId8: x = %" PRId8 "\n", -1i8);
+    printf("using PRId16: x = %" PRId16 "\n", -1i16);
+    printf("using PRId32: x = %" PRId32 "\n", -1i32);
+    printf("using PRId64: x = %" PRId64 "\n", -1i64);
+
+    printf("error: using PRId64 instead of PRId8: x = %" PRId64 "\n", -1i8);
+}

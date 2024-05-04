@@ -1,5 +1,13 @@
+type str10: array[10] of char;
+
 fn main(): u8
 {
-    local a: int;
-    12;
+    local a: -> int;
+    //a = 0; // error
+    a = nullptr;
+
+    local s: array[10] of char;
+
+    s = (str10){'f', 'o', 'o'};
+    s = (str10)"foo";
 }
