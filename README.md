@@ -231,18 +231,19 @@ The following predefined identifiers are used as named [types](#types) (essentia
 `u32`               `u64`               `i8`                `i16`
 `i32`               `i64`               `int`               `long`
 `long_long`         `unsigned`          `unsigned_long`     `unsigned_long_long`
-`size_t`            `ptrdiff_t`
+`size_t`            `ptrdiff_t`         `float`             `double`
 
 The following predefined identifiers are used as named constants:
 
 `nullptr`
 
-Literals can be decimal literals, octal literals, hexadecimal literals, string literals, and character literals.
+Literals can be decimal literals, octal literals, hexadecimal literals, string literals, character literals, and (decimal) floating point literals.
 - Decimal literals begin with a digit `1` to `9` and optionally have more digits from `0` to `9`. Decimal constants are unsigned and can be of arbitrary size.
 - Octal literals begin with a digit `0` and optionally have more digits from `0` to `7`.
 - Hexadecimal literals begin with a prefix `0x` and one or more digits from `0` to `9`, 'a' to 'f', or 'A' to 'F'.
 - String literals are delimited by `"`. Backslashes, i.e., `\`, are escape characters, removing the special meaning of the following character or allowing the insertion of special characters into a string.
 - Character literals are delimited by `'` and consist of a single character (which can be an escaped character).
+- Currently only decimal (but not hexadecimal) floating point literals are supported (see [floating_literal](https://en.cppreference.com/w/cpp/language/floating_literal))
 
 ## Expressions
 
