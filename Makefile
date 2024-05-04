@@ -112,7 +112,7 @@ $(abc-std-lib) : $(abc-std-lib)($(lib.abc.o))
 
 gen := $(build.dir)/inttypes.hdr
 
-$(build.dir)/inttypes.hdr: $(build.dir)/util/xtest_gen_inttypes_hdr
+$(build.dir)/inttypes.hdr: $(build.dir)util/xtest_gen_inttypes_hdr
 	$(build.dir)/util/xtest_gen_inttypes_hdr > $@
 
 

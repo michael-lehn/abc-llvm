@@ -20,7 +20,7 @@ call(ExprPtr &&fn, std::vector<ExprPtr> &&arg, lexer::Loc *loc)
     auto fnType = fn->type;
     if (!fnType->isFunction()) {
 	if (loc) {
-	    error::out() << fn->loc << ": Not a function or function ppointer."
+	    error::out() << fn->loc << ": Not a function or function pointer."
 		<< " Operand has type '" << fn->type << "'" << std::endl;
 	    error::fatal();
 	}
