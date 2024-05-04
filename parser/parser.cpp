@@ -1421,9 +1421,26 @@ parseStructMemberDeclaration(AstStructDecl *structDecl)
     }
     getToken();
 
+    bool unionStection = false;
     while (true) {
+	if (!unionStection && token.kind == TokenKind::UNION) {
+	    getToken();
+	    if (!error::expected(TokenKind::LBRACE)) {
+		return false;
+	    }
+	    getToken();
+	    unionStection = true;
+	}
 	if (!parseStructMemberList(structDecl)) {
 	    break;
+	}
+	if (unionStection && token.kind == TokenKind::RBRACE) {
+	    getToken();
+	    if (!error::expected(TokenKind::SEMICOLON)) {
+		return false;
+	    }
+	    getToken();
+	    unionStection = false;
 	}
     }
     if (!error::expected(TokenKind::RBRACE)) {
