@@ -145,7 +145,7 @@ declares a function pointer `foo` to a function with two integer parameters whic
 # Examples
 
 ```c
-#include <stdio.hdr>
+@ <stdio.hdr>
 
 fn main()
 {
@@ -153,9 +153,9 @@ fn main()
 }
 ```
 
-Currently, the C preprocessor (CPP) is used for macro processing and including headers. To be precise, the CPP integrated into C compilers like `gcc` or `clang` is used. This requires invoking the C compiler with the flags `-E` and, to ensure correct line and column numbers in error messages, with the flag `-traditional`. However, the `-traditional` flag has serious limitations. For example, it does not support stringification, which makes macros like `assert` much less useful. So in the near future, the preprocessor has to be integrated into the compiler.
+The worst part of C is the  C preprocessor (CPP). Hence it is greate that new C like languages are avoiding the preprocessor. But because ABC is just "A Better C, but still C" it does have a preprocessor. Students need to be prepared for this ugly side of C. However, compared to CPP the preprocessor has limited features. It can be used to include header files and you can define some simple macros. 
 
-Of course, the header file `stdio.hdr` does not contain the implementation of `printf` but just a declaration for it:
+Of course, the header file `stdio.hdr` does not contain the implementation of `printf` but just a declaration for it. From the preprocessor the compiler gets the following code:
 
 ```c
 extern fn printf(fmt: -> char, ...);
@@ -165,8 +165,36 @@ fn main()
     printf("hello, world!\n");
 }
 ```
+Compared to using CPP no include guards are required when the ABC preprocessor is used. Every file gets included only once (like using `@pragma once` with CPPs that support this pragma). 
 
-Any C function can be called from within an ABC function and vice versa. It just requires providing an `extern` declaration and linking against the C library or object file.
+For teaching purposes (i.e. for showing the ugly side of C), consider this example: 
+
+```c
+@define X 42
+
+fn main()
+{
+    local X: int = 42;
+}
+```
+
+Here the ABC compiler receives the following code from the preprocessor:
+
+```c
+fn main()
+{
+    local 42: int = 42;
+}
+```
+
+Of course this triggers an error from the compiler. But it is hard to see from the error message the actual problem:
+```
+    local X: int = 42;
+          ^^
+macro.abc:5.11-5.12: error: expected local variable declaration list
+```
+
+Sure, the error message actually could show the code the compiler got from the preprocessor. But using the preprocessor should not be attractive. If you want to use symbols for literals use languages features, e.g. enum constants or constant expressions. Don't use a preprocessor.
 
 # Language Description
 
