@@ -55,6 +55,10 @@ class Type
 	virtual bool isUnsignedInteger() const;
 	virtual std::size_t numBits() const;
 
+	// for floating point type (sub-)types 
+	virtual bool isFloatType() const;
+	virtual bool isFloat() const;
+	virtual bool isDouble() const;
 
 	// for pointer and array (sub-)types
 	virtual bool isPointer() const;

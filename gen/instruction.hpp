@@ -9,6 +9,17 @@
 namespace gen {
 
 enum InstructionOp {
+    FADD,
+    FSUB,
+    FMUL,
+    FDIV,
+    FEQ,
+    FNE,
+    FGT,
+    FGE,
+    FLT,
+    FLE,
+
     ADD,
     SUB,
     SMUL,

@@ -1,0 +1,24 @@
+@ <stdio.hdr>
+
+fn main()
+{
+    local a: int;
+    local b: unsigned;
+
+    a = -1.25;
+    b = 0.0 + 1.25;
+
+    local x: double;
+
+    x = 1;
+
+    x += 5.5;
+
+    printf("x = %lf, sizeof(x) = %zu\n", x, sizeof(x));
+
+    local y: float;
+
+    y = x;
+    printf("y = %f, sizeof(y) = %zu\n", y, sizeof(y));
+    printf("y = %g, sizeof(y) = %zu\n", y, sizeof(y));
+}

@@ -17,6 +17,9 @@ TokenKindCStr(TokenKind kind)
 	case TokenKind::OCTAL_LITERAL: return "OCTAL_LITERAL";
 	case TokenKind::STRING_LITERAL: return "STRING_LITERAL";
 	case TokenKind::CHARACTER_LITERAL: return "CHARACTER_LITERAL";
+	case TokenKind::FLOAT_DECIMAL_LITERAL: return "FLOAT_DECIMAL_LITERAL";
+	case TokenKind::FLOAT_HEXADECIMAL_LITERAL:
+	    return "FLOAT_HEXADECIMAL_LITERAL";
 
 	case TokenKind::ARRAY: return "ARRAY";
 	case TokenKind::ASSERT: return "ASSERT";

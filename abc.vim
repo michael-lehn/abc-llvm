@@ -46,10 +46,16 @@ syntax match keyword /\<default\>/ skipwhite
 syntax match keyword /\<struct\>/ skipwhite
 syntax match keyword /\<union\>/ skipwhite
 syntax match keyword /\<enum\>/ skipwhite
+syntax match keyword /\<goto\>/ skipwhite
+
+syntax match literal /\<true\>/ skipwhite
+syntax match literal /\<false\>/ skipwhite
 
 syntax match type /\<const\>/ skipwhite
 syntax match type /\<void\>/ skipwhite
 syntax match type /\<bool\>/ skipwhite
+syntax match type /\<float\>/ skipwhite
+syntax match type /\<double\>/ skipwhite
 syntax match type /\<char\>/ skipwhite
 syntax match type /\<u8\>/ skipwhite
 syntax match type /\<u16\>/ skipwhite
@@ -72,9 +78,9 @@ syn region cDefine start="^\s*\zs\%(%:\|#\)\s*\%(define\|undef\)\>" skip="\\$" e
 syn region cIncluded display contained start=+"+ skip=+\\\\\|\\"+ end=+"+
 syn match  cIncluded display contained "<[^>]*>"
 syn match  cInclude display "^\s*\zs\%(%:\|#\)\s*include\>\s*["<]" contains=cIncluded
+syn match  cInclude display "^\s*\zs\%(%:\|@\)\s*.*$" contains=cIncluded
 syn region cPreCondit   start="^\s*\zs\%(%:\|#\)\s*\%(if\|ifdef\|ifndef\|elif\)\>" skip="\\$" end="$" keepend contains=comment
 syn match  cPreCondit display "^\s*\zs\%(%:\|#\)\s*\%(else\|endif\)\>"
-
 
 
 syntax match literal /[+-]*[1-9][0-9]*/ skipwhite

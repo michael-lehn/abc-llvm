@@ -14,6 +14,12 @@ getConstantInt(const char *val, const abc::Type *type, std::uint8_t radix)
     assert(val);
     assert(type->isInteger());
 
+    if (radix == 16) {
+	assert(val[0] == '0');
+	assert(val[1] == 'x' || val[1] == 'Y');
+	val += 2;
+    }
+
     auto apint = llvm::APInt(type->numBits(), val, radix);
     return llvm::ConstantInt::get(*llvmContext, apint);
 }
@@ -27,6 +33,35 @@ getConstantInt(std::uint64_t val, const abc::Type *type)
     auto llvmType = llvm::dyn_cast<llvm::IntegerType>(convert(type));
     assert(llvmType);
     return llvm::ConstantInt::get(llvmType, val, type->isSignedInteger());
+}
+
+ConstantFloat
+getConstantFloat(const char *val, const abc::Type *type)
+{
+    assert(llvmContext);
+    assert(type);
+    assert(val);
+    assert(type->isFloatType());
+
+    auto llvmType = convert(type);
+    auto constVal = llvm::ConstantFP::get(llvmType, val);
+    auto constFP = llvm::dyn_cast<llvm::ConstantFP>(constVal);
+    assert(constFP);
+    return constFP;
+}
+
+ConstantFloat
+getConstantFloat(double val, const abc::Type *type)
+{
+    assert(type);
+    assert(type->isFloatType());
+
+    auto llvmType = convert(type);
+    assert(llvmType);
+    auto constVal = llvm::ConstantFP::get(llvmType, val);
+    auto constFP = llvm::dyn_cast<llvm::ConstantFP>(constVal);
+    assert(constFP);
+    return constFP;
 }
 
 Constant getConstantArray(const std::vector<Constant> &val,
@@ -56,6 +91,7 @@ getConstantZero(const abc::Type *type)
     assert(type);
 
     auto llvmType = convert(type);
+    assert(llvmType);
     return llvm::Constant::getNullValue(llvmType);
 }
 

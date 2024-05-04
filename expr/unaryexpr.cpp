@@ -106,7 +106,7 @@ UnaryExpr::loadConstant() const
 					child->loadConstant());
 	    }
 	case MINUS:
-	    return gen::instruction(gen::SUB,
+	    return gen::instruction(type->isFloatType() ? gen::FSUB : gen::SUB,
 				    gen::getConstantZero(type), 
 				    child->loadConstant());
 	case ADDRESS:
@@ -120,6 +120,10 @@ gen::Value
 UnaryExpr::loadValue() const
 {
     assert(type);
+
+    if (isConst()) {
+	return loadConstant();
+    }
 
     switch (kind) {
 	case LOGICAL_NOT:
@@ -170,7 +174,7 @@ UnaryExpr::loadValue() const
 		return prevLeftVal;
 	    }
 	case MINUS:
-	    return gen::instruction(gen::SUB,
+	    return gen::instruction(type->isFloatType() ? gen::FSUB : gen::SUB,
 				    gen::getConstantZero(type), 
 				    child->loadValue());
 	default:

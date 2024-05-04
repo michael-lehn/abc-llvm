@@ -13,6 +13,27 @@ instruction(InstructionOp op, Value left, Value right)
     assert(llvmContext);
 
     switch (op) {
+	case FADD:
+	    return llvmBuilder->CreateFAdd(left, right);
+	case FSUB:
+	    return llvmBuilder->CreateFSub(left, right);
+	case FMUL:
+	    return llvmBuilder->CreateFMul(left, right);
+	case FDIV:
+	    return llvmBuilder->CreateFDiv(left, right);
+	case FEQ:
+	    return llvmBuilder->CreateFCmpOEQ(left, right);
+	case FNE:
+	    return llvmBuilder->CreateFCmpONE(left, right);
+	case FGT:
+	    return llvmBuilder->CreateFCmpOGT(left, right);
+	case FGE:
+	    return llvmBuilder->CreateFCmpOGE(left, right);
+	case FLT:
+	    return llvmBuilder->CreateFCmpOLT(left, right);
+	case FLE:
+	    return llvmBuilder->CreateFCmpOLE(left, right);
+
 	case ADD:
 	    return llvmBuilder->CreateAdd(left, right);
 	case SUB:

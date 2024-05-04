@@ -29,6 +29,22 @@ cast(Value val, const abc::Type *fromType, const abc::Type *toType)
 	} else {
 	    return llvmBuilder->CreateTruncOrBitCast(val, llvmToType); 
 	}
+    } else if (fromType->isFloatType() && toType->isFloatType()) {
+	if (fromType->isFloat() && toType->isDouble()) {
+	    return llvmBuilder->CreateFPExt(val, llvmToType);
+	} else if (fromType->isDouble() && toType->isFloat()) {
+	    return llvmBuilder->CreateFPTrunc(val, llvmToType);
+	} else {
+	    return val;
+	}
+    } else if (fromType->isInteger() && toType->isFloatType()) {
+	return fromType->isUnsignedInteger()
+	    ? llvmBuilder->CreateUIToFP(val, llvmToType)
+	    : llvmBuilder->CreateSIToFP(val, llvmToType);
+    } else if (fromType->isFloatType() && toType->isInteger()) {
+	return toType->isUnsignedInteger()
+	    ? llvmBuilder->CreateFPToUI(val, llvmToType)
+	    : llvmBuilder->CreateFPToSI(val, llvmToType); 
     } else if (fromType->isPointer() && toType->isPointer()) {
 	return val;
     } else if (fromType->isArray() && toType->isArray()) {

@@ -6,6 +6,7 @@
 #include "llvm/Support/Solaris/sys/regset.h"
 #endif // SUPPORT_SOLARIS
 
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -21,6 +22,7 @@ using JumpOrigin = llvm::BasicBlock *;
 using Value = llvm::Value *;
 using Constant = llvm::Constant *;
 using ConstantInt = llvm::ConstantInt *;
+using ConstantFloat = llvm::ConstantFP *;
 
 extern std::unique_ptr<llvm::LLVMContext> llvmContext;
 extern std::unique_ptr<llvm::Module> llvmModule;

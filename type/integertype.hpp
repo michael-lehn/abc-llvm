@@ -31,10 +31,9 @@ class IntegerType : public Type
 	const Type *getConst() const override;
 	const Type *getConstRemoved() const override;
 
-	bool hasSize() const override;
 	std::size_t numBits() const override;
 
-	virtual bool isBool() const override;
+	bool isBool() const override;
 	bool isInteger() const override;
 	bool isSignedInteger() const override;
 	bool isUnsignedInteger() const override;

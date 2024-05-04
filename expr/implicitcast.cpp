@@ -96,6 +96,24 @@ ImplicitCast::loadValue() const
     } else if (expr->type->isArray() && type->isPointer()) {
 	return expr->loadAddress();
     }
+    if (expr->isConst()) {
+	// for constant expression some errors can be caught here ...
+	if (expr->type->isFloatType() && type->isUnsignedInteger()) {
+	    using T = std::remove_pointer_t<gen::ConstantFloat>;
+	    auto val = llvm::dyn_cast<T>(expr->loadConstant());
+	    if (val->isNegative()) {
+		error::location(loc);
+		error::out() << error::setColor(error::BOLD) << loc << ": "
+		    << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "conversion of out of range value from "
+		    " '" << expr->type << "' to '" << type
+		    << "' is undefined\n"
+		    << error::setColor(error::NORMAL);
+		error::fatal();
+	    }
+	}
+    }
     return gen::cast(expr->loadValue(), expr->type, type);
 }
 

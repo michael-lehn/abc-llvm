@@ -7,6 +7,7 @@
 #include "expr/enumconstant.hpp"
 #include "expr/explicitcast.hpp"
 #include "expr/exprlist.hpp"
+#include "expr/floatliteral.hpp"
 #include "expr/identifier.hpp"
 #include "expr/integerliteral.hpp"
 #include "expr/member.hpp"
@@ -17,6 +18,7 @@
 #include "lexer/error.hpp"
 #include "lexer/lexer.hpp"
 #include "symtab/symtab.hpp"
+#include "type/floattype.hpp"
 #include "type/integertype.hpp"
 #include "type/type.hpp"
 
@@ -508,10 +510,10 @@ parsePostfix(ExprPtr &&expr)
 //------------------------------------------------------------------------------
 
 static const Type *
-parseIntType()
+parseSuffixType()
 {
     auto type = parseType();
-    if (type && !type->isInteger()) {
+    if (type && !type->isInteger() && !type->isFloatType()) {
 	return nullptr;
     }
     return type;
@@ -563,19 +565,27 @@ parsePrimary()
 	    error::fatal();
 	    return nullptr;
 	}
+    } else if (tok.kind == TokenKind::FLOAT_DECIMAL_LITERAL) {
+	getToken();
+	auto ty = parseSuffixType(); // parse suffix
+	if (!ty) {
+	    ty = FloatType::createDouble();
+	}
+	auto expr = FloatLiteral::create(tok.processedVal, ty, tok.loc);
+        return expr;
     } else if (tok.kind == TokenKind::DECIMAL_LITERAL) {
 	getToken();
-	auto ty = parseIntType(); // parse suffix
+	auto ty = parseSuffixType(); // parse suffix
 	auto expr = IntegerLiteral::create(tok.processedVal, 10, ty, tok.loc);
         return expr;
     } else if (token.kind == TokenKind::HEXADECIMAL_LITERAL) {
 	getToken();
-	auto ty = parseIntType(); // parse suffix
+	auto ty = parseSuffixType(); // parse suffix
 	auto expr = IntegerLiteral::create(tok.processedVal, 16, ty, tok.loc);
         return expr;
     } else if (token.kind == TokenKind::OCTAL_LITERAL) {
 	getToken();
-	auto ty = parseIntType(); // parse suffix
+	auto ty = parseSuffixType(); // parse suffix
 	auto expr = IntegerLiteral::create(tok.processedVal, 8, ty, tok.loc);
         return expr;
     } else if (token.kind == TokenKind::CHARACTER_LITERAL) {

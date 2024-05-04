@@ -25,6 +25,9 @@ Type::equals(const Type *ty1, const Type *ty2)
     } else if (ty1->isInteger() && ty2->isInteger()) {
 	return ty1->isSignedInteger() == ty2->isSignedInteger()
 	    && ty1->numBits() == ty2->numBits();
+    } else if (ty1->isFloatType() && ty2->isFloatType()) {
+	return (ty1->isFloat() && ty2->isFloat())
+	    || (ty1->isDouble() && ty2->isDouble());
     } else if (ty1->isPointer() && ty2->isPointer()) {
 	if (ty1->isNullptr() || ty2->isNullptr()) {
 	    return ty1->isNullptr() == ty2->isNullptr();
@@ -99,8 +102,14 @@ Type::convert(const Type *from, const Type *to)
 	} else {
 	    return nullptr;
 	}
+    } else if (to->isFloatType()) {
+	if (from->isInteger() || from->isFloatType()) {
+	    return to;
+	} else {
+	    return nullptr;
+	}
     } else if (to->isInteger()) {
-	if (from->isInteger()) {
+	if (from->isInteger() || from->isFloatType()) {
 	    return to;
 	} else {
 	    return nullptr;
@@ -306,6 +315,25 @@ std::size_t
 Type::numBits() const
 {
     return isAlias() ? getUnalias()->numBits() : 0;
+}
+
+// for floating point type (sub-)types 
+bool
+Type::isFloatType() const
+{
+    return isAlias() ? getUnalias()->isFloatType() : false;
+}
+
+bool
+Type::isFloat() const
+{
+    return isAlias() ? getUnalias()->isFloat() : false;
+}
+
+bool
+Type::isDouble() const
+{
+    return isAlias() ? getUnalias()->isDouble() : false;
 }
 
 // for pointer and array (sub-)types

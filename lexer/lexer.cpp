@@ -216,10 +216,10 @@ getToken_(bool skipNewline)
 		if (repr == DECIMAL || repr == OCTAL) {
 		    octal_to_float = false; // already taken care of
 		    parseDecimalFloatingConstant();
-		    literalKind = TokenKind::FLOAT_LITERAL; // TODO: DEC...
+		    literalKind = TokenKind::FLOAT_DECIMAL_LITERAL;
 		} else {
 		    parseHexadecimalFloatingConstant();
-		    literalKind = TokenKind::FLOAT_LITERAL; // TODO: HEX...
+		    literalKind = TokenKind::FLOAT_HEXADECIMAL_LITERAL;
 		}
 		break;
 
@@ -230,7 +230,7 @@ getToken_(bool skipNewline)
 		}
 		/* hexadecimal floating constant */
 		parseHexadecimalFloatingConstant();
-		literalKind = TokenKind::FLOAT_LITERAL; // TODO: HEX...
+		literalKind = TokenKind::FLOAT_HEXADECIMAL_LITERAL;
 		break;
 
 	    case 'e':
@@ -241,7 +241,7 @@ getToken_(bool skipNewline)
 		    break;
 		}
 		parseDecimalFloatingConstant();
-		literalKind = TokenKind::FLOAT_LITERAL; // TODO: DEC...
+		literalKind = TokenKind::FLOAT_DECIMAL_LITERAL;
 		break;
 	    default:
 		break;
@@ -791,11 +791,62 @@ parseAddDirective()
 static void
 parseDecimalFloatingConstant()
 {
+    // we are at a '.', a digit behind the '.', at 'e' or 'E'
+    if (reader->ch != 'e' && reader->ch != 'E') {
+	// parse digit sequence of fractional constant, if ch neither 'e' nor
+	// 'E'
+	do {
+	    nextCh();
+	} while (isDecDigit(reader->ch));
+    }
+    if (reader->ch == 'e' || reader->ch == 'E') {
+	// parse exponential part
+	nextCh();
+	if (reader->ch == '+' || reader->ch == '-') {
+	    nextCh();
+	}
+	if (!isDecDigit(reader->ch)) {
+	    error::out() << token.loc
+		<< ": digits missing in exponent" << std::endl;
+	    error::fatal();
+	}
+	nextCh();
+	while (isDecDigit(reader->ch)) {
+	    nextCh();
+	}
+    }
 }
 
 static void
 parseHexadecimalFloatingConstant()
 {
+    // we are at a '.', at 'e' or 'E'
+    if (reader->ch == '.') {
+	nextCh();
+	while (isHexDigit(reader->ch)) {
+	    nextCh();
+	};
+    }
+    if (reader->ch != 'p' && reader->ch != 'P') {
+	error::out() << token.loc
+	    << ": exponent missing in hexadecimal floating constant"
+	    << std::endl;
+	error::fatal();
+    }
+    nextCh();
+    // parse exponential part
+    if (reader->ch == '+' || reader->ch == '-') {
+	nextCh();
+    }
+    if (!isDecDigit(reader->ch)) {
+	error::out() << token.loc << ": digits missing in exponent"
+	    << std::endl;
+	error::fatal();
+    }
+    nextCh();
+    while (isDecDigit(reader->ch)) {
+	nextCh();
+    }
 }
 
 } } // namespace lexer, abc

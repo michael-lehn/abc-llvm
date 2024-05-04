@@ -3,6 +3,7 @@
 #include "lexer/error.hpp"
 #include "type/arraytype.hpp"
 #include "type/integertype.hpp"
+#include "type/floattype.hpp"
 #include "type/pointertype.hpp"
 
 #include "implicitcast.hpp"
@@ -49,8 +50,12 @@ call(ExprPtr &&fn, std::vector<ExprPtr> &&arg, lexer::Loc *loc)
 	    // Rules for converting vargs:
 	    // - If an array is passed as varg it will always converted to a
 	    //	 pointer (required to interface with C)
+	    // - float is casted to double	 
 	    if (arg[i]->type->isArray()) {
 		auto argType = PointerType::create(arg[i]->type->refType());
+		arg[i] = ImplicitCast::create(std::move(arg[i]), argType);
+	    } else if (arg[i]->type->isFloat()) {
+		auto argType = FloatType::createDouble();
 		arg[i] = ImplicitCast::create(std::move(arg[i]), argType);
 	    }
 	}
@@ -68,6 +73,8 @@ static BinaryResult binaryErr(BinaryExpr::Kind kind, ExprPtr &&left,
 			      ExprPtr &&right, lexer::Loc *loc);
 static BinaryResult binaryInt(BinaryExpr::Kind kind, ExprPtr &&left,
 			      ExprPtr &&right, lexer::Loc *loc);
+static BinaryResult binaryFlt(BinaryExpr::Kind kind, ExprPtr &&left,
+			      ExprPtr &&right, lexer::Loc *loc);
 static BinaryResult binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left,
 			      ExprPtr &&right, lexer::Loc *loc);
 static BinaryResult binaryArray(BinaryExpr::Kind kind, ExprPtr &&left,
@@ -84,6 +91,8 @@ binary(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right, lexer::Loc *loc)
 	return binaryArray(kind, std::move(left), std::move(right), loc);
     } else if (left->type->isPointer() || right->type->isPointer()) {
 	return binaryPtr(kind, std::move(left), std::move(right), loc);
+    } else if (left->type->isFloatType() || right->type->isFloatType()) {
+	return binaryFlt(kind, std::move(left), std::move(right), loc);
     } else if (left->type->isInteger() && right->type->isInteger()) {
 	return binaryInt(kind, std::move(left), std::move(right), loc);
     } else {
@@ -175,6 +184,74 @@ binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	case BinaryExpr::Kind::BITWISE_RIGHT_SHIFT:
 	    type = newLeftType = left->type;
 	    newRightType = right->type;
+	    break;
+	case BinaryExpr::Kind::EQUAL:
+	case BinaryExpr::Kind::NOT_EQUAL:
+	case BinaryExpr::Kind::GREATER:
+	case BinaryExpr::Kind::GREATER_EQUAL:
+	case BinaryExpr::Kind::LESS:
+	case BinaryExpr::Kind::LESS_EQUAL:
+	    type = IntegerType::createBool();
+	    newLeftType = newRightType = commonType;
+	    break;
+	case BinaryExpr::Kind::LOGICAL_AND:
+	case BinaryExpr::Kind::LOGICAL_OR:
+	    type = newLeftType = newRightType = IntegerType::createBool();
+	    break;
+	default:
+	    type = nullptr;
+	    break;
+    }
+    if (!type || !newLeftType || !newRightType) { 
+	return binaryErr(kind, std::move(left), std::move(right), loc);
+    }
+    left = ImplicitCast::create(std::move(left), newLeftType);
+    right = ImplicitCast::create(std::move(right), newRightType);
+    return std::make_tuple(std::move(left), std::move(right), type);
+}
+
+static BinaryResult
+binaryFlt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
+	  lexer::Loc *loc)
+{
+    assert(left->type->isInteger() || left->type->isFloatType());
+    assert(right->type->isInteger() || right->type->isFloatType());
+
+    // when mixing integer and floating point: floating point wins
+    auto commonType = Type::common(left->type, right->type);
+
+    const Type *type = nullptr;
+    const Type *newLeftType = nullptr;
+    const Type *newRightType = nullptr;
+
+    switch (kind) {
+	case BinaryExpr::Kind::ASSIGN:
+	case BinaryExpr::Kind::ADD_ASSIGN:
+	case BinaryExpr::Kind::SUB_ASSIGN:
+	case BinaryExpr::Kind::MUL_ASSIGN:
+	case BinaryExpr::Kind::DIV_ASSIGN:
+	    if (left->type->hasConstFlag()) {
+		error::out() << error::setColor(error::BOLD) << left->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << ": assignment of read-only variable '"
+		    << left << "'\n"
+		    << error::setColor(error::NORMAL);
+	    } else if (!left->isLValue()) {
+		error::out() << error::setColor(error::BOLD) << left->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << " not an LValue\n"
+		    << error::setColor(error::NORMAL);
+	    } else {
+		type = newLeftType = newRightType = left->type;
+	    }
+	    break;
+	case BinaryExpr::Kind::ADD:
+	case BinaryExpr::Kind::SUB:
+	case BinaryExpr::Kind::MUL:
+	case BinaryExpr::Kind::DIV:
+	    type = newLeftType = newRightType = commonType;
 	    break;
 	case BinaryExpr::Kind::EQUAL:
 	case BinaryExpr::Kind::NOT_EQUAL:
@@ -504,7 +581,7 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 	    }
 	    break;
 	case UnaryExpr::MINUS:
-	    if (child->type->isInteger()) {
+	    if (child->type->isInteger() || child->type->isFloatType()) {
 		type = newChildType = child->type;
 	    }
 	    break;

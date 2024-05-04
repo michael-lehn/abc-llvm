@@ -7,12 +7,13 @@
 #include "gen/instruction.hpp"
 #include "gen/print.hpp"
 #include "gen/variable.hpp"
+#include "type/floattype.hpp"
 #include "type/integertype.hpp"
 #include "type/functiontype.hpp"
 
 #include "binaryexpr.hpp"
 #include "identifier.hpp"
-#include "integerliteral.hpp"
+#include "floatliteral.hpp"
 
 void
 defineGlobalVariable()
@@ -20,18 +21,18 @@ defineGlobalVariable()
     using namespace abc;
     using namespace gen;
 
-    auto intType = IntegerType::createSigned(32)->getAlias("int");
+    auto fltType = FloatType::createDouble()->getAlias("double");
 
     // extern declaration
     gen::globalVariableDefinition("foo_global",
-				  intType, 
+				  fltType, 
 				  nullptr,
 				  true);
 
     // definition with initializer
     gen::globalVariableDefinition("foo_global",
-				  intType, 
-				  getConstantInt("43", intType, 10), 
+				  fltType, 
+				  getConstantFloat("1.25", fltType), 
 				  false);
 }
 
@@ -39,14 +40,14 @@ void
 someInstructions()
 {
     using namespace abc;
-    auto intType = IntegerType::createSigned(32)->getAlias("int");
+    auto fltType = FloatType::createDouble()->getAlias("double");
 
-    auto intExpr = IntegerLiteral::create(-1, intType);
+    auto fltExpr = FloatLiteral::create(1.25, fltType);
     auto idExpr = Identifier::create(UStr::create("foo_global"),
 				     UStr::create("foo_global"),
-				     intType);
+				     fltType);
     auto addExpr = BinaryExpr::create(BinaryExpr::ADD,
-				      std::move(intExpr),
+				      std::move(fltExpr),
 				      std::move(idExpr));
 
     gen::returnInstruction(addExpr->loadValue());
@@ -67,7 +68,6 @@ defineMain()
     someInstructions();
     gen::functionDefinitionEnd();
 }
-
 
 int
 main()

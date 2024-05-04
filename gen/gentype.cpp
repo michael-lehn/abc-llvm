@@ -38,7 +38,11 @@ convert(const abc::Type *abcType)
 
 
     if (abcType->isVoid()) {
-	return llvm::Type::getVoidTy(*llvmContext);
+	llvmType = llvm::Type::getVoidTy(*llvmContext);
+    } else if (abcType->isFloat()) {
+	llvmType = llvm::Type::getFloatTy(*llvmContext);
+    } else if (abcType->isDouble()) {
+	llvmType = llvm::Type::getDoubleTy(*llvmContext);
     } else if (abcType->isInteger()) {
 	switch (abcType->numBits()) {
 	    case 1:

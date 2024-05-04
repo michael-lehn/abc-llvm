@@ -1,5 +1,6 @@
 #include "symtab/symtab.hpp"
 #include "type/integertype.hpp"
+#include "type/floattype.hpp"
 #include "type/voidtype.hpp"
 
 #include "defaulttype.hpp"
@@ -11,6 +12,11 @@ initDefaultType()
 {
     Symtab::addType(lexer::Loc{}, UStr::create("void"),
 		    VoidType::create()->getAlias("void"));
+
+    Symtab::addType(lexer::Loc{}, UStr::create("float"),
+		    FloatType::createFloat());
+    Symtab::addType(lexer::Loc{}, UStr::create("double"),
+		    FloatType::createDouble());
 
     Symtab::addType(lexer::Loc{}, UStr::create("bool"),
 		    IntegerType::createBool()->getAlias("bool"));

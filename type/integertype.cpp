@@ -113,12 +113,6 @@ IntegerType::getConstRemoved() const
     return create(numBits(), isSignedInteger(), false);
 }
 
-bool
-IntegerType::hasSize() const
-{
-    return true;
-}
-
 std::size_t
 IntegerType::numBits() const
 {

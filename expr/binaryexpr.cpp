@@ -558,13 +558,17 @@ getGenInstructionOp(abc::BinaryExpr::Kind kind, const abc::Type *type)
     assert(type);
     switch (kind) {
 	case abc::BinaryExpr::Kind::ADD:
-	    return gen::ADD;
+	    return type->isFloatType() ? gen::FADD : gen::ADD;
 	case abc::BinaryExpr::Kind::SUB:
-	    return gen::SUB;
+	    return type->isFloatType() ? gen::FSUB : gen::SUB;
 	case abc::BinaryExpr::Kind::MUL:
-	    return gen::SMUL;
+	    return type->isFloatType() ? gen::FMUL : gen::SMUL;
 	case abc::BinaryExpr::Kind::DIV:
-	    return type->isSignedInteger() ? gen::SDIV : gen::UDIV;
+	    if (type->isFloatType()) {
+		return gen::FDIV;
+	    } else {
+		return type->isSignedInteger() ? gen::SDIV : gen::UDIV;
+	    }
 	case abc::BinaryExpr::Kind::MOD:
 	    return type->isSignedInteger() ? gen::SMOD : gen::UMOD;
 	case abc::BinaryExpr::Kind::BITWISE_AND:
@@ -578,17 +582,33 @@ getGenInstructionOp(abc::BinaryExpr::Kind kind, const abc::Type *type)
 	case abc::BinaryExpr::Kind::BITWISE_RIGHT_SHIFT:
 	    return type->isSignedInteger() ? gen::ASHR : gen::LSHR;
 	case abc::BinaryExpr::Kind::EQUAL:
-	    return gen::EQ;
+	    return type->isFloatType() ? gen::FEQ : gen::EQ;
 	case abc::BinaryExpr::Kind::NOT_EQUAL:
-	    return gen::NE;
+	    return type->isFloatType() ? gen::FNE : gen::NE;
 	case abc::BinaryExpr::Kind::LESS:
-	    return type->isSignedInteger() ? gen::SLT : gen::ULT;
+	    if (type->isFloatType()) {
+		return gen::FLT;
+	    } else {
+		return type->isSignedInteger() ? gen::SLT : gen::ULT;
+	    }
 	case abc::BinaryExpr::Kind::LESS_EQUAL:
-	    return type->isSignedInteger() ? gen::SLE : gen::ULE;
+	    if (type->isFloatType()) {
+		return gen::FLE;
+	    } else {
+		return type->isSignedInteger() ? gen::SLE : gen::ULE;
+	    }
 	case abc::BinaryExpr::Kind::GREATER:
-	    return type->isSignedInteger() ? gen::SGT : gen::UGT;
+	    if (type->isFloatType()) {
+		return gen::FGT;
+	    } else {
+		return type->isSignedInteger() ? gen::SGT : gen::UGT;
+	    }
 	case abc::BinaryExpr::Kind::GREATER_EQUAL:
-	    return type->isSignedInteger() ? gen::SGE : gen::UGE;
+	    if (type->isFloatType()) {
+		return gen::FGE;
+	    } else {
+		return type->isSignedInteger() ? gen::SGE : gen::UGE;
+	    }
 	case abc::BinaryExpr::Kind::LOGICAL_AND:
 	    return gen::AND;
 	case abc::BinaryExpr::Kind::LOGICAL_OR:
