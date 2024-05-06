@@ -432,18 +432,6 @@ binaryArray(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 				       elementType);
 	    }
 	case BinaryExpr::Kind::ASSIGN:
-	    if (left->type->isPointer() && right->type->isArray()) {
-		auto leftRefTy = left->type->refType();
-		auto rightRefTy = right->type->refType();
-		auto newRightType = leftRefTy->isArray()
-		    ?  PointerType::create(right->type)
-		    :  PointerType::create(rightRefTy);
-		right = ImplicitCast::create(std::move(right), newRightType);
-		return binary(kind, std::move(left), std::move(right), loc);
-	    }
-	    if (!left->type->isArray() || !right->type->isArray()) {
-		break;
-	    }
 	    if (left->type->hasConstFlag()) {
 		error::location(left->loc);
 		error::out() << error::setColor(error::BOLD) << left->loc

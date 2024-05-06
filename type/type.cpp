@@ -114,17 +114,17 @@ Type::convert(const Type *from, const Type *to)
 	} else {
 	    return nullptr;
 	}
-    } else if (to->isPointer() && from->isPointer()) {
+    } else if (to->isPointer() && (from->isPointer() || from->isArray())) {
 	assert(!to->isNullptr());
-	return to;
-    } else if (to->isPointer() && from->isArray()) {
-	assert(!to->isNullptr());
+	if (from->isNullptr()) {
+	    return to;
+	}
 	auto toRefTy = to->refType();
 	auto fromRefTy = from->refType();
 	if (!fromRefTy->hasConstFlag() && toRefTy->hasConstFlag()) {
 	    toRefTy = toRefTy->getConstRemoved();
 	}
-	if (equals(toRefTy, from)) {
+	if (from->isArray() && equals(toRefTy, from)) {
 	    return to;
 	} else if (equals(toRefTy, fromRefTy)) {
 	    return to;
@@ -168,20 +168,7 @@ Type::explicitCast(const Type *from, const Type *to)
 	// allow const-casts
 	return type;
     } else if (from->isPointer() && to->isPointer()) {
-	if (from->isNullptr()) {
-	    return nullptr;
-	}
-	auto fromRefTy = from->refType()->getConstRemoved();
-	auto toRefTy = to->refType()->getConstRemoved();
-	if (equals(fromRefTy, toRefTy)) {
-	    return to;
-	} else if (from->refType()->isVoid()) {
-	    return to;
-	} else if (to->refType()->isVoid()) {
-	    return to;
-	} else {
-	    return nullptr;
-	}
+	return to;
     } else {
 	return nullptr;
     }
