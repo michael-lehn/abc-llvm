@@ -114,7 +114,7 @@ Type::convert(const Type *from, const Type *to)
 	} else {
 	    return nullptr;
 	}
-    } else if (to->isPointer() && (from->isPointer() || from->isArray())) {
+    } else if (to->isPointer() && from->isArray()) {
 	assert(!to->isNullptr());
 	if (from->isNullptr()) {
 	    return to;
@@ -124,9 +124,22 @@ Type::convert(const Type *from, const Type *to)
 	if (!fromRefTy->hasConstFlag() && toRefTy->hasConstFlag()) {
 	    toRefTy = toRefTy->getConstRemoved();
 	}
-	if (from->isArray() && equals(toRefTy, from)) {
+	if (equals(toRefTy, fromRefTy)) {
 	    return to;
-	} else if (equals(toRefTy, fromRefTy)) {
+	} else {
+	    return nullptr;
+	}
+    } else if (to->isPointer() && from->isPointer()) {
+	assert(!to->isNullptr());
+	if (from->isNullptr()) {
+	    return to;
+	}
+	auto toRefTy = to->refType();
+	auto fromRefTy = from->refType();
+	if (!fromRefTy->hasConstFlag() && toRefTy->hasConstFlag()) {
+	    toRefTy = toRefTy->getConstRemoved();
+	}
+	if (equals(toRefTy, fromRefTy)) {
 	    return to;
 	} else if (toRefTy->isVoid() || fromRefTy->isVoid()) {
 	    return to;
