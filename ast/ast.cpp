@@ -486,6 +486,19 @@ AstGlobalVar::codegen()
     for (const auto &item : decl.node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
+
+	/*
+	 * generate an uninitialized definition first, even if there is an
+	 * initializer. This is required for definitions where the initializer
+	 * uses the address of this global variable. Like in this case:
+	 *
+	 *	global foo: -> void &foo;
+	 */
+	for (std::size_t i = 0; i < var->varId.size(); ++i) {
+	    gen::globalVariableDefinition(var->varId[i].c_str(),
+					  var->varType, nullptr, false);
+	}
+
 	auto initializer = var->getInitializerExpr();
 	if (initializer && !initializer->isConst()) {
 	    error::location(initializer->loc);

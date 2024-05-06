@@ -124,7 +124,9 @@ Type::convert(const Type *from, const Type *to)
 	if (!fromRefTy->hasConstFlag() && toRefTy->hasConstFlag()) {
 	    toRefTy = toRefTy->getConstRemoved();
 	}
-	if (equals(toRefTy, fromRefTy)) {
+	if (from->isArray() && equals(toRefTy, from)) {
+	    return to;
+	} else if (equals(toRefTy, fromRefTy)) {
 	    return to;
 	} else if (toRefTy->isVoid() || fromRefTy->isVoid()) {
 	    return to;
