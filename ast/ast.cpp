@@ -377,7 +377,6 @@ AstVar::addInitializerExpr(AstInitializerExprPtr &&initializerExpr_)
 {
     initializerExpr = std::move(initializerExpr_);
     if (varType->isUnboundArray()) {
-	std::cerr << "patching arry dim\n";
 	auto init = dynamic_cast<const CompoundExpr *>(getInitializerExpr());
 	assert(init);
 	varType = ArrayType::create(varType->refType(), init->exprVec.size());
@@ -521,7 +520,6 @@ AstGlobalVar::codegen()
 	    auto initialValue = initializer
 		? initializer->loadConstant()
 		: nullptr;
-	    std::cerr << "ok\n";
 	    gen::globalVariableDefinition(var->varId[0].c_str(), var->varType,
 					  initialValue, false);
 	} else {

@@ -19,7 +19,6 @@ CompoundExpr::CompoundExpr(std::vector<ExprPtr> &&exprVec, const Type *type,
 			   lexer::Loc loc)
     : Expr{loc, type}, exprVec{std::move(exprVec)}
 {
-    std::cerr << "this->type = " << this->type << "\n";
     static std::size_t idCount;
     std::stringstream ss;
     ss << ".compound" << idCount++;
