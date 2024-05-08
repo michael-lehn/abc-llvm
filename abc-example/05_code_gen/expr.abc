@@ -14,7 +14,7 @@ fn releaseExpr(expr: -> const Expr)
 	case EXPR_BINARY:
 	    releaseExpr(expr->binary.left);
 	    releaseExpr(expr->binary.right);
-	    break;	
+	    break;
 	default:
 	    assert(0);
 	    break;
@@ -141,8 +141,8 @@ fn loadExpr(expr: -> const Expr): GenReg
 			    then loadExprAddr(expr->binary.left)
 			    else loadExpr(expr->binary.left);
 
-		genRelease(left);	
-		genRelease(right);	
+		genRelease(left);
+		genRelease(right);
 
 		switch (expr->binary.op) {
 		    case EXPR_ASSIGN:
