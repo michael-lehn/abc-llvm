@@ -69,17 +69,21 @@ StructType::isStruct() const
 
 const Type *
 StructType::complete(std::vector<UStr> &&memberName,
+		     std::vector<std::size_t> &&memberIndex,
 		     std::vector<const Type *> &&memberType)
 {
+    assert(memberName.size() == memberIndex.size());
     assert(memberName.size() == memberType.size());
     auto &constStructType = structConstSet.at(id());
     for (std::size_t i = 0; i < memberName.size(); ++i) {
 	constStructType.memberName_.push_back(memberName[i]);	
+	constStructType.memberIndex_.push_back(memberIndex[i]);	
 	constStructType.memberType_.push_back(memberType[i]->getConst());	
     }
     constStructType.isComplete_ = true;
 
     memberName_ = std::move(memberName);
+    memberIndex_ = std::move(memberIndex);
     memberType_ = std::move(memberType);
     isComplete_ = true;
     return this;
@@ -89,6 +93,12 @@ const std::vector<UStr> &
 StructType::memberName() const
 {
     return memberName_;
+}
+
+const std::vector<std::size_t> &
+StructType::memberIndex() const
+{
+    return memberIndex_;
 }
 
 const std::vector<const Type *> &

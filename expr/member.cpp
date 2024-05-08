@@ -30,11 +30,12 @@ Member::create(ExprPtr &&structure, UStr member, lexer::Loc loc)
     std::size_t index = 0;
     if (structureType->isStruct() && structureType->hasSize()) {
 	const auto &memberName = structureType->memberName();
+	const auto &memberIndex = structureType->memberIndex();
 	const auto &memberType = structureType->memberType();
 	for (std::size_t i = 0; i < memberName.size(); ++i) {
 	    if (member == memberName[i]) {
 		type = memberType[i];
-		index = i;
+		index = memberIndex[i];
 		break;
 	    }
 	}

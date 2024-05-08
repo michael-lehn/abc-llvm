@@ -80,8 +80,10 @@ class Type
 	// for struct (sub-)types
 	virtual bool isStruct() const;
 	virtual const Type *complete(std::vector<UStr> &&memberName,
+				     std::vector<std::size_t> &&memberIndex,
 				     std::vector<const Type *> &&memberType);
 	virtual const std::vector<UStr> &memberName() const;
+	virtual const std::vector<std::size_t> &memberIndex() const;
 	virtual const std::vector<const Type *> &memberType() const;
 
 };

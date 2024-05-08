@@ -413,7 +413,8 @@ Type::isStruct() const
 }
 
 const Type *
-Type::complete(std::vector<UStr> &&, std::vector<const Type *> &&)
+Type::complete(std::vector<UStr> &&, std::vector<std::size_t> &&,
+	       std::vector<const Type *> &&)
 {
     if (isAlias() && getUnalias()->isStruct()) {
 	assert(0 && "Alias type can not be completed");
@@ -427,6 +428,13 @@ Type::memberName() const
 {
     static std::vector<UStr> noMembers;
     return isAlias() ? getUnalias()->memberName() : noMembers;
+}
+
+const std::vector<std::size_t> &
+Type::memberIndex() const
+{
+    static std::vector<std::size_t> noMembers;
+    return isAlias() ? getUnalias()->memberIndex() : noMembers;
 }
 
 const std::vector<const Type *> &

@@ -1408,7 +1408,9 @@ parseStructDeclaration()
 }
 
 //------------------------------------------------------------------------------
-static bool parseStructMemberList(AstStructDecl *structDecl);
+static bool parseStructMemberList(AstStructDecl *structDecl,
+				  std::size_t &index,
+				  bool unionSection);
 
 /*
  * struct-member-declaration = "{" { struct-member-list } "}" ";"
@@ -1421,26 +1423,28 @@ parseStructMemberDeclaration(AstStructDecl *structDecl)
     }
     getToken();
 
-    bool unionStection = false;
+    bool unionSection = false;
+    std::size_t index = 0;
     while (true) {
-	if (!unionStection && token.kind == TokenKind::UNION) {
+	if (!unionSection && token.kind == TokenKind::UNION) {
 	    getToken();
 	    if (!error::expected(TokenKind::LBRACE)) {
 		return false;
 	    }
 	    getToken();
-	    unionStection = true;
+	    unionSection = true;
 	}
-	if (!parseStructMemberList(structDecl)) {
+	if (!parseStructMemberList(structDecl, index, unionSection)) {
 	    break;
 	}
-	if (unionStection && token.kind == TokenKind::RBRACE) {
+	if (unionSection && token.kind == TokenKind::RBRACE) {
 	    getToken();
 	    if (!error::expected(TokenKind::SEMICOLON)) {
 		return false;
 	    }
 	    getToken();
-	    unionStection = false;
+	    unionSection = false;
+	    ++index;
 	}
     }
     if (!error::expected(TokenKind::RBRACE)) {
@@ -1460,12 +1464,14 @@ parseStructMemberDeclaration(AstStructDecl *structDecl)
  *	= identifier { "," identifier } ":" ( type | struct-declaration ) ";"
  */
 static bool
-parseStructMemberList(AstStructDecl *structDecl)
+parseStructMemberList(AstStructDecl *structDecl, std::size_t &index,
+		      bool unionSection)
 {
     if (token.kind != TokenKind::IDENTIFIER) {
 	return false;
     }
     std::vector<lexer::Token> memberName;
+    std::vector<std::size_t> memberIndex;
     
     while (true) {
 	if (token.kind != TokenKind::IDENTIFIER) {
@@ -1475,6 +1481,10 @@ parseStructMemberList(AstStructDecl *structDecl)
 	    return false;
 	}
 	memberName.push_back(token);
+	memberIndex.push_back(index);
+	if (!unionSection) {
+	    ++index;
+	}
 	getToken();
 	if (token.kind != TokenKind::COMMA) {
 	    break;
@@ -1491,10 +1501,11 @@ parseStructMemberList(AstStructDecl *structDecl)
 	    return false;
 	}
 	getToken();
-	structDecl->add(std::move(memberName), type);
+	structDecl->add(std::move(memberName), std::move(memberIndex), type);
 	return true;
     } else if (auto ast = parseStructDeclaration()) {
-	structDecl->add(std::move(memberName), std::move(ast));
+	structDecl->add(std::move(memberName), std::move(memberIndex),
+			std::move(ast));
 	return true;
     } else {
 	error::location(token.loc);
