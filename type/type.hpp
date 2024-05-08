@@ -63,6 +63,7 @@ class Type
 	// for pointer and array (sub-)types
 	virtual bool isPointer() const;
 	virtual bool isArray() const;
+	bool isUnboundArray() const;
 	virtual const Type *refType() const;
 	virtual std::size_t dim() const;
 

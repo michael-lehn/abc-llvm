@@ -6,7 +6,7 @@
 namespace abc {
 
 AstPtr parser();
-const Type *parseType();
+const Type *parseType(bool allowZeroDim = false);
 
 } // namespace abc
 

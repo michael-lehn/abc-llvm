@@ -329,17 +329,17 @@ parseBlock()
 }
 
 //------------------------------------------------------------------------------
-static const Type *parseUnqualifiedType();
+static const Type *parseUnqualifiedType(bool allowZeroDim);
 
 /*
  * type = [const] unqualified-type
  */
 const Type *
-parseType()
+parseType(bool allowZeroDim)
 {
     if (token.kind == TokenKind::CONST) {
 	getToken();
-	auto type = parseUnqualifiedType();
+	auto type = parseUnqualifiedType(allowZeroDim);
 	if (!type) {
 	    error::location(token.loc);
 	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -351,7 +351,7 @@ parseType()
 	    return nullptr;
 	}
 	return type->getConst();
-    } else if (auto type = parseUnqualifiedType()) {
+    } else if (auto type = parseUnqualifiedType(allowZeroDim)) {
 	return type;
     } else {
 	return nullptr;
@@ -360,7 +360,7 @@ parseType()
 
 //------------------------------------------------------------------------------
 static const Type *parsePointerType();
-static const Type *parseArrayType();
+static const Type *parseArrayType(bool allowZeroDim);
 
 /*
  * unqualified-type = identifier
@@ -369,7 +369,7 @@ static const Type *parseArrayType();
  *		    | function-type
  */
 static const Type *
-parseUnqualifiedType()
+parseUnqualifiedType(bool allowZeroDim)
 {
     Token fnName;
     std::vector<Token> fnParamName;
@@ -382,7 +382,7 @@ parseUnqualifiedType()
 	return nullptr;
     } else if (auto type = parsePointerType()) {
 	return type;
-    } else if (auto type = parseArrayType()) {
+    } else if (auto type = parseArrayType(allowZeroDim)) {
 	return type;
     } else if (auto type = parseFunctionType(fnName, fnParamName)) {
 	return type;
@@ -432,7 +432,7 @@ parseExternVariableDeclaration()
 	}
 	getToken();
 	auto varTypeLoc = token.loc;
-	auto varType = parseType();
+	auto varType = parseType(true);
 	if (!varType) {
 	    error::location(token.loc);
 	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -592,7 +592,7 @@ parseVariableDefinition()
     }
     getToken();
     auto varTypeLoc = token.loc;
-    auto varType = parseType();
+    auto varType = parseType(true);
     if (!varType) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -607,6 +607,16 @@ parseVariableDefinition()
 					   varTypeLoc,
 					   varType,
 					   true);
+    if (varType->isUnboundArray() && token.kind != TokenKind::EQUAL) {
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "unbound array requires an initializer list\n"
+	    << error::setColor(error::NORMAL);
+	error::fatal();
+	return nullptr;
+    }
     if (token.kind == TokenKind::EQUAL) {
 	getToken();
 	auto initializerType = astVar->varName.size() > 1
@@ -1545,25 +1555,25 @@ parsePointerType()
 }
 
 //------------------------------------------------------------------------------
-static const Type * parseArrayDimAndType();
+static const Type * parseArrayDimAndType(bool allowZeroDim = false);
 
 /*
  * array-type = "array" array-dim-and-type
  */
 static const Type *
-parseArrayType()
+parseArrayType(bool allowZeroDim)
 {
     if (token.kind != TokenKind::ARRAY) {
 	return nullptr;
     }
     getToken();
-    auto type = parseArrayDimAndType();
+    auto type = parseArrayDimAndType(allowZeroDim);
     if (!type) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
 	    << error::setColor(error::BOLD_RED) << "error: "
 	    << error::setColor(error::BOLD)
-	    << "array dimension expected\n"
+	    << "array type expected\n"
 	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
@@ -1576,30 +1586,33 @@ parseArrayType()
  * array-dim-and-type = "[" expression "]" { "[" expression "]" } "of" type
  */
 static const Type *
-parseArrayDimAndType()
+parseArrayDimAndType(bool allowZeroDim)
 {
     if (token.kind != TokenKind::LBRACKET) {
 	return nullptr;
     }
     getToken();
-    auto dimExpr = parseAssignmentExpression();
-    if (!dimExpr || !dimExpr->isConst() || !dimExpr->type->isInteger()) {
-	error::location(token.loc);
-	error::out() << error::setColor(error::BOLD) << token.loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << "constant integer expression expected for array dimension\n"
-	    << error::setColor(error::NORMAL);
-	error::fatal();
-	return nullptr;
+    ExprPtr dimExpr = nullptr;
+    if (!allowZeroDim || token.kind != TokenKind::RBRACKET) {
+	dimExpr = parseAssignmentExpression();
+	if (!dimExpr || !dimExpr->isConst() || !dimExpr->type->isInteger()) {
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "constant integer expression expected for array dimension\n"
+		<< error::setColor(error::NORMAL);
+	    error::fatal();
+	    return nullptr;
+	}
     }
-    auto dim = dimExpr->getSignedIntValue();
-    if (dim < 0) {
+    auto dim = dimExpr ? dimExpr->getSignedIntValue() : 0;
+    if (dimExpr && dim <= 0) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
 	    << error::setColor(error::BOLD_RED) << "error: "
 	    << error::setColor(error::BOLD)
-	    << "dimension can not be negative\n"
+	    << "dimension has to be positiv\n"
 	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;

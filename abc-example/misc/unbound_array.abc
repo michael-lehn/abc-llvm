@@ -1,0 +1,10 @@
+extern a: array[] of int;
+global a: array[] of int = {1, 2,};
+global b: array[] of char = "hallo";
+
+fn main()
+{
+    local a: array[] of int = {1};
+    local b: array[] of char = "hallo";
+}
+

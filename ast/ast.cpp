@@ -10,6 +10,7 @@
 #include "gen/variable.hpp"
 #include "lexer/error.hpp"
 #include "symtab/symtab.hpp"
+#include "type/arraytype.hpp"
 #include "type/enumtype.hpp"
 #include "type/structtype.hpp"
 #include "type/typealias.hpp"
@@ -375,6 +376,11 @@ void
 AstVar::addInitializerExpr(AstInitializerExprPtr &&initializerExpr_)
 {
     initializerExpr = std::move(initializerExpr_);
+    if (varType->isUnboundArray()) {
+	auto init = dynamic_cast<const CompoundExpr *>(getInitializerExpr());
+	assert(init);
+	varType = ArrayType::create(varType->refType(), init->exprVec.size());
+    }
 }
 
 const Expr *

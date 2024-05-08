@@ -1,4 +1,5 @@
 #include <cassert>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -150,21 +151,33 @@ Symtab::add(UStr name, symtab::Entry &&entry)
 {
     if (scope.front()->contains(name)) {
 	auto &found = scope.front()->at(name);
+
 	if (entry != found) {
-	    error::location(entry.loc);
-	    error::out() << error::setColor(error::BOLD) << entry.loc << ": "
-		<< ": " << error::setColor(error::BOLD_RED) << "error: "
-		<< error::setColor(error::BOLD)
-		<< "incompatible redefinition\n"
-		<< error::setColor(error::NORMAL);
-	    error::location(found.loc);
-	    error::out() << error::setColor(error::BOLD) << found.loc << ": "
-		<< ": " << error::setColor(error::BOLD_RED) << "error: "
-		<< error::setColor(error::BOLD)
-		<< "previous definition\n"
-		<< error::setColor(error::NORMAL);
-	    error::fatal();
-	    return {nullptr, false};
+	    bool ok = false;
+
+	    // check exceptions ...
+	    if (found.kind == entry.kind && found.variableDeclaration()) {
+		ok = found.type->isUnboundArray()
+		    && entry.type->isArray()
+		    && found.type->refType() == entry.type->refType();
+	    }
+
+	    if (!ok) {
+		error::location(entry.loc);
+		error::out() << error::setColor(error::BOLD) << entry.loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "incompatible redefinition\n"
+		    << error::setColor(error::NORMAL);
+		error::location(found.loc);
+		error::out() << error::setColor(error::BOLD) << found.loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "previous definition\n"
+		    << error::setColor(error::NORMAL);
+		error::fatal();
+		return {nullptr, false};
+	    }
 	}
 	return {&found, false};
     }

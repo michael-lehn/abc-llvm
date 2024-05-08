@@ -228,7 +228,7 @@ Type::aggregateSize() const
 const Type *
 Type::aggregateType(std::size_t index) const
 {
-    assert(index < aggregateSize());
+    assert(isUnboundArray() || index < aggregateSize());
 
     if (isScalar()) {
 	return this;
@@ -349,6 +349,15 @@ bool
 Type::isArray() const
 {
     return isAlias() ? getUnalias()->isArray() : false;
+}
+
+bool
+Type::isUnboundArray() const
+{
+    if (isArray() && dim() == 0) {
+	return true;
+    }
+    return false;
 }
 
 const Type *

@@ -92,7 +92,11 @@ static std::string
 getArrayDimAndType(const Type *refType, std::size_t dim)
 {
     std::stringstream ss;
-    ss << "[" << dim << "]";
+    ss << "[";
+    if (dim) {
+	ss << dim;
+    }
+    ss << "]";
     if (refType->isArray()) {
 	ss << getArrayDimAndType(refType->refType(), refType->dim());
     } else {

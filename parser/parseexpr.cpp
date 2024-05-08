@@ -54,7 +54,8 @@ parseCompoundExpression(const Type *type)
 	return CompoundExpr::create(std::move(exprVec), type, tok.loc);
     } else if (token.kind == TokenKind::LBRACE) {
 	getToken();
-	for (std::size_t i = 0; i < type->aggregateSize(); ++i) {
+	auto ub = type->isUnboundArray();
+	for (std::size_t i = 0; ub || i < type->aggregateSize(); ++i) {
 	    auto ty = type->aggregateType(i);
 
 	    // note: parseCompoundExpression has to be called before

@@ -121,7 +121,7 @@ class AstVar : public Ast
 
 	const std::vector<lexer::Token> varName;
 	const lexer::Loc varTypeLoc;
-	const Type * const varType;
+	const Type *varType;
 	std::vector<UStr> varId;
 
 	void print(int indent) const override;
