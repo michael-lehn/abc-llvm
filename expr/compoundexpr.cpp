@@ -7,6 +7,7 @@
 #include "gen/instruction.hpp"
 #include "gen/variable.hpp"
 #include "lexer/error.hpp"
+#include "type/arraytype.hpp"
 #include "type/integertype.hpp"
 
 #include "compoundexpr.hpp"
@@ -18,6 +19,7 @@ CompoundExpr::CompoundExpr(std::vector<ExprPtr> &&exprVec, const Type *type,
 			   lexer::Loc loc)
     : Expr{loc, type}, exprVec{std::move(exprVec)}
 {
+    std::cerr << "this->type = " << this->type << "\n";
     static std::size_t idCount;
     std::stringstream ss;
     ss << ".compound" << idCount++;
@@ -62,7 +64,7 @@ CompoundExpr::create(std::vector<ExprPtr> &&exprVec, const Type *type,
     assert(type);
     assert(type->hasSize());
 
-    if (!type->isUnboundArray() && exprVec.size() > type->aggregateSize()) {
+    if (exprVec.size() > type->aggregateSize()) {
 	error::location(exprVec[type->aggregateSize()]->loc);
 	error::out() << error::setColor(error::BOLD)
 	    << exprVec[type->aggregateSize()]->loc << ": "
@@ -119,6 +121,7 @@ CompoundExpr::loadConstant() const
 {
     assert(isConst());
     assert(type);
+
     std::vector<gen::Constant> val{type->aggregateSize()};
     for (std::size_t i = 0; i < type->aggregateSize(); ++i) {
 	if (i < exprVec.size()) {

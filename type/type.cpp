@@ -2,6 +2,7 @@
 #include <cassert>
 #include <iostream>
 
+#include "arraytype.hpp"
 #include "integertype.hpp"
 #include "pointertype.hpp"
 #include "type.hpp"
@@ -370,6 +371,17 @@ std::size_t
 Type::dim() const
 {
     return isAlias() ? getUnalias()->dim() : 0;
+}
+
+const Type *
+Type::patchUnboundArray(const Type *type, std::size_t dim)
+{
+    assert(type);
+    if (type->isUnboundArray()) {
+	return ArrayType::create(type->refType(), dim);
+    } else {
+	return type;
+    }
 }
 
 // for function (sub-)types 

@@ -651,7 +651,7 @@ parseInitializerExpression(const Type *type)
     // note: parseCompoundExpression has to be called before
     //	     parseAssignmentExpression. Because parseCompoundExpression catches
     //	     string literals and treats them as a compound.
-    if (auto expr = parseCompoundExpression(type)) {
+    if (auto expr = parseCompoundExpression(type, &type)) {
 	return std::make_unique<AstInitializerExpr>(type, std::move(expr));
     } else if (auto expr = parseAssignmentExpression()) {
 	return std::make_unique<AstInitializerExpr>(type, std::move(expr));

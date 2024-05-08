@@ -66,6 +66,7 @@ class Type
 	bool isUnboundArray() const;
 	virtual const Type *refType() const;
 	virtual std::size_t dim() const;
+	static const Type *patchUnboundArray(const Type *type, std::size_t dim);
 
 	// for function (sub-)types 
 	virtual bool isFunction() const;
@@ -88,7 +89,6 @@ class Type
 	virtual const std::vector<const Type *> &memberType() const;
 
 };
-
 
 std::ostream &operator<<(std::ostream &out, const Type *type);
 

@@ -31,7 +31,7 @@ using namespace lexer;
 
 //------------------------------------------------------------------------------
 ExprPtr
-parseCompoundExpression(const Type *type)
+parseCompoundExpression(const Type *type, const Type **patchedType)
 {
     assert(type);
 
@@ -51,7 +51,6 @@ parseCompoundExpression(const Type *type)
 	}
 	exprVec.push_back(IntegerLiteral::create(0, IntegerType::createChar(),
 						 tok.loc));
-	return CompoundExpr::create(std::move(exprVec), type, tok.loc);
     } else if (token.kind == TokenKind::LBRACE) {
 	getToken();
 	auto ub = type->isUnboundArray();
@@ -75,10 +74,14 @@ parseCompoundExpression(const Type *type)
 	}
 	error::expected(TokenKind::RBRACE);
 	getToken();
-	return CompoundExpr::create(std::move(exprVec), type, tok.loc);
     } else {
 	return nullptr;
     }
+    type = Type::patchUnboundArray(type, exprVec.size());
+    if (patchedType) {
+	*patchedType = type;
+    }
+    return CompoundExpr::create(std::move(exprVec), type, tok.loc);
 }
 
 //------------------------------------------------------------------------------
