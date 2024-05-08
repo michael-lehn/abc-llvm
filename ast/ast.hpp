@@ -414,13 +414,17 @@ class AstStructDecl : public Ast
 	using AstOrType = std::variant<AstPtr, const Type *>;
 	using MemberDecl = std::pair<std::vector<lexer::Token>, AstOrType>;
 	std::vector<MemberDecl> memberDecl;
+	std::vector<std::size_t> memberIndex;
 
     public:
 	AstStructDecl(lexer::Token structTypeName);
 
 	void add(std::vector<lexer::Token> &&memberName,
+		 std::vector<std::size_t> &&memberIndex,
 		 const Type *memberType);
-	void add(std::vector<lexer::Token> &&memberName, AstPtr &&memberType);
+	void add(std::vector<lexer::Token> &&memberName,
+		 std::vector<std::size_t> &&memberIndex,
+		 AstPtr &&memberType);
 	void complete();
 	const Type *getStructType() const;
 

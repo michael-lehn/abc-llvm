@@ -76,9 +76,18 @@ convert(const abc::Type *abcType)
 					abcType->dim());
     } else if (abcType->isStruct()) {
 	auto abcMemberType = abcType->memberType();
-	std::vector<llvm::Type *> llvmMemberType{abcMemberType.size()};
-	for (std::size_t i = 0; i < abcMemberType.size(); ++i) {
-	    llvmMemberType[i] = convert(abcMemberType[i]);
+	auto abcMemberIndex = abcType->memberIndex();
+	auto lastIndex = abcMemberIndex.back();
+	std::vector<llvm::Type *> llvmMemberType{lastIndex + 1};
+	for (std::size_t i = 0, pos = 0; i <= lastIndex; ++i) {
+	    std::size_t maxSize = 0;
+	    while (pos < abcMemberIndex.size() && abcMemberIndex[pos] == i) {
+		if (getSizeof(abcMemberType[pos]) > maxSize) {
+		    maxSize = getSizeof(abcMemberType[pos]);
+		    llvmMemberType[i] = convert(abcMemberType[pos]);
+		}
+		++pos;
+	    }
 	}
 	llvmType = llvm::StructType::get(*llvmContext, llvmMemberType);
     } else {

@@ -1427,17 +1427,26 @@ AstStructDecl::AstStructDecl(lexer::Token name)
 
 void
 AstStructDecl::add(std::vector<lexer::Token> &&memberName,
+		   std::vector<std::size_t> &&memberIndex, 
 		   const Type *memberType)
 {
     assert(memberType);
     memberDecl.push_back({std::move(memberName), memberType});
+    for (auto index: memberIndex) {
+	this->memberIndex.push_back(index);
+    }
 }
 
 void
-AstStructDecl::add(std::vector<lexer::Token> &&memberName, AstPtr &&memberType)
+AstStructDecl::add(std::vector<lexer::Token> &&memberName,
+		   std::vector<std::size_t> &&memberIndex,
+		   AstPtr &&memberType)
 {
     assert(memberType);
     memberDecl.push_back({std::move(memberName), std::move(memberType)});
+    for (auto index: memberIndex) {
+	this->memberIndex.push_back(index);
+    }
 }
 
 void
@@ -1463,7 +1472,9 @@ AstStructDecl::complete()
 	}
     }
 
-    structType->complete(std::move(memberName), std::move(memberType));
+    structType->complete(std::move(memberName),
+			 std::vector<std::size_t>{memberIndex},
+			 std::move(memberType));
 }
 
 const Type *
@@ -1480,9 +1491,20 @@ AstStructDecl::print(int indent) const
     } else {
 	error::out(indent) << "struct " << structTypeName.val << "\n";
 	error::out(indent) << "{\n";
+
+	std::size_t pos = 0;
+	bool unionSection = false;
 	for (const auto &decl: memberDecl) {
+	    bool lastPos = pos + 1 == memberIndex.size();
+	    if (!unionSection) {
+		if (!lastPos && memberIndex[pos] == memberIndex[pos + 1]) {
+		    unionSection = true;
+		    indent += 4;
+		    error::out(indent) << "union {\n";
+		}
+	    }
 	    error::out(indent + 4) << "";
-	    for (std::size_t i = 0; i < decl.first.size(); ++i) {
+	    for (std::size_t i = 0; i < decl.first.size(); ++i, ++pos) {
 		error::out() << decl.first[i].val;
 		if (i + 1 < decl.first.size()) {
 		    error::out() << ", ";
@@ -1495,6 +1517,13 @@ AstStructDecl::print(int indent) const
 		error::out() << "\n";
 		std::get<AstPtr>(decl.second)->print(indent + 8);
 		error::out() << "\n";
+	    }
+	    if (unionSection) {
+		if (lastPos || (memberIndex[pos - 1] != memberIndex[pos])) {
+		    unionSection = false;
+		    error::out(indent) << "};\n";
+		    indent -= 4;
+		}
 	    }
 	}
 	error::out(indent) << "};";
