@@ -27,6 +27,12 @@ StringLiteral::create(UStr val, UStr valRaw, lexer::Loc loc)
 }
 
 bool
+StringLiteral::hasConstantAddress() const
+{
+    return true;
+}
+
+bool
 StringLiteral::hasAddress() const
 {
     return true;
@@ -57,11 +63,18 @@ StringLiteral::loadValue() const
     return loadConstant();
 }
 
-gen::Value
-StringLiteral::loadAddress() const
+gen::Constant
+StringLiteral::loadConstantAddress() const
 {
     assert(hasAddress());
     return gen::loadStringAddress(val.c_str());
+}
+
+
+gen::Value
+StringLiteral::loadAddress() const
+{
+    return loadConstantAddress();
 }
 
 void

@@ -97,7 +97,7 @@ globalVariableDefinition(const char *ident, const abc::Type *varType,
 			     nullptr);
 }
 
-Value
+Constant
 loadStringAddress(const char *stringLiteral)
 {
     assert(llvmContext);
@@ -117,7 +117,7 @@ loadStringAddress(const char *stringLiteral)
 				 /*Initializer=*/llvmStr,
 				 /*Name=*/ss.str().c_str());
     }
-    return loadAddress(stringMap.at(str).c_str());
+    return loadConstantAddress(stringMap.at(str).c_str());
 }
 
 Value

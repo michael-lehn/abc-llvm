@@ -18,6 +18,7 @@ class StringLiteral : public Expr
 
 	UStr		    val, valRaw;
 
+	bool hasConstantAddress() const override;
 	bool hasAddress() const override;
 	bool isLValue() const override;
 	bool isConst() const override;
@@ -25,6 +26,7 @@ class StringLiteral : public Expr
 	// for code generation
 	gen::Constant loadConstant() const override;
 	gen::Value loadValue() const override;
+	gen::Constant loadConstantAddress() const override;
 	gen::Value loadAddress() const override;
 	void condition(gen::Label trueLabel,
 		       gen::Label falseLabel) const override;

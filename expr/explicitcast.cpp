@@ -67,7 +67,11 @@ ExplicitCast::isLValue() const
 bool
 ExplicitCast::isConst() const
 {
-    return expr->isConst();
+    if (expr->type->isArray() && type->isPointer()) {
+	return expr->hasConstantAddress();
+    } else {
+	return expr->isConst();
+    }
 }
 
 // for code generation
@@ -78,8 +82,11 @@ ExplicitCast::loadConstant() const
     if (type->isBool()) {
 	auto zero = gen::getConstantZero(expr->type);
 	return gen::instruction(gen::NE, expr->loadConstant(), zero);
+    } else if (expr->type->isArray() && type->isPointer()) {
+	return expr->loadConstantAddress();
+    } else {
+	return gen::cast(expr->loadConstant(), expr->type, type);
     }
-    return gen::cast(expr->loadConstant(), expr->type, type);
 }
 
 gen::Value
@@ -89,6 +96,8 @@ ExplicitCast::loadValue() const
 	auto zero = gen::getConstantZero(expr->type);
 	return gen::instruction(gen::NE, expr->loadValue(), zero);
     } else if (expr->type->isArray() && type->isPointer()) {
+	std::cerr << "expr = " << expr << ", expr->type = " << expr->type
+	    << ", type = " << type << "\n";
 	return expr->loadAddress();
     }
     return gen::cast(expr->loadValue(), expr->type, type);
