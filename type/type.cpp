@@ -83,6 +83,10 @@ Type::common(const Type *ty1, const Type *ty2)
 	} else {
 	    common = IntegerType::createSigned(size);
 	}
+    } else if (ty1->isPointer() && ty2->isNullptr()) {
+	common = ty1;
+    } else if (ty1->isNullptr() && ty2->isPointer()) {
+	common = ty2;
     }
     if (common && (ty1->hasConstFlag() || ty2->hasConstFlag())) {
 	common->getConst();
