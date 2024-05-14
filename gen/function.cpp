@@ -18,6 +18,8 @@
 #include "label.hpp"
 #include "variable.hpp"
 
+#include "type/integertype.hpp"
+
 namespace gen {
 
 FunctionBuildingInfo functionBuildingInfo;
@@ -75,12 +77,17 @@ functionDefinitionBegin(const char *ident, const abc::Type *fnType,
 
     auto retType = fnType->retType();
 
+    // main by default returns int:
+    functionBuildingInfo.isMain = !strcmp(ident, "main");
+    if (functionBuildingInfo.isMain && retType->isVoid()) {
+	retType = abc::IntegerType::createInt();
+    }
+
     functionBuildingInfo.fn = fn; 
     functionBuildingInfo.leave = getLabel(".leave");
     functionBuildingInfo.retType = retType;
     functionBuildingInfo.retVal = nullptr;
     functionBuildingInfo.bbClosed = false;
-    functionBuildingInfo.isMain = !strcmp(ident, "main");
 
     for (std::size_t i = 0; i < param.size(); ++i) {
 	//std::cerr << ">> i = " << i << "\n";

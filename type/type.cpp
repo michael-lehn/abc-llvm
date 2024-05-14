@@ -68,6 +68,11 @@ Type::common(const Type *ty1, const Type *ty2)
     assert(ty1);
     assert(ty2);
 
+    // if types are integer and floating point always have float type in ty1
+    if (ty1->isInteger() && ty2->isFloatType()) {
+	std::swap(ty1, ty2);
+    }
+
     const Type *common = nullptr;
     if (equals(ty1->getConstRemoved(), ty2->getConstRemoved())) {
 	common = ty1;
@@ -76,6 +81,8 @@ Type::common(const Type *ty1, const Type *ty2)
 	if (equals(ty1->refType(), ty2->refType())) {
 	    common = PointerType::create(ty1->refType());
 	}
+    } else if (ty1->isFloatType() && ty2->isInteger()) {
+	common = ty1;
     } else if (ty1->isInteger() && ty2->isInteger()) {
 	auto size = std::max(ty1->numBits(), ty2->numBits());
 	if (ty1->isUnsignedInteger() || ty2->isUnsignedInteger()) {
