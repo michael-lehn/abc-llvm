@@ -565,9 +565,7 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 	    }
 	    break;
 	case UnaryExpr::LOGICAL_NOT:
-	    if (child->type->isInteger()) {
-		type = newChildType = child->type;
-	    } else if (child->type->isPointer()) {
+	    if (child->type->isInteger() || child->type->isPointer()) {
 		newChildType = child->type;
 		type = IntegerType::createBool();
 	    }

@@ -1,5 +1,5 @@
 CXXFLAGS += -std=c++20 -ftrapv
-CPPFLAGS += -Wextra -Wall
+CPPFLAGS += -Wextra -Wall -fsanitize=undefined,address
 RANLIB := ranlib
 
 build.dir := build/
