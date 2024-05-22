@@ -1,5 +1,5 @@
-CXXFLAGS += -std=c++20 -ftrapv
-CPPFLAGS += -Wextra -Wall -fsanitize=undefined,address
+#CPPFLAGS += -Werror -Wextra -Wall -pedantic -fsanitize=undefined,address
+CPPFLAGS += -Werror -Wextra -Wall -pedantic
 RANLIB := ranlib
 
 build.dir := build/
@@ -13,7 +13,10 @@ ABC := $(build.dir)abc/abc
 ABCFLAGS := -I abc-include
 
 CPPFLAGS += -Wno-unused-parameter -I `$(llvm-config) --includedir`
+CXXFLAGS += `$(llvm-config) --cxxflags`
+CFLAGS += `$(llvm-config) --cflags`
 LDFLAGS += `$(llvm-config) --ldflags --system-libs --libs all`
+CXXFLAGS += -std=c++20 -ftrapv
 
 
 src.cpp := \
@@ -98,13 +101,13 @@ $(build.dir)%.o : %.cpp | $(build.subdir)
 $(build.dir)% : $(build.dir)%.o $(lib.cpp.o)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $^ $(LDFLAGS) $(TARGET_ARCH) -o $@
 
-$(build.dir)%.o : %.abc $(ABC) | $(build.subdir)
+$(build.dir)%.o : %.abc $(ABC) | $(build.subdir) $(ABC)
 	$(ABC) -c $(ABCFLAGS) $< -o $@ -MF $(@:%.o=%.d) -MT '$@' -MD -MP
 
 $(abc-std-lib)(%.o) : $(build.dir)%.o | $(build.dir)
 	$(AR) $(ARFLAGS) $@ $<
 
-$(abc-std-lib) : $(abc-std-lib)($(lib.abc.o))
+$(abc-std-lib) : $(abc-std-lib)($(lib.abc.o)) | $(lib.abc.o)
 	$(RANLIB) $@
 
 
