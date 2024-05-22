@@ -93,13 +93,25 @@ EnumType::isEnum() const
 }
 
 const Type *
-EnumType::complete(std::vector<UStr> &&constName_,
-		   std::vector<std::int64_t> &&constValue_)
+EnumType::complete(std::vector<UStr> &&constName,
+		   std::vector<std::int64_t> &&constValue)
 {
-    constName = std::move(constName_);
-    constValue = std::move(constValue_);
+    constName_ = std::move(constName);
+    constValue_ = std::move(constValue);
     isComplete_ = true;
     return this;
+}
+
+const std::vector<UStr> &
+EnumType::constName() const
+{
+    return constName_;
+}
+
+const std::vector<std::int64_t> &
+EnumType::constValue() const
+{
+    return constValue_;
 }
 
 } // namespace abc

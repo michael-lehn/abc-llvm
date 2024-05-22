@@ -14,8 +14,8 @@ class EnumType : public Type
 	const Type *intType;
 
 	bool isComplete_;
-	std::vector<UStr> constName;
-	std::vector<std::int64_t> constValue;
+	std::vector<UStr> constName_;
+	std::vector<std::int64_t> constValue_;
 
     public:
 	static void init();
@@ -36,6 +36,8 @@ class EnumType : public Type
 	bool isEnum() const override;
 	const Type *complete(std::vector<UStr> &&constName,
 			     std::vector<std::int64_t> &&constValue) override;
+	const std::vector<UStr> &constName() const;
+	const std::vector<std::int64_t> &constValue() const;
 };
 
 } // namespace abc

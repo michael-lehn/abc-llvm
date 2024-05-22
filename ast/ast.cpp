@@ -1089,6 +1089,49 @@ AstSwitch::complete()
 	    || (hasDefault && defaultPos == bs)) {
 	body.append(std::make_unique<AstExpr>(ExprPtr{}));
     }
+    if (!hasDefault && expr->type->isEnum()) {
+	const auto type = dynamic_cast<const EnumType *>(expr->type);
+	assert(type);
+
+	std::unordered_map<std::uint64_t, UStr> valToEnum;
+	std::unordered_map<std::uint64_t, bool> valUsed;
+
+	for (std::size_t i = 0; i < type->constName().size(); ++i) {
+	    valToEnum[type->constValue()[i]] = type->constName()[i];
+	    valUsed[type->constValue()[i]] = false;
+	}
+	for (const auto &c: caseExpr) {
+	    valUsed[c->getSignedIntValue()] = true;
+	}
+
+	std::size_t notHandled = 0;
+	std::string str;
+	for (std::size_t i = 0; i < type->constName().size(); ++i) {
+	    if (!valUsed[type->constValue()[i]]) {
+		if (notHandled) {
+		    str += ", ";
+		}
+		str += valToEnum[type->constValue()[i]].c_str();
+		++notHandled;
+	    }
+	}
+
+	if (notHandled) {
+	    error::location(expr->loc);
+	    error::out() << error::setColor(error::BOLD)
+		<< expr->loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "enumeration value"
+		<< (notHandled == 1 ? " " : "s ")
+		<< str << " not handled in switch\n"
+		<< error::setColor(error::NORMAL);
+	    error::out() << error::setColor(error::BOLD_BLUE)
+		<< "use a default label or handle all enum constants\n"
+		<< error::setColor(error::NORMAL);
+	    error::fatal();
+	}
+    }
 }
 
 void
