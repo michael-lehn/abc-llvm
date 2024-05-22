@@ -19,16 +19,12 @@ defineGlobalVariable()
     auto intType = IntegerType::createSigned(32)->getAlias("int");
 
     // extern declaration
-    globalVariableDefinition("foo_global",
-			     intType, 
-			     nullptr,
-			     true);
+    externalVariableDeclaration("foo_global", intType);
 
     // definition with initializer
     globalVariableDefinition("foo_global",
 			     intType, 
-			     getConstantInt("42", intType, 10), 
-			     false);
+			     getConstantInt("42", intType, 10));
 }
 
 void

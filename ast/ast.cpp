@@ -501,8 +501,7 @@ AstGlobalVar::codegen()
 	 *	global foo: -> void &foo;
 	 */
 	for (std::size_t i = 0; i < var->varId.size(); ++i) {
-	    gen::globalVariableDefinition(var->varId[i].c_str(),
-					  var->varType, nullptr, false);
+	    gen::globalVariableDefinition(var->varId[i].c_str(), var->varType);
 	}
 
 	auto initializer = var->getInitializerExpr();
@@ -521,7 +520,7 @@ AstGlobalVar::codegen()
 		? initializer->loadConstant()
 		: nullptr;
 	    gen::globalVariableDefinition(var->varId[0].c_str(), var->varType,
-					  initialValue, false);
+					  initialValue);
 	} else {
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
 	    assert(!initializer || compExpr);
@@ -531,8 +530,7 @@ AstGlobalVar::codegen()
 		    : nullptr;
 		gen::globalVariableDefinition(var->varId[i].c_str(),
 					      var->varType,
-					      initialValue,
-					      false);
+					      initialValue);
 	    }
 	}
     }
@@ -591,15 +589,14 @@ AstStaticVar::codegen()
 		? initializer->loadConstant()
 		: nullptr;
 	    gen::globalVariableDefinition(var->varId[0].c_str(), var->varType,
-					  initialValue, false);
+					  initialValue);
 	} else {
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
 	    assert(compExpr);
 	    for (std::size_t i = 0; i < var->varId.size(); ++i) {
 		gen::globalVariableDefinition(var->varId[i].c_str(),
 					      var->varType,
-					      compExpr->loadConstant(i),
-					      false);
+					      compExpr->loadConstant(i));
 	    }
 	}
     }

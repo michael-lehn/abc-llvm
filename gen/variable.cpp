@@ -28,13 +28,11 @@ static Value lookup(const char *ident);
 
 //------------------------------------------------------------------------------
 
-void
+bool
 externalVariableDeclaration(const char *ident, const abc::Type *varType)
 {
     assert(llvmModule);
     assert(!varType->isFunction());
-
-    auto linkage = llvm::GlobalValue::ExternalLinkage;
 
     if (auto found = lookup(ident)) {
 	// variable exists, assert it is a global variable
@@ -42,8 +40,7 @@ externalVariableDeclaration(const char *ident, const abc::Type *varType)
 	assert(var);
 	// extern declaration can be followed by static declaration
 	// static declaration *can not* be followed by extern declaration
-	assert(var->getLinkage() == llvm::Function::ExternalLinkage);
-	return;
+	return var->getLinkage() == llvm::Function::ExternalLinkage;
     }
 
     auto llvmVarType = convert(varType);
@@ -52,22 +49,19 @@ externalVariableDeclaration(const char *ident, const abc::Type *varType)
     new llvm::GlobalVariable(*llvmModule,
 			     llvmVarType,
 			     /*isConstant=*/false,
-			     /*Linkage=*/linkage,
+			     /*Linkage=*/llvm::GlobalValue::ExternalLinkage,
 			     /*Initializer=*/nullptr,
 			     /*Name=*/ident,
 			     nullptr);
+    return true;
 }
 
 void
 globalVariableDefinition(const char *ident, const abc::Type *varType,
-			 Constant initialValue, bool externalLinkage)
+			 Constant initialValue)
 {
     assert(llvmModule);
     assert(!varType->isFunction());
-
-    auto linkage = externalLinkage
-	? llvm::GlobalValue::ExternalLinkage
-	: llvm::GlobalValue::InternalLinkage;
 
     auto llvmVarType = convert(varType);
     assert(llvmVarType);
@@ -80,10 +74,6 @@ globalVariableDefinition(const char *ident, const abc::Type *varType,
 	// variable exists, assert it is a global variable
 	auto var = llvm::dyn_cast<llvm::GlobalVariable>(found);
 	assert(var);
-	// extern declaration can be followed by static declaration
-	// static declaration *can not* be followed by extern declaration
-	assert(!externalLinkage
-		    || var->getLinkage() == llvm::Function::ExternalLinkage);
 	var->setInitializer(initialValue);
 	return;
     }
@@ -91,7 +81,7 @@ globalVariableDefinition(const char *ident, const abc::Type *varType,
     new llvm::GlobalVariable(*llvmModule,
 			     llvmVarType,
 			     /*isConstant=*/false,
-			     /*Linkage=*/linkage,
+			     /*Linkage=*/llvm::GlobalValue::InternalLinkage,
 			     /*Initializer=*/initialValue,
 			     /*Name=*/ident,
 			     nullptr);

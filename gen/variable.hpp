@@ -7,10 +7,10 @@
 
 namespace gen {
 
-void externalVariableDeclaration(const char *ident, const abc::Type *varType);
+bool externalVariableDeclaration(const char *ident, const abc::Type *varType);
 
 void globalVariableDefinition(const char *ident, const abc::Type *varType,
-			      Constant initialValue, bool externalLinkage);
+			      Constant initialValue = nullptr);
 
 Constant loadStringAddress(const char *str);
 

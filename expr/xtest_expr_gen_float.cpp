@@ -24,16 +24,12 @@ defineGlobalVariable()
     auto fltType = FloatType::createDouble()->getAlias("double");
 
     // extern declaration
-    gen::globalVariableDefinition("foo_global",
-				  fltType, 
-				  nullptr,
-				  true);
+    gen::externalVariableDeclaration("foo_global", fltType);
 
     // definition with initializer
     gen::globalVariableDefinition("foo_global",
 				  fltType, 
-				  getConstantFloat("1.25", fltType), 
-				  false);
+				  getConstantFloat("1.25", fltType));
 }
 
 void
