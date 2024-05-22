@@ -15,7 +15,7 @@ add(const char *name)
 
     std::cerr << "add: name = " << name << "\n";
     std::cerr << "added = " << addDecl.second << "\n";
-    std::cerr << "id = " << addDecl.first->id << "\n";
+    std::cerr << "id = " << addDecl.first->getId() << "\n";
     std::cerr << "type = " << addDecl.first->type << "\n";
     std::cerr << "\n";
 }

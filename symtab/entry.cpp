@@ -6,12 +6,12 @@
 namespace abc { namespace symtab {
 
 Entry::Entry(Kind kind, lexer::Loc loc, UStr id, const Type *type)
-    : kind{kind}, loc{loc}, id{id}, type{type}, expr{nullptr}
+    : id{id}, kind{kind}, loc{loc}, type{type}, expr{nullptr}
 {
 }
 
 Entry::Entry(lexer::Loc loc, UStr id, const Expr *expr)
-    : kind{EXPR}, loc{loc}, id{id}, type{nullptr}, expr{expr}
+    : id{id}, kind{EXPR}, loc{loc}, type{nullptr}, expr{expr}
 {
 }
 
@@ -31,6 +31,12 @@ Entry
 Entry::createExprEntry(lexer::Loc loc, UStr id, const Expr *expr)
 {
     return Entry(loc, id, expr);
+}
+
+const UStr
+Entry::getId() const
+{
+    return id;
 }
 
 bool
@@ -60,6 +66,42 @@ Entry::setDefinitionFlag()
     }
     definitionFlag = true;
     return true;
+}
+
+bool
+Entry::setExternalLinkage()
+{
+    assert(variableDeclaration());
+    // external declaration **can not** follow a static declaration
+    if (linkage == INTERNAL_LINKAGE) {
+        return false;
+    }
+    linkage = EXTERNAL_LINKAGE;
+    return true;
+}
+
+bool
+Entry::setInternalLinkage()
+{
+    assert(variableDeclaration());
+    // static declaration **can not** follow a external declaration
+    if (linkage == EXTERNAL_LINKAGE) {
+	return false;
+    }
+    linkage = INTERNAL_LINKAGE;
+    std::string prefix = ".";
+    id = UStr::create(prefix + id.c_str());
+    return true;
+}
+
+void
+Entry::setLinkage()
+{
+    assert(variableDeclaration());
+    if (linkage == NO_LINKAGE) {
+        // By default linkage is internal
+        setInternalLinkage();
+    }
 }
 
 bool

@@ -56,7 +56,6 @@ parser()
 static AstPtr parseFunctionDeclarationOrDefinition();
 static AstPtr parseExternDeclaration();
 static AstPtr parseGlobalVariableDefinition();
-static AstPtr parseStaticVariableDefinition();
 static AstPtr parseTypeDeclaration();
 static AstPtr parseStructDeclaration();
 static AstPtr parseEnumDeclaration();
@@ -65,7 +64,6 @@ static AstPtr parseEnumDeclaration();
  * top-level-declaration = function-declaration-or-definition
  *			 | extern-declaration
  *			 | global-variable-definition
- *			 | static-variable-definition
  *			 | type-declaration
  *			 | enum-declaration
  *			 | struct-declaration
@@ -78,7 +76,6 @@ parseTopLevelDeclaration()
     (ast = parseFunctionDeclarationOrDefinition())
     || (ast = parseExternDeclaration())
     || (ast = parseGlobalVariableDefinition())
-    || (ast = parseStaticVariableDefinition())
     || (ast = parseTypeDeclaration())
     || (ast = parseEnumDeclaration())
     || (ast = parseStructDeclaration());

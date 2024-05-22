@@ -9,7 +9,6 @@
 #include "gen/label.hpp"
 #include "gen/variable.hpp"
 #include "lexer/error.hpp"
-#include "symtab/symtab.hpp"
 #include "type/arraytype.hpp"
 #include "type/enumtype.hpp"
 #include "type/structtype.hpp"
@@ -188,9 +187,27 @@ AstFuncDecl::AstFuncDecl(lexer::Token fnName, const Type *fnType,
 	    || this->fnParamName.size() == 0);
 
     auto addDecl = Symtab::addDeclaration(fnName.loc, fnName.val, fnType);
-    if (addDecl.first) {
-	fnId = addDecl.first->id;
+    assert(addDecl.first);
+
+    if (fnName.val == UStr::create("main")) {
+	externalLinkage = true;
     }
+
+    bool ok = externalLinkage
+	? addDecl.first->setExternalLinkage()
+	: addDecl.first->setInternalLinkage();
+    if (!ok) {
+	assert(externalLinkage); // only external can fail
+	error::location(fnName.loc);
+	error::out() << error::setColor(error::BOLD) << fnName.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "'" << fnName.val
+	    << "' can not be re-declared as extern\n"
+	    << error::setColor(error::NORMAL);
+	error::fatal();
+    }
+    fnId = addDecl.first->getId();
 }
 
 void
@@ -220,9 +237,8 @@ AstFuncDecl::print(int indent) const
 void
 AstFuncDecl::codegen()
 {
-    if (fnId.c_str()) {
-	gen::functionDeclaration(fnId.c_str(), fnType, externalLinkage);
-    }
+    assert(fnId.c_str());
+    gen::functionDeclaration(fnId.c_str(), fnType, externalLinkage);
 }
 
 /*
@@ -232,9 +248,13 @@ AstFuncDef::AstFuncDef(lexer::Token fnName, const Type *fnType)
     : fnName{fnName}, fnType{fnType}
 {
     auto addDecl = Symtab::addDeclaration(fnName.loc, fnName.val, fnType);
-    if (addDecl.first) {
-	fnId = addDecl.first->id;
+    assert(addDecl.first);
+    if (fnName.val == UStr::create("main")) {
+	addDecl.first->setExternalLinkage();
+    } else {
+	addDecl.first->setLinkage();
     }
+    fnId = addDecl.first->getId();
 }
 
 void
@@ -248,7 +268,7 @@ AstFuncDef::appendParamName(std::vector<lexer::Token> &&fnParamName_)
 					      fnType->paramType()[i]);
 	assert(addDecl.first);
 	assert(addDecl.second);
-	fnParamId.push_back(addDecl.first->id.c_str());
+	fnParamId.push_back(addDecl.first->getId().c_str());
     }
 }
 
@@ -336,18 +356,18 @@ AstVar::AstVar(lexer::Token varName, lexer::Loc varTypeLoc, const Type *varType,
 	       bool define)
     : varName{varName}, varTypeLoc{varTypeLoc}, varType{varType}
 {
-    getId(define);
+    init(define);
 }
 
 AstVar::AstVar(std::vector<lexer::Token> &&varName, lexer::Loc varTypeLoc,
 	       const Type *varType, bool define)
     : varName{std::move(varName)}, varTypeLoc{varTypeLoc}, varType{varType}
 {
-    getId(define);
+    init(define);
 }
 
 void
-AstVar::getId(bool define)
+AstVar::init(bool define)
 {
     assert(varType);
     assert(!varName.empty());
@@ -364,11 +384,9 @@ AstVar::getId(bool define)
 	auto addDecl = define
 	    ? Symtab::addDefinition(varName[i].loc, varName[i].val, varType)
 	    : Symtab::addDeclaration(varName[i].loc, varName[i].val, varType);
-	if (addDecl.first) {
-	    varId.push_back(addDecl.first->id);
-	} else if (define) {
-	    std::cerr << "already defined\n";
-	}
+	assert(addDecl.first);
+	varEntry.push_back(addDecl.first);
+	varId.push_back(addDecl.first->getId());
     }
 }
 
@@ -390,6 +408,66 @@ AstVar::getInitializerExpr() const
 	return nullptr;
     } else {
 	return initializerExpr->expr.get();
+    }
+}
+
+std::size_t
+AstVar::count() const
+{
+    return varEntry.size();
+}
+
+const UStr
+AstVar::getId(std::size_t index) const
+{
+    assert(index < count());
+    return varId[index];
+}
+
+void
+AstVar::setExternalLinkage()
+{
+    for (std::size_t i = 0; i < varEntry.size(); ++i) {
+        if (!varEntry[i]->setExternalLinkage()) {
+            error::location(varName[i].loc);
+            error::out() << error::setColor(error::BOLD) << varTypeLoc << ": "
+                << error::setColor(error::BOLD_RED) << "error: "
+                << error::setColor(error::BOLD)
+                << "'" << varName[i].val
+                << "' can not be re-declared as external\n"
+                << error::setColor(error::NORMAL);
+            error::fatal();
+        }
+        varId[i] = varEntry[i]->getId();
+    }
+}
+
+void
+AstVar::setLinkage()
+{
+    for (std::size_t i = 0; i < varEntry.size(); ++i) {
+        varEntry[i]->setLinkage();
+        varId[i] = varEntry[i]->getId();
+        gen::globalVariableDefinition(varId[i].c_str(), varType);
+    }
+}
+
+void
+AstVar::setInternalLinkage()
+{
+    for (std::size_t i = 0; i < varEntry.size(); ++i) {
+        if (!varEntry[i]->setInternalLinkage()) {
+            error::location(varName[i].loc);
+            error::out() << error::setColor(error::BOLD) << varTypeLoc << ": "
+                << error::setColor(error::BOLD_RED) << "error: "
+                << error::setColor(error::BOLD)
+                << "'" << varName[i].val
+                << "' can not be re-declared as static\n"
+                << error::setColor(error::NORMAL);
+            error::fatal();
+        }
+        varId[i] = varEntry[i]->getId();
+        gen::globalVariableDefinition(varId[i].c_str(), varType);
     }
 }
 
@@ -416,6 +494,10 @@ AstVar::print(int indent) const
 AstExternVar::AstExternVar(AstListPtr &&declList)
     : declList{std::move(declList)}
 {
+    for (auto &decl : this->declList->node) {
+        auto var = dynamic_cast<AstVar *>(decl.get());
+        var->setExternalLinkage();
+    }
 }
 
 void
@@ -446,19 +528,33 @@ void
 AstExternVar::codegen()
 {
     for (const auto &decl : declList->node) {
-	auto var = dynamic_cast<const AstVar *>(decl.get());
-	assert(var);
-	for (const auto &id: var->varId) {
-	    gen::externalVariableDeclaration(id.c_str(), var->varType);
-	}
+        auto var = dynamic_cast<const AstVar *>(decl.get());
+        assert(var);
+        for (std::size_t i = 0; i < var->count(); ++i) {
+            const auto &id = var->getId(i);
+            if (!gen::externalVariableDeclaration(id.c_str(), var->varType)) {
+                const auto &tok = var->varName[i];
+                error::location(tok.loc);
+                error::out() << error::setColor(error::BOLD) << tok.loc << ": "
+                    << error::setColor(error::BOLD_RED) << "error: "
+                    << error::setColor(error::BOLD)
+                    << "var '" << tok.val << "' is static\n"
+                    << error::setColor(error::NORMAL);
+                error::out() << error::setColor(error::BOLD_BLUE)
+                    << "In C this would be accepted "
+                    << "by \"ignoring\" the extern declaration\n"
+                    << error::setColor(error::NORMAL);
+                error::fatal();
+            }
+        }
     }
 }
 
 /*
  * AstGlobalVar
  */
-AstGlobalVar::AstGlobalVar(AstListPtr &&decl)
-    : decl{std::move(*decl)}
+AstGlobalVar::AstGlobalVar(AstListPtr &&declList)
+    : declList{std::move(declList)}
 {
 }
 
@@ -466,12 +562,12 @@ void
 AstGlobalVar::print(int indent) const
 {
     error::out(indent) << "global ";
-    if (decl.size() > 1) {
+    if (declList->size() > 1) {
 	error::out() << "\n";
-	for (std::size_t i = 0; const auto &item : decl.node) {
+	for (std::size_t i = 0; const auto &item : declList->node) {
 	    auto var = dynamic_cast<const AstVar *>(item.get());
 	    var->print(indent + 4);
-	    if (i + 1< decl.size()) {
+	    if (i + 1< declList->size()) {
 		error::out() << ", ";
 	    } else {
 		error::out() << "; ";
@@ -479,7 +575,7 @@ AstGlobalVar::print(int indent) const
 	    ++i;
 	}
     } else {
-	auto var = dynamic_cast<const AstVar *>(decl.node[0].get());
+	auto var = dynamic_cast<const AstVar *>(declList->node[0].get());
 	var->print(0);
 	error::out() << "; ";
     }
@@ -489,20 +585,9 @@ AstGlobalVar::print(int indent) const
 void
 AstGlobalVar::codegen()
 {
-    for (const auto &item : decl.node) {
+    for (const auto &item : declList->node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
-
-	/*
-	 * generate an uninitialized definition first, even if there is an
-	 * initializer. This is required for definitions where the initializer
-	 * uses the address of this global variable. Like in this case:
-	 *
-	 *	global foo: -> void &foo;
-	 */
-	for (std::size_t i = 0; i < var->varId.size(); ++i) {
-	    gen::globalVariableDefinition(var->varId[i].c_str(), var->varType);
-	}
 
 	auto initializer = var->getInitializerExpr();
 
@@ -515,20 +600,20 @@ AstGlobalVar::codegen()
 		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	}
-	if (var->varId.size() == 1) {
+	if (var->count() == 1) {
 	    auto initialValue = initializer
 		? initializer->loadConstant()
 		: nullptr;
-	    gen::globalVariableDefinition(var->varId[0].c_str(), var->varType,
+	    gen::globalVariableDefinition(var->getId(0).c_str(), var->varType,
 					  initialValue);
 	} else {
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
 	    assert(!initializer || compExpr);
-	    for (std::size_t i = 0; i < var->varId.size(); ++i) {
+	    for (std::size_t i = 0; i < var->count(); ++i) {
 		auto initialValue = initializer
 		    ? compExpr->loadConstant(i)
 		    : nullptr;
-		gen::globalVariableDefinition(var->varId[i].c_str(),
+		gen::globalVariableDefinition(var->getId(i).c_str(),
 					      var->varType,
 					      initialValue);
 	    }
@@ -539,21 +624,25 @@ AstGlobalVar::codegen()
 /*
  * AstStaticVar
  */
-AstStaticVar::AstStaticVar(AstListPtr &&decl)
-    : decl{std::move(*decl)}
+AstStaticVar::AstStaticVar(AstListPtr &&declList)
+    : declList{std::move(declList)}
 {
+    for (auto &decl : this->declList->node) {
+        auto var = dynamic_cast<AstVar *>(decl.get());
+        var->setInternalLinkage();
+    }
 }
 
 void
 AstStaticVar::print(int indent) const
 {
     error::out(indent) << "static ";
-    if (decl.size() > 1) {
+    if (declList->size() > 1) {
 	error::out() << "\n";
-	for (std::size_t i = 0; const auto &item : decl.node) {
+	for (std::size_t i = 0; const auto &item : declList->node) {
 	    auto var = dynamic_cast<const AstVar *>(item.get());
 	    var->print(indent + 4);
-	    if (i + 1< decl.size()) {
+	    if (i + 1< declList->size()) {
 		error::out() << ", ";
 	    } else {
 		error::out() << "; ";
@@ -561,7 +650,7 @@ AstStaticVar::print(int indent) const
 	    ++i;
 	}
     } else {
-	auto var = dynamic_cast<const AstVar *>(decl.node[0].get());
+	auto var = dynamic_cast<const AstVar *>(declList->node[0].get());
 	var->print(0);
 	error::out() << "; ";
     }
@@ -571,7 +660,7 @@ AstStaticVar::print(int indent) const
 void
 AstStaticVar::codegen()
 {
-    for (const auto &item : decl.node) {
+    for (const auto &item : declList->node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
 	auto initializer = var->getInitializerExpr();
@@ -584,17 +673,17 @@ AstStaticVar::codegen()
 		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	}
-	if (var->varId.size() == 1) {
+	if (var->count() == 1) {
 	    auto initialValue = initializer
 		? initializer->loadConstant()
 		: nullptr;
-	    gen::globalVariableDefinition(var->varId[0].c_str(), var->varType,
+	    gen::globalVariableDefinition(var->getId(0).c_str(), var->varType,
 					  initialValue);
 	} else {
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
 	    assert(compExpr);
-	    for (std::size_t i = 0; i < var->varId.size(); ++i) {
-		gen::globalVariableDefinition(var->varId[i].c_str(),
+	    for (std::size_t i = 0; i < var->count(); ++i) {
+		gen::globalVariableDefinition(var->getId(i).c_str(),
 					      var->varType,
 					      compExpr->loadConstant(i));
 	    }
@@ -605,8 +694,8 @@ AstStaticVar::codegen()
 /*
  * AstLocalVar
  */
-AstLocalVar::AstLocalVar(AstListPtr &&decl)
-    : decl{std::move(*decl)}
+AstLocalVar::AstLocalVar(AstListPtr &&declList)
+    : declList{std::move(declList)}
 {
 }
 
@@ -614,12 +703,12 @@ void
 AstLocalVar::print(int indent) const
 {
     error::out(indent) << "local ";
-    if (decl.size() > 1) {
-	for (std::size_t i = 0; const auto &item : decl.node) {
+    if (declList->size() > 1) {
+	for (std::size_t i = 0; const auto &item : declList->node) {
 	    error::out() << "\n";
 	    auto var = dynamic_cast<const AstVar *>(item.get());
 	    var->print(indent + 4);
-	    if (i + 1< decl.size()) {
+	    if (i + 1< declList->size()) {
 		error::out() << ", ";
 	    } else {
 		error::out() << "; ";
@@ -627,7 +716,7 @@ AstLocalVar::print(int indent) const
 	    ++i;
 	}
     } else {
-	auto var = dynamic_cast<const AstVar *>(decl.node[0].get());
+	auto var = dynamic_cast<const AstVar *>(declList->node[0].get());
 	var->print(0);
 	error::out() << "; ";
     }
@@ -636,25 +725,25 @@ AstLocalVar::print(int indent) const
 void
 AstLocalVar::codegen()
 {
-    for (const auto &item : decl.node) {
+    for (const auto &item : declList->node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
 	auto initializer = var->getInitializerExpr();
-	if (var->varId.size() == 1) {
-	    gen::localVariableDefinition(var->varId[0].c_str(), var->varType);
+	if (var->count() == 1) {
+	    gen::localVariableDefinition(var->getId(0).c_str(), var->varType);
 	    if (initializer) {
 		gen::store(initializer->loadValue(),
-			   gen::loadAddress(var->varId[0].c_str()));
+			   gen::loadAddress(var->getId(0).c_str()));
 	    }
 	} else {
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
 	    assert(!initializer || compExpr);
-	    for (std::size_t i = 0; i < var->varId.size(); ++i) {
-		gen::localVariableDefinition(var->varId[i].c_str(),
+	    for (std::size_t i = 0; i < var->count(); ++i) {
+		gen::localVariableDefinition(var->getId(i).c_str(),
 					     var->varType);
 		if (initializer) {
 		    gen::store(compExpr->loadValue(i),
-			       gen::loadAddress(var->varId[i].c_str()));
+			       gen::loadAddress(var->getId(i).c_str()));
 		}
 	    }
 	}

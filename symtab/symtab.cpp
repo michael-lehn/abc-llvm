@@ -133,7 +133,7 @@ Symtab::print(std::ostream &out)
 	    [&](const auto &s) {
 		for (const auto &item: *s) {
 		    out << item.first << ": "
-			<< item.second.id << ", ";
+			<< item.second.getId() << ", ";
 		    if (item.second.expressionDeclaration()) {
 			out << item.second.expr;
 		    } else {

@@ -27,7 +27,7 @@ addVar(const char *name)
 
     std::cerr << "add: var = " << name << "\n";
     std::cerr << "added = " << addDecl.second << "\n";
-    std::cerr << "id = " << addDecl.first->id << "\n";
+    std::cerr << "id = " << addDecl.first->getId() << "\n";
     std::cerr << "type = " << addDecl.first->type << "\n";
     std::cerr << "kind = " << getEntryKind(addDecl.first) << "\n";
     std::cerr << "\n";
@@ -43,7 +43,7 @@ addType(const char *name)
 
     std::cerr << "add: type = " << name << "\n";
     std::cerr << "added = " << addDecl.second << "\n";
-    std::cerr << "id = " << addDecl.first->id << "\n";
+    std::cerr << "id = " << addDecl.first->getId() << "\n";
     std::cerr << "type = " << addDecl.first->type << "\n";
     std::cerr << "kind = " << getEntryKind(addDecl.first) << "\n";
     std::cerr << "\n";

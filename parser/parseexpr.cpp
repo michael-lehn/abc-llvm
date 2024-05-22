@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "expr/assertexpr.hpp"
 #include "expr/binaryexpr.hpp"
 #include "expr/callexpr.hpp"
@@ -367,7 +369,7 @@ parsePrefix()
 		}
 	    } else {
 		// Ups, it was the '(' of a primary expression
-		auto expr = parseAssignmentExpression();
+		auto expr = parseExpressionList();
 		if (!error::expected(TokenKind::RPAREN)) {
 		    return nullptr;
 		}
@@ -557,7 +559,7 @@ parsePrimary()
 	    return expr;
 	} else if (auto sym = Symtab::variable(tok.val, Symtab::AnyScope)) {
 	    auto ty = sym->type;
-	    auto expr = Identifier::create(tok.val, sym->id, ty, tok.loc);
+	    auto expr = Identifier::create(tok.val, sym->getId(), ty, tok.loc);
 	    return expr;
 	} else {
 	    error::location(tok.loc);

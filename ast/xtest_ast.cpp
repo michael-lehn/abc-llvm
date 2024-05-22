@@ -63,8 +63,8 @@ makeExpr()
 	std::cerr << "Undeclared identifier " << name << "\n";
 	assert(0);
     }
-    std::cerr << "argcExpr with id = " << entry->id << "\n";
-    auto argcExpr = abc::Identifier::create(name, entry->id, entry->type);
+    std::cerr << "argcExpr with id = " << entry->getId() << "\n";
+    auto argcExpr = abc::Identifier::create(name, entry->getId(), entry->type);
 
     auto intType = abc::IntegerType::createSigned(32)->getAlias("int");
     auto intExpr = abc::IntegerLiteral::create(-1, intType);

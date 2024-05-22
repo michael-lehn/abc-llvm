@@ -35,7 +35,6 @@ bool
 expected(lexer::TokenKind kind)
 {
     if (lexer::token.kind != kind) {
-	std::cerr << "lexer::token.kind = " << lexer::token.kind << "\n";
 	error::location(lexer::token.loc);
 	out() << error::setColor(error::BOLD) << lexer::token.loc << ": "
 	    << error::setColor(error::BOLD_RED) << "error: "
@@ -54,7 +53,7 @@ static std::unordered_map<Color, std::string> colorMap = {
     { RED, "\033[0;31m"},
     { BLUE, "\033[0;34m"},
     { BOLD_RED, "\033[1;31m"},
-    { BOLD_BLUE, "\033[1;31m"},
+    { BOLD_BLUE, "\033[1;34m"},
 };
 
 std::string

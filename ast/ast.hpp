@@ -11,6 +11,7 @@
 #include "lexer/loc.hpp"
 #include "lexer/token.hpp"
 #include "type/type.hpp"
+#include "symtab/symtab.hpp"
 
 namespace abc {
 
@@ -108,7 +109,10 @@ class AstVar : public Ast
 {
     private:
 	AstInitializerExprPtr initializerExpr;
-	void getId(bool define);
+	void init(bool define);
+
+        std::vector<symtab::Entry *> varEntry;
+        std::vector<UStr> varId;
 
     public:
 	AstVar(lexer::Token varName, lexer::Loc varTypeLoc,
@@ -122,7 +126,13 @@ class AstVar : public Ast
 	const std::vector<lexer::Token> varName;
 	const lexer::Loc varTypeLoc;
 	const Type *varType;
-	std::vector<UStr> varId;
+
+        std::size_t count() const;
+        const UStr getId(std::size_t index) const;
+
+        void setExternalLinkage();
+        void setInternalLinkage();
+        void setLinkage();
 
 	void print(int indent) const override;
 };
@@ -147,9 +157,9 @@ class AstExternVar : public Ast
 class AstGlobalVar : public Ast
 {
     public:
-	AstGlobalVar(AstListPtr &&decl);
+	AstGlobalVar(AstListPtr &&declList);
 
-	const AstList decl;
+	const AstListPtr declList;
 
 	void print(int indent) const override;
 	void codegen() override;
@@ -160,9 +170,9 @@ class AstGlobalVar : public Ast
 class AstStaticVar : public Ast
 {
     public:
-	AstStaticVar(AstListPtr &&decl);
+	AstStaticVar(AstListPtr &&declList);
 
-	const AstList decl;
+	const AstListPtr declList;
 
 	void print(int indent) const override;
 	void codegen() override;
@@ -173,9 +183,9 @@ class AstStaticVar : public Ast
 class AstLocalVar : public Ast
 {
     public:
-	AstLocalVar(AstListPtr &&decl);
+	AstLocalVar(AstListPtr &&declList);
 
-	const AstList decl;
+	const AstListPtr declList;
 
 	void print(int indent) const override;
 	void codegen() override;
