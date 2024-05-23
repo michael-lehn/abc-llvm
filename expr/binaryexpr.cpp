@@ -75,35 +75,27 @@ BinaryExpr::isLValue() const
 bool
 BinaryExpr::isConst() const
 {
+    // special case
+    if (kind == SUB && left->type->isPointer() && right->type->isPointer()) {
+	auto refType = left->type->refType();
+	auto diff = gen::pointerConstantDifference(refType,
+						   left->loadValue(),
+						   right->loadValue());
+	return diff.has_value();
+    }
+
+    // remaining cases just depend on whether operands are const
     switch (kind) {
 	default:
 	    return false;
-	case ADD:
-	    if (type->isPointer()) {
-		return left->type->isPointer() && left->isConst()
-		    && right->type->isInteger() && right->isConst();
-	    } else {
-		return left->isConst() && right->isConst();
-	    }
 	case SUB:
+	case ADD:
 	case LESS:
 	case LESS_EQUAL:
 	case GREATER:
 	case GREATER_EQUAL:
 	case NOT_EQUAL:
 	case EQUAL:
-	    if (left->type->isPointer()) {
-		assert(right->type->isPointer());
-		assert(Type::equals(left->type->refType(),
-				    right->type->refType()));
-		auto refType = left->type->refType();
-		auto diff =  gen::pointerConstantDifference(refType,
-							    left->loadValue(),
-							    right->loadValue());
-		return diff.has_value();
-	    } else {
-		return left->isConst() && right->isConst();
-	    }
 	case MUL:
 	case DIV:
 	case MOD:
@@ -145,7 +137,7 @@ BinaryExpr::loadConstant() const
 					right->loadConstant());
 	    }
 	case SUB:
-	    if (left->type->isPointer()) {
+	    if (left->type->isPointer() && right->type->isPointer()) {
 		// pointer - pointer
 		assert(right->type->isPointer());
 		assert(Type::equals(left->type->refType(),

@@ -371,9 +371,12 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	    }
 	    break;
 	case BinaryExpr::SUB:
-	    if (right->type->isPointer()) {
+	    if (left->type->isPointer() && right->type->isPointer()) {
 		type = IntegerType::createSigned(64);
-		newLeftType = left->type;
+		newLeftType = newRightType
+		    = Type::common(left->type, right->type);
+	    } else if (left->type->isPointer() && right->type->isInteger()) {
+		type = newLeftType = left->type;
 		newRightType = right->type;
 	    }
 	    break;
@@ -387,6 +390,10 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		type = IntegerType::createBool();
 		newLeftType = newRightType
 		    = Type::common(left->type, right->type);
+		std::cerr << "type left = " << left->type << "\n";
+		std::cerr << "type right = " << right->type << "\n";
+		std::cerr << "newLeftType = " << newLeftType << "\n";
+		std::cerr << "newRightType = " << newRightType << "\n";
 	    }
 	    break;
 	case BinaryExpr::Kind::LOGICAL_AND:
