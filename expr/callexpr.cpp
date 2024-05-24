@@ -4,6 +4,7 @@
 #include "gen/constant.hpp"
 #include "gen/function.hpp"
 #include "gen/instruction.hpp"
+#include "gen/variable.hpp"
 #include "lexer/error.hpp"
 
 #include "callexpr.hpp"
@@ -15,6 +16,17 @@ CallExpr::CallExpr(ExprPtr &&fn, std::vector<ExprPtr> &&arg, const Type *type,
 		   lexer::Loc loc)
     : Expr{loc, type}, fn{std::move(fn)}, arg{std::move(arg)}
 {
+    static std::size_t idCount;
+    std::stringstream ss;
+    ss << ".call" << idCount++;
+    tmpId = UStr::create(ss.str());
+}
+
+void
+CallExpr::initTmp() const
+{
+    auto tmpAddr = gen::localVariableDefinition(tmpId.c_str(), type);
+    gen::store(loadValue(), tmpAddr);
 }
 
 ExprPtr
@@ -32,7 +44,7 @@ CallExpr::create(ExprPtr &&fn, std::vector<ExprPtr> &&arg, lexer::Loc loc)
 bool
 CallExpr::hasAddress() const
 {
-    return false;
+    return true;
 }
 
 bool
@@ -70,8 +82,8 @@ CallExpr::loadValue() const
 gen::Value
 CallExpr::loadAddress() const
 {
-    assert(0 && "CallExpr has no address");
-    return nullptr;
+    initTmp();
+    return gen::loadAddress(tmpId.c_str());
 }
 
 // for debugging and educational purposes

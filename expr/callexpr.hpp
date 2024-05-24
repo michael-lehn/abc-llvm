@@ -13,6 +13,10 @@ class CallExpr : public Expr
 	CallExpr(ExprPtr &&fn, std::vector<ExprPtr> &&arg, const Type *type,
 		 lexer::Loc loc);
 
+	UStr tmpId;
+
+	void initTmp() const;
+
     public:
 	static ExprPtr create(ExprPtr &&fn, std::vector<ExprPtr> &&arg,
 			      lexer::Loc loc = lexer::Loc{});

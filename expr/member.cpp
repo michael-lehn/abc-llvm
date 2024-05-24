@@ -26,6 +26,17 @@ Member::create(ExprPtr &&structure, UStr member, lexer::Loc loc)
 	? structure->type->refType()
 	: structure->type;
 
+    if (!structure->hasAddress()) {
+	error::location(loc);
+	error::out() << error::setColor(error::BOLD) << structure->loc
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << structure << " has no address (internal compiler error)\n"
+	    << error::setColor(error::NORMAL);
+	error::fatal();
+	return nullptr;
+    }
+
     const Type *type = nullptr;
     std::size_t index = 0;
     if (structureType->isStruct() && structureType->hasSize()) {
