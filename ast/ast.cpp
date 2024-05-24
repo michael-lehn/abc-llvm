@@ -195,9 +195,8 @@ AstFuncDecl::AstFuncDecl(lexer::Token fnName, const Type *fnType,
 
     bool ok = externalLinkage
 	? addDecl.first->setExternalLinkage()
-	: addDecl.first->setInternalLinkage();
+	: addDecl.first->setLinkage();
     if (!ok) {
-	assert(externalLinkage); // only external can fail
 	error::location(fnName.loc);
 	error::out() << error::setColor(error::BOLD) << fnName.loc << ": "
 	    << error::setColor(error::BOLD_RED) << "error: "

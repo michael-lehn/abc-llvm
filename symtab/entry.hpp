@@ -49,7 +49,7 @@ class Entry
 	bool setDefinitionFlag();
         bool setExternalLinkage();
         bool setInternalLinkage();
-        void setLinkage();
+        bool setLinkage();
 
 	friend bool operator!=(const Entry &a, const Entry &b);
 };

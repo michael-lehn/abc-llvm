@@ -94,7 +94,7 @@ Entry::setInternalLinkage()
     return true;
 }
 
-void
+bool
 Entry::setLinkage()
 {
     assert(variableDeclaration());
@@ -102,6 +102,7 @@ Entry::setLinkage()
         // By default linkage is internal
         setInternalLinkage();
     }
+    return true;
 }
 
 bool
