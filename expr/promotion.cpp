@@ -20,8 +20,13 @@ call(ExprPtr &&fn, std::vector<ExprPtr> &&arg, lexer::Loc *loc)
     auto fnType = fn->type;
     if (!fnType->isFunction()) {
 	if (loc) {
-	    error::out() << fn->loc << ": Not a function or function pointer."
-		<< " Operand has type '" << fn->type << "'" << std::endl;
+	    error::location(fn->loc);
+	    error::out() << fn->loc
+		<< error::setColor(error::BOLD_RED) << ": "
+		<< error::setColor(error::BOLD)
+		<< "error: Not a function or function pointer."
+		<< " Operand has type '" << fn->type << "'\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	}
 	return std::make_tuple(std::move(fn), std::move(arg), nullptr);
@@ -31,14 +36,22 @@ call(ExprPtr &&fn, std::vector<ExprPtr> &&arg, lexer::Loc *loc)
 
     if (arg.size() < paramType.size()) {
 	if (loc) {
+	    error::location(fn->loc);
 	    error::out() << fn->loc
-		<< ": too few arguments to function" << std::endl;
+		<< error::setColor(error::BOLD_RED) << ": "
+		<< error::setColor(error::BOLD)
+		<< "error: too few arguments to function\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	}
     } else if (!hasVarg && arg.size() > paramType.size()) {
 	if (loc) {
+	    error::location(fn->loc);
 	    error::out() << fn->loc
-		<< ": too many arguments to function" << std::endl;
+		<< error::setColor(error::BOLD_RED) << ": "
+		<< error::setColor(error::BOLD)
+		<< "error: too many arguments to function\n"
+		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	}
     }
