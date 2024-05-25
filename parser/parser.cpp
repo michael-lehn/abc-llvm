@@ -118,13 +118,8 @@ parseFunctionDeclarationOrDefinition()
 
     auto fnBody = parseBlock();
     if (!fnBody) {
-	error::location(token.loc);
-	error::out() << error::setColor(error::BOLD) << token.loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << "expected ';' or compound statement\n"
-	    << error::setColor(error::NORMAL);
-	error::fatal();
+	error::expectedAfterLastToken({TokenKind::LBRACE,
+				       TokenKind::SEMICOLON});
 	return nullptr;
     }
     fnDef->appendBody(std::move(fnBody));
@@ -1196,7 +1191,7 @@ parseExpressionStatement()
 {
     auto expr = parseExpressionList();
     if (expr) {
-	error::expected(TokenKind::SEMICOLON);
+	error::expectedAfterLastToken(TokenKind::SEMICOLON);
     }
     if (token.kind != TokenKind::SEMICOLON) {
 	return nullptr;

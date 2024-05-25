@@ -47,6 +47,56 @@ expected(lexer::TokenKind kind)
     return true;
 }
 
+bool
+expectedAfterLastToken(lexer::TokenKind kind)
+{
+    if (lexer::token.kind != kind) {
+	error::location(lexer::lastToken.loc);
+	out() << error::setColor(error::BOLD) << lexer::token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "expected '" << kind
+	    << "' after " << lexer::lastToken.kind << "'\n"
+	    << error::setColor(error::NORMAL);
+	fatal();
+	return false;
+    }
+    return true;
+}
+
+bool
+expectedAfterLastToken(const std::vector<lexer::TokenKind> &kind)
+{
+    bool ok = false;
+
+    for (const auto &k: kind) {
+	if (k == lexer::lastToken.kind) {
+	    ok = true;
+	}
+    }
+
+    if (!ok) {
+	error::location(lexer::lastToken.loc);
+	out() << error::setColor(error::BOLD) << lexer::token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "expected ";
+	for (std::size_t i = 0; i < kind.size(); ++i) {
+	    out() << "'" << kind[i] << "'";
+	    if (i + 2 == kind.size()) {
+		out() << " or ";
+	    } else if (i + 1 < kind.size()) {
+		out() << ", ";
+	    }
+	}
+	out() << " after '" << lexer::lastToken.kind << "'\n"
+	    << error::setColor(error::NORMAL);
+	fatal();
+	return false;
+    }
+    return true;
+}
+
 static std::unordered_map<Color, std::string> colorMap = {
     { NORMAL, "\033[0m"},
     { BOLD, "\033[0m" "\033[1;10m"},

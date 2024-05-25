@@ -12,7 +12,7 @@
 
 namespace abc { namespace lexer {
 
-Token token;
+Token token, lastToken;
 
 static std::unordered_map<UStr, TokenKind> keyword;
 static std::set<std::filesystem::path> includedFiles_;
@@ -122,6 +122,7 @@ setToken(TokenKind kind, std::string processed)
 TokenKind
 getToken()
 {
+    lastToken = token;
     do {
 	while (true) {
 	    if (macro::hasToken()) {

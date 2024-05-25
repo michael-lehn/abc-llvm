@@ -12,7 +12,7 @@ namespace abc { namespace lexer {
 void init();
 const std::set<std::filesystem::path> &includedFiles();
 
-extern Token token;
+extern Token token, lastToken;
 
 TokenKind getToken();
 

@@ -13,6 +13,8 @@ void fatal();
 void warning();
 
 bool expected(lexer::TokenKind kind);
+bool expectedAfterLastToken(lexer::TokenKind kind);
+bool expectedAfterLastToken(const std::vector<lexer::TokenKind> &kind);
 
 enum Color
 {
