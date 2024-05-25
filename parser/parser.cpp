@@ -20,6 +20,12 @@ namespace abc {
 
 using namespace lexer;
 
+static bool
+isType(Token token)
+{
+    return Symtab::type(token.val, Symtab::AnyScope);
+}
+
 //------------------------------------------------------------------------------
 static AstPtr parseTopLevelDeclaration();
 
@@ -103,6 +109,9 @@ parseFunctionDeclarationOrDefinition()
 	return nullptr;
     }
 
+    error::expectedAfterLastToken({TokenKind::LBRACE,
+				   TokenKind::SEMICOLON});
+
     if (token.kind == TokenKind::SEMICOLON) {
 	getToken();
 	return std::make_unique<AstFuncDecl>(fnName,
@@ -118,8 +127,6 @@ parseFunctionDeclarationOrDefinition()
 
     auto fnBody = parseBlock();
     if (!fnBody) {
-	error::expectedAfterLastToken({TokenKind::LBRACE,
-				       TokenKind::SEMICOLON});
 	return nullptr;
     }
     fnDef->appendBody(std::move(fnBody));
@@ -146,7 +153,7 @@ parseFunctionType(Token &fnName, std::vector<Token> &fnParamName)
 	fnName = token;
 	getToken();
     }
-    if (!error::expected(TokenKind::LPAREN)) {
+    if (!error::expectedAfterLastToken(TokenKind::LPAREN)) {
 	return nullptr;
     }
     getToken();
@@ -163,7 +170,7 @@ parseFunctionType(Token &fnName, std::vector<Token> &fnParamName)
 	error::fatal();
 	return nullptr;
     }
-    if (!error::expected(TokenKind::RPAREN)) {
+    if (!error::expectedAfterLastToken(TokenKind::RPAREN)) {
 	return nullptr;
     }
     getToken();
@@ -201,7 +208,7 @@ parseFunctionParameterList(std::vector<Token> &paramName,
     hasVarg = false;
     std::size_t unusedCount = 0;
     while (true) {
-	if (token.kind == TokenKind::IDENTIFIER) {
+	if (token.kind == TokenKind::IDENTIFIER && !isType(token)) {
 	    paramName.push_back(token);
 	    getToken();
 	} else {
@@ -210,7 +217,7 @@ parseFunctionParameterList(std::vector<Token> &paramName,
 	    auto unused = UStr::create(ss.str());
 	    paramName.push_back(Token{token.loc, token.kind, unused});
 	}
-	if (!error::expected(TokenKind::COLON)) {
+	if (!error::expectedBeforeToken(TokenKind::COLON)) {
 	    return false;
 	}
 	getToken();
@@ -366,12 +373,11 @@ parseUnqualifiedType(bool allowZeroDim)
     Token fnName;
     std::vector<Token> fnParamName;
 
-    if (token.kind == TokenKind::IDENTIFIER) {
-	if (auto entry = Symtab::type(token.val, Symtab::AnyScope)) {
-	    getToken();
-	    return entry->type;
-	}
-	return nullptr;
+    if (token.kind == TokenKind::IDENTIFIER && isType(token)) {
+	auto entry = Symtab::type(token.val, Symtab::AnyScope);
+	assert(entry);
+	getToken();
+	return entry->type;
     } else if (auto type = parsePointerType()) {
 	return type;
     } else if (auto type = parseArrayType(allowZeroDim)) {

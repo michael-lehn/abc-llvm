@@ -13,6 +13,9 @@ void fatal();
 void warning();
 
 bool expected(lexer::TokenKind kind);
+bool expected(const std::vector<lexer::TokenKind> &kind);
+bool expectedBeforeToken(lexer::TokenKind kind);
+bool expectedBeforeToken(const std::vector<lexer::TokenKind> &kind);
 bool expectedAfterLastToken(lexer::TokenKind kind);
 bool expectedAfterLastToken(const std::vector<lexer::TokenKind> &kind);
 

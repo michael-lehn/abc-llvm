@@ -31,52 +31,32 @@ warning()
     out() << std::endl << "WARNING" << std::endl << std::endl;
 }
 
-bool
-expected(lexer::TokenKind kind)
-{
-    if (lexer::token.kind != kind) {
-	error::location(lexer::token.loc);
-	out() << error::setColor(error::BOLD) << lexer::token.loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << "expected '" << kind << "'\n"
-	    << error::setColor(error::NORMAL);
-	fatal();
-	return false;
-    }
-    return true;
-}
+enum ExpectedLoc {
+    HERE,
+    AFTER,
+    BEFORE,
+};
 
 bool
-expectedAfterLastToken(lexer::TokenKind kind)
+expected(const std::vector<lexer::TokenKind> &kind, ExpectedLoc where)
 {
-    if (lexer::token.kind != kind) {
-	error::location(lexer::lastToken.loc);
-	out() << error::setColor(error::BOLD) << lexer::token.loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << "expected '" << kind
-	    << "' after " << lexer::lastToken.kind << "'\n"
-	    << error::setColor(error::NORMAL);
-	fatal();
-	return false;
-    }
-    return true;
-}
+    assert(where == HERE || where == AFTER || where == BEFORE);
 
-bool
-expectedAfterLastToken(const std::vector<lexer::TokenKind> &kind)
-{
     bool ok = false;
 
     for (const auto &k: kind) {
-	if (k == lexer::lastToken.kind) {
+	if (k == lexer::token.kind) {
 	    ok = true;
 	}
     }
 
     if (!ok) {
-	error::location(lexer::lastToken.loc);
+	if (where == AFTER) {
+	    error::location(lexer::lastToken.loc);
+	} else if (where == HERE || where == BEFORE) {
+	    error::location(lexer::token.loc);
+	}
+
 	out() << error::setColor(error::BOLD) << lexer::token.loc << ": "
 	    << error::setColor(error::BOLD_RED) << "error: "
 	    << error::setColor(error::BOLD)
@@ -89,12 +69,62 @@ expectedAfterLastToken(const std::vector<lexer::TokenKind> &kind)
 		out() << ", ";
 	    }
 	}
-	out() << " after '" << lexer::lastToken.kind << "'\n"
-	    << error::setColor(error::NORMAL);
+	if (where == AFTER) {
+	    out() << " after '";
+	    if (lexer::lastToken.kind == lexer::TokenKind::IDENTIFIER) {
+		out() << lexer::lastToken.val;
+	    } else {
+		out() << lexer::lastToken.kind;
+	    }
+	    out() << "'\n" << error::setColor(error::NORMAL);
+	} else if (where == BEFORE) {
+	    out() << " before '";
+	    if (lexer::token.kind == lexer::TokenKind::IDENTIFIER) {
+		out() << lexer::token.val;
+	    } else {
+		out() << lexer::token.kind;
+	    }
+	    out() << "'\n" << error::setColor(error::NORMAL);
+	}
 	fatal();
-	return false;
     }
-    return true;
+    return ok;
+}
+
+bool
+expected(lexer::TokenKind kind)
+{
+    return expected(std::vector{kind}, HERE);
+}
+
+bool
+expected(const std::vector<lexer::TokenKind> &kind)
+{
+    return expected(kind, HERE);
+}
+
+bool
+expectedBeforeToken(lexer::TokenKind kind)
+{
+    return expected(std::vector{kind}, BEFORE);
+}
+
+bool
+expectedBeforeToken(const std::vector<lexer::TokenKind> &kind)
+{
+    return expected(kind, BEFORE);
+}
+
+bool
+expectedAfterLastToken(lexer::TokenKind kind)
+{
+    return expected(std::vector{kind}, AFTER);
+}
+
+bool
+expectedAfterLastToken(const std::vector<lexer::TokenKind> &kind)
+{
+    return expected(kind, AFTER);
 }
 
 static std::unordered_map<Color, std::string> colorMap = {
