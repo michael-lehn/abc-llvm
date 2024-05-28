@@ -168,7 +168,7 @@ Type::convert(const Type *from, const Type *to)
 	    return nullptr;
 	}
     } else if (to->isArray() && from->isArray()) {
-	if (to->dim() != from->dim() && to->dim() > 0) {
+	if (to->dim() != from->dim() && !to->isUnboundArray()) {
 	    return nullptr;
 	}
 	auto toRefTy = to->refType();
@@ -177,7 +177,7 @@ Type::convert(const Type *from, const Type *to)
 	    fromRefTy = fromRefTy->getConstRemoved();
 	}
 	if (equals(toRefTy, fromRefTy)) {
-	    return to;
+	    return to->isUnboundArray() ? from : to;
 	} else {
 	    return nullptr;
 	}

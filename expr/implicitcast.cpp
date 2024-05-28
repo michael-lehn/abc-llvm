@@ -24,22 +24,21 @@ ImplicitCast::create(ExprPtr &&expr, const Type *toType)
 {
     assert(expr->type);
     assert(toType);
-    if (Type::equals(expr->type, toType)) {
+    auto type = Type::convert(expr->type, toType);
+    auto loc = expr->loc;
+    if (!type) {
+	error::location(loc);
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "can not convert an expression of "
+	    " type '" << expr->type << "' to type '" << toType << "'\n"
+	    << error::setColor(error::NORMAL);
+	error::fatal();
+	return nullptr;
+    } else if (Type::equals(expr->type, type)) {
 	return expr;
     } else {
-	auto loc = expr->loc;
-	auto type = Type::convert(expr->type, toType);
-	if (!type) {
-	    error::location(loc);
-	    error::out() << error::setColor(error::BOLD) << loc << ": "
-		<< error::setColor(error::BOLD_RED) << "error: "
-		<< error::setColor(error::BOLD)
-		<< "can not convert an expression of "
-		" type '" << expr->type << "' to type '" << toType << "'\n"
-		<< error::setColor(error::NORMAL);
-	    error::fatal();
-	    return nullptr;
-	}
 	auto p = new ImplicitCast{std::move(expr), type, loc};
 	return std::unique_ptr<ImplicitCast>{p};
     }

@@ -399,9 +399,12 @@ AstVar::addInitializerExpr(AstInitializerExprPtr &&initializerExpr_)
 	    varType = ArrayType::create(varType->refType(),
 				        comp->exprVec.size());
 	} else if (initExpr->type->isArray()) {
+	    assert(!initExpr->type->isUnboundArray());
 	    varType = initExpr->type;
 	} else {
-	    assert(0 && "can not be initialized with this type");
+	    // initializer should be either a compound expression or an
+	    // array
+	    assert(0 && "unbound array initializtion");
 	}
     }
 }
