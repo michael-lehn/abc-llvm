@@ -1,0 +1,24 @@
+@ <stdio.hdr>
+
+struct Node
+{
+    val: array[8] of char;
+    next: -> Node;
+};
+
+extern a, b, c: Node;
+
+global a, b, c: Node =
+{
+    {"world", &b},
+    {"hello,", &c},
+    {"!"},
+};
+
+fn main()
+{
+    for (local p: -> Node = &a; p; p = p->next) {
+	printf("%s ", p->val);
+    }
+    printf("\n");
+}

@@ -586,6 +586,18 @@ AstGlobalVar::codegen()
 {
     for (const auto &item : declList->node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
+	if (var->count() == 1) {
+	    gen::globalVariableDefinition(var->getId(0).c_str(), var->varType);
+	} else {
+	    for (std::size_t i = 0; i < var->count(); ++i) {
+		gen::globalVariableDefinition(var->getId(i).c_str(),
+					      var->varType);
+	    }
+	}
+    }
+
+    for (const auto &item : declList->node) {
+	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
 
 	auto initializer = var->getInitializerExpr();
@@ -659,6 +671,17 @@ AstStaticVar::print(int indent) const
 void
 AstStaticVar::codegen()
 {
+    for (const auto &item : declList->node) {
+	auto var = dynamic_cast<const AstVar *>(item.get());
+	if (var->count() == 1) {
+	    gen::globalVariableDefinition(var->getId(0).c_str(), var->varType);
+	} else {
+	    for (std::size_t i = 0; i < var->count(); ++i) {
+		gen::globalVariableDefinition(var->getId(i).c_str(),
+					      var->varType);
+	    }
+	}
+    }
     for (const auto &item : declList->node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);

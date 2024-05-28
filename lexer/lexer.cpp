@@ -75,6 +75,7 @@ init()
     keyword[UStr::create("break")] = TokenKind::BREAK;
     keyword[UStr::create("case")] = TokenKind::CASE;
     keyword[UStr::create("const")] = TokenKind::CONST;
+    keyword[UStr::create("readonly")] = TokenKind::CONST;
     keyword[UStr::create("continue")] = TokenKind::CONTINUE;
     keyword[UStr::create("default")] = TokenKind::DEFAULT;
     keyword[UStr::create("do")] = TokenKind::DO;
