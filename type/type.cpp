@@ -168,7 +168,7 @@ Type::convert(const Type *from, const Type *to)
 	    return nullptr;
 	}
     } else if (to->isArray() && from->isArray()) {
-	if (to->dim() != from->dim()) {
+	if (to->dim() != from->dim() && to->dim() > 0) {
 	    return nullptr;
 	}
 	auto toRefTy = to->refType();

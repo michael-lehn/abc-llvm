@@ -394,9 +394,15 @@ AstVar::addInitializerExpr(AstInitializerExprPtr &&initializerExpr_)
 {
     initializerExpr = std::move(initializerExpr_);
     if (varType->isUnboundArray()) {
-	auto init = dynamic_cast<const CompoundExpr *>(getInitializerExpr());
-	assert(init);
-	varType = ArrayType::create(varType->refType(), init->exprVec.size());
+	auto initExpr = getInitializerExpr();
+	if (auto comp = dynamic_cast<const CompoundExpr *>(initExpr)) {
+	    varType = ArrayType::create(varType->refType(),
+				        comp->exprVec.size());
+	} else if (initExpr->type->isArray()) {
+	    varType = initExpr->type;
+	} else {
+	    assert(0 && "can not be initialized with this type");
+	}
     }
 }
 

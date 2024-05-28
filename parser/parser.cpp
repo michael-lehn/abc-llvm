@@ -92,7 +92,7 @@ parseTopLevelDeclaration()
 //------------------------------------------------------------------------------
 static const Type *parseFunctionType(Token &fnName,
 				     std::vector<Token> &fnParamName);
-static AstPtr parseBlock();
+static AstPtr parseBlock(bool required = false);
 
 /*
  * function-declaration-or-definition
@@ -311,8 +311,11 @@ static AstPtr parseStatementOrDeclarationList();
  * block = "{" statement-or-declaration-list "}"
  */
 static AstPtr
-parseBlock()
+parseBlock(bool required)
 {
+    if (required) {
+	error::expectedAfterLastToken(TokenKind::LBRACE);
+    }
     if (token.kind != TokenKind::LBRACE) {
 	return nullptr;
     }
@@ -711,7 +714,7 @@ parseLocalVariableDefinition()
 
 
 //------------------------------------------------------------------------------
-static AstPtr parseCompoundStatement();
+static AstPtr parseCompoundStatement(bool required = false);
 static AstPtr parseIfStatement();
 static AstPtr parseSwitchStatement();
 static AstPtr parseWhileStatement();
@@ -763,8 +766,11 @@ parseStatement()
  * compound-statement = "{" statement-or-declaration-list "}"
  */
 static AstPtr
-parseCompoundStatement()
+parseCompoundStatement(bool required)
 {
+    if (required) {
+	error::expectedAfterLastToken(TokenKind::LBRACE);
+    }
     if (token.kind != TokenKind::LBRACE) {
 	return nullptr;
     }
@@ -812,7 +818,7 @@ parseIfStatement()
 	return nullptr;
     }
     getToken();
-    auto thenBody = parseCompoundStatement();
+    auto thenBody = parseCompoundStatement(true);
     if (!thenBody) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -825,7 +831,7 @@ parseIfStatement()
     }
     if (token.kind == TokenKind::ELSE) {
 	getToken();
-	auto elseBody = parseCompoundStatement();
+	auto elseBody = parseCompoundStatement(true);
 	if (!elseBody) {
 	    elseBody = parseIfStatement();
 	}
@@ -881,7 +887,7 @@ parseSwitchStatement()
 	return nullptr;
     }
     getToken();
-    if (!error::expected(TokenKind::LBRACE)) {
+    if (!error::expectedAfterLastToken(TokenKind::LBRACE)) {
 	return nullptr;
     }
     getToken();
@@ -958,7 +964,7 @@ parseWhileStatement()
 	return nullptr;
     }
     getToken();
-    auto whileBody = parseCompoundStatement();
+    auto whileBody = parseCompoundStatement(true);
     if (!whileBody) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -981,7 +987,7 @@ parseDoWhileStatement()
 	return nullptr;
     }
     getToken();
-    auto doWhileBody = parseCompoundStatement();
+    auto doWhileBody = parseCompoundStatement(true);
     if (!doWhileBody) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -1073,7 +1079,7 @@ parseForStatement()
 	: std::make_unique<AstFor>(std::move(forInitExpr),
 				   std::move(forCond),
 				   std::move(forUpdate));
-    auto forBody = parseBlock();
+    auto forBody = parseBlock(true);
     if (!forBody) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
