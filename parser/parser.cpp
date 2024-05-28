@@ -831,9 +831,9 @@ parseIfStatement()
     }
     if (token.kind == TokenKind::ELSE) {
 	getToken();
-	auto elseBody = parseCompoundStatement(true);
+	auto elseBody = parseIfStatement();
 	if (!elseBody) {
-	    elseBody = parseIfStatement();
+	    elseBody = parseCompoundStatement(true);
 	}
 	if (!elseBody) {
 	    error::location(token.loc);
