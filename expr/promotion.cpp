@@ -403,10 +403,6 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		type = IntegerType::createBool();
 		newLeftType = newRightType
 		    = Type::common(left->type, right->type);
-		std::cerr << "type left = " << left->type << "\n";
-		std::cerr << "type right = " << right->type << "\n";
-		std::cerr << "newLeftType = " << newLeftType << "\n";
-		std::cerr << "newRightType = " << newRightType << "\n";
 	    }
 	    break;
 	case BinaryExpr::Kind::LOGICAL_AND:
