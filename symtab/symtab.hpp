@@ -4,7 +4,9 @@
 #include <cstddef>
 #include <forward_list>
 #include <memory>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "expr/expr.hpp"
 #include "lexer/loc.hpp"
@@ -24,6 +26,8 @@ class Symtab
 
 	Symtab(UStr prefix = UStr{});
 	~Symtab();
+
+	static std::vector<std::string> didYouMean(UStr name);
 
 	static const symtab::Entry *find(UStr name, Scope inScope);
 	static const symtab::Entry *type(UStr name, Scope inScope);

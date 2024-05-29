@@ -4,6 +4,7 @@
 #include "type/integertype.hpp"
 
 #include "constant.hpp"
+#include "editdistance.hpp"
 #include "function.hpp"
 #include "gen.hpp"
 #include "instruction.hpp"
@@ -78,4 +79,9 @@ main()
     gen::printFunctionList();
 
     gen::print("hello");
+    std::cerr << gen::editDistance("printf", "prinTf") << "\n";
+    std::cerr << gen::editDistance("printf", "prinft") << "\n";
+    std::cerr << gen::editDistance("printf", "prinT") << "\n";
+    std::cerr << gen::editDistance("printf", "prinf") << "\n";
+    std::cerr << gen::editDistance("printf", "prin") << "\n";
 }

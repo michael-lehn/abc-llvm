@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "gen/editdistance.hpp"
 #include "lexer/error.hpp"
 
 #include "symtab.hpp"
@@ -33,6 +34,23 @@ Symtab::~Symtab()
 {
     scope.pop_front();
     --scopeSize;
+}
+
+std::vector<std::string>
+Symtab::didYouMean(UStr name_)
+{
+    std::vector<std::string> list;
+    std::string name{name_.c_str()};
+
+    for (auto s = scope.cbegin(); s != scope.cend(); ++s) {
+	for (const auto &node: **s) {
+	    std::string id{node.first.c_str()};
+	    if (gen::editDistance(id, name) <= 2) {
+		list.push_back(id);
+	    }
+	}
+    }
+    return list;
 }
 
 const symtab::Entry *
