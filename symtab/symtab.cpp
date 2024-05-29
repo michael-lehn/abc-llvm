@@ -42,11 +42,14 @@ Symtab::didYouMean(UStr name_)
     std::vector<std::string> list;
     std::string name{name_.c_str()};
 
-    for (auto s = scope.cbegin(); s != scope.cend(); ++s) {
+    unsigned max = 2;
+    for (auto s = scope.cbegin(); s != scope.cend(); ++s, max = 1) {
 	for (const auto &node: **s) {
-	    std::string id{node.first.c_str()};
-	    if (gen::editDistance(id, name) <= 2) {
-		list.push_back(id);
+	    if (!node.second.typeDeclaration()) {
+		std::string id{node.first.c_str()};
+		if (gen::editDistance(id, name) <= max) {
+		    list.push_back(id);
+		}
 	    }
 	}
     }
