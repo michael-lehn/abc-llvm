@@ -28,6 +28,7 @@ class Loc
 	Loc(Loc &&loc) = default;
 	Loc &operator=(const Loc &loc) = default;
 	Loc &operator=(Loc &&loc) = default;
+	operator bool() const {return path.length(); }
 
 	UStr path;
 	Pos from, to;

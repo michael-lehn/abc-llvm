@@ -21,9 +21,26 @@ namespace abc {
 using namespace lexer;
 
 static bool
-isType(Token token)
+isTypeToken(Token token)
 {
-    return Symtab::type(token.val, Symtab::AnyScope);
+    return token.kind == TokenKind::IDENTIFIER
+	&& Symtab::type(token.val, Symtab::AnyScope);
+}
+
+/*
+static bool
+isTypeTokenInCurrentScope(Token token)
+{
+    return token.kind == TokenKind::IDENTIFIER
+	&& Symtab::type(token.val, Symtab::CurrentScope);
+}
+*/
+
+static bool
+isIdentifierToken(Token token)
+{
+    return token.kind == TokenKind::IDENTIFIER
+	&& !Symtab::type(token.val, Symtab::AnyScope);
 }
 
 //------------------------------------------------------------------------------
@@ -149,7 +166,7 @@ parseFunctionType(Token &fnName, std::vector<Token> &fnParamName)
 	return nullptr;
     }
     getToken();
-    if (token.kind == TokenKind::IDENTIFIER) {
+    if (isIdentifierToken(token)) {
 	fnName = token;
 	getToken();
     }
@@ -202,13 +219,13 @@ parseFunctionParameterList(std::vector<Token> &paramName,
 			   std::vector<const Type *> &paramType,
 			   bool &hasVarg)
 {
-    if (token.kind != TokenKind::IDENTIFIER && token.kind != TokenKind::COLON) {
+    if (!isIdentifierToken(token) && token.kind != TokenKind::COLON) {
 	return true; // empty parameter list
     }
     hasVarg = false;
     std::size_t unusedCount = 0;
     while (true) {
-	if (token.kind == TokenKind::IDENTIFIER && !isType(token)) {
+	if (isIdentifierToken(token)) {
 	    paramName.push_back(token);
 	    getToken();
 	} else {
@@ -376,7 +393,7 @@ parseUnqualifiedType(bool allowZeroDim)
     Token fnName;
     std::vector<Token> fnParamName;
 
-    if (token.kind == TokenKind::IDENTIFIER && isType(token)) {
+    if (isTypeToken(token)) {
 	auto entry = Symtab::type(token.val, Symtab::AnyScope);
 	assert(entry);
 	getToken();
@@ -463,7 +480,7 @@ parseExternVariableDeclaration()
 static bool
 parseIdentifierList(std::vector<Token> &identifier)
 {
-    if (token.kind != TokenKind::IDENTIFIER) {
+    if (!isIdentifierToken(token)) {
 	return false;
     }
     identifier.clear();
@@ -1161,12 +1178,12 @@ parseGotoStatement()
     }
     getToken();
     auto label = token;
-    if (!error::expected(TokenKind::IDENTIFIER)) {
+    if (!error::expectedAfterLastToken(TokenKind::IDENTIFIER)) {
 	return nullptr;
     }
     getToken();
 
-    if (!error::expected(TokenKind::SEMICOLON)) {
+    if (!error::expectedAfterLastToken(TokenKind::SEMICOLON)) {
 	return nullptr;
     }
     getToken();
@@ -1352,10 +1369,10 @@ parseEnumConstantDeclaration(AstEnumDeclPtr &enumDecl)
 static bool
 parseEnumConstantList(AstEnumDeclPtr &enumDecl)
 {
-    if (token.kind != TokenKind::IDENTIFIER) {
+    if (!isIdentifierToken(token)) {
 	return false;
     }
-    while (token.kind == TokenKind::IDENTIFIER) {
+    while (isIdentifierToken(token)) {
 	auto ident = token;
 	getToken();
 	if (token.kind == TokenKind::EQUAL) {
@@ -1481,14 +1498,14 @@ static bool
 parseStructMemberList(AstStructDecl *structDecl, std::size_t &index,
 		      bool unionSection)
 {
-    if (token.kind != TokenKind::IDENTIFIER) {
+    if (!isIdentifierToken(token)) {
 	return false;
     }
     std::vector<lexer::Token> memberName;
     std::vector<std::size_t> memberIndex;
     
     while (true) {
-	if (token.kind != TokenKind::IDENTIFIER) {
+	if (!isIdentifierToken(token)) {
 	    error::out() << token.loc
 		<< ": identifier for struct member expected" << std::endl;
 	    error::fatal();

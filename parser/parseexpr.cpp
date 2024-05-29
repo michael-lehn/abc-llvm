@@ -578,7 +578,7 @@ parsePrimary()
 		for (std::size_t i = 0; i < didYouMean.size(); ++i) {
 		    error::out() << "'" << didYouMean[i] << "'";
 		    if (i + 2 == didYouMean.size()) {
-			error::out() << " or ";
+			error::out() << ", or ";
 		    } else  if (i + 1 < didYouMean.size()) {
 			error::out() << ", ";
 		    }

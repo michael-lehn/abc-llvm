@@ -3,7 +3,6 @@
 fn main()
 {
     local n: u64;
-    local int: int;
 
     printf("n = ");
     scanf("%d", &n);

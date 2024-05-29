@@ -1411,11 +1411,17 @@ AstTypeDecl::AstTypeDecl(lexer::Token name, const Type *type)
 	    error::out() << error::setColor(error::BOLD) << name.loc << ": "
 		<< error::setColor(error::BOLD_RED) << "error: "
 		<< error::setColor(error::BOLD)
-		<< "redefinition of '"
-		<< name.val << "\n"
+		<< "incompatible redefinition of '"
+		<< name.val << "'\n"
 		<< error::setColor(error::NORMAL);
-	    error::out() << found->loc
-		<< ": note: previous definition is here\n";
+	    if (found->loc) {
+		error::location(found->loc);
+		error::out() << error::setColor(error::BOLD) << found->loc
+		    << ": " << error::setColor(error::BOLD_BLUE) << "note: "
+		    << error::setColor(error::BOLD)
+		    << ": previous definition is here\n"
+		    << error::setColor(error::NORMAL);
+	    }
 	    error::fatal();
 	}
     } else {
@@ -1459,12 +1465,17 @@ AstEnumDecl::AstEnumDecl(lexer::Token name, const Type *intType)
 	    error::out() << error::setColor(error::BOLD) << name.loc << ": "
 		<< error::setColor(error::BOLD_RED) << "error: "
 		<< error::setColor(error::BOLD)
-		<< "redefinition of '"
+		<< "incompatible redefinition of '"
 		<< name.val << "\n"
 		<< error::setColor(error::NORMAL);
-	    error::out() << error::setColor(error::BOLD) << found->loc
-		<< ": note: previous definition is here\n"
-		<< error::setColor(error::NORMAL);
+	    if (found->loc) {
+		error::location(found->loc);
+		error::out() << error::setColor(error::BOLD) << found->loc
+		    << ": " << error::setColor(error::BOLD_BLUE) << "note: "
+		    << error::setColor(error::BOLD)
+		    << ": previous definition is here\n"
+		    << error::setColor(error::NORMAL);
+	    }
 	    error::fatal();
 	} else {
 	    // grrh, const_cast! But we have to complete the type ...
@@ -1571,12 +1582,17 @@ AstStructDecl::AstStructDecl(lexer::Token name)
 	    error::out() << error::setColor(error::BOLD) << name.loc << ": "
 		<< error::setColor(error::BOLD_RED) << "error: "
 		<< error::setColor(error::BOLD)
-		<< "redefinition of '"
+		<< "incompatible redefinition of '"
 		<< name.val << "\n"
 		<< error::setColor(error::NORMAL);
-	    error::out() << error::setColor(error::BOLD) << found->loc
-		<< ": note: previous definition is here\n"
-		<< error::setColor(error::NORMAL);
+	    if (found->loc) {
+		error::location(found->loc);
+		error::out() << error::setColor(error::BOLD) << found->loc
+		    << ": " << error::setColor(error::BOLD_BLUE) << "note: "
+		    << error::setColor(error::BOLD)
+		    << ": previous definition is here\n"
+		    << error::setColor(error::NORMAL);
+	    }
 	    error::fatal();
 	} else {
 	    // grrh, const_cast! But we have to complete the type ...
