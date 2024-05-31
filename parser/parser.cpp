@@ -126,8 +126,14 @@ parseFunctionDeclarationOrDefinition()
 	return nullptr;
     }
 
-    error::expectedAfterLastToken({TokenKind::LBRACE,
-				   TokenKind::SEMICOLON});
+    if (fnType->retType()->isVoid()) {
+	error::expectedAfterLastToken({TokenKind::LBRACE,
+				       TokenKind::COLON,
+				       TokenKind::SEMICOLON});
+    } else {
+	error::expectedAfterLastToken({TokenKind::LBRACE,
+				       TokenKind::SEMICOLON});
+    }
 
     if (token.kind == TokenKind::SEMICOLON) {
 	getToken();
