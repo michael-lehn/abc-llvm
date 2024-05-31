@@ -49,6 +49,8 @@ enum class TokenKind {
     CASE,
     DEFAULT,
     ENUM,
+    TRUE,
+    FALSE,
 
     // punctuators
     NEWLINE,

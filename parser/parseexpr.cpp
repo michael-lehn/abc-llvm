@@ -611,6 +611,16 @@ parsePrimary()
 	auto ty = parseSuffixType(); // parse suffix
 	auto expr = IntegerLiteral::create(tok.processedVal, 8, ty, tok.loc);
         return expr;
+    } else if (token.kind == TokenKind::TRUE) {
+	getToken();
+	auto ty = IntegerType::createBool();
+	auto expr = IntegerLiteral::create(1, ty, tok.loc);
+        return expr;
+    } else if (token.kind == TokenKind::FALSE) {
+	getToken();
+	auto ty = IntegerType::createBool();
+	auto expr = IntegerLiteral::create(0, ty, tok.loc);
+        return expr;
     } else if (token.kind == TokenKind::CHARACTER_LITERAL) {
 	getToken();
 	return CharacterLiteral::create(tok.processedVal, tok.val, tok.loc);

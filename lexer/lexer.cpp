@@ -100,6 +100,8 @@ init()
     keyword[UStr::create("type")] = TokenKind::TYPE;
     keyword[UStr::create("union")] = TokenKind::UNION;
     keyword[UStr::create("while")] = TokenKind::WHILE;
+    keyword[UStr::create("true")] = TokenKind::TRUE;
+    keyword[UStr::create("false")] = TokenKind::FALSE;
 }
 
 const std::set<std::filesystem::path> &
