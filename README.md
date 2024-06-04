@@ -81,25 +81,25 @@ In both cases, one declares
 - `a` as an array of 10 elements, where each element is a pointer to an integer
 - `b` as a pointer to an array of 10 integers
   
-Of course, sometimes we need to express that the data at the end of the pointer is constant, or that the pointer itself is constant, meaning the pointer cannot be redirected. Sometimes, both conditions apply — that the pointer itself is constant and the data at the end. Here are some examples of such declarations in C:
+Occasionally, we need to specify that the data pointed to by a pointer should remain unchanged, or that the pointer itself should remain fixed, indicating that it shouldn't be redirected. In some cases, both conditions apply: neither the pointer nor the data it points to should change. Here are examples of such declarations in C:
 
 ```c
     const int *c[10];
     int (* const d)[10];
     const int (* const e)[10];
 ```
-and the equivalent declarations in ABC:
+It's important to note that in C, using `const` doesn't guarantee that the variable is immutable. With an appropriate cast, the content of a variable can still be altered. In ABC, the keyword `readonly` is used for this purpose. It signifies that while technically it's still possible to modify the value (if one really insists), the declaration clearly states the intent to access it in a read-only manner:
 
 ```abc
-    c: array[10] of -> const int;
-    d: array[10] of const -> int;
-    e: array[10] of const -> const int;
+    c: array[10] of -> readonly int;
+    d: array[10] of readonly -> int;
+    e: array[10] of readonly -> readonly int;
 ```
 Here, we have declared
 
-- `c` as an array of 10 elements, where each element is a pointer to a constant integer
-- `d` as an array of 10 elements, where each element is a constant pointer to an integer
-- `e` as an array of 10 elements, where each element is a constant pointer to a constant integer
+- `c` as an array of 10 elements, where each element is a pointer to a readonly integer
+- `d` as an array of 10 elements, where each element is a readonly pointer to an integer
+- `e` as an array of 10 elements, where each element is a readonly pointer to a readonly integer
 
 But that's not all about pointers. A function name represents an address, the address of its first instruction. Hence you can store the function address in a pointer variable. Such a pointer is then called a function pointer. Here, a declaration of a local or global pointer variable to a function that has no return type and does not accept any parameters:
 ```c
