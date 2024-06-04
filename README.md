@@ -9,7 +9,7 @@ concepts.
 
 ## Why Another Programming Language?
 
-### What is the Easiest Programming Language Among C, C++, Rust, and Zig?
+What is the Easiest Programming Language Among C, C++, Rust, and Zig?
 
 - **Simplest Syntax and Easiest to Learn**: C has the simplest syntax and is
   the easiest to learn, but it offers little safety and requires manual memory
