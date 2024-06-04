@@ -82,8 +82,11 @@ ImplicitCast::loadConstant() const
 	} else {
 	    return gen::getTrue();
 	}
+    } else if (expr->type->isArray() && type->isPointer()) {
+	return expr->loadConstantAddress();
+    } else {
+	return gen::cast(expr->loadConstant(), expr->type, type);
     }
-    return gen::cast(expr->loadConstant(), expr->type, type);
 }
 
 gen::Value
