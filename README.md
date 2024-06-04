@@ -1,73 +1,66 @@
-# ABC: A Bloody Compiler for A Better C
+# ABC: A Better C
 
-The ABC programming language is meticulously crafted as a teaching tool,
-specifically designed to impart a deep understanding of C programming while
-prioritizing teachability.
+ABC is a C-like language that uses LLVM for code generation and features
+Pascal-inspired syntax for declarations. The language is specifically designed
+for educational purposes, helping learners transition to languages like C, C++,
+Rust, and Zig. Unlike Python, JavaScript, or Ruby, these languages are closer
+to the hardware and require a deeper understanding of low-level programming
+concepts.
 
-Beyond serving as a vehicle for mastering C, ABC acts as a springboard for
-exploring why C (or ABC) might not always be the optimal choice for a project,
-and for delving into alternative languages better suited to specific
-requirements. Proficiency in ABC equips learners with the foundational
-programming skills necessary to readily adapt to these alternatives.
+## Why Another Programming Language?
 
-## Better in what respect?
+### What is the Easiest Programming Language Among C, C++, Rust, and Zig?
 
-In the realm of C instruction, challenges surrounding pointers and memory
-management are paramount, whether grappling with global, local, or dynamic
-memory. Traditional C's syntactic complexities and semantic inconsistencies
-often obscure fundamental concepts, impeding student comprehension.
+- **Simplest Syntax and Easiest to Learn**: C has the simplest syntax and is
+  the easiest to learn, but it offers little safety and requires manual memory
+  management.
+- **Best Balance of Simplicity and Safety**: Zig offers a good balance between
+  simple syntax and modern safety features.
+- **Complex but Safe**: Rust is the most complex to learn, but it provides the
+  best safety mechanisms and long-term benefits due to its memory and thread
+  safety models.
+- **Powerful but Complex**: C++ is very powerful but also very complex, with a
+  steep learning curve due to the multitude of language features.
 
-ABC tackles these challenges head-on by adopting a Pascal-like syntax for
-declarations and maintaining semantic coherence throughout the language. By
-simplifying declaration syntax and ensuring consistency, ABC minimizes
-distractions, enabling students to focus on mastering memory management and
-pointer manipulation principles. In this capacity, ABC transcends being just a
-programming language; it becomes a catalyst for educators to deliver a more
-effective and engaging learning experience.
+All these languages present significant challenges that can be easier to tackle
+with a language specifically designed to teach these concepts. Introducing a
+new C-like language that focuses on fundamental programming concepts could
+provide a smoother transition to learning C, C++, Rust, and Zig. This new
+language would serve as an educational stepping stone, helping learners grasp
+essential principles and paradigms before moving on to more complex and
+specialized languages.
 
-With its lucid syntax and coherent semantics, ABC strives to be more than a
-mere teaching language—it aspires to be *A Better C*, empowering students to
-navigate C programming's intricacies with confidence and clarity.
+### How ABC Aims to Achieve This Goal
 
-## Why C (or ABC) and not ...?
+To address these challenges, the following design decisions have been made for ABC:
 
-The last decade has witnessed the emergence of numerous programming
-languages—like Rust, Zig, Go, Hare,and Odin—each positioned as a superior
-alternative to C (or C++). These languages address specific C programming
-challenges and offer distinct solutions, prioritizing different aspects of
-programming.
+- **Simplified Grammar for Expressions and Statements**: The grammar for
+  expressions and statements in ABC is heavily inspired by C. With a few
+  simplifications and avoidance of inconsistencies, the grammar is nearly
+  identical. A simple syntax makes the language easier to learn.
+- **Simplified Declaration Syntax Inspired by Pascal**: ABC adopts Pascal-like
+  syntax for declarations (e.g., identifier first, then type). In C/C++,
+  declarations involving pointers are particularly challenging (see examples
+  below with a pointer to an array of integers and an array of pointers to
+  integers). Handling pointers is a significant challenge in learning C, C++,
+  Zig, and Rust, making this an important aspect.
+- **Explicit Scope and Lifetime Keywords**: Understanding the scope and
+  lifetime of variables is crucial. These concepts are often new to beginners,
+  and the differences are not always clear initially. In ABC, variable
+  declarations explicitly use the keywords `global`, `local`, or `static` to
+  clarify their meanings.
+- **Teaching Memory Management Concepts**: Beginners need to learn about global
+  variables (static lifetime), which reside in the data segment, and local
+  variables (automatic lifetime), which reside on the stack and become invalid
+  when the function exits. For dynamic memory management, ABC requires the use
+  of `malloc` and `free`, similar to C.
 
-Some emphasize memory management, incorporating features like garbage collection,
-borrow checker, or linear types, while others prioritize performance, eschewing
-such mechanisms. Variations in handling unsafe pointers also reflect differing
-language priorities.
+By incorporating these design choices, ABC aims to provide a robust foundation
+for learners, making it easier for them to transition to more complex languages
+like C, C++, Rust, and Zig. ABC serves as an educational tool that simplifies
+core programming concepts while maintaining enough complexity to prepare
+learners for the challenges of advanced languages.
 
-However, discussions about garbage collectors and safe pointers may seem
-abstract without practical experience. In C (and consequently, ABC), learners
-confront the very problems these features solve, laying a solid foundation for
-understanding and appreciating design decisions in alternative languages.
-
-## How to use ABC to learn programming?
-
-Programming intertwines with hardware and tooling like compilers, and often
-spans multiple domains, including operating systems. For C-like languages,
-understanding these connections is crucial and can be achieved through two main
-avenues:
-
-- Building hardware: Starting with logic gates, learners progress to building
-  their own computers using essentials like Field Programmable Gate Arrays
-  (FPGAs).
-
-- Writing a simple compiler: A tutorial will be provided to guide learners
-  through building their own compiler from scratch, facilitating understanding
-  of key programming concepts.
-
-These approaches may initially seem daunting, but with focused attention on
-essentials, learners can effectively navigate and master them. A comprehensive
-stack of learning materials is available to support learners in these
-endeavors.
-
-# How ABC addresses problems in teaching C
 
 ## Declarations in C and ABC
 
