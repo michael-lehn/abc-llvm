@@ -52,6 +52,14 @@ ImplicitCast::setOutput(bool on)
     return old;
 }
 
+void
+ImplicitCast::apply(std::function<bool(const Expr *)> op) const
+{
+    if (op(this)) {
+	expr->apply(op);
+    }
+}
+
 bool
 ImplicitCast::hasAddress() const
 {

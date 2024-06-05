@@ -23,6 +23,7 @@ using Value = llvm::Value *;
 using Constant = llvm::Constant *;
 using ConstantInt = llvm::ConstantInt *;
 using ConstantFloat = llvm::ConstantFP *;
+using Function = llvm::Function *;
 
 extern std::unique_ptr<llvm::LLVMContext> llvmContext;
 extern std::unique_ptr<llvm::Module> llvmModule;

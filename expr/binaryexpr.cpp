@@ -47,6 +47,15 @@ BinaryExpr::create(Kind kind, ExprPtr &&left, ExprPtr &&right, lexer::Loc loc)
     return std::unique_ptr<BinaryExpr>{p};
 }
 
+void
+BinaryExpr::apply(std::function<bool(const Expr *)> op) const
+{
+    if (op(this)) {
+	left->apply(op);
+	right->apply(op);
+    }
+}
+
 bool
 BinaryExpr::hasConstantAddress() const
 {

@@ -57,6 +57,16 @@ ConditionalExpr::create(ExprPtr cond, ExprPtr trueExpr, ExprPtr falseExpr,
     return std::unique_ptr<ConditionalExpr>{p};
 }
 
+void
+ConditionalExpr::apply(std::function<bool(const Expr *)> op) const
+{
+    if (op(this)) {
+	cond->apply(op);
+	trueExpr->apply(op);
+	falseExpr->apply(op);
+    }
+}
+
 bool
 ConditionalExpr::hasAddress() const
 {

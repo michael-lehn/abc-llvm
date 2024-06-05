@@ -24,6 +24,8 @@ static std::unordered_map<std::string, std::string> stringMap;
 
 // Map with all local variables
 static std::unordered_map<const char *, llvm::AllocaInst *> localVariable;
+static std::unordered_map<llvm::AllocaInst *, const abc::Type *> allocaAbcType;
+
 static Value lookup(const char *ident);
 
 //------------------------------------------------------------------------------
@@ -129,7 +131,50 @@ localVariableDefinition(const char *ident, const abc::Type *varType)
     llvm::IRBuilder<> tmpBuilder(&fn->getEntryBlock(),
 				 fn->getEntryBlock().begin());
     localVariable[ident] = tmpBuilder.CreateAlloca(llvmVarType, nullptr, ident);
+    allocaAbcType[localVariable[ident]] = varType;
     return localVariable[ident];
+}
+
+static void
+insertDestructorAfterLastUse(llvm::AllocaInst *alloca, const abc::Type *type)
+{
+    if (alloca->getName().str() == ".retVal") {
+	return;
+    }
+    llvm::Instruction *lastUse = nullptr;
+
+    for (auto *User : alloca->users()) {
+	if (auto instr = dyn_cast<llvm::Instruction>(User)) {
+	    if (!lastUse || lastUse->comesBefore(instr)) {
+		lastUse = instr;
+	    }
+	}
+    }
+
+    if (lastUse) {
+	lastUse = lastUse->getNextNode();
+	assert(lastUse);
+	llvm::IRBuilder<> builder(lastUse);
+	
+	auto destrName = type->destructorName().c_str();
+	auto destr = llvmModule->getFunction(destrName);
+	if (destr) {
+	    builder.CreateCall(destr, {alloca});
+	} else {
+	    std::cerr << "function '" << destrName << "' not found\n";
+	    assert(0);
+	}
+    }
+}
+void
+releaseLocalVariables()
+{
+    for (auto &[alloca, type]: allocaAbcType) {
+	if (type->isUPointer()) {
+	    insertDestructorAfterLastUse(alloca, type);
+	}
+    }
+    forgetAllLocalVariables();
 }
 
 void
@@ -143,6 +188,7 @@ void
 forgetAllLocalVariables()
 {
     localVariable.clear();
+    allocaAbcType.clear();
 }
 
 static Value

@@ -16,6 +16,7 @@ class ImplicitCast : public Expr
 	static bool setOutput(bool on);
 	const ExprPtr expr;
 
+	void apply(std::function<bool(const Expr *)> op) const override;
 	bool hasAddress() const override;
 	bool isLValue() const override;
 	bool isConst() const override;

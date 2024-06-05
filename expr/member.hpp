@@ -22,6 +22,7 @@ class Member : public Expr
 	const UStr member;
 	const std::size_t index;
 
+	void apply(std::function<bool(const Expr *)> op) const override;
 	bool hasAddress() const override;
 	bool isLValue() const override;
 	bool isConst() const override;

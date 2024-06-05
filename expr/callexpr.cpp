@@ -41,6 +41,17 @@ CallExpr::create(ExprPtr &&fn, std::vector<ExprPtr> &&arg, lexer::Loc loc)
     return std::unique_ptr<CallExpr>{p};
 }
 
+void
+CallExpr::apply(std::function<bool(const Expr *)> op) const
+{
+    if (op(this)) {
+	fn->apply(op);
+	for (const auto &expr: arg) {
+	    expr->apply(op);
+	}
+    }
+}
+
 bool
 CallExpr::hasAddress() const
 {

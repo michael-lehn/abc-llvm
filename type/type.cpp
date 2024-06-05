@@ -32,8 +32,12 @@ Type::equals(const Type *ty1, const Type *ty2)
     } else if (ty1->isPointer() && ty2->isPointer()) {
 	if (ty1->isNullptr() || ty2->isNullptr()) {
 	    return ty1->isNullptr() == ty2->isNullptr();
-	} else {
+	} else if (ty1->isUPointer() && ty2->isUPointer()) {
 	    return equals(ty1->refType(), ty2->refType());
+	} else if (!ty1->isUPointer() && !ty2->isUPointer()) {
+	    return equals(ty1->refType(), ty2->refType());
+	} else {
+	    return false;
 	}
     } else if (ty1->isStruct() && ty2->isStruct()) {
 	return ty1->id() == ty2->id();
@@ -358,6 +362,12 @@ Type::isPointer() const
 }
 
 bool
+Type::isUPointer() const
+{
+    return isAlias() ? getUnalias()->isUPointer() : false;
+}
+
+bool
 Type::isArray() const
 {
     return isAlias() ? getUnalias()->isArray() : false;
@@ -376,6 +386,12 @@ const Type *
 Type::refType() const
 {
     return isAlias() ? getUnalias()->refType() : nullptr;
+}
+
+const UStr
+Type::destructorName() const
+{
+    return isAlias() ? getUnalias()->destructorName() : UStr{};
 }
 
 std::size_t

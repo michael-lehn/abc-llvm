@@ -10,6 +10,12 @@ Expr::Expr(lexer::Loc  loc, const Type  *type)
     : loc{loc}, type{type}
 {}
 
+void
+Expr::apply(std::function<bool(const Expr *)> op) const
+{
+    op(this);
+}
+
 bool
 Expr::hasConstantAddress() const
 {

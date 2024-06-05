@@ -52,6 +52,14 @@ ExplicitCast::create(ExprPtr &&expr, const Type *toType, lexer::Loc loc)
     }
 }
 
+void
+ExplicitCast::apply(std::function<bool(const Expr *)> op) const
+{
+    if (op(this)) {
+	expr->apply(op);
+    }
+}
+
 bool
 ExplicitCast::hasAddress() const
 {

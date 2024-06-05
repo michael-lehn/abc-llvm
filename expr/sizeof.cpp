@@ -36,6 +36,14 @@ Sizeof::create(ExprPtr &&sizeofExpr, lexer::Loc loc)
     return std::unique_ptr<Sizeof>{p};
 }
 
+void
+Sizeof::apply(std::function<bool(const Expr *)> op) const
+{
+    if (op(this)) {
+	sizeofExpr->apply(op);
+    }
+}
+
 bool
 Sizeof::hasAddress() const
 {

@@ -3,6 +3,7 @@
 
 #include "expr/expr.hpp"
 #include "expr/compoundexpr.hpp"
+#include "expr/identifier.hpp"
 #include "expr/implicitcast.hpp"
 #include "gen/function.hpp"
 #include "gen/instruction.hpp"
@@ -971,6 +972,16 @@ AstExpr::codegen()
 	return;
     }
     expr->loadValue(); 
+    expr->apply(
+	[=](const Expr *expr) -> bool {
+	    if (auto ident = dynamic_cast<const Identifier *>(expr)) {
+		if (ident->type->isUPointer()) {
+		    ident->loadValue();
+		}
+	    }
+	    return true;
+	}
+    );
 }
 
 /*

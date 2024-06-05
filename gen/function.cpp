@@ -159,6 +159,8 @@ functionDefinitionEnd()
 	llvmBuilder->CreateRet(retVal);
     }
 
+    releaseLocalVariables();
+
     llvm::verifyFunction(*functionBuildingInfo.fn);
 
     functionBuildingInfo.fn = nullptr; 

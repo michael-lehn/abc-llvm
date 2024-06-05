@@ -40,6 +40,14 @@ UnaryExpr::create(Kind kind, ExprPtr &&child, lexer::Loc loc)
     return std::unique_ptr<UnaryExpr>{p};
 }
 
+void
+UnaryExpr::apply(std::function<bool(const Expr *)> op) const
+{
+    if (op(this)) {
+	child->apply(op);
+    }
+}
+
 bool
 UnaryExpr::hasConstantAddress() const
 {

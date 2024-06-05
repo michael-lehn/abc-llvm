@@ -29,6 +29,16 @@ ExprList::create(std::vector<ExprPtr> &&exprVec)
     return std::unique_ptr<ExprList>{p};
 }
 
+void
+ExprList::apply(std::function<bool(const Expr *)> op) const
+{
+    if (op(this)) {
+	for (const auto &expr: exprVec) {
+	    expr->apply(op);
+	}
+    }
+}
+
 bool
 ExprList::hasAddress() const
 {

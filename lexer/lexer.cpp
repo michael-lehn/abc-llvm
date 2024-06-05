@@ -394,6 +394,9 @@ getToken_(bool skipNewline)
 	if (reader->ch == '=') {
 	    nextCh();
 	    return setToken(TokenKind::EQUAL2);
+	} else if (reader->ch == '>') {
+	    nextCh();
+	    return setToken(TokenKind::ARROW2);
 	}
 	return setToken(TokenKind::EQUAL);
     } else if (reader->ch == '!') {

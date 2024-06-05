@@ -12,6 +12,8 @@ std::ostream& out(int indent = 0);
 void fatal();
 void warning();
 
+void undefinedIdentifier(const lexer::Loc &loc, UStr name);
+
 bool expected(lexer::TokenKind kind);
 bool expected(const std::vector<lexer::TokenKind> &kind);
 bool expectedBeforeToken(lexer::TokenKind kind);

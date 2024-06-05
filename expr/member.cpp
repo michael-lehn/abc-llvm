@@ -96,6 +96,14 @@ Member::create(ExprPtr &&structure, UStr member, lexer::Loc loc)
     }
 }
 
+void
+Member::apply(std::function<bool(const Expr *)> op) const
+{
+    if (op(this)) {
+	structure->apply(op);
+    }
+}
+
 bool
 Member::hasAddress() const
 {

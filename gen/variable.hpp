@@ -15,7 +15,7 @@ void globalVariableDefinition(const char *ident, const abc::Type *varType,
 Constant loadStringAddress(const char *str);
 
 Value localVariableDefinition(const char *ident, const abc::Type *varType);
-
+void releaseLocalVariables();
 
 void forgetAllVariables();
 void forgetAllLocalVariables();

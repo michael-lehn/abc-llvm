@@ -22,6 +22,8 @@ class Sizeof : public Expr
 	const Type *sizeofType;
 	const ExprPtr sizeofExpr;
 
+	void apply(std::function<bool(const Expr *)> op) const override;
+
 	// for sematic checks
 	bool hasAddress() const override;
 	bool isLValue() const override;

@@ -91,6 +91,16 @@ CompoundExpr::setDisplayOpt(DisplayOpt opt) const
     displayOpt = opt;
 }
 
+void
+CompoundExpr::apply(std::function<bool(const Expr *)> op) const
+{
+    if (op(this)) {
+	for (const auto &expr: exprVec) {
+	    expr->apply(op);
+	}
+    }
+}
+
 bool
 CompoundExpr::hasAddress() const
 {

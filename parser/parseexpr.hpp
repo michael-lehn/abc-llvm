@@ -5,11 +5,12 @@
 #include "type/type.hpp"
 
 namespace abc {
-    
+
 ExprPtr parseCompoundExpression(const Type *type,
 				const Type **patchedType = nullptr);
 ExprPtr parseExpressionList();
 ExprPtr parseAssignmentExpression();
+
 
 } // namespace abc
 

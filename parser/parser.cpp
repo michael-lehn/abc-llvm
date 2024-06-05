@@ -9,6 +9,7 @@
 #include "type/functiontype.hpp"
 #include "type/integertype.hpp"
 #include "type/pointertype.hpp"
+#include "type/upointertype.hpp"
 #include "type/voidtype.hpp"
 
 #include "defaultdecl.hpp"
@@ -1559,13 +1560,15 @@ parseStructMemberList(AstStructDecl *structDecl, std::size_t &index,
 //------------------------------------------------------------------------------
 /*
  * pointer-type = "->" type
+ *		| "=>" type "+" identifier
  */
 static const Type *
 parsePointerType()
 {
-    if (token.kind != TokenKind::ARROW) {
+    if (token.kind != TokenKind::ARROW && token.kind != TokenKind::ARROW2) {
 	return nullptr;
     }
+    bool uptr = token.kind == TokenKind::ARROW2;
     getToken();
     auto type = parseType();
     if (!type) {
@@ -1578,7 +1581,34 @@ parsePointerType()
 	error::fatal();
 	return nullptr;
     }
-    return PointerType::create(type);
+    if (uptr) {
+	error::expectedAfterLastToken(TokenKind::PLUS);
+	getToken();
+	error::expectedAfterLastToken(TokenKind::IDENTIFIER);
+	auto tok = token;
+	getToken();
+	auto sym = Symtab::variable(tok.val, Symtab::AnyScope);
+	auto destructorType = UPointerType::destructorType(type);
+	if (!sym) {
+	    error::undefinedIdentifier(tok.loc, tok.val);
+	    error::fatal();
+	    return nullptr;
+	} else if (!Type::equals(sym->type, destructorType)) {
+	    error::location(tok.loc);
+	    error::out() << error::setColor(error::BOLD) << tok.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< " destructor type '" << destructorType << "' expected. "
+		<< "'" << tok.val << "' has type " << sym->type << "\n"
+		<< error::setColor(error::NORMAL);
+	    error::fatal();
+	    return nullptr;
+	} else {
+	    return UPointerType::create(type, sym->getId());
+	}
+    } else {
+	return PointerType::create(type);
+    }
 }
 
 //------------------------------------------------------------------------------

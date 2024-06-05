@@ -22,6 +22,7 @@ class ConditionalExpr : public Expr
 	const ExprPtr cond, trueExpr, falseExpr;
 	bool thenElseStyle;
 
+	void apply(std::function<bool(const Expr *)> op) const override;
 	bool hasAddress() const override;
 	bool isLValue() const override;
 	bool isConst() const override;

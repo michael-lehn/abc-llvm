@@ -32,6 +32,7 @@ class UnaryExpr : public Expr
 	const Kind kind;
 	const ExprPtr child;
 
+	void apply(std::function<bool(const Expr *)> op) const override;
 	virtual bool hasConstantAddress() const override;
 	bool hasAddress() const override;
 	bool isLValue() const override;

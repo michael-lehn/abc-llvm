@@ -74,6 +74,7 @@ enum class TokenKind {
     MINUS2,
     MINUS_EQUAL,
     ARROW,
+    ARROW2,
     ASTERISK,
     ASTERISK_EQUAL,
     SLASH,

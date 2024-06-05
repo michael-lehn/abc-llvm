@@ -23,6 +23,8 @@ class Expr
 	const Type * const type;
 
     public:
+	virtual void apply(std::function<bool(const Expr *)> op) const;
+
 	// for sematic checks
 	virtual bool hasConstantAddress() const;
 	virtual bool hasAddress() const = 0;
@@ -36,6 +38,7 @@ class Expr
 	virtual gen::Value loadAddress() const = 0;
 	virtual void condition(gen::Label trueLabel,
 			       gen::Label falseLabel) const;
+
 
 	// for debugging and educational purposes
 	virtual void print(int indent = 1) const = 0;

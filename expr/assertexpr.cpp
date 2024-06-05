@@ -40,6 +40,14 @@ AssertExpr::setFunction(UStr name, const Type *fnType)
     assertFnType = fnType;
 }
 
+void
+AssertExpr::apply(std::function<bool(const Expr *)> op) const
+{
+    if (op(this)) {
+	expr->apply(op);
+    }
+}
+
 bool
 AssertExpr::hasAddress() const
 {

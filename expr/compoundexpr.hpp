@@ -33,6 +33,7 @@ class CompoundExpr : public Expr
 
 	const std::vector<ExprPtr> exprVec;
 
+	void apply(std::function<bool(const Expr *)> op) const override;
 	bool hasAddress() const override;
 	bool isLValue() const override;
 	bool isConst() const override;
