@@ -562,30 +562,7 @@ parsePrimary()
 	    auto expr = Identifier::create(tok.val, sym->getId(), ty, tok.loc);
 	    return expr;
 	} else {
-	    auto didYouMean = Symtab::didYouMean(tok.val);
-	    error::location(tok.loc);
-	    error::out() << error::setColor(error::BOLD) << tok.loc << ": "
-		<< error::setColor(error::BOLD_RED) << "error: "
-		<< error::setColor(error::BOLD)
-		<< "undefined identifier\n"
-		<< error::setColor(error::NORMAL);
-	    if (didYouMean.size()) {
-		error::out() << error::setColor(error::BOLD) << tok.loc << ": "
-		    << error::setColor(error::BOLD_BLUE) << "note: "
-		    << error::setColor(error::BOLD)
-		    << "did you mean: "
-		    << error::setColor(error::NORMAL);
-		for (std::size_t i = 0; i < didYouMean.size(); ++i) {
-		    error::out() << "'" << didYouMean[i] << "'";
-		    if (i + 2 == didYouMean.size()) {
-			error::out() << ", or ";
-		    } else  if (i + 1 < didYouMean.size()) {
-			error::out() << ", ";
-		    }
-		}
-		error::out() << "?\n";
-	    }
-	    error::fatal();
+	    error::undefinedIdentifier(tok.loc, tok.val);
 	    return nullptr;
 	}
     } else if (tok.kind == TokenKind::FLOAT_DECIMAL_LITERAL) {

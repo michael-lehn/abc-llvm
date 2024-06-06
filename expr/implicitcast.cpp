@@ -22,25 +22,37 @@ ImplicitCast::ImplicitCast(ExprPtr &&expr, const Type *toType,
 ExprPtr
 ImplicitCast::create(ExprPtr &&expr, const Type *toType)
 {
-    assert(expr->type);
-    assert(toType);
-    auto type = Type::convert(expr->type, toType);
     auto loc = expr->loc;
-    if (!type) {
+    if (!expr) {
 	error::location(loc);
-	error::out() << error::setColor(error::BOLD) << loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
+	error::out() << error::setColor(error::BOLD) << loc
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
 	    << error::setColor(error::BOLD)
-	    << "can not convert an expression of "
-	    " type '" << expr->type << "' to type '" << toType << "'\n"
+	    << ": expected non-empty expression\n"
 	    << error::setColor(error::NORMAL);
 	error::fatal();
-	return nullptr;
-    } else if (Type::equals(expr->type, type)) {
+    }
+    assert(expr->type);
+    assert(toType);
+    if (Type::equals(expr->type, toType)) {
 	return expr;
     } else {
-	auto p = new ImplicitCast{std::move(expr), type, loc};
-	return std::unique_ptr<ImplicitCast>{p};
+	auto loc = expr->loc;
+	auto type = Type::convert(expr->type, toType);
+	if (!type) {
+	    error::location(loc);
+	    error::out() << error::setColor(error::BOLD) << loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "can not convert an expression of "
+		" type '" << expr->type << "' to type '" << toType << "'\n"
+		<< error::setColor(error::NORMAL);
+	    error::fatal();
+	    return nullptr;
+	} else {
+	    auto p = new ImplicitCast{std::move(expr), type, loc};
+	    return std::unique_ptr<ImplicitCast>{p};
+	}
     }
 }
 
@@ -55,7 +67,7 @@ ImplicitCast::setOutput(bool on)
 bool
 ImplicitCast::hasAddress() const
 {
-    return false;
+    return true;
 }
 
 bool
@@ -67,7 +79,11 @@ ImplicitCast::isLValue() const
 bool
 ImplicitCast::isConst() const
 {
-    return expr->isConst();
+    if (expr->type->isArray() && type->isPointer()) {
+	return expr->hasConstantAddress();
+    } else {
+	return expr->isConst();
+    }
 }
 
 // for code generation
@@ -122,8 +138,13 @@ ImplicitCast::loadValue() const
 gen::Value
 ImplicitCast::loadAddress() const
 {
-    assert(0 && "Cast expression has no address");
-    return nullptr;
+    static std::size_t idCount;
+    std::stringstream ss;
+    ss << ".compound" << idCount++;
+    auto tmpId = UStr::create(ss.str()).c_str();
+    auto tmpAddr = gen::localVariableDefinition(tmpId, type);
+    gen::store(loadValue(), tmpAddr);
+    return tmpAddr;
 }
 
 // for debugging and educational purposes

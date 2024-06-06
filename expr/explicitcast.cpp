@@ -46,16 +46,17 @@ ExplicitCast::create(ExprPtr &&expr, const Type *toType, lexer::Loc loc)
 		<< error::setColor(error::NORMAL);
 	    error::fatal();
 	    return nullptr;
+	} else {
+	    auto p = new ExplicitCast{std::move(expr), toType, loc};
+	    return std::unique_ptr<ExplicitCast>{p};
 	}
-	auto p = new ExplicitCast{std::move(expr), toType, loc};
-	return std::unique_ptr<ExplicitCast>{p};
     }
 }
 
 bool
 ExplicitCast::hasAddress() const
 {
-    return false;
+    return true;
 }
 
 bool
@@ -80,8 +81,12 @@ ExplicitCast::loadConstant() const
 {
     assert(isConst());
     if (type->isBool()) {
-	auto zero = gen::getConstantZero(expr->type);
-	return gen::instruction(gen::NE, expr->loadConstant(), zero);
+	auto value = expr->loadConstant();
+	if (value->isZeroValue()) {
+	    return gen::getFalse();
+	} else {
+	    return gen::getTrue();
+	}
     } else if (expr->type->isArray() && type->isPointer()) {
 	return expr->loadConstantAddress();
     } else {
@@ -96,9 +101,25 @@ ExplicitCast::loadValue() const
 	auto zero = gen::getConstantZero(expr->type);
 	return gen::instruction(gen::NE, expr->loadValue(), zero);
     } else if (expr->type->isArray() && type->isPointer()) {
-	std::cerr << "expr = " << expr << ", expr->type = " << expr->type
-	    << ", type = " << type << "\n";
 	return expr->loadAddress();
+    }
+    if (expr->isConst()) {
+	// for constant expression some errors can be caught here ...
+	if (expr->type->isFloatType() && type->isUnsignedInteger()) {
+	    using T = std::remove_pointer_t<gen::ConstantFloat>;
+	    auto val = llvm::dyn_cast<T>(expr->loadConstant());
+	    if (val->isNegative()) {
+		error::location(loc);
+		error::out() << error::setColor(error::BOLD) << loc << ": "
+		    << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "conversion of out of range value from "
+		    " '" << expr->type << "' to '" << type
+		    << "' is undefined\n"
+		    << error::setColor(error::NORMAL);
+		error::fatal();
+	    }
+	}
     }
     return gen::cast(expr->loadValue(), expr->type, type);
 }
@@ -106,7 +127,12 @@ ExplicitCast::loadValue() const
 gen::Value
 ExplicitCast::loadAddress() const
 {
-    assert(0 && "Cast expression has no address");
+    static std::size_t idCount;
+    std::stringstream ss;
+    ss << ".compound" << idCount++;
+    auto tmpId = UStr::create(ss.str()).c_str();
+    auto tmpAddr = gen::localVariableDefinition(tmpId, type);
+    gen::store(loadValue(), tmpAddr);
     return nullptr;
 }
 

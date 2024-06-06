@@ -7,6 +7,7 @@
 
 #include "error.hpp"
 #include "lexer.hpp"
+#include "symtab/symtab.hpp"
 
 namespace abc { namespace error {
 
@@ -31,6 +32,34 @@ warning()
     out() << std::endl << "WARNING" << std::endl << std::endl;
 }
 
+void
+undefinedIdentifier(const lexer::Loc &loc, UStr name)
+{
+    auto didYouMean = Symtab::didYouMean(name);
+    location(loc);
+    out() << setColor(BOLD) << loc << ": "
+	<< setColor(BOLD_RED) << "error: " << setColor(BOLD)
+	<< "undefined identifier\n"
+	<< setColor(NORMAL);
+    if (didYouMean.size()) {
+	out() << setColor(BOLD) << loc << ": "
+	    << setColor(BOLD_BLUE) << "note: "
+	    << setColor(BOLD)
+	    << "did you mean: "
+	    << setColor(NORMAL);
+	for (std::size_t i = 0; i < didYouMean.size(); ++i) {
+	    out() << "'" << didYouMean[i] << "'";
+	    if (i + 2 == didYouMean.size()) {
+		out() << ", or ";
+	    } else  if (i + 1 < didYouMean.size()) {
+		out() << ", ";
+	    }
+	}
+	out() << "?\n";
+    }
+    fatal();
+}
+
 enum ExpectedLoc {
     HERE,
     AFTER,
@@ -52,14 +81,14 @@ expected(const std::vector<lexer::TokenKind> &kind, ExpectedLoc where)
 
     if (!ok) {
 	if (where == AFTER) {
-	    error::location(lexer::lastToken.loc);
+	    location(lexer::lastToken.loc);
 	} else if (where == HERE || where == BEFORE) {
-	    error::location(lexer::token.loc);
+	    location(lexer::token.loc);
 	}
 
-	out() << error::setColor(error::BOLD) << lexer::token.loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
+	out() << setColor(BOLD) << lexer::token.loc << ": "
+	    << setColor(BOLD_RED) << "error: "
+	    << setColor(BOLD)
 	    << "expected ";
 	for (std::size_t i = 0; i < kind.size(); ++i) {
 	    out() << "'" << kind[i] << "'";
@@ -84,7 +113,7 @@ expected(const std::vector<lexer::TokenKind> &kind, ExpectedLoc where)
 		out() << lexer::token.kind;
 	    }
 	}
-	out() << "'\n" << error::setColor(error::NORMAL);
+	out() << "'\n" << setColor(NORMAL);
 	fatal();
     }
     return ok;
