@@ -8,6 +8,7 @@
 #include "gen/variable.hpp"
 #include "lexer/error.hpp"
 #include "type/integertype.hpp"
+#include "type/pointertype.hpp"
 
 #include "binaryexpr.hpp"
 #include "identifier.hpp"
@@ -274,8 +275,17 @@ BinaryExpr::loadValue() const
     assert(type);
     switch (kind) {
 	case ASSIGN:
-	    return gen::store(right->loadValue(),
-			      left->loadAddress());
+	    if (left->type->isUPointer() && left->type->isUPointer()) {
+		auto leftAddr = left->loadAddress();
+		auto leftValue = gen::fetch(leftAddr, left->type);
+		auto rightAddr = right->loadAddress();
+		auto rightValue = gen::fetch(rightAddr, right->type);
+
+		gen::store(leftValue, rightAddr);
+		return gen::store(rightValue, leftAddr);
+	    } else {
+		return gen::store(right->loadValue(), left->loadAddress());
+	    }
 	case ADD_ASSIGN:
 	    return gen::store(handleArithmetricOperation(ADD),
 			      left->loadAddress());

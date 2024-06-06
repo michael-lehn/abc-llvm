@@ -72,6 +72,7 @@ TokenKindCStr(TokenKind kind)
 	case TokenKind::MINUS_EQUAL: return "MINUS_EQUAL";
 	case TokenKind::ARROW: return "ARROW";
 	case TokenKind::ARROW2: return "ARROW2";
+	case TokenKind::TILDE: return "TILDE";
 	case TokenKind::ASTERISK: return "ASTERISK";
 	case TokenKind::ASTERISK_EQUAL: return "ASTERISK_EQUAL";
 	case TokenKind::SLASH: return "SLASH";
@@ -158,6 +159,7 @@ getCStr(TokenKind kind)
 	case TokenKind::MINUS_EQUAL: return "-=";
 	case TokenKind::ARROW: return "->";
 	case TokenKind::ARROW2: return "=>";
+	case TokenKind::TILDE: return "~";
 	case TokenKind::ASTERISK: return "*";
 	case TokenKind::ASTERISK_EQUAL: return "*=";
 	case TokenKind::SLASH: return "/";

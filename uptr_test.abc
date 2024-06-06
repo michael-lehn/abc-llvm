@@ -1,0 +1,35 @@
+@ <stdio.hdr>
+
+fn last(this: ->-> char)
+{
+    if (*this) {
+	printf(" last: *this = %s\n", *this);
+    }
+}
+
+fn foo(msg: => char + last): => char + last
+{
+    printf("foo called: msg = %s\n", msg);
+    return msg;
+}
+
+fn main(): int
+{
+    local msg: => char + last = "hello, world";
+
+    printf("msg = %s\n", msg);
+
+    local msg2: => char + last = nullptr;
+    printf("msg = %s\n", msg);
+
+    msg2 = foo(~msg);
+
+    printf("msg = %s\n",  msg);
+    printf("msg2 = %s\n",  msg2);
+
+    msg = ~msg2;
+
+    printf("msg = %s\n",  msg);
+    printf("msg2 = %s\n",  msg2);
+
+}

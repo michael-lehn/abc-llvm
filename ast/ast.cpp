@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "expr/expr.hpp"
+#include "expr/binaryexpr.hpp"
 #include "expr/compoundexpr.hpp"
 #include "expr/identifier.hpp"
 #include "expr/implicitcast.hpp"
@@ -832,7 +833,11 @@ AstReturn::codegen()
 	    return;
 	}
 	expr = ImplicitCast::create(std::move(expr), retType);
-	gen::returnInstruction(expr->loadValue());
+	auto val = expr->loadValue();
+	if (expr->type->isUPointer()) {
+	    gen::store(gen::getConstantZero(expr->type), expr->loadAddress());
+	}
+	gen::returnInstruction(val);
     }
 }
 
@@ -960,6 +965,17 @@ AstExpr::print(int indent) const
     }
 }
 
+static bool
+keepAlive(const Expr *expr)
+{
+    if (auto ident = dynamic_cast<const Identifier *>(expr)) {
+	if (ident->type->isUPointer()) {
+	    ident->loadValue();
+	}
+    }
+    return true;
+}
+
 void
 AstExpr::codegen()
 {
@@ -971,17 +987,8 @@ AstExpr::codegen()
 	    << ": warning: expression statement not reachabel\n";
 	return;
     }
-    expr->loadValue(); 
-    expr->apply(
-	[=](const Expr *expr) -> bool {
-	    if (auto ident = dynamic_cast<const Identifier *>(expr)) {
-		if (ident->type->isUPointer()) {
-		    ident->loadValue();
-		}
-	    }
-	    return true;
-	}
-    );
+    expr->loadValue();
+    expr->apply(keepAlive);
 }
 
 /*

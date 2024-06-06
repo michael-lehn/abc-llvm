@@ -15,6 +15,8 @@
 #include "constant.hpp"
 #include "function.hpp"
 #include "gentype.hpp"
+#include "instruction.hpp"
+#include "label.hpp"
 #include "variable.hpp"
 
 namespace gen {
@@ -154,12 +156,34 @@ insertDestructorAfterLastUse(llvm::AllocaInst *alloca, const abc::Type *type)
     if (lastUse) {
 	lastUse = lastUse->getNextNode();
 	assert(lastUse);
-	llvm::IRBuilder<> builder(lastUse);
 	
 	auto destrName = type->destructorName().c_str();
 	auto destr = llvmModule->getFunction(destrName);
 	if (destr) {
+	    llvm::IRBuilder<> builder(lastUse);
 	    builder.CreateCall(destr, {alloca});
+
+	    /*
+	    auto currBlock = lastUse->getParent();
+	    auto contBlock = currBlock->splitBasicBlock(lastUse, "continue");
+	    auto callBlock = llvm::BasicBlock::Create(*llvmContext,
+						      "call_destr",
+						       currBlock->getParent());
+	    currBlock->getTerminator()->eraseFromParent();
+
+	    llvmBuilder->SetInsertPoint(currBlock);
+	    auto llvmType = convert(type);
+	    auto val = llvmBuilder->CreateLoad(llvmType, alloca);
+	    auto zero =  llvm::Constant::getNullValue(llvmType);
+	    auto cmp = llvmBuilder->CreateICmpNE(val, zero);
+	    llvmBuilder->CreateCondBr(cmp, callBlock, contBlock);
+
+	    llvmBuilder->SetInsertPoint(callBlock);
+	    llvmBuilder->CreateCall(destr, {alloca});
+	    llvmBuilder->CreateBr(contBlock);
+
+	    llvmBuilder->SetInsertPoint(&contBlock->front());
+	    */
 	} else {
 	    std::cerr << "function '" << destrName << "' not found\n";
 	    assert(0);

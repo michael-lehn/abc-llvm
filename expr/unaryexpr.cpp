@@ -62,7 +62,7 @@ UnaryExpr::hasConstantAddress() const
 bool
 UnaryExpr::hasAddress() const
 {
-    return isLValue();
+    return isLValue() || kind == GUTTING;
 }
 
 bool
@@ -89,6 +89,7 @@ UnaryExpr::isConst() const
 	case POSTFIX_DEC:
 	case PREFIX_DEC:
 	case PREFIX_INC:
+	case GUTTING:
 	    return false;
 	default:
 	    assert(0 && "internal error: case not handled");
@@ -146,6 +147,16 @@ UnaryExpr::loadValue() const
 		error::fatal();
 	    }
 	    return gen::fetch(child->loadValue(), type);
+	case GUTTING:
+	    {
+		assert(!moveValue);
+		if (!moveValue) {
+		    auto addr = loadAddress();
+		    moveValue = gen::fetch(addr, type);
+		    gen::store(gen::getConstantZero(child->type), addr);
+		}
+		return moveValue;
+	    }
 	case ADDRESS:
 	    return child->loadAddress();
 	case PREFIX_INC:
@@ -206,7 +217,21 @@ gen::Value
 UnaryExpr::loadAddress() const
 {
     assert(hasAddress());
-    assert(kind == ARROW_DEREF || kind == ASTERISK_DEREF);
+    if (kind == GUTTING) {
+	assert(!moveValue);
+	static std::size_t idCount;
+	std::stringstream ss;
+	ss << ".gutting_addr" << idCount++;
+	auto tmpId = UStr::create(ss.str()).c_str();
+	auto tmpAddr = gen::localVariableDefinition(tmpId, child->type);
+	auto tmpValue = gen::getConstantZero(child->type);
+	auto childAddr = child->loadAddress();
+	auto childValue = gen::fetch(childAddr, child->type);
+	
+	gen::store(tmpValue, childAddr);
+	gen::store(childValue, tmpAddr);
+	return tmpAddr;
+    }
     return child->loadValue();
 }
 
@@ -253,6 +278,11 @@ UnaryExpr::printFlat(std::ostream &out, int prec) const
 	case UnaryExpr::LOGICAL_NOT:
 	    if (prec > 15) { out << "("; }
 	    out << "!"; child->printFlat(out, 15);
+	    if (prec > 15) { out << ")"; }
+	    break;
+	case UnaryExpr::GUTTING:
+	    if (prec > 15) { out << "("; }
+	    out << "~"; child->printFlat(out, 15);
 	    if (prec > 15) { out << ")"; }
 	    break;
 	case UnaryExpr::ADDRESS:

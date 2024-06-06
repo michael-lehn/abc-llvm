@@ -376,6 +376,11 @@ parsePrefix()
 		getToken();
 		return parsePostfix(std::move(expr));
 	    }
+	case TokenKind::TILDE:
+	    getToken();
+	    return UnaryExpr::create(UnaryExpr::GUTTING,
+				     parsePrefix(),
+				     tok.loc);
 	case TokenKind::AND:
 	    getToken();
 	    return UnaryExpr::create(UnaryExpr::ADDRESS,

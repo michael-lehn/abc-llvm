@@ -20,10 +20,13 @@ class UnaryExpr : public Expr
 	    POSTFIX_INC,
 	    PREFIX_DEC,
 	    PREFIX_INC,
+	    GUTTING,
 	};
 
     protected:
 	UnaryExpr(Kind kind, ExprPtr &&child, const Type *type, lexer::Loc loc);
+
+	mutable gen::Value moveValue = nullptr;
 
     public:
 	static ExprPtr create(Kind kind, ExprPtr &&child,

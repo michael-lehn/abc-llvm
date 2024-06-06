@@ -58,6 +58,16 @@ call(ExprPtr &&fn, std::vector<ExprPtr> &&arg, lexer::Loc *loc)
 
     for (std::size_t i = 0; i < arg.size(); ++i) {
 	if (i < paramType.size()) {
+	    if (arg[i]->type->isUPointer() && arg[i]->isLValue()
+		    && paramType[i]->isUPointer()) {
+		error::location(arg[i]->loc);
+		error::out() << arg[i]->loc
+		    << error::setColor(error::BOLD_RED) << ": "
+		    << error::setColor(error::BOLD)
+		    << "error: can not pass L-value unique-poiner\n"
+		    << error::setColor(error::NORMAL);
+		error::fatal();
+	    }
 	    arg[i] = ImplicitCast::create(std::move(arg[i]), paramType[i]);
 	} else {
 	    // Rules for converting vargs:
@@ -318,6 +328,17 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		    << error::setColor(error::BOLD)
 		    << "not an LValue\n"
 		    << error::setColor(error::NORMAL);
+	    } else if (left->type->isUPointer() && right->type->isUPointer()) {
+		if (right->isLValue()) {
+		    error::out() << error::setColor(error::BOLD) << right->loc
+			<< ": " << error::setColor(error::BOLD_RED) << "error: "
+			<< error::setColor(error::BOLD)
+			<< "has to be an RValue\n"
+			<< error::setColor(error::NORMAL);
+		} else {
+		    type = newLeftType = left->type;
+		    newRightType = Type::convert(right->type, type);
+		}
 	    } else {
 		type = newLeftType = left->type;
 		newRightType = Type::convert(right->type, type);
@@ -538,10 +559,22 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
     switch (kind) {
 	default:
 	    break;
+	case UnaryExpr::GUTTING:
+	    if (child->type->isUPointer() && child->isLValue()) {
+		type = newChildType = child->type;
+	    }
+	    break;
 	case UnaryExpr::ADDRESS:
-	    if (child->hasAddress()) {
+	    if (child->isLValue()) {
 		type = PointerType::create(child->type);
 		newChildType = child->type;
+	    } else {
+		error::location(child->loc);
+		error::out() << error::setColor(error::BOLD) << child->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "lvalue required as unary '&' operand"
+		    << error::setColor(error::NORMAL);
 	    }
 	    break;
 	case UnaryExpr::ASTERISK_DEREF:

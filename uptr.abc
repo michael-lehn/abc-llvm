@@ -1,0 +1,16 @@
+global p: => char;
+global l: -> char;
+
+extern fn foo(): => char;
+
+fn main()
+{
+    local q: => char, free = malloc(10);
+
+    l = q;
+
+    p <- q;
+
+    p = foo();
+}
+
