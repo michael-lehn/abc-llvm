@@ -13,6 +13,11 @@ fn foo(msg: => char + last): => char + last
     return msg;
 }
 
+fn bar(): => char + last
+{
+    return "The World Ends!";
+}
+
 fn main(): int
 {
     local msg: => char + last = "hello, world";
@@ -27,6 +32,16 @@ fn main(): int
     printf("msg2 = %s\n",  msg2);
 
     msg = ~msg2;
+
+    printf("msg = %s\n",  msg);
+    printf("msg2 = %s\n",  msg2);
+
+    msg = bar();
+
+    printf("msg = %s\n",  msg);
+    printf("msg2 = %s\n",  msg2);
+
+    msg2 = ~msg;
 
     printf("msg = %s\n",  msg);
     printf("msg2 = %s\n",  msg2);

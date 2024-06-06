@@ -87,7 +87,7 @@ expected(const std::vector<lexer::TokenKind> &kind, ExpectedLoc where)
 	}
 
 	out() << setColor(BOLD) << lexer::token.loc << ": "
-	    << setColor(BOLD_RED) << ""
+	    << setColor(BOLD_RED) << "error: "
 	    << setColor(BOLD)
 	    << "expected ";
 	for (std::size_t i = 0; i < kind.size(); ++i) {
