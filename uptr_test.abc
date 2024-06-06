@@ -16,11 +16,10 @@ fn foo(msg: => char + last): => char + last
 fn main(): int
 {
     local msg: => char + last = "hello, world";
+    local msg2: => char + last = "Hallo Welt!";
 
     printf("msg = %s\n", msg);
-
-    local msg2: => char + last = nullptr;
-    printf("msg = %s\n", msg);
+    printf("msg2 = %s\n",  msg2);
 
     msg2 = foo(~msg);
 
