@@ -15,8 +15,8 @@ class Member : public Expr
 	       std::size_t index, lexer::Loc loc);
 
     public:
-	static ExprPtr create(ExprPtr &&structure, UStr member,
-			      lexer::Loc loc = lexer::Loc{});
+	static ExprPtr create(ExprPtr &&structure, bool derefStructPtr,
+			      UStr member, lexer::Loc loc = lexer::Loc{});
 
 	const ExprPtr structure;
 	const UStr member;

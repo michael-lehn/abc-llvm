@@ -441,7 +441,8 @@ parsePostfix(ExprPtr &&expr)
 	    {
 		getToken();
 		error::expected(TokenKind::IDENTIFIER);
-		expr = Member::create(std::move(expr), token.val, token.loc);
+		tok = token;
+		expr = Member::create(std::move(expr), false, tok.val, tok.loc);
 		getToken();
 		return parsePostfix(std::move(expr));
 	    }
@@ -490,6 +491,7 @@ parsePostfix(ExprPtr &&expr)
 		auto tok = token;
 		getToken();
 		return  parsePostfix(Member::create(std::move(expr),
+						    true,
 						    tok.val,
 						    tok.loc));
 	    } else {

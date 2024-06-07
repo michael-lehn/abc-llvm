@@ -18,11 +18,13 @@ Member::Member(ExprPtr &&structure, UStr member, const Type *type,
 }
 
 ExprPtr
-Member::create(ExprPtr &&structure, UStr member, lexer::Loc loc)
+Member::create(ExprPtr &&structure, bool derefStructPtr, UStr member,
+	       lexer::Loc loc)
 {
     assert(structure);
     assert(structure->type);
-    auto structureType = structure->type->isPointer()
+
+    auto structureType = derefStructPtr
 	? structure->type->refType()
 	: structure->type;
 
@@ -83,8 +85,8 @@ Member::create(ExprPtr &&structure, UStr member, lexer::Loc loc)
 	    const auto &memberName = structureType->memberName();
 	    const auto &memberType = structureType->memberType();
 	    for (std::size_t i = 0; i < memberName.size(); ++i) {
-		error::out() << memberName[i] << " of type " << memberType[i]
-		    << "\n";
+		error::out() << "\t" <<  memberName[i] << " of type "
+		    << memberType[i] << "\n";
 	    }
 	    error::out() << error::setColor(error::NORMAL);
 	}
