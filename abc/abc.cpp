@@ -403,7 +403,9 @@ main(int argc, char *argv[])
 	linkerCmd += " -labc ";
 
 	if (verbose) {
-	    std::cerr << linkerCmd.c_str() << "\n";
+	    // std::cerr << linkerCmd.c_str() << "\n";
+	    auto verbose = linkerCmd + " -### 2>&1 | tail -1";
+	    std::system(verbose.c_str());
 	}
 	if (std::system(linkerCmd.c_str())) {
 	    std::cerr << "linker error\n";
