@@ -5,6 +5,7 @@
 #include <fstream>
 #include <vector>
 
+#include "expr/implicitcast.hpp"
 #include "gen/gen.hpp"
 #include "gen/print.hpp"
 #include "lexer/lexer.hpp"
@@ -69,7 +70,7 @@ usage(const char *prog, int exit = 1)
     std::cerr << "usage: " << prog << " "
 	<< "[ -o outfile ] "
 	<< "[ -v ] "
-	<< "[ -c | -S | --emit-llvm ] "
+	<< "[ -c | -S | -E | --emit-llvm ] "
 	<< "[  -O0 | -O1 | -O2 | -O3 | -Os | -Oz ] "
 	<< "[ -Idir... ] "
 	<< "[ -Ldir... ] "
@@ -93,6 +94,7 @@ main(int argc, char *argv[])
     gen::FileType outputFileType = gen::OBJECT_FILE;
     std::string ldFlags;
     bool printAst = false;
+    bool codegen = true;
     bool createDep = false;
     bool createPhonyDep = false;
     std::filesystem::path depTarget;
@@ -146,6 +148,11 @@ main(int argc, char *argv[])
 		case 'c':
 		    outputFileType = gen::OBJECT_FILE;
 		    createExecutable = false;
+		    break;
+		case 'E':
+		    printAst = true;
+		    abc::ImplicitCast::setOutput(false);
+		    codegen = false;
 		    break;
 		case 'S':
 		    outputFileType = gen::ASSEMBLY_FILE;
@@ -346,10 +353,12 @@ main(int argc, char *argv[])
 	    if (printAst) {
 		ast->print();
 	    }
-	    ast->codegen();
-	    gen::print(outfile.c_str(), outputFileType);
-	    if (outputFileType == gen::OBJECT_FILE) {
-		objFile.push_back(outfile);
+	    if (codegen) {
+		ast->codegen();
+		gen::print(outfile.c_str(), outputFileType);
+		if (outputFileType == gen::OBJECT_FILE) {
+		    objFile.push_back(outfile);
+		}
 	    }
 	} else {
 	    std::exit(1);
@@ -381,7 +390,7 @@ main(int argc, char *argv[])
 	}
     }
 
-    if (createExecutable) {
+    if (codegen && createExecutable) {
 	std::string linkerCmd = ccCmd + " -o ";
 	linkerCmd += executable.c_str();
 	for (const auto &obj: objFile) {
