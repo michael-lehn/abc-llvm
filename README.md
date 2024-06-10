@@ -7,6 +7,17 @@ Rust, and Zig. Unlike Python, JavaScript, or Ruby, these languages are closer
 to the hardware and require a deeper understanding of low-level programming
 concepts.
 
+## Installation
+
+Clone the repository, build the compiler with `make`, install it with `make install`:
+
+```
+git clone https://github.com/michael-lehn/abc-llvm.git
+cd abc-llvm
+make
+sudo make install
+```
+
 ## Why Another Programming Language?
 
 What is the Easiest Programming Language Among C, C++, Rust, and Zig?
