@@ -148,10 +148,16 @@ Type::convert(const Type *from, const Type *to)
 	}
 	auto toRefTy = to->refType();
 	auto fromRefTy = from->refType();
-	if (!fromRefTy->hasConstFlag() && toRefTy->hasConstFlag()) {
+	if (toRefTy->hasConstFlag() && !fromRefTy->hasConstFlag()) {
 	    toRefTy = toRefTy->getConstRemoved();
 	}
-	if (equals(toRefTy, fromRefTy)) {
+	if (toRefTy->isPointer() && fromRefTy->isPointer()) {
+	    if (convert(fromRefTy, toRefTy)) {
+		return to;
+	    } else {
+		return nullptr;
+	    }
+	} else if (equals(toRefTy, fromRefTy)) {
 	    return to;
 	} else if (toRefTy->isVoid() || fromRefTy->isVoid()) {
 	    return to;
@@ -481,7 +487,7 @@ Type::memberType() const
 std::ostream &
 operator<<(std::ostream &out, const Type *type)
 {
-    const char *constFlag = type->hasConstFlag() ? "const " : "";
+    const char *constFlag = type->hasConstFlag() ? "readonly " : "";
 
     out << constFlag << type->ustr();
     return out;
