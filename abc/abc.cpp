@@ -75,6 +75,7 @@ usage(const char *prog, int exit = 1)
 	<< "[ -Idir... ] "
 	<< "[ -Ldir... ] "
 	<< "[ -llibrary ] "
+	<< "[ -static ] "
 	<< "[ -O<level> ] "
 	<< "[ -MD -MP -MT <target> -MF <file>] "
 	<< "[ --help ] "
@@ -100,10 +101,13 @@ main(int argc, char *argv[])
     std::filesystem::path depTarget;
     std::filesystem::path depFile;
     bool verbose = false;
+    bool staticLink = false;
     llvm::OptimizationLevel optLevel = llvm::OptimizationLevel::O0;
     
     for (int i = 1; i < argc; ++i) {
-	if (argv[i][0] == '-') {
+	if (!strcmp(argv[i], "-static")) {
+	    staticLink = true;
+	} else if (argv[i][0] == '-') {
 	    switch (argv[i][1]) {
 		case '-':
 		    if (!strcmp(argv[i], "--help")) {
@@ -401,6 +405,9 @@ main(int argc, char *argv[])
 	linkerCmd += " -L ";
 	linkerCmd += abcLibDir;
 	linkerCmd += " -labc ";
+	if (staticLink) {
+	    linkerCmd += " -static ";
+	}
 
 	if (verbose) {
 	    // std::cerr << linkerCmd.c_str() << "\n";
