@@ -246,7 +246,7 @@ AstFuncDecl::codegen()
 AstFuncDef::AstFuncDef(lexer::Token fnName, const Type *fnType)
     : fnName{fnName}, fnType{fnType}
 {
-    auto addDecl = Symtab::addDeclaration(fnName.loc, fnName.val, fnType);
+    auto addDecl = Symtab::addDefinition(fnName.loc, fnName.val, fnType);
     assert(addDecl.first);
     if (fnName.val == UStr::create("main")) {
 	addDecl.first->setExternalLinkage();
