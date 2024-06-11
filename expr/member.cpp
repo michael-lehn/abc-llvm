@@ -24,6 +24,16 @@ Member::create(ExprPtr &&structure, bool derefStructPtr, UStr member,
     assert(structure);
     assert(structure->type);
 
+    if (derefStructPtr && !structure->type->isPointer()) {
+	error::location(loc);
+	error::out() << error::setColor(error::BOLD) << loc
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << structure << " is not a pointer\n"
+	    << error::setColor(error::NORMAL);
+	error::fatal();
+    }
+
     auto structureType = derefStructPtr
 	? structure->type->refType()
 	: structure->type;

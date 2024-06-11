@@ -772,6 +772,8 @@ AstLocalVar::codegen()
 	    for (std::size_t i = 0; i < var->count(); ++i) {
 		gen::localVariableDefinition(var->getId(i).c_str(),
 					     var->varType);
+	    }
+	    for (std::size_t i = 0; i < var->count(); ++i) {
 		if (initializer) {
 		    gen::store(compExpr->loadValue(i),
 			       gen::loadAddress(var->getId(i).c_str()));
