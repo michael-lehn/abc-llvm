@@ -52,6 +52,7 @@ syntax match literal /\<true\>/ skipwhite
 syntax match literal /\<false\>/ skipwhite
 
 syntax match type /\<const\>/ skipwhite
+syntax match type /\<readonly\>/ skipwhite
 syntax match type /\<void\>/ skipwhite
 syntax match type /\<bool\>/ skipwhite
 syntax match type /\<float\>/ skipwhite
