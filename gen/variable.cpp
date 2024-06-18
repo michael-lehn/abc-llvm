@@ -15,6 +15,7 @@
 #include "constant.hpp"
 #include "function.hpp"
 #include "gentype.hpp"
+#include "instruction.hpp"
 #include "variable.hpp"
 
 namespace gen {
@@ -206,8 +207,8 @@ Value
 pointerIncrement(const abc::Type *type, Value pointer, Value offset)
 {
     assert(llvmBuilder);
-    assert(!functionBuildingInfo.bbClosed);
     assert(type);
+    assert(functionBuildingInfo.fn);
     auto llvmType = convert(type);
 
     std::vector<Value> idxList{1};
@@ -234,8 +235,9 @@ Value
 pointerDifference(const abc::Type *type, Value pointer1, Value pointer2)
 {
     assert(llvmBuilder);
-    assert(!functionBuildingInfo.bbClosed);
     assert(type);
+    assert(functionBuildingInfo.fn);
+    reachableCheck();
     auto llvmType = convert(type);
     return llvmBuilder->CreatePtrDiff(llvmType, pointer1, pointer2);
 }
@@ -244,9 +246,10 @@ Value
 pointerToIndex(const abc::Type *type, Value pointer, std::size_t index)
 {
     assert(llvmBuilder);
-    assert(!functionBuildingInfo.bbClosed);
     assert(type);
     assert(type->isStruct());
+    assert(functionBuildingInfo.fn);
+    reachableCheck();
     auto llvmType = convert(type);
 
     std::vector<Value> idxList{2};
@@ -260,8 +263,9 @@ Value
 fetch(Value addr, const abc::Type *type)
 {
     assert(llvmBuilder);
-    assert(!functionBuildingInfo.bbClosed);
     assert(type);
+    assert(functionBuildingInfo.fn);
+    reachableCheck();
     auto llvmType = convert(type);
     return llvmBuilder->CreateLoad(llvmType, addr);
 }
@@ -270,7 +274,8 @@ Value
 store(Value val, Value addr)
 {
     assert(llvmBuilder);
-    assert(!functionBuildingInfo.bbClosed);
+    assert(functionBuildingInfo.fn);
+    reachableCheck();
     llvmBuilder->CreateStore(val, addr);
     return val;
 }

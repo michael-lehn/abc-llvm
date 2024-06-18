@@ -58,6 +58,7 @@ JumpOrigin jumpInstruction(Value condition, Label defaultLabel,
 Value phi(Value a, Label labelA, Value b, Label labelB, const abc::Type *type);
 
 void returnInstruction(Value val);
+void reachableCheck();
 
 } // namespace gen
 

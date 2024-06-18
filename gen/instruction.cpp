@@ -3,14 +3,19 @@
 #include "function.hpp"
 #include "gentype.hpp"
 #include "instruction.hpp"
+#include "label.hpp"
 #include "variable.hpp"
 
 namespace gen {
 
-Value
-instruction(InstructionOp op, Value left, Value right)
+static Value
+instruction(InstructionOp op, Value left, Value right, bool forConstValue)
 {
     assert(llvmContext);
+    
+    if (!forConstValue) {
+	reachableCheck();
+    }
 
     switch (op) {
 	case FADD:
@@ -86,12 +91,18 @@ instruction(InstructionOp op, Value left, Value right)
     }
 }
 
+Value
+instruction(InstructionOp op, Value left, Value right)
+{
+    return instruction(op, left, right, false);
+}
+
 Constant
 instruction(InstructionOp op, Constant left, Constant right)
 {
     auto left_ = llvm::dyn_cast<llvm::Value>(left);
     auto right_ = llvm::dyn_cast<llvm::Value>(right);
-    return llvm::dyn_cast<llvm::Constant>(instruction(op, left_, right_));
+    return llvm::dyn_cast<llvm::Constant>(instruction(op, left_, right_, true));
 }
 
 JumpOrigin
@@ -99,7 +110,7 @@ jumpInstruction(Label label)
 {
     assert(llvmBuilder);
     assert(functionBuildingInfo.fn);
-    assert(!functionBuildingInfo.bbClosed);
+    reachableCheck();
 
     auto ib = llvmBuilder->GetInsertBlock();
     llvmBuilder->CreateBr(label);
@@ -112,7 +123,7 @@ jumpInstruction(Value condition, Label trueLabel, Label falseLabel)
 {
     assert(llvmBuilder);
     assert(functionBuildingInfo.fn);
-    assert(!functionBuildingInfo.bbClosed);
+    reachableCheck();
 
     auto ib = llvmBuilder->GetInsertBlock();
     llvmBuilder->CreateCondBr(condition, trueLabel, falseLabel);
@@ -126,7 +137,7 @@ jumpInstruction(Value condition, Label defaultLabel,
 {
     assert(llvmBuilder);
     assert(functionBuildingInfo.fn);
-    assert(!functionBuildingInfo.bbClosed);
+    reachableCheck();
 
     auto ib = llvmBuilder->GetInsertBlock();
     auto sw = llvmBuilder->CreateSwitch(condition,
@@ -156,12 +167,20 @@ returnInstruction(Value val)
 {
     assert(llvmBuilder);
     assert(functionBuildingInfo.fn);
-    assert(!functionBuildingInfo.bbClosed);
+    reachableCheck();
 
     if (val) {
 	store(val, functionBuildingInfo.retVal);
     }
     jumpInstruction(functionBuildingInfo.leave);
+}
+
+void
+reachableCheck()
+{
+    if (functionBuildingInfo.bbClosed) {
+	defineLabel(getLabel("not_reachable"));
+    }
 }
 
 } // namespace gen
