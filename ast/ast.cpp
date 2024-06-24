@@ -1637,6 +1637,7 @@ AstStructDecl::add(std::vector<lexer::Token> &&memberName,
 void
 AstStructDecl::complete()
 {
+    std::unordered_map<UStr, lexer::Loc> memberMap;
     std::vector<UStr> memberName;
     std::vector<const Type *> memberType;
 
@@ -1652,6 +1653,27 @@ AstStructDecl::complete()
 	}
 
 	for (std::size_t i = 0; i < decl.first.size(); ++i) {
+	    if (memberMap.contains(decl.first[i].val)) {
+		std::cerr << "member already defined: " << decl.first[i].val
+		    << "\n";
+		error::location(decl.first[i].loc);
+		error::out() << error::setColor(error::BOLD)
+		    << decl.first[i].loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "member '" << decl.first[i].val << "' already defined.\n"
+		    << error::setColor(error::NORMAL);
+		error::location(memberMap[decl.first[i].val]);
+		error::out() << error::setColor(error::BOLD)
+		    << memberMap[decl.first[i].val]
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "previous definition here.\n"
+		    << error::setColor(error::NORMAL);
+
+		error::fatal();
+	    }
+	    memberMap[decl.first[i].val] = decl.first[i].loc;
 	    memberName.push_back(decl.first[i].val);
 	    memberType.push_back(type);
 	}
