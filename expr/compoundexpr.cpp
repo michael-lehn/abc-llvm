@@ -46,8 +46,7 @@ CompoundExpr::initTmp() const
 	    gen::store(val[i], elementAddr);
 	}
     } else if (type->isStruct()) {
-	const auto memberType = type->memberType();
-	for (std::size_t i = 0; i < memberType.size(); ++i) {
+	for (std::size_t i = 0; i < type->aggregateSize(); ++i) {
 	    auto memberAddr = gen::pointerToIndex(type, tmpAddr, i);
 	    gen::store(val[i], memberAddr);
 	}

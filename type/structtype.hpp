@@ -34,6 +34,8 @@ class StructType : public Type
 	const std::vector<UStr> &memberName() const override;
 	const std::vector<std::size_t> &memberIndex() const override;
 	const std::vector<const Type *> &memberType() const override;
+	std::size_t aggregateSize() const override;
+	const Type *aggregateType(std::size_t index) const override;
 };
 
 } // namespace abc

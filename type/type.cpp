@@ -236,10 +236,9 @@ Type::aggregateSize() const
 	return 1;
     } else if (isArray()) {
 	return dim();
-    } else if (isStruct()) {
-	return memberType().size();
     } else {
 	assert(0);
+	return 0;
     }
 }
 
@@ -252,10 +251,9 @@ Type::aggregateType(std::size_t index) const
 	return this;
     } else if (isArray()) {
 	return refType();
-    } else if (isStruct()) {
-	return memberType()[index];
     } else {
 	assert(0);
+	return nullptr;
     }
 }
 

@@ -107,4 +107,23 @@ StructType::memberType() const
     return memberType_;
 }
 
+std::size_t
+StructType::aggregateSize() const
+{
+    assert(!memberIndex_.empty());
+    return memberIndex_.back() + 1;
+}
+
+const Type *
+StructType::aggregateType(std::size_t index) const
+{
+    for (std::size_t i = 0; i < memberIndex_.size(); ++i) {
+	if (memberIndex_[i] == index) {
+	    return memberType_[i];
+	}
+    }
+    assert(0);
+    return nullptr;
+}
+
 } // namespace abc
