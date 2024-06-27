@@ -475,11 +475,23 @@ Type::memberIndex() const
     return isAlias() ? getUnalias()->memberIndex() : noMembers;
 }
 
+std::optional<std::size_t>
+Type::memberIndex(UStr name) const
+{
+    return isAlias() ? getUnalias()->memberIndex(name) : std::nullopt;
+}
+
 const std::vector<const Type *> &
 Type::memberType() const
 {
     static std::vector<const Type *> noMembers;
     return isAlias() ? getUnalias()->memberType() : noMembers;
+}
+
+const Type *
+Type::memberType(UStr name) const
+{
+    return isAlias() ? getUnalias()->memberType(name) : nullptr;
 }
 
 std::ostream &

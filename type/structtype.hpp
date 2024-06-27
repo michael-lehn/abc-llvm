@@ -33,7 +33,9 @@ class StructType : public Type
 			     std::vector<const Type *> &&memberType) override;
 	const std::vector<UStr> &memberName() const override;
 	const std::vector<std::size_t> &memberIndex() const override;
+	std::optional<std::size_t> memberIndex(UStr name) const override;
 	const std::vector<const Type *> &memberType() const override;
+	const Type *memberType(UStr name) const override;
 	std::size_t aggregateSize() const override;
 	const Type *aggregateType(std::size_t index) const override;
 };

@@ -1,4 +1,5 @@
 #include <cassert>
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <tuple>
@@ -105,6 +106,28 @@ const std::vector<const Type *> &
 StructType::memberType() const
 {
     return memberType_;
+}
+
+const Type *
+StructType::memberType(UStr name) const
+{
+    for (std::size_t i = 0; i < memberName_.size(); ++i) {
+	if (name == memberName_[i]) {
+	    return memberType_[i];
+	}
+    }
+    return nullptr;
+}
+
+std::optional<std::size_t>
+StructType::memberIndex(UStr name) const
+{
+    for (std::size_t i = 0; i < memberName_.size(); ++i) {
+	if (name == memberName_[i]) {
+	    return memberIndex_[i];
+	}
+    }
+    return std::nullopt;
 }
 
 std::size_t

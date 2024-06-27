@@ -15,9 +15,12 @@
 
 namespace abc {
 
-CompoundExpr::CompoundExpr(std::vector<ExprPtr> &&exprVec, const Type *type,
+CompoundExpr::CompoundExpr(std::vector<ExprPtr> &&expr, const Type *type,
+			   std::vector<Designator> &&designator,
+			   std::vector<const Expr *> &&parsedExpr,
 			   lexer::Loc loc)
-    : Expr{loc, type}, exprVec{std::move(exprVec)}
+    : Expr{loc, type}, designator{std::move(designator)}
+    , parsedExpr{std::move(parsedExpr)}, expr{std::move(expr)}
 {
     static std::size_t idCount;
     std::stringstream ss;
@@ -56,31 +59,54 @@ CompoundExpr::initTmp() const
 }
 
 ExprPtr
-CompoundExpr::create(std::vector<ExprPtr> &&exprVec, const Type *type,
+CompoundExpr::create(std::vector<Designator> &&designator,
+		     std::vector<ExprPtr> &&parsedExpr, const Type *type,
 		     lexer::Loc loc)
 {
     assert(type);
     assert(type->hasSize());
+    assert(!designator.size() || designator.size() == parsedExpr.size());
 
-    if (exprVec.size() > type->aggregateSize()) {
-	error::location(exprVec[type->aggregateSize()]->loc);
-	error::out() << error::setColor(error::BOLD)
-	    << exprVec[type->aggregateSize()]->loc << ": "
-	    << ": " << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << ": excess elements in "
-	    << (type->isScalar() ? "scalar"
-				 : type->isArray() ? "array"
-						   : "struct")
-	    << " initializer\n"
-	    << error::setColor(error::NORMAL);
-	error::fatal();
+    std::vector<ExprPtr> expr(type->aggregateSize());
+    std::vector<const Expr *> parsedExpr_;
+    for (std::size_t i = 0, index = 0; i < parsedExpr.size(); ++i, ++index) {
+	auto ty = type->aggregateType(i);
+	if (designator.size()) {
+	    if (std::holds_alternative<lexer::Token>(designator[i])) {
+		assert(type->isStruct());
+		auto name = std::get<lexer::Token>(designator[i]).val;
+		auto index_ = type->memberIndex(name);
+		assert(index_.has_value());
+		index = index_.value();
+		ty = type->memberType(name);
+	    } else if (std::holds_alternative<ExprPtr>(designator[i])) {
+		assert(type->isArray());
+		index = std::get<ExprPtr>(designator[i])->getUnsignedIntValue();
+	    }
+	}
+	if (expr[index]) {
+	    error::location(parsedExpr[i]->loc);
+	    error::out() << error::setColor(error::BOLD)
+		<< parsedExpr[i]->loc << ": "
+		<< error::setColor(error::BOLD_BLUE) << "warning: "
+		<< error::setColor(error::BOLD)
+		<< "initializer overrides prior initialization\n"
+		<< error::setColor(error::NORMAL);
+	    error::location(expr[index]->loc);
+	    error::out() << error::setColor(error::BOLD)
+		<< expr[index]->loc << ": "
+		<< error::setColor(error::BOLD_BLUE) << "note: "
+		<< error::setColor(error::BOLD)
+		<< "previous initialization here\n"
+		<< error::setColor(error::NORMAL);
+	}
+	expr[index] = ImplicitCast::create(std::move(parsedExpr[i]), ty);
+	parsedExpr_.push_back(expr[index].get());
     }
-    for (std::size_t i = 0; i < exprVec.size(); ++i) {
-	exprVec[i] = ImplicitCast::create(std::move(exprVec[i]),
-					  type->aggregateType(i));
-    }
-    auto p = new CompoundExpr{std::move(exprVec), type, loc};
+    auto p = new CompoundExpr{std::move(expr), type,
+			      std::move(designator),
+			      std::move(parsedExpr_),
+			      loc};
     return std::unique_ptr<CompoundExpr>{p};
 }
 
@@ -105,8 +131,8 @@ CompoundExpr::isLValue() const
 bool
 CompoundExpr::isConst() const
 {
-    for (const auto &expr: exprVec) {
-	if (!expr->isConst()) {
+    for (const auto &e: expr) {
+	if (e && !e->isConst()) {
 	    return false;
 	}
     }
@@ -122,8 +148,8 @@ CompoundExpr::loadConstant() const
 
     std::vector<gen::Constant> val{type->aggregateSize()};
     for (std::size_t i = 0; i < type->aggregateSize(); ++i) {
-	if (i < exprVec.size()) {
-	    val[i] = exprVec[i]->loadConstant();
+	if (expr[i]) {
+	    val[i] = expr[i]->loadConstant();
 	} else {
 	    val[i] = gen::getConstantZero(type->aggregateType(i));
 	}
@@ -157,8 +183,8 @@ gen::Constant
 CompoundExpr::loadConstant(std::size_t index) const
 {
     assert(index < type->aggregateSize());
-    if (index < exprVec.size()) {
-	return exprVec[index]->loadConstant();
+    if (expr[index]) {
+	return expr[index]->loadConstant();
     } else {
 	return gen::getConstantZero(type->aggregateType(index));
     }
@@ -167,8 +193,8 @@ CompoundExpr::loadConstant(std::size_t index) const
 gen::Value
 CompoundExpr::loadValue(std::size_t index) const
 {
-    if (index < exprVec.size()) {
-	return exprVec[index]->loadValue();
+    if (expr[index]) {
+	return expr[index]->loadValue();
     } else {
 	return gen::getConstantZero(type->aggregateType(index));
     }
@@ -192,9 +218,18 @@ CompoundExpr::printFlat(std::ostream &out, int prec) const
 	out << type;
     }
     out << "{";
-    for (std::size_t i = 0; i < exprVec.size(); ++i) {
-	out << exprVec[i];
-	if (i + 1 < exprVec.size()) {
+    for (std::size_t i = 0; i < parsedExpr.size(); ++i) {
+	if (designator.size()) {
+	    if (std::holds_alternative<lexer::Token>(designator[i])) {
+		out << "." << std::get<lexer::Token>(designator[i]).val;
+		out << " = ";
+	    } else if (std::holds_alternative<ExprPtr>(designator[i])) {
+		out << "[" << std::get<ExprPtr>(designator[i]) << "]";
+		out << " = ";
+	    }
+	}
+	out << parsedExpr[i];
+	if (i + 1 < parsedExpr.size()) {
 	    out << ", ";
 	}
     }

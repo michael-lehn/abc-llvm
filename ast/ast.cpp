@@ -395,12 +395,15 @@ AstVar::addInitializerExpr(AstInitializerExprPtr &&initializerExpr_)
     initializerExpr = std::move(initializerExpr_);
     if (varType->isUnboundArray()) {
 	auto initExpr = getInitializerExpr();
-	if (auto comp = dynamic_cast<const CompoundExpr *>(initExpr)) {
-	    varType = ArrayType::create(varType->refType(),
-				        comp->exprVec.size());
-	} else if (initExpr->type->isArray()) {
+	if (initExpr->type->isArray()) {
 	    assert(!initExpr->type->isUnboundArray());
 	    varType = initExpr->type;
+	    for (std::size_t i = 0; i < varName.size(); ++i) {
+		auto addDecl = Symtab::addDefinition(varName[i].loc,
+						     varName[i].val,
+						     varType);
+		assert(addDecl.first);
+	    }
 	} else {
 	    // initializer should be either a compound expression or an
 	    // array
@@ -1654,8 +1657,6 @@ AstStructDecl::complete()
 
 	for (std::size_t i = 0; i < decl.first.size(); ++i) {
 	    if (memberMap.contains(decl.first[i].val)) {
-		std::cerr << "member already defined: " << decl.first[i].val
-		    << "\n";
 		error::location(decl.first[i].loc);
 		error::out() << error::setColor(error::BOLD)
 		    << decl.first[i].loc

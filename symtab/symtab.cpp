@@ -173,14 +173,19 @@ Symtab::add(UStr name, symtab::Entry &&entry)
     if (scope.front()->contains(name)) {
 	auto &found = scope.front()->at(name);
 
+	bool changed = false;
 	if (entry != found) {
 	    bool ok = false;
 
 	    // check exceptions ...
-	    if (found.kind == entry.kind && found.variableDeclaration()) {
+	    if (entry.variableDeclaration() && found.variableDeclaration()) {
 		ok = found.type->isUnboundArray()
 		    && entry.type->isArray()
 		    && found.type->refType() == entry.type->refType();
+		if (ok) {
+		    found.type = entry.type;
+		    changed = true;
+		}
 	    }
 
 	    if (!ok) {
@@ -200,7 +205,7 @@ Symtab::add(UStr name, symtab::Entry &&entry)
 		return {nullptr, false};
 	    }
 	}
-	return {&found, false};
+	return {&found, changed};
     }
 
     auto added = scope.front()->insert({name, std::move(entry)});

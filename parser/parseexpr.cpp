@@ -33,12 +33,14 @@ using namespace lexer;
 
 //------------------------------------------------------------------------------
 ExprPtr
-parseCompoundExpression(const Type *type, const Type **patchedType)
+parseCompoundExpression(const Type *type)
 {
     assert(type);
 
     auto tok = token;
+    std::size_t exprSize = 0;
     std::vector<ExprPtr> exprVec;
+    std::vector<CompoundExpr::Designator> designatorVec;
     if (type->isArray() && token.kind == TokenKind::STRING_LITERAL) {
 	// string literals are treated as compound expression. For example:
 	// "abc" is treated as {'a', 'b', 'c'}
@@ -53,10 +55,68 @@ parseCompoundExpression(const Type *type, const Type **patchedType)
 	}
 	exprVec.push_back(IntegerLiteral::create(0, IntegerType::createChar(),
 						 tok.loc));
+	exprSize = str.length() + 1;
     } else if (token.kind == TokenKind::LBRACE) {
 	getToken();
-	auto ub = type->isUnboundArray();
-	for (std::size_t i = 0; ub || i < type->aggregateSize(); ++i) {
+	std::size_t maxIndex = 0;
+	for (std::size_t i=0; ; ++i) {
+	    bool hasDesignator = false;
+	    auto designatorLoc = token.loc;
+	    if (type->isStruct() && token.kind == TokenKind::DOT) {
+		getToken();
+		error::expected(TokenKind::IDENTIFIER);
+		if (auto index = type->memberIndex(token.val)) {
+		    i = index.value();
+		    hasDesignator = true;
+		    designatorVec.push_back(token);
+		} else {
+		    error::location(token.loc);
+		    error::out() << error::setColor(error::BOLD)
+			<< tok.loc << ": "
+			<< error::setColor(error::BOLD_RED) << "error: "
+			<< error::setColor(error::BOLD)
+			<< "'" << token.val << "' is not a member of "
+			<< type << "\n"
+			<< error::setColor(error::NORMAL);
+		    error::fatal();
+		}
+		getToken();
+		error::expected(TokenKind::EQUAL);
+		getToken();
+	    } else if (type->isArray() && token.kind == TokenKind::LBRACKET) {
+		auto loc = token.loc;
+		getToken();
+		auto expr = parseAssignmentExpression();
+		if (!expr || !expr->isConst() || !expr->type->isInteger()) {
+		    error::location(loc);
+		    error::out() << error::setColor(error::BOLD)
+			<< loc << ": "
+			<< error::setColor(error::BOLD_RED) << "error: "
+			<< error::setColor(error::BOLD)
+			<< "constant integer expression expected after '['\n"
+			<< error::setColor(error::NORMAL);
+		    error::fatal();
+		}
+		i = expr->getUnsignedIntValue();
+		hasDesignator = true;
+		designatorVec.push_back(std::move(expr));
+		error::expected(TokenKind::RBRACKET);
+		getToken();
+		error::expected(TokenKind::EQUAL);
+		getToken();
+	    }
+	    if (!type->isUnboundArray() && i >= type->aggregateSize()) {
+		error::location(token.loc);
+		error::out() << error::setColor(error::BOLD)
+		    << token.loc << ": "
+		    << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "excess elements in struct initializer\n"
+		    << error::setColor(error::NORMAL);
+		error::fatal();
+	    }
+
+	    maxIndex = std::max(maxIndex, i);
 	    auto ty = type->aggregateType(i);
 
 	    // note: parseCompoundExpression has to be called before
@@ -67,23 +127,38 @@ parseCompoundExpression(const Type *type, const Type **patchedType)
 	    } else if (auto expr = parseAssignmentExpression()) {
 		exprVec.push_back(std::move(expr));
 	    } else {
+		if (hasDesignator) {
+		    error::location(designatorLoc);
+		    error::out() << error::setColor(error::BOLD)
+			<< designatorLoc << ": "
+			<< error::setColor(error::BOLD_RED) << "error: "
+			<< error::setColor(error::BOLD)
+			<< ": expression expected after designator\n"
+			<< error::setColor(error::NORMAL);
+		    error::fatal();
+		}
 		break;
+	    }
+	    if (!hasDesignator) {
+		designatorVec.push_back(std::nullopt);
 	    }
 	    if (token.kind != TokenKind::COMMA) {
 		break;
 	    }
 	    getToken();
+	    if (token.kind == TokenKind::RBRACE) {
+		break;
+	    }
 	}
+	exprSize = maxIndex + 1;
 	error::expected(TokenKind::RBRACE);
 	getToken();
     } else {
 	return nullptr;
     }
-    type = Type::patchUnboundArray(type, exprVec.size());
-    if (patchedType) {
-	*patchedType = type;
-    }
-    return CompoundExpr::create(std::move(exprVec), type, tok.loc);
+    type = Type::patchUnboundArray(type, exprSize);
+    return CompoundExpr::create(std::move(designatorVec), std::move(exprVec),
+				type, tok.loc);
 }
 
 //------------------------------------------------------------------------------

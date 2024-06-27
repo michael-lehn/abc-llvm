@@ -630,7 +630,7 @@ parseVariableDefinition()
     auto astVar = std::make_unique<AstVar>(std::move(varName),
 					   varTypeLoc,
 					   varType,
-					   true);
+					   !varType->isUnboundArray());
     if (varType->isUnboundArray() && token.kind != TokenKind::EQUAL) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -653,7 +653,7 @@ parseVariableDefinition()
 		<< error::setColor(error::BOLD_RED) << "error: "
 		<< error::setColor(error::BOLD)
 		<< (initializerType->isScalar()
-			? "expression of initializer list expected\n"
+			? "expression or initializer list expected\n"
 			: "initializer list expected\n")
 		<< error::setColor(error::NORMAL);
 	    error::fatal();
@@ -675,7 +675,7 @@ parseInitializerExpression(const Type *type)
     // note: parseCompoundExpression has to be called before
     //	     parseAssignmentExpression. Because parseCompoundExpression catches
     //	     string literals and treats them as a compound.
-    if (auto expr = parseCompoundExpression(type, &type)) {
+    if (auto expr = parseCompoundExpression(type)) {
 	return std::make_unique<AstInitializerExpr>(type, std::move(expr));
     } else if (auto expr = parseAssignmentExpression()) {
 	return std::make_unique<AstInitializerExpr>(type, std::move(expr));

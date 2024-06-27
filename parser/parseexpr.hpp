@@ -6,8 +6,7 @@
 
 namespace abc {
     
-ExprPtr parseCompoundExpression(const Type *type,
-				const Type **patchedType = nullptr);
+ExprPtr parseCompoundExpression(const Type *type);
 ExprPtr parseExpressionList();
 ExprPtr parseAssignmentExpression();
 

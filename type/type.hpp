@@ -2,6 +2,7 @@
 #define TYPE_TYPE_HPP
 
 #include <cstddef>
+#include <optional>
 #include <ostream>
 #include <vector>
 
@@ -86,7 +87,9 @@ class Type
 				     std::vector<const Type *> &&memberType);
 	virtual const std::vector<UStr> &memberName() const;
 	virtual const std::vector<std::size_t> &memberIndex() const;
+	virtual std::optional<std::size_t> memberIndex(UStr name) const;
 	virtual const std::vector<const Type *> &memberType() const;
+	virtual const Type *memberType(UStr name) const;
 
 };
 

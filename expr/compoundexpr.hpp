@@ -1,10 +1,13 @@
 #ifndef EXPR_COMPOUNDEXPR_HPP
 #define EXPR_COMPOUNDEXPR_HPP
 
+#include <optional>
+#include <variant>
 #include <vector>
 
 #include "expr.hpp"
 #include "lexer/loc.hpp"
+#include "lexer/token.hpp"
 
 namespace abc {
 
@@ -17,21 +20,30 @@ class CompoundExpr : public Expr
 	    BRACE,
 	};
 
+	using Designator = std::variant<lexer::Token, ExprPtr, std::nullopt_t>;
+
     protected:
-	CompoundExpr(std::vector<ExprPtr> &&exprVec, const Type *type,
+	CompoundExpr(std::vector<ExprPtr> &&expr, const Type *type,
+		     std::vector<Designator> &&designator,
+		     std::vector<const Expr *> &&parsedExpr,
 		     lexer::Loc loc);
 
 	UStr tmpId;
 	mutable DisplayOpt displayOpt = NONE;
 
+	const std::vector<Designator> designator;
+	const std::vector<const Expr *> parsedExpr;
+
 	void initTmp() const;
 
     public:
-	static ExprPtr create(std::vector<ExprPtr> &&exprVec, const Type *type,
+	static ExprPtr create(std::vector<Designator> &&designator,
+			      std::vector<ExprPtr> &&parsedExpr,
+			      const Type *type,
 			      lexer::Loc loc = lexer::Loc{});
 	void setDisplayOpt(DisplayOpt opt) const;
 
-	const std::vector<ExprPtr> exprVec;
+	const std::vector<ExprPtr> expr;
 
 	bool hasAddress() const override;
 	bool isLValue() const override;

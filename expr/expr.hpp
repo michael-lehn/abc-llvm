@@ -18,11 +18,9 @@ class Expr
     public:
 	virtual ~Expr() = default;
 
-    public:
 	const lexer::Loc loc;
 	const Type * const type;
 
-    public:
 	// for sematic checks
 	virtual bool hasConstantAddress() const;
 	virtual bool hasAddress() const = 0;
