@@ -30,7 +30,7 @@ fn main()
 	printf("b[%d] = %d\n", i, b[i]);
     }
     printf("\n");
-    for (local i, j:= {0, 3}; i < sizeof(c) / sizeof(c[0]); ++i, ++j) {
+    for (local i, j:= {0, 3u64}; i < sizeof(c) / sizeof(c[0]); ++i, ++j) {
 	printf("c[%d] = %d\n", i, c[i]);
 	printf("j = %d\n", j);
     }
