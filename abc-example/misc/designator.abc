@@ -1,0 +1,53 @@
+@ <stdio.hdr>
+
+type string: array[12] of char;
+
+enum ExprKind
+{
+    EXPR_BINARY,
+    EXPR_ADD = EXPR_BINARY,
+    EXPR_ASSIGN,
+    EXPR_DIV,
+    EXPR_MUL,
+    EXPR_SUB,
+    EXPR_BINARY_END,
+
+    EXPR_PRIMARY = EXPR_BINARY_END,
+    EXPR_INTEGER = EXPR_PRIMARY,
+    EXPR_IDENTIFIER,
+    EXPR_PRIMARY_END,
+};
+
+struct Expr
+{
+    kind:	    ExprKind;
+    union {
+    	left, right:    -> Expr;
+    	decimal:	string;
+    	identifier:	string;
+    };
+};
+
+fn main()
+{
+    local a, c: array[] of int = {
+	{[8] = 5, 9, [0] = 10, 11, [7] = 5},
+	{1, 2, 3, },
+    };
+    local b: array[] of int = {[2] = 1, [0] = 2, 3,};
+    local expr: Expr = {.decimal = string"5", .kind = EXPR_IDENTIFIER};
+
+    printf("expr.kind = %d, expr.decimal = %s\n", expr.kind, expr.decimal);
+    printf("sizeof(a) = %zu\n", sizeof(a));
+    for (local i: int = 0; i < sizeof(a) / sizeof(a[0]); ++i) {
+	printf("a[%d] = %d\n", i, a[i]);
+    }
+    printf("\n");
+    for (local i: int = 0; i < sizeof(b) / sizeof(b[0]); ++i) {
+	printf("b[%d] = %d\n", i, b[i]);
+    }
+    printf("\n");
+    for (local i: int = 0; i < sizeof(c) / sizeof(c[0]); ++i) {
+	printf("c[%d] = %d\n", i, c[i]);
+    }
+}
