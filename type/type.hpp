@@ -45,6 +45,7 @@ class Type
 
 	virtual bool hasSize() const;
 
+	virtual bool isAuto() const;
 	virtual bool isVoid() const;
 	virtual bool isNullptr() const;
 

@@ -179,9 +179,13 @@ Symtab::add(UStr name, symtab::Entry &&entry)
 
 	    // check exceptions ...
 	    if (entry.variableDeclaration() && found.variableDeclaration()) {
-		ok = found.type->isUnboundArray()
-		    && entry.type->isArray()
-		    && found.type->refType() == entry.type->refType();
+		bool fixUnbound = found.type->isUnboundArray()
+		     && entry.type->isArray()
+		     && found.type->refType() == entry.type->refType();
+		bool resolveAuto = found.type->isAuto()
+		    && entry.type->hasSize();
+
+		ok = fixUnbound || resolveAuto;
 		if (ok) {
 		    found.type = entry.type;
 		    changed = true;

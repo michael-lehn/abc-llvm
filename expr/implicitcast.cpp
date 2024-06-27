@@ -38,6 +38,9 @@ ImplicitCast::create(ExprPtr &&expr, const Type *toType)
 	return expr;
     } else if (toType->isUnboundArray() && Type::convert(expr->type, toType)) {
 	return expr;
+    } else if (toType->isAuto()
+	    || (toType->isArray() && toType->refType()->isAuto())) {
+	return expr;
     } else {
 	auto loc = expr->loc;
 	auto type = Type::convert(expr->type, toType);

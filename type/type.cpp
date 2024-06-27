@@ -292,6 +292,12 @@ Type::hasSize() const
 }
 
 bool
+Type::isAuto() const
+{
+    return isAlias() ? getUnalias()->isAuto() : false;
+}
+
+bool
 Type::isVoid() const
 {
     return isAlias() ? getUnalias()->isVoid() : false;

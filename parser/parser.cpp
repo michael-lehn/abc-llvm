@@ -5,6 +5,7 @@
 #include "lexer/error.hpp"
 #include "lexer/lexer.hpp"
 #include "symtab/symtab.hpp"
+#include "type/autotype.hpp"
 #include "type/arraytype.hpp"
 #include "type/functiontype.hpp"
 #include "type/integertype.hpp"
@@ -615,8 +616,11 @@ parseVariableDefinition()
 	return nullptr;
     }
     getToken();
+    auto autoType = token.kind == TokenKind::EQUAL;
     auto varTypeLoc = token.loc;
-    auto varType = parseType(true);
+    auto varType = autoType
+	? AutoType::create()
+	: parseType(true);
     if (!varType) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -627,10 +631,11 @@ parseVariableDefinition()
 	error::fatal();
 	return nullptr;
     }
+    bool define = !varType->isUnboundArray() && !varType->isAuto();
     auto astVar = std::make_unique<AstVar>(std::move(varName),
 					   varTypeLoc,
 					   varType,
-					   !varType->isUnboundArray());
+					   define);
     if (varType->isUnboundArray() && token.kind != TokenKind::EQUAL) {
 	error::location(token.loc);
 	error::out() << error::setColor(error::BOLD) << token.loc << ": "
@@ -675,9 +680,10 @@ parseInitializerExpression(const Type *type)
     // note: parseCompoundExpression has to be called before
     //	     parseAssignmentExpression. Because parseCompoundExpression catches
     //	     string literals and treats them as a compound.
-    if (auto expr = parseCompoundExpression(type)) {
+    ExprPtr expr;
+    if (!type->isAuto() && (expr = parseCompoundExpression(type))) {
 	return std::make_unique<AstInitializerExpr>(type, std::move(expr));
-    } else if (auto expr = parseAssignmentExpression()) {
+    } else if ((expr = parseAssignmentExpression())) {
 	return std::make_unique<AstInitializerExpr>(type, std::move(expr));
     }
     return nullptr;

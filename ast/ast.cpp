@@ -371,7 +371,7 @@ AstVar::init(bool define)
 {
     assert(varDeclType);
     assert(!varName.empty());
-    if (!varDeclType->hasSize()) {
+    if (!varDeclType->hasSize() && !varDeclType->isAuto()) {
 	error::location(varTypeLoc);
 	error::out() << error::setColor(error::BOLD) << varTypeLoc << ": "
 	    << error::setColor(error::BOLD_RED) << "error: "
@@ -397,7 +397,8 @@ AstVar::addInitializerExpr(AstInitializerExprPtr &&initializerExpr_)
     initializerExpr = std::move(initializerExpr_);
     auto initExpr = getInitializerExpr();
     assert(!varDeclType->isUnboundArray() || initExpr->type->isArray());
-    if (varDeclType->isUnboundArray() && initExpr->type->isArray()) {
+    if (varDeclType->isAuto()
+	    || (varDeclType->isUnboundArray() && initExpr->type->isArray())) {
 	if (count() == 1) {
 	    varType[0] = initExpr->type;
 	    auto addDecl = Symtab::addDefinition(varName[0].loc,
@@ -506,7 +507,19 @@ AstVar::print(int indent) const
 	    error::out(indent) << ", ";
 	}
     }
-    error::out(indent) << ": " << varDeclType;
+    error::out(indent) << ":";
+    if (varDeclType->isAuto()) {
+	error::out(indent) << "/*";
+	for (std::size_t i = 0; i < varName.size(); ++i) {
+	    error::out() << varType[i];
+	    if (i + 1 < varName.size()) {
+		error::out(indent) << ", ";
+	    }
+	}
+	error::out(indent) << "*/";
+    } else {
+	error::out(indent) << varDeclType;
+    }
     if (initializerExpr) {
 	error::out() << " = ";
 	initializerExpr->print(0);

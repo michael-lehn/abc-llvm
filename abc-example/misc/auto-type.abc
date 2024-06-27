@@ -1,0 +1,40 @@
+@ <stdio.hdr>
+
+type Array10: array[10] of int;
+
+fn foo(): int
+{
+    return 42;
+}
+
+fn bar(): u64
+{
+    return 142;
+}
+
+fn main()
+{
+    local a:= (array[10] of int){1, 2, 3};
+    local b:= (array[10] of int){4, 5, 6};
+    local c:= Array10{7, 8, 9};
+
+    local x, y:= {2, 2.4};
+    local X, Y:= { foo(), bar() };
+
+    printf("sizeof(a) = %zu\n", sizeof(a));
+    for (local i:= 0; i < sizeof(a) / sizeof(a[0]); ++i) {
+	printf("a[%d] = %d\n", i, a[i]);
+    }
+    printf("\n");
+    for (local i:= 0; i < sizeof(b) / sizeof(b[0]); ++i) {
+	printf("b[%d] = %d\n", i, b[i]);
+    }
+    printf("\n");
+    for (local i, j:= {0, 3}; i < sizeof(c) / sizeof(c[0]); ++i, ++j) {
+	printf("c[%d] = %d\n", i, c[i]);
+	printf("j = %d\n", j);
+    }
+
+    printf("x = %d, y = %lf\n", x, y);
+    printf("X = %d, Y = %lld\n", X, Y);
+}
