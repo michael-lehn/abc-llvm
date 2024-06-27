@@ -113,6 +113,8 @@ class AstVar : public Ast
 
         std::vector<symtab::Entry *> varEntry;
         std::vector<UStr> varId;
+        std::vector<const Type *> varType;
+	const Type *varDeclType;
 
     public:
 	AstVar(lexer::Token varName, lexer::Loc varTypeLoc,
@@ -125,10 +127,10 @@ class AstVar : public Ast
 
 	const std::vector<lexer::Token> varName;
 	const lexer::Loc varTypeLoc;
-	const Type *varType;
 
         std::size_t count() const;
         const UStr getId(std::size_t index) const;
+        const Type *getType(std::size_t index) const;
 
         void setExternalLinkage();
         void setInternalLinkage();

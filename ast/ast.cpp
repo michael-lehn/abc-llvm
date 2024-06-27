@@ -353,14 +353,15 @@ AstInitializerExpr::print(int indent) const
  */
 AstVar::AstVar(lexer::Token varName, lexer::Loc varTypeLoc, const Type *varType,
 	       bool define)
-    : varName{varName}, varTypeLoc{varTypeLoc}, varType{varType}
+    : varType{1}, varDeclType{varType}, varName{varName}, varTypeLoc{varTypeLoc}
 {
     init(define);
 }
 
 AstVar::AstVar(std::vector<lexer::Token> &&varName, lexer::Loc varTypeLoc,
 	       const Type *varType, bool define)
-    : varName{std::move(varName)}, varTypeLoc{varTypeLoc}, varType{varType}
+    : varType{varName.size()}, varDeclType{varType}
+    , varName{std::move(varName)}, varTypeLoc{varTypeLoc}
 {
     init(define);
 }
@@ -368,21 +369,22 @@ AstVar::AstVar(std::vector<lexer::Token> &&varName, lexer::Loc varTypeLoc,
 void
 AstVar::init(bool define)
 {
-    assert(varType);
+    assert(varDeclType);
     assert(!varName.empty());
-    if (!varType->hasSize()) {
+    if (!varDeclType->hasSize()) {
 	error::location(varTypeLoc);
 	error::out() << error::setColor(error::BOLD) << varTypeLoc << ": "
 	    << error::setColor(error::BOLD_RED) << "error: "
 	    << error::setColor(error::BOLD)
-	    << "type '" << varType << "' is incomplete\n"
+	    << "type '" << varDeclType << "' is incomplete\n"
 	    << error::setColor(error::NORMAL);
 	error::fatal();
     }
     for (std::size_t i = 0; i < varName.size(); ++i) {
+	auto ty = varType[i] = varDeclType;
 	auto addDecl = define
-	    ? Symtab::addDefinition(varName[i].loc, varName[i].val, varType)
-	    : Symtab::addDeclaration(varName[i].loc, varName[i].val, varType);
+	    ? Symtab::addDefinition(varName[i].loc, varName[i].val, ty)
+	    : Symtab::addDeclaration(varName[i].loc, varName[i].val, ty);
 	assert(addDecl.first);
 	varEntry.push_back(addDecl.first);
 	varId.push_back(addDecl.first->getId());
@@ -393,21 +395,26 @@ void
 AstVar::addInitializerExpr(AstInitializerExprPtr &&initializerExpr_)
 {
     initializerExpr = std::move(initializerExpr_);
-    if (varType->isUnboundArray()) {
-	auto initExpr = getInitializerExpr();
-	if (initExpr->type->isArray()) {
-	    assert(!initExpr->type->isUnboundArray());
-	    varType = initExpr->type;
+    auto initExpr = getInitializerExpr();
+    assert(!varDeclType->isUnboundArray() || initExpr->type->isArray());
+    if (varDeclType->isUnboundArray() && initExpr->type->isArray()) {
+	if (count() == 1) {
+	    varType[0] = initExpr->type;
+	    auto addDecl = Symtab::addDefinition(varName[0].loc,
+						 varName[0].val,
+						 varType[0]);
+	    assert(addDecl.first);
+	} else {
+	    auto compExpr = dynamic_cast<const CompoundExpr *>(initExpr);
+	    assert(compExpr);
 	    for (std::size_t i = 0; i < varName.size(); ++i) {
+		assert(compExpr->expr[i]);
+		varType[i] = compExpr->expr[i]->type;
 		auto addDecl = Symtab::addDefinition(varName[i].loc,
 						     varName[i].val,
-						     varType);
+						     varType[i]);
 		assert(addDecl.first);
 	    }
-	} else {
-	    // initializer should be either a compound expression or an
-	    // array
-	    assert(0 && "unbound array initializtion");
 	}
     }
 }
@@ -435,6 +442,13 @@ AstVar::getId(std::size_t index) const
     return varId[index];
 }
 
+const Type *
+AstVar::getType(std::size_t index) const
+{
+    assert(index < count());
+    return varType[index];
+}
+
 void
 AstVar::setExternalLinkage()
 {
@@ -459,7 +473,7 @@ AstVar::setLinkage()
     for (std::size_t i = 0; i < varEntry.size(); ++i) {
         varEntry[i]->setLinkage();
         varId[i] = varEntry[i]->getId();
-        gen::globalVariableDefinition(varId[i].c_str(), varType);
+        gen::globalVariableDefinition(varId[i].c_str(), varType[i]);
     }
 }
 
@@ -478,7 +492,7 @@ AstVar::setInternalLinkage()
             error::fatal();
         }
         varId[i] = varEntry[i]->getId();
-        gen::globalVariableDefinition(varId[i].c_str(), varType);
+        gen::globalVariableDefinition(varId[i].c_str(), varType[i]);
     }
 }
 
@@ -492,7 +506,7 @@ AstVar::print(int indent) const
 	    error::out(indent) << ", ";
 	}
     }
-    error::out(indent) << ": " << varType;
+    error::out(indent) << ": " << varDeclType;
     if (initializerExpr) {
 	error::out() << " = ";
 	initializerExpr->print(0);
@@ -543,7 +557,8 @@ AstExternVar::codegen()
         assert(var);
         for (std::size_t i = 0; i < var->count(); ++i) {
             const auto &id = var->getId(i);
-            if (!gen::externalVariableDeclaration(id.c_str(), var->varType)) {
+	    const auto &ty = var->getType(i);
+            if (!gen::externalVariableDeclaration(id.c_str(), ty)) {
                 const auto &tok = var->varName[i];
                 error::location(tok.loc);
                 error::out() << error::setColor(error::BOLD) << tok.loc << ": "
@@ -599,11 +614,12 @@ AstGlobalVar::codegen()
     for (const auto &item : declList->node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	if (var->count() == 1) {
-	    gen::globalVariableDefinition(var->getId(0).c_str(), var->varType);
+	    gen::globalVariableDefinition(var->getId(0).c_str(),
+					  var->getType(0));
 	} else {
 	    for (std::size_t i = 0; i < var->count(); ++i) {
 		gen::globalVariableDefinition(var->getId(i).c_str(),
-					      var->varType);
+					      var->getType(i));
 	    }
 	}
     }
@@ -627,7 +643,8 @@ AstGlobalVar::codegen()
 	    auto initialValue = initializer
 		? initializer->loadConstant()
 		: nullptr;
-	    gen::globalVariableDefinition(var->getId(0).c_str(), var->varType,
+	    gen::globalVariableDefinition(var->getId(0).c_str(),
+					  var->getType(0),
 					  initialValue);
 	} else {
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
@@ -637,7 +654,7 @@ AstGlobalVar::codegen()
 		    ? compExpr->loadConstant(i)
 		    : nullptr;
 		gen::globalVariableDefinition(var->getId(i).c_str(),
-					      var->varType,
+					      var->getType(i),
 					      initialValue);
 	    }
 	}
@@ -686,11 +703,12 @@ AstStaticVar::codegen()
     for (const auto &item : declList->node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	if (var->count() == 1) {
-	    gen::globalVariableDefinition(var->getId(0).c_str(), var->varType);
+	    gen::globalVariableDefinition(var->getId(0).c_str(),
+					  var->getType(0));
 	} else {
 	    for (std::size_t i = 0; i < var->count(); ++i) {
 		gen::globalVariableDefinition(var->getId(i).c_str(),
-					      var->varType);
+					      var->getType(i));
 	    }
 	}
     }
@@ -711,14 +729,15 @@ AstStaticVar::codegen()
 	    auto initialValue = initializer
 		? initializer->loadConstant()
 		: nullptr;
-	    gen::globalVariableDefinition(var->getId(0).c_str(), var->varType,
+	    gen::globalVariableDefinition(var->getId(0).c_str(),
+					  var->getType(0),
 					  initialValue);
 	} else {
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
 	    assert(compExpr);
 	    for (std::size_t i = 0; i < var->count(); ++i) {
 		gen::globalVariableDefinition(var->getId(i).c_str(),
-					      var->varType,
+					      var->getType(i),
 					      compExpr->loadConstant(i));
 	    }
 	}
@@ -764,7 +783,8 @@ AstLocalVar::codegen()
 	assert(var);
 	auto initializer = var->getInitializerExpr();
 	if (var->count() == 1) {
-	    gen::localVariableDefinition(var->getId(0).c_str(), var->varType);
+	    gen::localVariableDefinition(var->getId(0).c_str(),
+					 var->getType(0));
 	    if (initializer) {
 		gen::store(initializer->loadValue(),
 			   gen::loadAddress(var->getId(0).c_str()));
@@ -774,7 +794,7 @@ AstLocalVar::codegen()
 	    assert(!initializer || compExpr);
 	    for (std::size_t i = 0; i < var->count(); ++i) {
 		gen::localVariableDefinition(var->getId(i).c_str(),
-					     var->varType);
+					     var->getType(i));
 	    }
 	    for (std::size_t i = 0; i < var->count(); ++i) {
 		if (initializer) {
