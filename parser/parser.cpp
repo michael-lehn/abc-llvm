@@ -1463,16 +1463,36 @@ parseStructMemberDeclaration(AstStructDecl *structDecl)
     bool unionSection = false;
     std::size_t index = 0;
     while (true) {
-	if (!unionSection && token.kind == TokenKind::UNION) {
-	    getToken();
-	    if (!error::expected(TokenKind::LBRACE)) {
-		return false;
+	if (token.kind == TokenKind::UNION) {
+	    if (!unionSection) {
+		getToken();
+		if (!error::expected(TokenKind::LBRACE)) {
+		    return false;
+		}
+		getToken();
+		unionSection = true;
+	    } else {
+		error::location(token.loc);
+		error::out() << error::setColor(error::BOLD) << token.loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "union blocks can not be nested\n"
+		    << error::setColor(error::NORMAL);
+		error::fatal();
 	    }
-	    getToken();
-	    unionSection = true;
 	}
 	if (!parseStructMemberList(structDecl, index, unionSection)) {
-	    break;
+	    if (unionSection) {
+		error::location(token.loc);
+		error::out() << error::setColor(error::BOLD) << token.loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "struct member expected\n"
+		    << error::setColor(error::NORMAL);
+		error::fatal();
+	    } else {
+		break;
+	    }
 	}
 	if (unionSection && token.kind == TokenKind::RBRACE) {
 	    getToken();
