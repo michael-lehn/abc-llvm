@@ -2,6 +2,7 @@
 #include <sstream>
 
 #include "expr/expr.hpp"
+#include "expr/compoundexpr.hpp"
 #include "lexer/error.hpp"
 #include "lexer/lexer.hpp"
 #include "symtab/symtab.hpp"
@@ -682,6 +683,29 @@ parseInitializerExpression(const Type *type)
     //	     string literals and treats them as a compound.
     ExprPtr expr;
     if (!type->isAuto() && (expr = parseCompoundExpression(type))) {
+	if (type->isArray() && type->refType()->isAuto()) {
+	    assert(!type->isUnboundArray());
+	    auto compExpr = dynamic_cast<const CompoundExpr *>(expr.get());
+	    assert(compExpr);
+	    bool ok = true;
+	    for (std::size_t i = 0; i < type->dim(); ++i) {
+		if (!compExpr->expr[i]) {
+		    ok = false;
+		    break;
+		}
+	    }
+	    if (!ok) {
+		error::location(expr->loc);
+		error::out() << error::setColor(error::BOLD)
+		    << expr->loc << ": "
+		    << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "for auto type deduction compound has to contain "
+		    << type->dim() << " typed expressions\n"
+		    << error::setColor(error::NORMAL);
+		error::fatal();
+	    }
+	}
 	return std::make_unique<AstInitializerExpr>(type, std::move(expr));
     } else if ((expr = parseAssignmentExpression())) {
 	return std::make_unique<AstInitializerExpr>(type, std::move(expr));

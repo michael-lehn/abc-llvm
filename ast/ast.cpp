@@ -407,7 +407,16 @@ AstVar::addInitializerExpr(AstInitializerExprPtr &&initializerExpr_)
 	    assert(addDecl.first);
 	} else {
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initExpr);
-	    assert(compExpr);
+	    if (!compExpr) {
+		error::location(initExpr->loc);
+		error::out() << error::setColor(error::BOLD)
+		    << initExpr->loc << ": "
+		    << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "compound expression expected\n"
+		    << error::setColor(error::NORMAL);
+		error::fatal();
+	    }
 	    for (std::size_t i = 0; i < varName.size(); ++i) {
 		assert(compExpr->expr[i]);
 		varType[i] = compExpr->expr[i]->type;
