@@ -678,6 +678,21 @@ parseVariableDefinition()
 static AstInitializerExprPtr
 parseInitializerExpression(const Type *type)
 {
+    if (type->isArray() && type->refType()->isAuto()) {
+	if (token.kind != TokenKind::LBRACE) {
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD)
+		<< token.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "auto type deduction for " << type->dim() << " variables "
+		<< "requires a compound expression with " << type->dim()
+		<< " typed expressions\n"
+		<< error::setColor(error::NORMAL);
+	    error::fatal();
+
+	}
+    }
     // note: parseCompoundExpression has to be called before
     //	     parseAssignmentExpression. Because parseCompoundExpression catches
     //	     string literals and treats them as a compound.
