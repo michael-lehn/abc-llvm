@@ -99,6 +99,7 @@ EnumType::complete(std::vector<UStr> &&constName,
     constName_ = std::move(constName);
     constValue_ = std::move(constValue);
     isComplete_ = true;
+    enumConstMap.at(id_).isComplete_ = true;
     return this;
 }
 

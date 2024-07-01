@@ -40,7 +40,7 @@ struct Expr
     kind:	ExprKind;
 };
 
-extern fn releaseExpr(expr: -> const Expr);
+extern fn releaseExpr(expr: const -> const Expr);
 
 extern fn isIdentifierExpr(expr: -> const Expr): bool;
 

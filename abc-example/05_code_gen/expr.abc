@@ -6,7 +6,7 @@
 @ "expr.hdr"
 @ "symtab.hdr"
 
-fn releaseExpr(expr: -> const Expr)
+fn releaseExpr(expr: const -> const Expr)
 {
     switch (expr->kind) {
 	case EXPR_PRIMARY:

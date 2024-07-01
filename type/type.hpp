@@ -20,6 +20,9 @@ class Type
 	Type(bool isConst, UStr name);
 	virtual ~Type() = default;
 
+	// for assignments
+	static bool assignable(const Type *type);
+
 	// for type conversion
 	static bool equals(const Type *ty1, const Type *ty2);
 	static const Type *common(const Type *ty1, const Type *ty2);

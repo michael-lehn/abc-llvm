@@ -101,10 +101,25 @@ Type::common(const Type *ty1, const Type *ty2)
     return common;
 }
 
-const Type *
-Type::convert(const Type *from, const Type *to)
+bool
+Type::assignable(const Type *type)
 {
-    if (equals(from, to)) {
+    if (type->isArray()) {
+	return assignable(type->refType());
+    } else {
+	return !type->hasConstFlag();
+    }
+}
+
+static const Type *
+convert(const Type *from, const Type *to, bool checkConst)
+{
+    if (checkConst && from->hasConstFlag() && !to->hasConstFlag()) {
+	return nullptr;
+    }
+    from = from->getConstRemoved();
+    to = to->getConstRemoved();
+    if (Type::equals(from, to)) {
 	return to;
     } else if (to->isBool()) {
 	if (from->isInteger()) {
@@ -131,12 +146,7 @@ Type::convert(const Type *from, const Type *to)
 	if (from->isNullptr()) {
 	    return to;
 	}
-	auto toRefTy = to->refType();
-	auto fromRefTy = from->refType();
-	if (!fromRefTy->hasConstFlag() && toRefTy->hasConstFlag()) {
-	    toRefTy = toRefTy->getConstRemoved();
-	}
-	if (equals(toRefTy, fromRefTy)) {
+	if (convert(from->refType(), to->refType(), true)) {
 	    return to;
 	} else {
 	    return nullptr;
@@ -146,29 +156,16 @@ Type::convert(const Type *from, const Type *to)
 	if (from->isNullptr()) {
 	    return to;
 	}
-	auto toRefTy = to->refType();
-	auto fromRefTy = from->refType();
-	if (toRefTy->hasConstFlag() && !fromRefTy->hasConstFlag()) {
-	    toRefTy = toRefTy->getConstRemoved();
-	}
-	if (toRefTy->isPointer() && fromRefTy->isPointer()) {
-	    if (convert(fromRefTy, toRefTy)) {
-		return to;
-	    } else {
-		return nullptr;
-	    }
-	} else if (equals(toRefTy, fromRefTy)) {
+	if (from->refType()->isVoid() || to->refType()->isVoid()) {
 	    return to;
-	} else if (toRefTy->isVoid() || fromRefTy->isVoid()) {
+	}
+	if (convert(from->refType(), to->refType(), true)) {
 	    return to;
 	} else {
 	    return nullptr;
 	}
     } else if (from->isStruct() && to->isStruct()) {
-	if (from->hasConstFlag() && !to->hasConstFlag()) {
-	    from = from->getConstRemoved();
-	}
-	if (equals(from, to)) {
+	if (Type::equals(from, to)) {
 	    return to;
 	} else {
 	    return nullptr;
@@ -177,19 +174,20 @@ Type::convert(const Type *from, const Type *to)
 	if (to->dim() != from->dim() && !to->isUnboundArray()) {
 	    return nullptr;
 	}
-	auto toRefTy = to->refType();
-	auto fromRefTy = from->refType();
-	if (fromRefTy->hasConstFlag() && !toRefTy->hasConstFlag()) {
-	    fromRefTy = fromRefTy->getConstRemoved();
-	}
-	if (equals(toRefTy, fromRefTy)) {
-	    return to->isUnboundArray() ? from : to;
+	if (convert(from->refType(), to->refType(), checkConst)) {
+	    return to;
 	} else {
 	    return nullptr;
 	}
     } else {
 	return nullptr;
     }
+}
+
+const Type *
+Type::convert(const Type *from, const Type *to)
+{
+    return abc::convert(from, to, false);
 }
 
 const Type *

@@ -159,7 +159,7 @@ binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	case BinaryExpr::Kind::BITWISE_XOR_ASSIGN:
 	case BinaryExpr::Kind::BITWISE_LEFT_SHIFT_ASSIGN:
 	case BinaryExpr::Kind::BITWISE_RIGHT_SHIFT_ASSIGN:
-	    if (left->type->hasConstFlag()) {
+	    if (!Type::assignable(left->type)) {
 		error::out() << error::setColor(error::BOLD) << left->loc
 		    << ": " << error::setColor(error::BOLD_RED) << "error: "
 		    << error::setColor(error::BOLD)
@@ -243,7 +243,7 @@ binaryFlt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	case BinaryExpr::Kind::SUB_ASSIGN:
 	case BinaryExpr::Kind::MUL_ASSIGN:
 	case BinaryExpr::Kind::DIV_ASSIGN:
-	    if (left->type->hasConstFlag()) {
+	    if (!Type::assignable(left->type)) {
 		error::out() << error::setColor(error::BOLD) << left->loc
 		    << ": " << error::setColor(error::BOLD_RED) << "error: "
 		    << error::setColor(error::BOLD)
@@ -304,7 +304,7 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 
     switch (kind) {
 	case BinaryExpr::ASSIGN:
-	    if (left->type->hasConstFlag()) {
+	    if (!Type::assignable(left->type)) {
 		error::out() << error::setColor(error::BOLD) << left->loc
 		    << ": " << error::setColor(error::BOLD_RED) << "error: "
 		    << error::setColor(error::BOLD)
@@ -349,7 +349,15 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		return binaryErr(kind, std::move(left), std::move(right), loc);
 	    }
 	case BinaryExpr::Kind::ADD_ASSIGN:
-	    if (right->type->isInteger()) {
+	    if (!Type::assignable(left->type)) {
+		error::out() << error::setColor(error::BOLD) << left->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "assignment of read-only variable '"
+		    << left << "'\n"
+		    << error::setColor(error::NORMAL);
+		break;
+	    } else if (right->type->isInteger()) {
 		if (!left->isLValue()) {
 		    error::out() << error::setColor(error::BOLD) << left->loc
 			<< ": " << error::setColor(error::BOLD_RED) << "error: "
@@ -363,7 +371,15 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	    }
 	    break;
 	case BinaryExpr::Kind::SUB_ASSIGN:
-	    if (right->type->isPointer()) {
+	    if (!Type::assignable(left->type)) {
+		error::out() << error::setColor(error::BOLD) << left->loc
+		    << ": " << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "assignment of read-only variable '"
+		    << left << "'\n"
+		    << error::setColor(error::NORMAL);
+		break;
+	    } else if (right->type->isPointer()) {
 		if (!left->isLValue()) {
 		    error::out() << error::setColor(error::BOLD) << left->loc
 			<< ": " << error::setColor(error::BOLD_RED) << "error: "
@@ -448,7 +464,7 @@ binaryArray(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 				       elementType);
 	    }
 	case BinaryExpr::Kind::ASSIGN:
-	    if (left->type->hasConstFlag()) {
+	    if (!Type::assignable(left->type)) {
 		error::location(left->loc);
 		error::out() << error::setColor(error::BOLD) << left->loc
 		    << ": " << error::setColor(error::BOLD_RED) << "error: "
@@ -494,7 +510,7 @@ binaryStruct(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	default:
 	    break;
 	case BinaryExpr::Kind::ASSIGN:
-	    if (left->type->hasConstFlag()) {
+	    if (!Type::assignable(left->type)) {
 		error::location(left->loc);
 		error::out() << error::setColor(error::BOLD) << left->loc
 		    << ": " << error::setColor(error::BOLD_RED) << "error: "

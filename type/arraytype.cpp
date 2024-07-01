@@ -73,7 +73,11 @@ ArrayType::isArray() const
 const Type *
 ArrayType::refType() const
 {
-    return refType_;
+    if (hasConstFlag()) {
+	return refType_->getConst();
+    } else {
+	return refType_;
+    }
 }
 
 std::size_t

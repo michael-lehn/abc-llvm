@@ -617,6 +617,10 @@ parseVariableDefinition()
 	return nullptr;
     }
     getToken();
+    auto readOnlyType = token.kind == TokenKind::CONST;
+    if (readOnlyType) {
+	getToken();
+    }
     auto autoType = token.kind == TokenKind::EQUAL;
     auto varTypeLoc = token.loc;
     auto varType = autoType
@@ -631,6 +635,9 @@ parseVariableDefinition()
 	    << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
+    }
+    if (readOnlyType) {
+	varType = varType->getConst();
     }
     bool define = !varType->isUnboundArray() && !varType->isAuto();
     auto astVar = std::make_unique<AstVar>(std::move(varName),
