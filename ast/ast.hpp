@@ -24,7 +24,6 @@ class Ast
 	virtual void print(int indent = 0) const = 0;
 	virtual void codegen();
 	virtual void apply(std::function<bool(Ast *)> op);
-	virtual const Type *type() const;
 };
 
 using AstPtr = std::unique_ptr<Ast>;
@@ -415,9 +414,24 @@ class AstEnumDecl : public Ast
 
 using AstEnumDeclPtr = std::unique_ptr<AstEnumDecl>;
 
+//==============================================================================
+
+class AstType: public Ast
+{
+    protected:
+	const Type *type;
+
+    public:
+	AstType(const Type *type);
+
+	const Type *getType() const;
+};
+
+using AstTypePtr = std::unique_ptr<AstType>;
+
 //------------------------------------------------------------------------------
 
-class AstStructDecl : public Ast
+class AstStructDecl: public AstType
 {
     private:
 	lexer::Token structTypeName;
@@ -445,6 +459,84 @@ class AstStructDecl : public Ast
 };
 
 using AstStructDeclPtr = std::unique_ptr<AstStructDecl>;
+
+//------------------------------------------------------------------------------
+
+class AstTypeReadonly: public AstType
+{
+    private:
+	const AstTypePtr astType;
+
+    public:
+	AstTypeReadonly(AstTypePtr &&astType);
+	void print(int indent) const override;
+};
+
+//------------------------------------------------------------------------------
+
+class AstTypeIdentifier: public AstType
+{
+    private:
+	const lexer::Token identifier;
+
+    public:
+	AstTypeIdentifier(lexer::Token identifier);
+
+	void print(int indent) const override;
+};
+
+//------------------------------------------------------------------------------
+
+class AstTypePointer: public AstType
+{
+    private:
+	const AstTypePtr astRefType;
+
+    public:
+	AstTypePointer(AstTypePtr &&astRefType);
+
+	void print(int indent) const override;
+};
+
+//------------------------------------------------------------------------------
+
+class AstTypeArray: public AstType
+{
+    private:
+	const std::vector<ExprPtr> dimExpr;
+	const AstTypePtr astRefType;
+
+    public:
+
+	AstTypeArray(std::vector<ExprPtr> &&dimExpr, AstTypePtr &&astRefType);
+
+	void print(int indent) const override;
+
+};
+
+//------------------------------------------------------------------------------
+
+class AstTypeFuntion: public AstType
+{
+    public:
+	using ParamName = std::vector<std::optional<lexer::Token>>;
+
+    private:
+	const std::optional<lexer::Token> fnName;
+	const ParamName paramName;
+	const std::vector<AstTypePtr> paramAstType;
+	bool hasVargs;
+	const AstTypePtr astRetType;
+
+    public:
+	AstTypeFuntion(std::optional<lexer::Token> fnName,
+		       ParamName &&paramName,
+		       std::vector<AstTypePtr> &&paramAstType,
+		       bool hasVargs,
+		       AstTypePtr &&retType);
+
+	void print(int indent) const override;
+};
 
 } // namespace abc
 

@@ -1,8 +1,8 @@
 #include <unordered_map>
 #include <iostream>
 
-#include "expr/expr.hpp"
 #include "expr/compoundexpr.hpp"
+#include "expr/expr.hpp"
 #include "expr/implicitcast.hpp"
 #include "gen/function.hpp"
 #include "gen/instruction.hpp"
@@ -11,6 +11,8 @@
 #include "lexer/error.hpp"
 #include "type/arraytype.hpp"
 #include "type/enumtype.hpp"
+#include "type/functiontype.hpp"
+#include "type/pointertype.hpp"
 #include "type/structtype.hpp"
 #include "type/typealias.hpp"
 
@@ -124,12 +126,6 @@ Ast::apply(std::function<bool(Ast *)> op)
 void
 Ast::codegen()
 {
-}
-
-const Type *
-Ast::type() const
-{
-    return nullptr;
 }
 
 /*
@@ -1616,10 +1612,24 @@ AstEnumDecl::codegen()
 }
 
 /*
+ * AstType
+ */
+AstType::AstType(const Type *type)
+    : type{type}
+{
+}
+
+const Type *
+AstType::getType() const
+{
+    return type;
+}
+
+/*
  * AstStructDecl
  */
 AstStructDecl::AstStructDecl(lexer::Token name)
-    : structTypeName{name}
+    : AstType{nullptr}, structTypeName{name}
 {
     if (auto found = Symtab::type(name.val, Symtab::CurrentScope)) {
 	// if <name> is already a type declaration it has to be an incomplete
@@ -1653,6 +1663,7 @@ AstStructDecl::AstStructDecl(lexer::Token name)
 	auto add = Symtab::addType(name.loc, name.val, structType);
 	assert(add.second);
     }
+    type = structType;
 }
 
 void
@@ -1783,6 +1794,150 @@ AstStructDecl::print(int indent) const
 void
 AstStructDecl::codegen()
 {
+}
+
+/*
+ * AstTypeReadonly
+ */
+
+AstTypeReadonly::AstTypeReadonly(AstTypePtr &&astType)
+    : AstType{astType->getType()->getConst()}, astType{std::move(astType)}
+{
+}
+
+void
+AstTypeReadonly::print(int indent) const
+{
+    error::out(indent) << "readonly";
+    astType->print(0);
+}
+
+/*
+ * AstTypeIdentifier
+ */
+
+static const Type *
+getTypeFromToken(const lexer::Token &identifier)
+{
+    if (identifier.kind != lexer::TokenKind::IDENTIFIER) {
+	return nullptr;
+    }
+    if (auto entry = Symtab::type(identifier.val, Symtab::AnyScope)) {
+	return entry->type;
+    }
+    return nullptr;
+}
+
+AstTypeIdentifier::AstTypeIdentifier(lexer::Token identifier)
+    : AstType(getTypeFromToken(identifier)), identifier{identifier}
+{
+}
+
+void
+AstTypeIdentifier::print(int indent) const
+{
+    error::out(indent) << identifier.val;
+}
+
+/*
+ * AstTypePointer
+ */
+AstTypePointer::AstTypePointer(AstTypePtr &&astRefType)
+    : AstType(PointerType::create(astRefType->getType()))
+    , astRefType{std::move(astRefType)}
+{
+}
+
+void
+AstTypePointer::print(int indent) const
+{
+    error::out(indent) << "-> ";
+    astRefType->print(0);
+}
+
+/*
+ * AstTypeArray
+ */
+static const Type *
+getArrayType(const std::vector<ExprPtr> &dimExpr, const AstTypePtr &astRefType)
+{
+    const Type *type = astRefType->getType();
+    for (std::size_t i = 0; i < dimExpr.size(); ++i) {
+	type = ArrayType::create(type, dimExpr[i]->getUnsignedIntValue());
+    }
+    return type;
+}
+
+AstTypeArray::AstTypeArray(std::vector<ExprPtr> &&dimExpr,
+			   AstTypePtr &&astRefType)
+    : AstType(getArrayType(dimExpr, astRefType)), dimExpr{std::move(dimExpr)}
+    , astRefType{std::move(astRefType)}
+{
+}
+
+void
+AstTypeArray::print(int indent) const
+{
+    error::out(indent) << "array";
+    for (std::size_t i = 0; i < dimExpr.size(); ++i) {
+	error::out(0) << "[" << dimExpr[i] << "]";
+    }
+    error::out(0) << " of ";
+    astRefType->print(0);
+}
+
+/*
+ * AstTypeFunction
+ */
+static const Type *
+getFunctionType(std::vector<AstTypePtr> &paramAstType, bool hasVargs,
+		AstTypePtr &astRetType)
+{
+    std::vector<const Type *> paramType;
+    for (const auto &p: paramAstType) {
+	paramType.push_back(p->getType());
+    }
+    return FunctionType::create(astRetType->getType(), std::move(paramType),
+				hasVargs);
+}
+
+AstTypeFuntion::AstTypeFuntion(std::optional<lexer::Token> fnName,
+			       ParamName &&paramName,
+			       std::vector<AstTypePtr> &&paramAstType,
+			       bool hasVargs,
+			       AstTypePtr &&astRetType)
+    : AstType{getFunctionType(paramAstType, hasVargs, astRetType)}
+    , fnName{fnName}, paramName{std::move(paramName)}
+    , paramAstType{std::move(paramAstType)}, hasVargs{hasVargs}
+    , astRetType{std::move(astRetType)}
+{
+}
+
+void
+AstTypeFuntion::print(int indent) const
+{
+    error::out(indent) << "fn";
+    if (fnName) {
+	error::out(0) << fnName.value();
+    }
+    error::out(0) << "(";
+    for (std::size_t i = 0; i < paramAstType.size(); ++i) {
+	if (paramName[i]) {
+	    error::out(0) << paramName[i].value().val << ": ";
+	}
+	paramAstType[i]->print(0);
+	if (hasVargs || i + 1 < paramAstType.size()) {
+	    error::out(0) << ", ";
+	}
+    }
+    if (hasVargs) {
+	error::out(0) << "...";
+    }
+    error::out(0) << ")";
+    if (!astRetType->getType()->isVoid()) {
+	error::out(0) << ": ";
+	astRetType->print(0);
+    }
 }
 
 } // namespace abc
