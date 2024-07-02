@@ -43,7 +43,7 @@ parseCompoundExpression(const Type *type)
     std::vector<CompoundExpr::Designator> designatorVec;
     if (type->isArray() && token.kind == TokenKind::STRING_LITERAL) {
 	// string literals are treated as compound expression. For example:
-	// "abc" is treated as {'a', 'b', 'c'}
+	// "abc" is treated as {'a', 'b', 'c', 0}
 	std::string str{};
 	do {
 	    str += token.processedVal.c_str();
@@ -56,6 +56,16 @@ parseCompoundExpression(const Type *type)
 	exprVec.push_back(IntegerLiteral::create(0, IntegerType::createChar(),
 						 tok.loc));
 	exprSize = str.length() + 1;
+	if (!type->isUnboundArray() && exprSize > type->aggregateSize()) {
+	    error::location(tok.loc);
+	    error::out() << error::setColor(error::BOLD)
+		<< tok.loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "excess elements in initializer\n"
+		<< error::setColor(error::NORMAL);
+	    error::fatal();
+	}
     } else if (token.kind == TokenKind::LBRACE) {
 	getToken();
 	std::size_t maxIndex = 0;
