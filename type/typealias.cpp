@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "typealias.hpp"
 
 namespace abc {
@@ -29,7 +31,7 @@ TypeAlias::create(UStr name, const Type *type)
     aliasSet.emplace(id, TypeAlias{id, name, type, false});
     aliasConstSet.emplace(id, TypeAlias{id, name, type, true});
 
-    return &aliasSet.at(id);
+    return  &aliasSet.at(id);
 }
 
 bool

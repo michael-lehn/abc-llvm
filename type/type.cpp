@@ -218,7 +218,7 @@ Type::id() const
 bool
 Type::hasConstFlag() const
 {
-    return isConst;
+    return isAlias() ? getUnalias()->isConst : isConst;
 }
 
 bool
@@ -501,7 +501,7 @@ Type::memberType(UStr name) const
 std::ostream &
 operator<<(std::ostream &out, const Type *type)
 {
-    const char *constFlag = type->hasConstFlag() ? "readonly " : "";
+    const char *constFlag = type->isConst ? "readonly " : "";
 
     out << constFlag << type->ustr();
     return out;

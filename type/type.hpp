@@ -95,6 +95,7 @@ class Type
 	virtual const std::vector<const Type *> &memberType() const;
 	virtual const Type *memberType(UStr name) const;
 
+	friend std::ostream &operator<<(std::ostream &out, const Type *type);
 };
 
 std::ostream &operator<<(std::ostream &out, const Type *type);
