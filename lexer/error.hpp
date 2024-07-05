@@ -5,11 +5,12 @@
 
 #include "lexer.hpp"
 #include "loc.hpp"
+#include "loc.hpp"
 
 namespace abc { namespace error {
 
 std::ostream& out(int indent = 0);
-void fatal();
+void fatal(const lexer::Loc &loc = lexer::Loc{}, const char *msg = nullptr);
 void warning();
 
 void undefinedIdentifier(const lexer::Loc &loc, UStr name);

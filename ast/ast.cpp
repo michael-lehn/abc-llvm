@@ -15,6 +15,7 @@
 #include "type/pointertype.hpp"
 #include "type/structtype.hpp"
 #include "type/typealias.hpp"
+#include "type/voidtype.hpp"
 
 #include "ast.hpp"
 
@@ -1656,7 +1657,7 @@ AstStructDecl::AstStructDecl(lexer::Token name)
 	    structType = const_cast<Type *>(found->type);
 	}
     } else {
-	// otherwise a new incomplete struct tyoe gets created and added. If
+	// otherwise a new incomplete struct type gets created and added. If
 	// <name> is a different kind of symbol (variable name or enum
 	// constatnt) the error is handled by Symtab::addType
 	structType = StructType::createIncomplete(name.val);
@@ -1808,7 +1809,7 @@ AstTypeReadonly::AstTypeReadonly(AstTypePtr &&astType)
 void
 AstTypeReadonly::print(int indent) const
 {
-    error::out(indent) << "readonly";
+    error::out(indent) << "readonly ";
     astType->print(0);
 }
 
@@ -1831,6 +1832,16 @@ getTypeFromToken(const lexer::Token &identifier)
 AstTypeIdentifier::AstTypeIdentifier(lexer::Token identifier)
     : AstType(getTypeFromToken(identifier)), identifier{identifier}
 {
+    if (!type) {
+	error::location(identifier.loc);
+	error::out() << error::setColor(error::BOLD)
+	    << identifier.loc
+	    << ": " << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "'" << identifier.val << "' is not a type.\n"
+	    << error::setColor(error::NORMAL);
+	error::fatal();
+    }
 }
 
 void
@@ -1897,15 +1908,17 @@ getFunctionType(std::vector<AstTypePtr> &paramAstType, bool hasVargs,
     for (const auto &p: paramAstType) {
 	paramType.push_back(p->getType());
     }
-    return FunctionType::create(astRetType->getType(), std::move(paramType),
-				hasVargs);
+    auto retType = astRetType
+	? astRetType->getType()
+	: VoidType::create();
+    return FunctionType::create(retType, std::move(paramType), hasVargs);
 }
 
-AstTypeFuntion::AstTypeFuntion(std::optional<lexer::Token> fnName,
-			       ParamName &&paramName,
-			       std::vector<AstTypePtr> &&paramAstType,
-			       bool hasVargs,
-			       AstTypePtr &&astRetType)
+AstTypeFunction::AstTypeFunction(std::optional<lexer::Token> fnName,
+			         ParamName &&paramName,
+			         std::vector<AstTypePtr> &&paramAstType,
+			         bool hasVargs,
+			         AstTypePtr &&astRetType)
     : AstType{getFunctionType(paramAstType, hasVargs, astRetType)}
     , fnName{fnName}, paramName{std::move(paramName)}
     , paramAstType{std::move(paramAstType)}, hasVargs{hasVargs}
@@ -1914,11 +1927,11 @@ AstTypeFuntion::AstTypeFuntion(std::optional<lexer::Token> fnName,
 }
 
 void
-AstTypeFuntion::print(int indent) const
+AstTypeFunction::print(int indent) const
 {
-    error::out(indent) << "fn";
+    error::out(indent) << "fn ";
     if (fnName) {
-	error::out(0) << fnName.value();
+	error::out(0) << fnName.value().val;
     }
     error::out(0) << "(";
     for (std::size_t i = 0; i < paramAstType.size(); ++i) {
@@ -1934,7 +1947,7 @@ AstTypeFuntion::print(int indent) const
 	error::out(0) << "...";
     }
     error::out(0) << ")";
-    if (!astRetType->getType()->isVoid()) {
+    if (astRetType && !astRetType->getType()->isVoid()) {
 	error::out(0) << ": ";
 	astRetType->print(0);
     }

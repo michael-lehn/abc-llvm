@@ -1,3 +1,4 @@
+#include <cassert>
 #include <sstream>
 
 #include "functiontype.hpp"
@@ -46,6 +47,10 @@ const Type *
 FunctionType::create(const Type *ret, std::vector<const Type *> &&param,
 		     bool varg)
 {
+    assert(ret);
+    for (const auto &p: param) {
+	assert(p);
+    }
     std::stringstream ss;
     ss << "fn (";
     for (std::size_t i = 0; i < param.size(); ++i) {

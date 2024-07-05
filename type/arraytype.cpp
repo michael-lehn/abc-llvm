@@ -1,3 +1,4 @@
+#include <cassert>
 #include <set>
 #include <sstream>
 #include <string>
@@ -34,6 +35,7 @@ ArrayType::ArrayType(const Type *refType, std::size_t dim, bool constFlag,
 const Type *
 ArrayType::create(const Type *refType, std::size_t dim, bool constFlag)
 {
+    assert(refType);
     std::stringstream ss;
     ss << "array " << getArrayDimAndType(refType, dim);
     auto ty = ArrayType{refType, dim, constFlag, UStr::create(ss.str())};

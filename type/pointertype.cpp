@@ -1,3 +1,4 @@
+#include <cassert>
 #include <set>
 #include <sstream>
 
@@ -29,6 +30,7 @@ PointerType::PointerType(const Type *refType, bool constFlag, UStr name)
 const Type *
 PointerType::create(const Type *refType, bool constFlag)
 {
+    assert(refType);
     std::stringstream ss;
     ss << "-> " << refType;
     auto ty = PointerType{refType, constFlag, UStr::create(ss.str())};

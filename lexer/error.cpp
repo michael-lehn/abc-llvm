@@ -21,9 +21,18 @@ out(int indent)
 }
 
 void
-fatal()
+fatal(const lexer::Loc &loc, const char *msg)
 {
-    std::exit(1);
+    if (loc) {
+	location(loc);
+	out() << setColor(error::BOLD) << loc << ": ";
+    }
+    out() << setColor(error::BOLD_RED) << "error";
+    if (msg) {
+	out() << ": " << setColor(error::BOLD) << msg;
+    }
+    out() << "\n" << setColor(error::NORMAL);
+    //std::exit(1);
 }
 
 void

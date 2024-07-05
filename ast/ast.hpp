@@ -516,7 +516,7 @@ class AstTypeArray: public AstType
 
 //------------------------------------------------------------------------------
 
-class AstTypeFuntion: public AstType
+class AstTypeFunction: public AstType
 {
     public:
 	using ParamName = std::vector<std::optional<lexer::Token>>;
@@ -529,11 +529,11 @@ class AstTypeFuntion: public AstType
 	const AstTypePtr astRetType;
 
     public:
-	AstTypeFuntion(std::optional<lexer::Token> fnName,
-		       ParamName &&paramName,
-		       std::vector<AstTypePtr> &&paramAstType,
-		       bool hasVargs,
-		       AstTypePtr &&retType);
+	AstTypeFunction(std::optional<lexer::Token> fnName,
+		        ParamName &&paramName,
+		        std::vector<AstTypePtr> &&paramAstType,
+		        bool hasVargs,
+		        AstTypePtr &&retType);
 
 	void print(int indent) const override;
 };

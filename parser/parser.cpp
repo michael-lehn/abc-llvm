@@ -1579,7 +1579,7 @@ parseStructMemberList(AstStructDecl *structDecl, std::size_t &index,
     if (!isIdentifierToken(token)) {
 	return false;
     }
-    std::vector<lexer::Token> memberName;
+    std::vector<Token> memberName;
     std::vector<std::size_t> memberIndex;
     
     while (true) {
