@@ -1,4 +1,10 @@
 @ <stdabc.hdr>
 
-extern fn strncpy(dest: -> char, src: -> const char, len: size_t): -> char;
-extern fn strcmp(s1: -> const char, s2: -> const char): int;
+extern fn stpcpy(dst: -> char, src: -> readonly char): -> char;
+extern fn stpncpy(dst: -> char, src: -> readonly char, len: size_t): -> char;
+extern fn strcpy(dest: -> char, src: -> readonly char): -> char;
+extern fn strncpy(dest: -> char, src: -> readonly char, len: size_t): -> char;
+extern fn strcmp(s1: -> readonly char, s2: -> readonly char): int;
+extern fn strlen(s: -> readonly char): size_t;
+extern fn strnlen(s: -> readonly char, maxlen: size_t): size_t;
+
