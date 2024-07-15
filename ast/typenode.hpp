@@ -19,7 +19,7 @@ class TypeNode
 	virtual ~TypeNode() = default;
 
 	const Type *type() const;
-	virtual void print(int indent = 0) const = 0;
+	virtual void print(int indent = 0, bool beginNewline = true) const = 0;
 };
 
 using TypeNodePtr = std::unique_ptr<TypeNode>;
@@ -34,7 +34,7 @@ class IdentifierTypeNode: public TypeNode
     public:
 	IdentifierTypeNode(lexer::Token identifier);
 
-	void print(int indent) const override;
+	void print(int indent, bool beginNewline) const override;
 };
 
 //------------------------------------------------------------------------------
@@ -47,7 +47,7 @@ class ReadonlyTypeNode: public TypeNode
     public:
 	ReadonlyTypeNode(TypeNodePtr &&refTypeNode);
 
-	void print(int indent) const override;
+	void print(int indent, bool beginNewline) const override;
 };
 
 //------------------------------------------------------------------------------
@@ -60,7 +60,7 @@ class PointerTypeNode: public TypeNode
     public:
 	PointerTypeNode(TypeNodePtr &&refTypeNode);
 
-	void print(int indent) const override;
+	void print(int indent, bool beginNewline) const override;
 };
 
 //------------------------------------------------------------------------------
@@ -75,7 +75,7 @@ class ArrayTypeNode: public TypeNode
 
 	ArrayTypeNode(std::vector<ExprPtr> &&dim, TypeNodePtr &&refTypeNode);
 
-	void print(int indent) const override;
+	void print(int indent, bool beginNewline) const override;
 
 };
 
@@ -100,25 +100,30 @@ class FunctionTypeNode: public TypeNode
 		         bool hasVargs,
 		         TypeNodePtr &&retTypeNode);
 
-	void print(int indent) const override;
+	void print(int indent, bool beginNewline) const override;
 };
 
 //------------------------------------------------------------------------------
 
 class StructTypeNode: public TypeNode
 {
+    public:
+	using MemberDecl
+	    = std::vector<std::pair<std::vector<lexer::Token>, TypeNodePtr>>;
+
     private:
 	lexer::Token structName;
-	using MemberDecl = std::pair<std::vector<lexer::Token>, TypeNodePtr>;
-	std::vector<MemberDecl> memberDecl;
+	MemberDecl memberDecl;
 
     public:
 	StructTypeNode(lexer::Token structName);
+	StructTypeNode(lexer::Token structName, MemberDecl &&memberDecl);
 
-	void add(std::vector<lexer::Token> &&memberName, TypeNodePtr typeNode);
+    private:
 	void complete();
 
-	void print(int indent) const override;
+    public:
+	void print(int indent, bool beginNewline) const override;
 };
 
 } // namespace abc

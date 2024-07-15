@@ -35,7 +35,9 @@ using namespace lexer;
 ExprPtr
 parseCompoundExpression(const Type *type)
 {
-    assert(type);
+    if (!type) {
+	return nullptr;
+    }
 
     auto tok = token;
     std::size_t exprSize = 0;
@@ -124,6 +126,7 @@ parseCompoundExpression(const Type *type)
 		    << "excess elements in struct initializer\n"
 		    << error::setColor(error::NORMAL);
 		error::fatal();
+		return nullptr;
 	    }
 
 	    maxIndex = std::max(maxIndex, i);

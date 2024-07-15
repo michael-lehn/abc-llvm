@@ -7,6 +7,7 @@
 
 #include "lexer/error.hpp"
 #include "symtab/symtab.hpp"
+#include "type/autotype.hpp"
 #include "type/arraytype.hpp"
 #include "type/functiontype.hpp"
 #include "type/pointertype.hpp"
@@ -115,7 +116,7 @@ TypeNode::TypeNode(const Type *type)
 const Type *
 TypeNode::type() const
 {
-    return type_;
+    return type_ ? type_ : AutoType::create();
 }
 
 /*
@@ -131,9 +132,9 @@ IdentifierTypeNode::IdentifierTypeNode(lexer::Token identifier)
 }
 
 void
-IdentifierTypeNode::print(int indent) const
+IdentifierTypeNode::print(int indent, bool beginNewline) const
 {
-    error::out(indent) << identifier.val;
+    error::out(indent, beginNewline) << identifier.val;
 }
 
 /*
@@ -147,10 +148,10 @@ ReadonlyTypeNode::ReadonlyTypeNode(TypeNodePtr &&refTypeNode)
 }
 
 void
-ReadonlyTypeNode::print(int indent) const
+ReadonlyTypeNode::print(int indent, bool beginNewline) const
 {
-    error::out(indent) << "readonly ";
-    refTypeNode->print(0);
+    error::out(indent, beginNewline) << "readonly ";
+    refTypeNode->print(indent, false);
 }
 
 /*
@@ -163,10 +164,10 @@ PointerTypeNode::PointerTypeNode(TypeNodePtr &&refTypeNode)
 }
 
 void
-PointerTypeNode::print(int indent) const
+PointerTypeNode::print(int indent, bool beginNewline) const
 {
-    error::out(indent) << "-> ";
-    refTypeNode->print(0);
+    error::out(indent, beginNewline) << "-> ";
+    refTypeNode->print(indent, beginNewline);
 }
 
 /*
@@ -180,9 +181,9 @@ ArrayTypeNode::ArrayTypeNode(std::vector<ExprPtr> &&dim,
 }
 
 void
-ArrayTypeNode::print(int indent) const
+ArrayTypeNode::print(int indent, bool beginNewline) const
 {
-    error::out(indent) << "array";
+    error::out(indent, beginNewline) << "array";
     for (std::size_t i = 0; i < dim.size(); ++i) {
 	error::out(0) << "[";
 	if (dim[i]) {
@@ -191,7 +192,7 @@ ArrayTypeNode::print(int indent) const
 	error::out(0) << "]";
     }
     error::out(0) << " of ";
-    refTypeNode->print(0);
+    refTypeNode->print(indent, false);
 }
 
 /*
@@ -211,9 +212,9 @@ FunctionTypeNode::FunctionTypeNode(std::optional<lexer::Token> fnName,
 }
 
 void
-FunctionTypeNode::print(int indent) const
+FunctionTypeNode::print(int indent, bool beginNewline) const
 {
-    error::out(indent) << "fn ";
+    error::out(indent, beginNewline) << "fn ";
     if (fnName) {
 	error::out(0) << fnName.value().val;
     }
@@ -246,11 +247,10 @@ StructTypeNode::StructTypeNode(lexer::Token structName)
 {
 }
 
-void
-StructTypeNode::add(std::vector<lexer::Token> &&memberName,
-		    TypeNodePtr typeNode)
+StructTypeNode::StructTypeNode(lexer::Token structName, MemberDecl &&memberDecl)
+    : TypeNode{getStructType(structName)}, memberDecl{std::move(memberDecl)}
 {
-    memberDecl.push_back({std::move(memberName), std::move(typeNode)});
+    complete();
 }
 
 void
@@ -288,13 +288,13 @@ StructTypeNode::complete()
 }
 
 void
-StructTypeNode::print(int indent) const
+StructTypeNode::print(int indent, bool beginNewline) const
 {
     if (!memberDecl.size()) {
-	error::out(indent) << "struct " << structName.val << ";";
+	error::out(indent, beginNewline) << "struct " << structName.val << ";";
     } else {
-	error::out(indent) << "struct " << structName.val << "\n";
-	error::out(indent) << "{\n";
+	error::out(indent, beginNewline) << "struct " << structName.val
+	    << "{\n";
 
 	for (const auto &decl: memberDecl) {
 	    error::out(indent + 4) << "";
@@ -305,10 +305,10 @@ StructTypeNode::print(int indent) const
 		}
 	    }
 	    error::out() << ": ";
-	    decl.second->print(0);
+	    decl.second->print(indent + 4, false);
 	    error::out() << ";\n";
 	}
-	error::out(indent) << "};";
+	error::out(indent) << "}";
     }
 }
 

@@ -9,7 +9,7 @@
 
 namespace abc { namespace error {
 
-std::ostream& out(int indent = 0);
+std::ostream& out(int indent = 0, bool beginNewline = true);
 void fatal(const lexer::Loc &loc = lexer::Loc{}, const char *msg = nullptr);
 void warning();
 

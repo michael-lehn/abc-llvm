@@ -12,9 +12,10 @@
 namespace abc { namespace error {
 
 std::ostream &
-out(int indent)
+out(int indent, bool beginNewline)
 {
-    if (indent) {
+    if (indent && beginNewline) {
+	std::cerr << "\n";
 	std::cerr << std::setfill(' ') << std::setw(indent) << ' ';
     }
     return std::cerr;

@@ -11,6 +11,61 @@ namespace abc {
 using namespace lexer;
 
 static TypeNodePtr
+parseStructType()
+{
+    if (token.kind != TokenKind::STRUCT) {
+	return nullptr;
+    }
+    getToken();
+    error::expected(TokenKind::IDENTIFIER);
+    auto structName = token;
+    getToken();
+
+    if (token.kind == TokenKind::SEMICOLON) {
+	getToken();
+	return std::make_unique<StructTypeNode>(structName);
+    } else if (token.kind == TokenKind::LBRACE) {
+	getToken();
+
+	StructTypeNode::MemberDecl memberDecl;
+
+	while (token.kind == TokenKind::IDENTIFIER) {
+	    std::vector<lexer::Token> member;
+	    do {
+		error::expected(TokenKind::IDENTIFIER);
+		member.push_back(token);
+		getToken();
+		if (token.kind == TokenKind::COLON) {
+		    getToken();
+		    break;
+		}
+		error::expected(TokenKind::COMMA);
+		getToken();
+	    } while (true);
+	    auto typeNode = parseType_(false);
+	    if (!typeNode) {
+		error::fatal(token.loc, "type for member expected");
+		return nullptr;
+	    }
+	    error::expected(TokenKind::SEMICOLON);
+	    getToken();
+	    memberDecl.push_back({std::move(member), std::move(typeNode)});
+	}
+	error::expected(TokenKind::RBRACE);
+	if (memberDecl.empty()) {
+	    error::fatal(token.loc, "at least one membler required in struct");
+	    return nullptr;
+	}
+	getToken();
+	return std::make_unique<StructTypeNode>(structName,
+					        std::move(memberDecl));
+    } else {
+	error::fatal(token.loc, "';' or '{' expected");
+	return nullptr;
+    }
+}
+
+static TypeNodePtr
 parseFunctionType()
 {
     if (token.kind != TokenKind::FN) {
@@ -127,6 +182,8 @@ parseUnqualifiedType(bool allowZeroDim)
     } else if (auto typeNode = parseArrayType(allowZeroDim)) {
 	return typeNode;
     } else if (auto typeNode = parseFunctionType()) {
+	return typeNode;
+    } else if (auto typeNode = parseStructType()) {
 	return typeNode;
     } else {
 	return nullptr;

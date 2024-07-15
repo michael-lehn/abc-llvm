@@ -23,10 +23,14 @@ main(int argc, char *argv[])
 
     std::filesystem::path infile;
     std::filesystem::path outfile;
+    bool justStrings = false;
 
     for (int i = 1; i < argc; ++i) {
 	if (argv[i][0] == '-') {
 	    switch (argv[i][1]) {
+		case 's':
+		    justStrings = true;
+		    break;
 		case 'o':
 		    if (!argv[i][2] && i + 1 < argc) {
 			outfile = argv[i + 1];
@@ -72,6 +76,10 @@ main(int argc, char *argv[])
     lexer::init();
     do {
 	lexer::getToken();
-	*fp << lexer::token << std::endl;
+	if (justStrings) {
+	    *fp << lexer::token.val << std::endl;
+	} else {
+	    *fp << lexer::token << std::endl;
+	}
     } while (lexer::token.kind != lexer::TokenKind::EOI);
 }

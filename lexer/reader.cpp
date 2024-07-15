@@ -39,6 +39,12 @@ ReaderInfo::resetStart()
     val = "";
 }
 
+Loc
+ReaderInfo::loc() const
+{
+    return Loc{path, start, pos};
+}
+
 //------------------------------------------------------------------------------
 
 std::unique_ptr<ReaderInfo> reader;

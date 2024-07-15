@@ -26,6 +26,7 @@ struct ReaderInfo {
     bool eof() const;
     bool valid() const;
     void resetStart();
+    Loc loc() const;
 };
 
 extern std::unique_ptr<ReaderInfo> reader;

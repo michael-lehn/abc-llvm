@@ -31,6 +31,8 @@ TokenKindCStr(TokenKind kind)
 	case TokenKind::DO: return "DO";
 	case TokenKind::ELSE: return "ELSE";
 	case TokenKind::ENUM: return "ENUM";
+	case TokenKind::TRUE: return "TRUE";
+	case TokenKind::FALSE: return "FALSE";
 	case TokenKind::EXTERN: return "EXTERN";
 	case TokenKind::FN: return "FN";
 	case TokenKind::FOR: return "FOR";
@@ -116,6 +118,8 @@ getCStr(TokenKind kind)
 	case TokenKind::DO: return "do";
 	case TokenKind::ELSE: return "else";
 	case TokenKind::ENUM: return "enum";
+	case TokenKind::TRUE: return "true";
+	case TokenKind::FALSE: return "false";
 	case TokenKind::EXTERN: return "extern";
 	case TokenKind::FN: return "fn";
 	case TokenKind::FOR: return "for";

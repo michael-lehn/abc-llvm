@@ -204,7 +204,9 @@ CompoundExpr::loadValue(std::size_t index) const
 void
 CompoundExpr::print(int indent) const
 {
-    std::cerr << std::setfill(' ') << std::setw(indent) << ' ';
+    if (indent) {
+	std::cerr << std::setfill(' ') << std::setw(indent) << ' ';
+    }
     printFlat(std::cerr, 0);
 }
 

@@ -113,7 +113,7 @@ includedFiles()
 static TokenKind
 setToken(TokenKind kind, std::string processed)
 {
-    auto loc = Loc{reader->path, reader->start, reader->pos};
+    auto loc = reader->loc();
     auto val = UStr::create(reader->val);
 
     token = processed.empty() && kind != TokenKind::STRING_LITERAL
@@ -187,9 +187,7 @@ getToken_(bool skipNewline)
 		repr = HEXADECIMAL;
                 nextCh();
                 if (!isHexDigit(reader->ch)) {
-		    error::out() << token.loc
-			<<  ": invalid hexadecimal constant" << std::endl;
-		    error::fatal();
+		    error::fatal(reader->loc(), "invalid hexadecimal constant");
 		    return setToken(TokenKind::BAD);
 		}
 		do {
@@ -253,9 +251,7 @@ getToken_(bool skipNewline)
 	if (octal_to_float) {
 	    // leading 0 with non-octal digits following
 	    // which did not turn into a decimal floating constant
-	    error::out() << token.loc
-		<<  ": invalid octal constant" << std::endl;
-	    error::fatal();
+	    error::fatal(reader->loc(), "invalid octal constant");
 	    return setToken(TokenKind::BAD);
 	}
 	if (!literalKind) {
@@ -487,9 +483,9 @@ parseStringLiteral()
     nextCh();
     while (reader->ch != '"') {
         if (reader->ch == '\n') {
-	    error::out() << token.loc << ": newline in string literal"
-		<< std::endl;
-	    error::fatal();
+	    error::location(reader->loc());
+	    error::fatal(reader->loc(), "newline in string literal");
+	    break;
         } else if (reader->ch == '\\') {
             nextCh();
             if (isOctDigit(reader->ch)) {
@@ -558,6 +554,7 @@ parseStringLiteral()
 			    error::out() << token.loc
 				<< ": expected hex digit" << std::endl;
 			    error::fatal();
+			    break;
                         }
                         unsigned hexval = hexToVal(reader->ch);
                         nextCh();
@@ -569,16 +566,15 @@ parseStringLiteral()
                         break;
                     }
                     default:
-			error::out() << token.loc
-			    << ": invalid character '" << reader->ch
-			    << "'" << std::endl;
-			error::fatal();
+			error::location(reader->loc());
+			error::fatal(reader->loc(), "invalid character");
+			break;
                 }
             }
         } else if (reader->ch == EOF) {
-	    error::out() << token.loc << ": end of file in string literal"
-		<< std::endl;
-	    error::fatal();
+	    error::location(reader->loc());
+	    error::fatal(reader->loc(), "invalid character");
+	    break;
         } else {
 	    processed += reader->ch;
             nextCh();
