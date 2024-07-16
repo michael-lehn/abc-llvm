@@ -43,7 +43,7 @@ TypeAlias::isAlias() const
 const Type *
 TypeAlias::getUnalias() const
 {
-    return type;
+    return isConst ? type->getConst() : type;
 }
 
 const Type *
