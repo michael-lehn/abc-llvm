@@ -1,9 +1,0 @@
-@ "gen.hdr"
-
-fn main()
-{
-    local val1: GenReg = genLoad(42);
-    local val2: GenReg = genLoad(-1);
-    local val3: GenReg = genAluInstr(GEN_ADD, val1, val2);
-    local val4: GenReg = genAluInstr(GEN_SUB, val1, val2);
-}

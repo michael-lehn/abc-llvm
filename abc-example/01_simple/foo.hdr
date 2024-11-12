@@ -1,2 +1,0 @@
-extern fn foo();
-extern bar: i32;
