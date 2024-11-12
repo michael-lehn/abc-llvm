@@ -2,6 +2,7 @@
 #define LEXER_LEXER_HPP
 
 #include <filesystem>
+#include  <optional>
 
 #include "loc.hpp"
 #include "token.hpp"
@@ -14,8 +15,8 @@ const std::set<std::filesystem::path> &includedFiles();
 
 extern Token token, lastToken;
 
+void setTokenFix(TokenKind expectedTokenKind);
 TokenKind getToken();
-
 
 } } // namespace lexer, abc
 

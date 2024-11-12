@@ -2,6 +2,7 @@
 #include <iostream>
 #include <optional>
 #include <string>
+#include <sstream>
 
 #include "util/ustr.hpp"
 
@@ -21,7 +22,8 @@ static bool isWhiteSpace(int ch);
 static bool isDecDigit(int ch);
 static bool isOctDigit(int ch);
 static bool isLetter(int ch);
-static TokenKind getToken_(bool skipNewline = true);
+static TokenKind getToken0(bool skipNewline = true);
+static TokenKind getToken1(); // checks for keywords, deals with macros
 static TokenKind setToken(TokenKind kind, std::string processed = "");
 
 static unsigned hexToVal(char ch);
@@ -122,17 +124,48 @@ setToken(TokenKind kind, std::string processed)
     return kind;
 }
 
+static std::optional<Token> tokenBuffer;
+
+void
+setTokenFix(TokenKind expectedTokenKind)
+{
+    assert(!tokenBuffer || "after each call of setTokenFix call getToken");
+
+    if (token.kind != expectedTokenKind) {
+	error::expected(expectedTokenKind);
+	tokenBuffer = token;
+	token = Token{token.loc, expectedTokenKind, UStr{}};
+    }
+    std::cerr << "setTokenFix(): token = " << token << "\n";
+}
+
 TokenKind
 getToken()
 {
     lastToken = token;
+    if (tokenBuffer) {
+	std::stringstream ss;
+	ss << "applied fix by inserting '" << token.kind << "'";
+	error::fatal(token.loc, ss.str().c_str());
+	token = tokenBuffer.value();
+	tokenBuffer = std::nullopt;
+    } else {
+	getToken1(); 
+    }
+    std::cerr << "getToken(): token = " << token << "\n";
+    return token.kind;
+}
+
+TokenKind
+getToken1()
+{
     do {
 	while (true) {
 	    if (macro::hasToken()) {
 		token = macro::getToken();
 		break;
 	    } else {
-		getToken_();
+		getToken0();
 		if (!macro::expandMacro(token)) {
 		    break;
 		}
@@ -149,7 +182,7 @@ getToken()
 }
 
 TokenKind
-getToken_(bool skipNewline)
+getToken0(bool skipNewline)
 {
     // skip white spaces and newlines
     while (isWhiteSpace(reader->ch) || (skipNewline && reader->ch == '\n')) {
@@ -168,7 +201,7 @@ getToken_(bool skipNewline)
 	return setToken(TokenKind::CHARACTER_LITERAL, str);
     } else if (reader->ch == '@') {
 	parseAddDirective();
-	return getToken();
+	return getToken0();
     } else if (isLetter(reader->ch)) {
         while (isLetter(reader->ch) || isDecDigit(reader->ch)) {
             nextCh();
@@ -357,7 +390,7 @@ getToken_(bool skipNewline)
 	    while (reader->ch != '\n') {
 		nextCh();
 	    }
-	    return getToken();
+	    return getToken0();
 	} else if (reader->ch == '*') {
 	    nextCh();
 	    // skip to next '*', '/'
@@ -375,7 +408,7 @@ getToken_(bool skipNewline)
 		error::fatal();
 		return setToken(TokenKind::BAD);
 	    }
-	    return getToken();
+	    return getToken0();
 	}
 	return setToken(TokenKind::SLASH);
      } else if (reader->ch == '%') {
@@ -711,9 +744,9 @@ parseAddDirective()
 
     // ch == '@'
     nextCh();
-    getToken_();
+    getToken0();
     if (token.kind == TokenKind::IDENTIFIER && token.val == ifdefKw) {
-	getToken_(false);
+	getToken0(false);
 	if (token.kind != TokenKind::IDENTIFIER) {
 	    error::out() << token.loc
 		<< ": expected identifier" << std::endl;
@@ -727,18 +760,18 @@ parseAddDirective()
     } else if (token.kind == TokenKind::IDENTIFIER && token.val == endifKw) {
 	macro::endifDirective();
     } else if (token.kind == TokenKind::IDENTIFIER && token.val == defineKw) {
-	getToken_(false);
+	getToken0(false);
 	if (token.kind != TokenKind::IDENTIFIER) {
 	    error::out() << token.loc
 		<< ": expected identifier" << std::endl;
 	    error::fatal();
 	}
 	auto from = token;
-	getToken_(false);
+	getToken0(false);
 	std::vector<Token> to;
 	while (token.kind != TokenKind::NEWLINE) {
 	    to.push_back(token);
-	    getToken_(false);
+	    getToken0(false);
 	}
 	if (!macro::defineDirective(from, std::move(to))) {
 	    error::out() << token.loc

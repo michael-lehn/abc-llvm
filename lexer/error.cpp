@@ -115,6 +115,7 @@ expected(const std::vector<lexer::TokenKind> &kind, ExpectedLoc where)
 	    } else {
 		out() << lexer::lastToken.kind;
 	    }
+	    out() << "'";
 	} else if (where == BEFORE) {
 	    out() << " before '";
 	    if (lexer::token.kind == lexer::TokenKind::IDENTIFIER) {
@@ -122,8 +123,9 @@ expected(const std::vector<lexer::TokenKind> &kind, ExpectedLoc where)
 	    } else {
 		out() << lexer::token.kind;
 	    }
+	    out() << "'";
 	}
-	out() << "'\n" << setColor(NORMAL);
+	out() << "\n" << setColor(NORMAL);
 	fatal();
     }
     return ok;

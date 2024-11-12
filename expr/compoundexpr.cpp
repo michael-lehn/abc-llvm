@@ -10,16 +10,19 @@
 #include "type/arraytype.hpp"
 #include "type/integertype.hpp"
 
+#include "badexpr.hpp"
 #include "compoundexpr.hpp"
 #include "implicitcast.hpp"
 
 namespace abc {
 
 CompoundExpr::CompoundExpr(std::vector<ExprPtr> &&expr, const Type *type,
+			   const Type *unpatchedType,
 			   std::vector<Designator> &&designator,
 			   std::vector<const Expr *> &&parsedExpr,
 			   lexer::Loc loc)
-    : Expr{loc, type}, designator{std::move(designator)}
+    : Expr{loc, type}, unpatchedType{unpatchedType}
+    , designator{std::move(designator)}
     , parsedExpr{std::move(parsedExpr)}, expr{std::move(expr)}
 {
     static std::size_t idCount;
@@ -63,26 +66,83 @@ CompoundExpr::create(std::vector<Designator> &&designator,
 		     std::vector<ExprPtr> &&parsedExpr, const Type *type,
 		     lexer::Loc loc)
 {
-    assert(type);
-    assert(type->hasSize());
-    assert(!designator.size() || designator.size() == parsedExpr.size());
+    auto unpatchedType = type;
+    if (!type) {
+	return BadExpr::create(
+		    UStr::create("type expected for compound expression"),
+		    loc);
+    } else if (type->isUnboundArray()) {
+	// if parsedExpr is empty it is a zero size array
+	type = Type::patchUnboundArray(type, parsedExpr.size());
+    }
+
+    if (!type->hasSize()) {
+	return BadExpr::create(
+		    UStr::create("type with size zero is not supported"),
+		    loc);
+    }
 
     std::vector<ExprPtr> expr(type->aggregateSize());
     std::vector<const Expr *> parsedExpr_;
     for (std::size_t i = 0, index = 0; i < parsedExpr.size(); ++i, ++index) {
-	auto ty = type->aggregateType(i);
-	if (designator.size()) {
-	    if (std::holds_alternative<lexer::Token>(designator[i])) {
-		assert(type->isStruct());
-		auto name = std::get<lexer::Token>(designator[i]).val;
-		auto index_ = type->memberIndex(name);
-		assert(index_.has_value());
-		index = index_.value();
-		ty = type->memberType(name);
-	    } else if (std::holds_alternative<ExprPtr>(designator[i])) {
-		assert(type->isArray());
-		index = std::get<ExprPtr>(designator[i])->getUnsignedIntValue();
+	if (std::holds_alternative<lexer::Token>(designator[i])) {
+	    auto name = std::get<lexer::Token>(designator[i]).val;
+	    auto index_ = type->memberIndex(name);
+	    if (!index_) {
+		error::location(parsedExpr[i]->loc);
+		error::out() << error::setColor(error::BOLD)
+		    << parsedExpr[i]->loc << ": "
+		    << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "'" << name << "' is not a member "
+		    << "of type '" << unpatchedType << "'.\n"
+		    << error::setColor(error::NORMAL);
+		return BadExpr::create(
+			    UStr::create("illegal member"),
+			    parsedExpr[i]->loc);
 	    }
+	    index = index_.value();
+	} else if (std::holds_alternative<ExprPtr>(designator[i])) {
+	    const auto &d = std::get<ExprPtr>(designator[i]);
+	    if (!type->isArray()) {
+		error::location(d->loc);
+		error::out() << error::setColor(error::BOLD)
+		    << d->loc << ": "
+		    << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "desigantor for array index, but "
+		    << "'" << unpatchedType << "' is not an array type.\n"
+		    << error::setColor(error::NORMAL);
+		return BadExpr::create(
+			    UStr::create("illegal desigantor"),
+			    d->loc);
+	    } else if (!d->isConst() || !d->type->isInteger()) {
+		error::location(d->loc);
+		error::out() << error::setColor(error::BOLD)
+		    << loc << ": "
+		    << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "constant integer expression expected\n"
+		    << error::setColor(error::NORMAL);
+		error::fatal();
+		return BadExpr::create(
+			    UStr::create("constant integer expression "
+					 "expected"),
+			    d->loc);
+	    }
+	    index = d->getUnsignedIntValue();
+	}
+	if (index >= type->aggregateSize()) {
+	    error::location(parsedExpr[i]->loc);
+	    error::out() << error::setColor(error::BOLD)
+		<< parsedExpr[i]->loc << ": "
+		<< error::setColor(error::BOLD_RED) << "error: "
+		<< error::setColor(error::BOLD)
+		<< "excess elements in initializer\n"
+		<< error::setColor(error::NORMAL);
+	    return BadExpr::create(
+			UStr::create("excess elements in initializer"),
+			parsedExpr[i]->loc);
 	}
 	if (expr[index]) {
 	    error::location(parsedExpr[i]->loc);
@@ -100,10 +160,11 @@ CompoundExpr::create(std::vector<Designator> &&designator,
 		<< "previous initialization here\n"
 		<< error::setColor(error::NORMAL);
 	}
+	auto ty = type->aggregateType(index);
 	expr[index] = ImplicitCast::create(std::move(parsedExpr[i]), ty);
 	parsedExpr_.push_back(expr[index].get());
     }
-    auto p = new CompoundExpr{std::move(expr), type,
+    auto p = new CompoundExpr{std::move(expr), type, unpatchedType,
 			      std::move(designator),
 			      std::move(parsedExpr_),
 			      loc};
@@ -215,9 +276,9 @@ void
 CompoundExpr::printFlat(std::ostream &out, int prec) const
 {
     if (displayOpt == PAREN) {
-	out << "(" << type << ")";
+	out << "(" << unpatchedType << ")";
     } else if (displayOpt == BRACE) {
-	out << type;
+	out << unpatchedType;
     }
     out << "{";
     for (std::size_t i = 0; i < parsedExpr.size(); ++i) {

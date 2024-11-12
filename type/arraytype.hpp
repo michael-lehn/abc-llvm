@@ -26,6 +26,8 @@ class ArrayType : public Type
 	bool isArray() const override;
 	const Type *refType() const override;
 	std::size_t dim() const override;
+	bool hasSize() const override;
+	bool isUnboundArray() const override;
 };
 
 } // namespace abc

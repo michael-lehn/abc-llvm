@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "expr/assertexpr.hpp"
+#include "expr/badexpr.hpp"
 #include "expr/binaryexpr.hpp"
 #include "expr/callexpr.hpp"
 #include "expr/characterliteral.hpp"
@@ -35,15 +36,11 @@ using namespace lexer;
 ExprPtr
 parseCompoundExpression(const Type *type)
 {
-    if (!type) {
-	return nullptr;
-    }
-
     auto tok = token;
-    std::size_t exprSize = 0;
     std::vector<ExprPtr> exprVec;
     std::vector<CompoundExpr::Designator> designatorVec;
-    if (type->isArray() && token.kind == TokenKind::STRING_LITERAL) {
+
+    if (token.kind == TokenKind::STRING_LITERAL) {
 	// string literals are treated as compound expression. For example:
 	// "abc" is treated as {'a', 'b', 'c', 0}
 	std::string str{};
@@ -57,103 +54,59 @@ parseCompoundExpression(const Type *type)
 	}
 	exprVec.push_back(IntegerLiteral::create(0, IntegerType::createChar(),
 						 tok.loc));
-	exprSize = str.length() + 1;
-	if (!type->isUnboundArray() && exprSize > type->aggregateSize()) {
-	    error::location(tok.loc);
-	    error::out() << error::setColor(error::BOLD)
-		<< tok.loc << ": "
-		<< error::setColor(error::BOLD_RED) << "error: "
-		<< error::setColor(error::BOLD)
-		<< "excess elements in initializer\n"
-		<< error::setColor(error::NORMAL);
-	    error::fatal();
-	}
     } else if (token.kind == TokenKind::LBRACE) {
 	getToken();
-	std::size_t maxIndex = 0;
-	for (std::size_t i=0; ; ++i) {
-	    bool hasDesignator = false;
+	while (true) {
+	    CompoundExpr::Designator designator = std::nullopt;
 	    auto designatorLoc = token.loc;
-	    if (type->isStruct() && token.kind == TokenKind::DOT) {
+	    if (token.kind == TokenKind::DOT) {
 		getToken();
-		error::expected(TokenKind::IDENTIFIER);
-		if (auto index = type->memberIndex(token.val)) {
-		    i = index.value();
-		    hasDesignator = true;
-		    designatorVec.push_back(token);
+		if (token.kind == TokenKind::IDENTIFIER) {
+		    designator = std::move(token);
+		    getToken();
 		} else {
-		    error::location(token.loc);
-		    error::out() << error::setColor(error::BOLD)
-			<< tok.loc << ": "
-			<< error::setColor(error::BOLD_RED) << "error: "
-			<< error::setColor(error::BOLD)
-			<< "'" << token.val << "' is not a member of "
-			<< type << "\n"
-			<< error::setColor(error::NORMAL);
-		    error::fatal();
+		    designatorVec.back()
+			= BadExpr::create(
+				UStr::create("identifier for member expected"),
+				token.loc);
 		}
+		setTokenFix(TokenKind::EQUAL);
 		getToken();
-		error::expected(TokenKind::EQUAL);
-		getToken();
-	    } else if (type->isArray() && token.kind == TokenKind::LBRACKET) {
-		auto loc = token.loc;
+	    } else if (token.kind == TokenKind::LBRACKET) {
 		getToken();
 		auto expr = parseAssignmentExpression();
-		if (!expr || !expr->isConst() || !expr->type->isInteger()) {
-		    error::location(loc);
-		    error::out() << error::setColor(error::BOLD)
-			<< loc << ": "
-			<< error::setColor(error::BOLD_RED) << "error: "
-			<< error::setColor(error::BOLD)
-			<< "constant integer expression expected after '['\n"
-			<< error::setColor(error::NORMAL);
-		    error::fatal();
-		}
-		i = expr->getUnsignedIntValue();
-		hasDesignator = true;
-		designatorVec.push_back(std::move(expr));
-		error::expected(TokenKind::RBRACKET);
+		designator = std::move(expr);
+		setTokenFix(TokenKind::RBRACKET);
 		getToken();
-		error::expected(TokenKind::EQUAL);
+		setTokenFix(TokenKind::EQUAL);
 		getToken();
 	    }
-	    if (!type->isUnboundArray() && i >= type->aggregateSize()) {
-		error::location(token.loc);
-		error::out() << error::setColor(error::BOLD)
-		    << token.loc << ": "
-		    << error::setColor(error::BOLD_RED) << "error: "
-		    << error::setColor(error::BOLD)
-		    << "excess elements in struct initializer\n"
-		    << error::setColor(error::NORMAL);
-		error::fatal();
-		return nullptr;
-	    }
-
-	    maxIndex = std::max(maxIndex, i);
-	    auto ty = type->aggregateType(i);
 
 	    // note: parseCompoundExpression has to be called before
 	    //	     parseAssignmentExpression. Because parseCompoundExpression
 	    //	     catches string literals and treats them as a compound.
-	    if (auto expr = parseCompoundExpression(ty)) {
+	    if (auto expr = parseCompoundExpression(nullptr)) {
+		designatorVec.push_back(std::move(designator));
 		exprVec.push_back(std::move(expr));
 	    } else if (auto expr = parseAssignmentExpression()) {
+		designatorVec.push_back(std::move(designator));
 		exprVec.push_back(std::move(expr));
-	    } else {
-		if (hasDesignator) {
-		    error::location(designatorLoc);
-		    error::out() << error::setColor(error::BOLD)
-			<< designatorLoc << ": "
-			<< error::setColor(error::BOLD_RED) << "error: "
-			<< error::setColor(error::BOLD)
-			<< ": expression expected after designator\n"
-			<< error::setColor(error::NORMAL);
-		    error::fatal();
-		}
+	    } else if (!std::holds_alternative<std::nullopt_t>(designator)) {
+		error::location(designatorLoc);
+		error::out() << error::setColor(error::BOLD)
+		    << designatorLoc << ": "
+		    << error::setColor(error::BOLD_RED) << "error: "
+		    << error::setColor(error::BOLD)
+		    << "expression expected after designator\n"
+		    << error::setColor(error::NORMAL);
+		error::fatal();
+		auto badExpr = BadExpr::create(
+				    UStr::create("expression expected after "
+						 "designator"),
+				    token.loc);
 		break;
-	    }
-	    if (!hasDesignator) {
-		designatorVec.push_back(std::nullopt);
+	    } else {
+		break;
 	    }
 	    if (token.kind != TokenKind::COMMA) {
 		break;
@@ -163,13 +116,11 @@ parseCompoundExpression(const Type *type)
 		break;
 	    }
 	}
-	exprSize = maxIndex + 1;
-	error::expected(TokenKind::RBRACE);
+	setTokenFix(TokenKind::RBRACE);
 	getToken();
     } else {
 	return nullptr;
     }
-    type = Type::patchUnboundArray(type, exprSize);
     return CompoundExpr::create(std::move(designatorVec), std::move(exprVec),
 				type, tok.loc);
 }
@@ -204,7 +155,10 @@ parseExpressionList()
 		    << "expected non-empty assignment expression\n"
 		    << error::setColor(error::NORMAL);
 		error::fatal();
-		return nullptr;
+		expr = BadExpr::create(
+			    UStr::create("expected non-empty assignment "
+					 "expression"),
+			    token.loc);
 	    }
 	    exprVec.push_back(std::move(expr));
 	    if (token.kind != TokenKind::COMMA) {
@@ -318,6 +272,10 @@ parseAssignmentExpression()
 		<< "expected non-empty assignment expression\n"
 		<< error::setColor(error::NORMAL);
 	    error::fatal();
+	    expr = BadExpr::create(
+			UStr::create("expected non-empty assignment "
+				     "expression"),
+			token.loc);
 	}
 	expr = BinaryExpr::create(getBinaryExprKind(tok.kind),
 				  std::move(expr),
@@ -350,11 +308,14 @@ parseConditional()
 		<< "expected non-empty expression\n"
 		<< error::setColor(error::NORMAL);
 	    error::fatal();
+	    expr = BadExpr::create(
+			UStr::create("expected non-empty expression"),
+			token.loc);
 	}
 	if (thenElseStyle) {
-	    error::expected(TokenKind::ELSE);
+	    setTokenFix(TokenKind::ELSE);
 	} else {
-	    error::expected(TokenKind::COLON);
+	    setTokenFix(TokenKind::COLON);
 	}
 	getToken();
 	auto right = parseConditional();
@@ -426,6 +387,7 @@ parseBinary(int prec)
             }
 	    expr = BinaryExpr::create(op, std::move(expr), std::move(right),
 				      opLoc);
+	    error::out() << "after BinaryExpr::create ok\n";
         }
     }
     return expr;
@@ -443,9 +405,7 @@ parsePrefix()
 	    getToken();
 	    if (auto type = parseType()) {
 		// Yes, it's a C cast!
-		if (!error::expected(TokenKind::RPAREN)) {
-		    return nullptr;
-		}
+		setTokenFix(TokenKind::RPAREN);
 		getToken();
 		if (auto expr = parseCompoundExpression(type)) {
 		    auto comp = dynamic_cast<const CompoundExpr *>(expr.get());
@@ -458,9 +418,8 @@ parsePrefix()
 	    } else {
 		// Ups, it was the '(' of a primary expression
 		auto expr = parseExpressionList();
-		if (!error::expected(TokenKind::RPAREN)) {
-		    return nullptr;
-		}
+		
+		setTokenFix(TokenKind::RPAREN);
 		getToken();
 		return parsePostfix(std::move(expr));
 	    }
@@ -512,26 +471,24 @@ parsePostfix(ExprPtr &&expr)
 	return expr;
     }
 
-    if (!expr) {
-	error::location(token.loc);
-	error::out() << error::setColor(error::BOLD) << token.loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << "postfix operator '" << token.kind << "' requires"
-	    << " non-empty expression\n"
-	    << error::setColor(error::NORMAL);
-	error::fatal();
-    }
+    assert(expr);
 
     auto tok = token;
     switch (tok.kind) {
 	case TokenKind::DOT:
 	    {
 		getToken();
-		error::expected(TokenKind::IDENTIFIER);
-		tok = token;
-		expr = Member::create(std::move(expr), false, tok.val, tok.loc);
-		getToken();
+		if (token.kind != TokenKind::IDENTIFIER) {
+		    error::expected(TokenKind::IDENTIFIER);
+		    expr = BadExpr::create(
+				UStr::create("identifier for member expected"),
+				token.loc);
+		} else {
+		    tok = token;
+		    expr = Member::create(std::move(expr), false, tok.val,
+					  tok.loc);
+		    getToken();
+		}
 		return parsePostfix(std::move(expr));
 	    }
 	case TokenKind::LPAREN:
@@ -547,7 +504,7 @@ parsePostfix(ExprPtr &&expr)
 		    }
 		    getToken();
 		}
-		error::expected(TokenKind::RPAREN);
+		setTokenFix(TokenKind::RPAREN);
 		getToken();
 		expr = CallExpr::create(std::move(expr), std::move(arg),
 				        tok.loc);
@@ -556,7 +513,7 @@ parsePostfix(ExprPtr &&expr)
 	case TokenKind::LBRACKET:
 	    getToken();
 	    if (auto index = parseExpressionList()) {
-		error::expected(TokenKind::RBRACKET);
+		setTokenFix(TokenKind::RBRACKET);
 		getToken();
 		expr = BinaryExpr::create(BinaryExpr::INDEX, std::move(expr),
 					  std::move(index), tok.loc);
@@ -569,10 +526,10 @@ parsePostfix(ExprPtr &&expr)
 		    << "expected non-empty expression\n"
 		    << error::setColor(error::NORMAL);
 		error::fatal();
-		return nullptr;
+		return BadExpr::create(
+			    UStr::create("expected non-empty expression"),
+			    token.loc);
 	    }
-	    assert(0 && "Not implemented");
-	    return nullptr;
 	case TokenKind::ARROW:
 	    getToken();
 	    if (token.kind == TokenKind::IDENTIFIER) {
@@ -608,11 +565,19 @@ parsePostfix(ExprPtr &&expr)
 static const Type *
 parseSuffixType()
 {
+    if (token.kind == TokenKind::IDENTIFIER
+	    && Symtab::type(token.val, Symtab::AnyScope))
+    {
+	error::out() << "warning: literal suffix disabled\n";
+    }
+    return nullptr;
+    /*
     auto type = parseType();
     if (type && !type->isInteger() && !type->isFloatType()) {
 	return nullptr;
     }
     return type;
+    */
 }
 
 static ExprPtr
@@ -634,11 +599,13 @@ parsePrimary()
 		    << "after type " << sym->type << "\n"
 		    << error::setColor(error::NORMAL);
 		error::fatal();
-		return nullptr;
+		return BadExpr::create(
+			    UStr::create("expected compound expression"),
+			    token.loc);
 	    } else {
-		auto comp = dynamic_cast<const CompoundExpr *>(expr.get());
-		assert(comp);
-		comp->setDisplayOpt(CompoundExpr::BRACE);
+		if (auto e = dynamic_cast<const CompoundExpr *>(expr.get())) {
+		    e->setDisplayOpt(CompoundExpr::BRACE);
+		}
 		return expr;
 	    }
 	} else if (auto sym = Symtab::constant(tok.val, Symtab::AnyScope)) {
@@ -653,7 +620,7 @@ parsePrimary()
 	    return expr;
 	} else {
 	    error::undefinedIdentifier(tok.loc, tok.val);
-	    return nullptr;
+	    return BadExpr::create(UStr::create("unknown identifier"), tok.loc);
 	}
     } else if (tok.kind == TokenKind::FLOAT_DECIMAL_LITERAL) {
 	getToken();
@@ -707,9 +674,7 @@ parsePrimary()
         return Nullptr::create(tok.loc);
     } else if (token.kind == TokenKind::SIZEOF) {
 	getToken();
-	if (!error::expected(TokenKind::LPAREN)) {
-	    return nullptr;
-	}
+	setTokenFix(TokenKind::LPAREN);
 	getToken();
 	auto tok = token;
 	ExprPtr sizeofExpr;
@@ -725,14 +690,17 @@ parsePrimary()
 		<< "expected type or expression\n"
 		<< error::setColor(error::NORMAL);
 	    error::fatal();
-	    return nullptr;
+	    auto badExpr = BadExpr::create(
+				UStr::create("expected type or expression"),
+				token.loc);
+	    sizeofExpr = Sizeof::create(std::move(badExpr), tok.loc);
 	}
-	if (!error::expected(TokenKind::RPAREN)) {
-	    return nullptr;
-	}
+	setTokenFix(TokenKind::RPAREN);
 	getToken();
 	return sizeofExpr;
     } else if (token.kind == TokenKind::ASSERT) {
+	getToken();
+	setTokenFix(TokenKind::LPAREN);
 	getToken();
 	auto expr = parseExpressionList();
 	if (!expr) {
@@ -743,7 +711,12 @@ parsePrimary()
 		<< "expected non-empty expression\n"
 		<< error::setColor(error::NORMAL);
 	    error::fatal();
+	    expr = BadExpr::create(
+			UStr::create("expected non-empty expression"),
+			token.loc);
 	}
+	setTokenFix(TokenKind::RPAREN);
+	getToken();
 	return AssertExpr::create(std::move(expr), tok.loc);
     } else if (token.kind == TokenKind::LPAREN) {
         getToken();
@@ -756,8 +729,11 @@ parsePrimary()
 		<< "expected non-empty expression\n"
 		<< error::setColor(error::NORMAL);
 	    error::fatal();
+	    expr = BadExpr::create(
+			UStr::create("expected non-empty expression"),
+			token.loc);
 	}
-	error::expected(TokenKind::RPAREN);
+	setTokenFix(TokenKind::RPAREN);
         getToken();
         return expr;
     } else {

@@ -35,8 +35,6 @@ BinaryExpr::BinaryExpr(Kind kind, ExprPtr &&left, ExprPtr &&right,
 ExprPtr
 BinaryExpr::create(Kind kind, ExprPtr &&left, ExprPtr &&right, lexer::Loc loc)
 {
-    assert(left);
-    assert(right);
     auto promotion = promotion::binary(kind, std::move(left),
 				       std::move(right), &loc);
     auto p = new BinaryExpr{kind,

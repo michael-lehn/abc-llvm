@@ -1,9 +1,6 @@
 #ifndef EXPR_IDENTIFIER_HPP
 #define EXPR_IDENTIFIER_HPP
 
-#include "type/type.hpp"
-#include "lexer/loc.hpp"
-
 #include "expr.hpp"
 
 namespace abc {
@@ -20,7 +17,7 @@ class Identifier : public Expr
 	const UStr name;
 	const UStr id;
 
-	virtual bool hasConstantAddress() const override;
+	bool hasConstantAddress() const override;
 	bool hasAddress() const override;
 	bool isLValue() const override;
 	bool isConst() const override;
@@ -35,7 +32,7 @@ class Identifier : public Expr
 	void print(int indent) const override;
 
 	// for printing error messages
-	virtual void printFlat(std::ostream &out, int prec) const override;
+	void printFlat(std::ostream &out, int prec) const override;
 };
 
 } // namespace abc

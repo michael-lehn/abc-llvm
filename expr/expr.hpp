@@ -21,6 +21,8 @@ class Expr
 	const lexer::Loc loc;
 	const Type * const type;
 
+	bool valid() const;
+
 	// for sematic checks
 	virtual bool hasConstantAddress() const;
 	virtual bool hasAddress() const = 0;

@@ -26,6 +26,7 @@ TokenKindCStr(TokenKind kind)
 	case TokenKind::BREAK: return "BREAK";
 	case TokenKind::CASE: return "CASE";
 	case TokenKind::CONST: return "CONST";
+	case TokenKind::READONLY: return "READONLY";
 	case TokenKind::CONTINUE: return "CONTINUE";
 	case TokenKind::DEFAULT: return "DEFAULT";
 	case TokenKind::DO: return "DO";
@@ -113,6 +114,7 @@ getCStr(TokenKind kind)
 	case TokenKind::BREAK: return "break";
 	case TokenKind::CASE: return "case";
 	case TokenKind::CONST: return "const";
+	case TokenKind::READONLY: return "readonly";
 	case TokenKind::CONTINUE: return "continue";
 	case TokenKind::DEFAULT: return "default";
 	case TokenKind::DO: return "do";

@@ -359,7 +359,7 @@ parseBlock(bool required)
 static const Type *parseUnqualifiedType(bool allowZeroDim);
 
 /*
- * type = [const] unqualified-type
+ * type = ["const"] unqualified-type
  */
 const Type *
 parseType(bool allowZeroDim)

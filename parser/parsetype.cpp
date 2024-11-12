@@ -2,6 +2,7 @@
 
 #include "lexer/error.hpp"
 #include "lexer/lexer.hpp"
+#include "symtab/symtab.hpp"
 
 #include "parseexpr.hpp"
 #include "parsetype.hpp"
@@ -10,6 +11,12 @@ namespace abc {
 
 using namespace lexer;
 
+/*
+ * struct-declaration = "struct" identifier (";" | { struct-member-list } )
+ * struct-member-list
+ *	= identifier { "," identifier } ":" ( type | struct-declaration ) ";"
+ * 
+ */
 static TypeNodePtr
 parseStructType()
 {
@@ -42,9 +49,12 @@ parseStructType()
 		error::expected(TokenKind::COMMA);
 		getToken();
 	    } while (true);
-	    auto typeNode = parseType_(false);
+	    auto typeNode = parseType_();
 	    if (!typeNode) {
 		error::fatal(token.loc, "type for member expected");
+		return nullptr;
+	    } else if (!typeNode->type()->hasSize()) {
+		error::fatal(token.loc, "type has zero size");
 		return nullptr;
 	    }
 	    error::expected(TokenKind::SEMICOLON);
@@ -65,6 +75,12 @@ parseStructType()
     }
 }
 
+/*
+ * function-type
+ *	= "fn" [identifier] "("
+ *	   [ [identifier] ":" type { "," [identifier] ":" type} } ["," ...] ]
+ *	   ")" [ ":" type ]
+ */
 static TypeNodePtr
 parseFunctionType()
 {
@@ -94,9 +110,12 @@ parseFunctionType()
 	}
 	error::expected(TokenKind::COLON);
 	getToken();
-	auto typeNode = parseType_(false);
+	auto typeNode = parseType_();
 	if (!typeNode) {
 	    error::fatal(token.loc, "type for parameter expected");
+	    return nullptr;
+	} else if (typeNode->type()->isUnboundArray()) {
+	    error::fatal(token.loc, "use pointer instead of unbound array");
 	    return nullptr;
 	}
 	fnParamType.push_back(std::move(typeNode));
@@ -114,9 +133,12 @@ parseFunctionType()
     getToken();
     if (token.kind == TokenKind::COLON) {
 	getToken();
-	fnRetType = parseType_(false);
+	fnRetType = parseType_();
 	if (!fnRetType) {
 	    error::fatal(token.loc, "return type for function expected");
+	    return nullptr;
+	} else if (fnRetType->type()->isUnboundArray()) {
+	    error::fatal(token.loc, "use pointer instead of unbound array");
 	    return nullptr;
 	}
     }
@@ -127,34 +149,37 @@ parseFunctionType()
 					      std::move(fnRetType));
 }
 
+/*
+ * array-type = "array" "[" assignment-expression "]"
+ *		{ "[" assignment-expression "]" }
+ */
 static TypeNodePtr
-parseArrayType(bool allowZeroDim)
+parseArrayType()
 {
     if (token.kind != TokenKind::ARRAY) {
 	return nullptr;
     }
     getToken();
     std::vector<ExprPtr> dimExpr;
-    for (bool first = true; token.kind == TokenKind::LBRACKET; first = false) {
+    do {
+	setTokenFix(TokenKind::LBRACKET);
 	getToken();
 	dimExpr.push_back(parseAssignmentExpression());
-	if (!dimExpr.back() && (!first || !allowZeroDim)) {
-	    error::fatal(token.loc, "dimension expected");
-	}
-	error::expected(TokenKind::RBRACKET);
+	setTokenFix(TokenKind::RBRACKET);
 	getToken();
-    }
-    error::expected(TokenKind::OF);
+    } while (token.kind == TokenKind::LBRACKET);
+    setTokenFix(TokenKind::OF);
     getToken();
 
-    auto refTypeNode = parseType_(false);
-    if (!refTypeNode) {
-	error::fatal(token.loc, "element type for array expected");
-    }
+    auto refTypeNode = parseType_();
+    error::out() << "ok\n";
     return std::make_unique<ArrayTypeNode>(std::move(dimExpr),
 					   std::move(refTypeNode));
 }
 
+/*
+ * pointer-type = "->" type
+ */
 static TypeNodePtr
 parsePointerType()
 {
@@ -162,7 +187,7 @@ parsePointerType()
 	return nullptr;
     }
     getToken();
-    auto refTypeNode = parseType_(false);
+    auto refTypeNode = parseType_();
     if (!refTypeNode) {
 	error::fatal(token.loc, "target type for pointer expected");
 	return nullptr;
@@ -170,16 +195,25 @@ parsePointerType()
     return std::make_unique<PointerTypeNode>(std::move(refTypeNode));
 }
 
+/*
+ * unqualified-type = identifier
+ *		    | pointer-type
+ *		    | array-type
+ *		    | function-type
+ *		    | struct-type
+ */
 TypeNodePtr
-parseUnqualifiedType(bool allowZeroDim)
+parseUnqualifiedType()
 {
-    if (token.kind == TokenKind::IDENTIFIER) {
+    if (token.kind == TokenKind::IDENTIFIER
+	    && Symtab::type(token.val, Symtab::AnyScope))
+    {
 	auto tok = token;
 	getToken();
 	return std::make_unique<IdentifierTypeNode>(tok);
     } else if (auto typeNode = parsePointerType()) {
 	return typeNode;
-    } else if (auto typeNode = parseArrayType(allowZeroDim)) {
+    } else if (auto typeNode = parseArrayType()) {
 	return typeNode;
     } else if (auto typeNode = parseFunctionType()) {
 	return typeNode;
@@ -190,16 +224,19 @@ parseUnqualifiedType(bool allowZeroDim)
     }
 }
 
+/*
+ * type = [ "readonly" ] unqualified-type
+ */
 TypeNodePtr
-parseType_(bool allowZeroDim)
+parseType_()
 {
     bool isReadonlyType = false;
     auto tok = token;
-    if (token.kind == TokenKind::CONST) {
+    if (token.kind == TokenKind::READONLY) {
 	getToken();
 	isReadonlyType = true;
     }
-    auto typeNode = parseUnqualifiedType(allowZeroDim);
+    auto typeNode = parseUnqualifiedType();
     if (!typeNode && isReadonlyType) {
 	error::fatal(tok.loc, "unqualified type expected after 'readonly'");
     }

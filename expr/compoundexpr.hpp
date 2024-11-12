@@ -24,12 +24,14 @@ class CompoundExpr : public Expr
 
     protected:
 	CompoundExpr(std::vector<ExprPtr> &&expr, const Type *type,
+		     const Type *unpatchedType,
 		     std::vector<Designator> &&designator,
 		     std::vector<const Expr *> &&parsedExpr,
 		     lexer::Loc loc);
 
 	UStr tmpId;
 	mutable DisplayOpt displayOpt = NONE;
+	const Type *unpatchedType;
 
 	const std::vector<Designator> designator;
 	const std::vector<const Expr *> parsedExpr;

@@ -374,9 +374,6 @@ Type::isArray() const
 bool
 Type::isUnboundArray() const
 {
-    if (isArray() && dim() == 0) {
-	return true;
-    }
     return false;
 }
 
@@ -501,9 +498,13 @@ Type::memberType(UStr name) const
 std::ostream &
 operator<<(std::ostream &out, const Type *type)
 {
-    const char *constFlag = type->isConst ? "readonly " : "";
+    if (type) {
+	const char *constFlag = type->isConst ? "readonly " : "";
 
-    out << constFlag << type->ustr();
+	out << constFlag << type->ustr();
+    } else {
+	out << "nullptr";
+    }
     return out;
 }
 

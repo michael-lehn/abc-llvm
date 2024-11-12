@@ -88,6 +88,18 @@ ArrayType::dim() const
     return dim_;
 }
 
+bool
+ArrayType::hasSize() const
+{
+    return !isUnboundArray();
+}
+
+bool
+ArrayType::isUnboundArray() const
+{
+    return dim_ == 0;
+}
+
 //------------------------------------------------------------------------------
 
 /*

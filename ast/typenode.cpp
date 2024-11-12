@@ -70,9 +70,16 @@ getStructType(const lexer::Token &structName)
 static const Type *
 getArrayType(const std::vector<ExprPtr> &dim, const TypeNodePtr &refTypeNode)
 {
+    error::out() << "getArrayType\n";
+    if (!refTypeNode || !refTypeNode->type()) {
+	return nullptr;
+    }
     const Type *type = refTypeNode->type();
-    for (std::size_t i = 0; i < dim.size(); ++i) {
-	if (!type) {
+    for (std::size_t i = dim.size(); i-- > 0;) {
+	if ((!dim[i] && i > 0) || (dim[i] && !dim[i]->valid())) {
+	    if (dim[i] && !dim[i]->valid()) {
+		std::cerr << "dim[i]: " << dim[i] << "\n";
+	    }
 	    return nullptr;
 	}
 	auto dimVal = dim[i]
@@ -116,7 +123,13 @@ TypeNode::TypeNode(const Type *type)
 const Type *
 TypeNode::type() const
 {
-    return type_ ? type_ : AutoType::create();
+    return type_;
+}
+
+bool
+TypeNode::valid() const
+{
+    return type();
 }
 
 /*
@@ -183,6 +196,10 @@ ArrayTypeNode::ArrayTypeNode(std::vector<ExprPtr> &&dim,
 void
 ArrayTypeNode::print(int indent, bool beginNewline) const
 {
+    if (!valid()) {
+	error::out(indent, beginNewline) << "[invalid array type]";
+	return;
+    }
     error::out(indent, beginNewline) << "array";
     for (std::size_t i = 0; i < dim.size(); ++i) {
 	error::out(0) << "[";

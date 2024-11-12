@@ -11,6 +11,12 @@ Expr::Expr(lexer::Loc  loc, const Type  *type)
 {}
 
 bool
+Expr::valid() const
+{
+    return type;
+}
+
+bool
 Expr::hasConstantAddress() const
 {
     return false;
@@ -66,6 +72,7 @@ Expr::getUnsignedIntValue() const
 std::ostream &
 operator<<(std::ostream &out, const ExprPtr &expr)
 {
+    assert(expr);
     expr->printFlat(out, false);
     return out;
 }
@@ -73,6 +80,7 @@ operator<<(std::ostream &out, const ExprPtr &expr)
 std::ostream &
 operator<<(std::ostream &out, const Expr *expr)
 {
+    assert(expr);
     expr->printFlat(out, 1);
     return out;
 }

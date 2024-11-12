@@ -67,9 +67,18 @@ main(int argc, char *argv[])
     abc::Symtab newScope;
     abc::initDefaultType();
 
-    while (auto astType = abc::parseType_(true)) {
-	astType->print();
-	std::cerr << "\n";
+    while (abc::lexer::token.kind != abc::lexer::TokenKind::EOI) {
+	auto astType = abc::parseType_();
+	if (astType) {
+	    astType->print();
+	    std::cerr << "\n";
+	    std::cerr << "type: " << astType->type() << "\n\n";
+	    std::cerr << "----\n";
+	} else {
+	    std::cerr << "Not a type.\n Ignore token "
+		<< abc::lexer::token << "\n";
+	    abc::lexer::getToken();
+	}
     }
     if (abc::lexer::token.kind != abc::lexer::TokenKind::EOI) {
 	abc::error::location(abc::lexer::token.loc);

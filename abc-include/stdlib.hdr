@@ -1,4 +1,6 @@
 extern fn malloc(size: size_t): -> void;
+extern fn realloc(ptr: -> void, size: size_t): -> void;
+
 extern fn free(ptr: -> void);
 extern fn abort();
 extern fn exit(status: int);

@@ -24,6 +24,7 @@ enum class TokenKind {
     GOTO,
     LABEL,
     CONST,
+    READONLY,
     FN,
     RETURN,
     GLOBAL,

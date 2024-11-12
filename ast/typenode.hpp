@@ -7,6 +7,11 @@
 #include "lexer/token.hpp"
 #include "type/type.hpp"
 
+// TODO: 
+// - check sematics when node gets created (e.g. array dim)
+// - store token
+// - add method to get location
+
 namespace abc {
 
 class TypeNode
@@ -19,6 +24,7 @@ class TypeNode
 	virtual ~TypeNode() = default;
 
 	const Type *type() const;
+	bool valid() const;
 	virtual void print(int indent = 0, bool beginNewline = true) const = 0;
 };
 

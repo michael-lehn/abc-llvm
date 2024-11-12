@@ -6,6 +6,7 @@
 #include "type/floattype.hpp"
 #include "type/pointertype.hpp"
 
+#include "badexpr.hpp"
 #include "implicitcast.hpp"
 #include "promotion.hpp"
 
@@ -98,7 +99,16 @@ static BinaryResult binaryStruct(BinaryExpr::Kind kind, ExprPtr &&left,
 BinaryResult
 binary(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right, lexer::Loc *loc)
 {
-    if (left->type->isStruct() || right->type->isStruct()) {
+    if (!left) {
+	left = BadExpr::create(UStr::create("empty expression"));
+    }
+    if (!right) {
+	right = BadExpr::create(UStr::create("empty expression"));
+    }
+
+    if (!left->valid() || !right->valid()) {
+	return std::make_tuple(std::move(left), std::move(right), nullptr);
+    } else if (left->type->isStruct() || right->type->isStruct()) {
 	return binaryStruct(kind, std::move(left), std::move(right), loc);
     } else if (left->type->isArray() || right->type->isArray()) {
 	return binaryArray(kind, std::move(left), std::move(right), loc);

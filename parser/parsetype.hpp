@@ -5,7 +5,7 @@
 
 namespace abc {
     
-TypeNodePtr parseType_(bool allowZeroDim);
+TypeNodePtr parseType_();
 
 } // namespace abc
 
