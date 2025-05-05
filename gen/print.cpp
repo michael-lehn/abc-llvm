@@ -61,7 +61,7 @@ print(std::filesystem::path path, FileType fileType)
 
 
     if (targetMachine->addPassesToEmitFile(pass, f, nullptr, llvmFileType)) {
-	llvm::errs() << "can't emit a file of this type";
+	llvm::errs() << "can't emit a file of this type\n";
 	std::exit(1);
     }
     pass.run(*llvmModule);

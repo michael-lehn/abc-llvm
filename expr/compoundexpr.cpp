@@ -34,24 +34,26 @@ CompoundExpr::initTmp() const
     auto tmpAddr = gen::localVariableDefinition(tmpId.c_str(), type);
 
     std::vector<gen::Value> val{type->aggregateSize()};
+    std::vector<const Type *> valType{type->aggregateSize()};
     for (std::size_t i = 0; i < type->aggregateSize(); ++i) {
 	val[i] = loadValue(i);
+	valType[i] = type->aggregateType(i);
     }
 
     if (type->isScalar()) {
-	gen::store(val[0], tmpAddr);
+	gen::store(val[0], tmpAddr, valType[0]->hasVolatileFlag());
     } else if (type->isArray()) {
 	for (std::size_t i = 0; i < type->dim(); ++i) {
 	    auto index = gen::getConstantInt(i, IntegerType::createSizeType());
 	    auto elementAddr = gen::pointerIncrement(type->refType(),
 						     tmpAddr,
 						     index);
-	    gen::store(val[i], elementAddr);
+	    gen::store(val[i], elementAddr, valType[i]->hasVolatileFlag());
 	}
     } else if (type->isStruct()) {
 	for (std::size_t i = 0; i < type->aggregateSize(); ++i) {
 	    auto memberAddr = gen::pointerToIndex(type, tmpAddr, i);
-	    gen::store(val[i], memberAddr);
+	    gen::store(val[i], memberAddr, valType[i]->hasVolatileFlag());
 	}
     } else {
 	assert(0);
@@ -169,7 +171,7 @@ CompoundExpr::loadConstant() const
 gen::Value
 CompoundExpr::loadValue() const
 {
-    return gen::fetch(loadAddress(), type);
+    return gen::fetch(loadAddress(), type, type->hasVolatileFlag());
 }
 
 gen::Value

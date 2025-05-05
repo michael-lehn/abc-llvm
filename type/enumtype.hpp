@@ -9,7 +9,7 @@ class EnumType : public Type
 {
     protected:
 	EnumType(std::size_t id, UStr name, const Type *intType,
-		 bool constFlag);
+		 bool constFlag, bool volatileFlag);
 	std::size_t id_;
 	const Type *intType;
 
@@ -24,6 +24,7 @@ class EnumType : public Type
 	std::size_t id() const override;
 
 	const Type *getConst() const override;
+	const Type *getVolatile() const override;
 	const Type *getConstRemoved() const override;
 
 	bool hasSize() const override;

@@ -14,10 +14,13 @@ class Type
 {
     protected:
 	bool isConst;
+	bool isVolatile = false;
 	UStr name;
 
     public:
+	// TODO: remove this constructor
 	Type(bool isConst, UStr name);
+	Type(bool isConst, bool isVolatile, UStr name);
 	virtual ~Type() = default;
 
 	// for assignments
@@ -30,11 +33,14 @@ class Type
 	static const Type *explicitCast(const Type *from, const Type *to);
 
 	virtual const Type *getConst() const = 0;
+	virtual const Type *getVolatile() const;
+	// TODO: rename to getCVRemoved()
 	virtual const Type *getConstRemoved() const = 0;
 
 	UStr ustr() const;
 	virtual std::size_t id() const;
 	bool hasConstFlag() const;
+	bool hasVolatileFlag() const;
 	bool isScalar() const;
 	virtual std::size_t aggregateSize() const;
 	virtual const Type *aggregateType(std::size_t index) const;

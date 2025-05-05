@@ -163,14 +163,14 @@ phi(Value a, Label labelA, Value b, Label labelB, const abc::Type *type)
 }
 
 void
-returnInstruction(Value val)
+returnInstruction(Value val, bool isVolatile)
 {
     assert(llvmBuilder);
     assert(functionBuildingInfo.fn);
     reachableCheck();
 
     if (val) {
-	store(val, functionBuildingInfo.retVal);
+	store(val, functionBuildingInfo.retVal, isVolatile);
     }
     jumpInstruction(functionBuildingInfo.leave);
 }

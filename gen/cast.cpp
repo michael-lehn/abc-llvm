@@ -47,10 +47,12 @@ cast(Value val, const abc::Type *fromType, const abc::Type *toType)
 	    : llvmBuilder->CreateFPToSI(val, llvmToType); 
     } else if (fromType->isPointer() && toType->isPointer()) {
 	return val;
+    } else if (fromType->isInteger() && toType->isPointer()) {
+	return llvmBuilder->CreateIntToPtr(val, llvmToType);
     } else if (fromType->isArray() && toType->isArray()) {
 	return val;
     }
-    std::cerr << "gen::cat: can not cast '" << fromType << "' to '" << toType
+    std::cerr << "gen::cast: can not cast '" << fromType << "' to '" << toType
 	<< "'\n";
     assert(0);
     return nullptr;

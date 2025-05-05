@@ -107,6 +107,12 @@ main(int argc, char *argv[])
     for (int i = 1; i < argc; ++i) {
 	if (!strcmp(argv[i], "-static")) {
 	    staticLink = true;
+	} else if (!strcmp(argv[i], "-emit-llvm")) {
+	    outputFileType = gen::LLVM_FILE;
+	    createExecutable = false;
+	} else if (!strncmp(argv[i], "-mmcu=", 6)) {
+	    std::string mcu = argv[i] + 6;
+	    gen::opt::mcu = mcu;
 	} else if (argv[i][0] == '-') {
 	    switch (argv[i][1]) {
 		case '-':
@@ -117,6 +123,9 @@ main(int argc, char *argv[])
 		    } else if (!strcmp(argv[i], "--emit-llvm")) {
 			outputFileType = gen::LLVM_FILE;
 			createExecutable = false;
+		    } else if (!strncmp(argv[i], "--target=", 9)) {
+			std::string target = argv[i] + 9;
+			gen::opt::target = target;
 		    } else {
 			usage(argv[0], 0);
 		    }

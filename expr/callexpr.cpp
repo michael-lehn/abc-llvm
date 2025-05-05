@@ -26,7 +26,7 @@ void
 CallExpr::initTmp() const
 {
     auto tmpAddr = gen::localVariableDefinition(tmpId.c_str(), type);
-    gen::store(loadValue(), tmpAddr);
+    gen::store(loadValue(), tmpAddr, type->hasVolatileFlag());
 }
 
 ExprPtr

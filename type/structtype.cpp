@@ -11,11 +11,14 @@ namespace abc {
 
 static std::unordered_map<std::size_t, StructType> structSet;
 static std::unordered_map<std::size_t, StructType> structConstSet;
+static std::unordered_map<std::size_t, StructType> structVolatileSet;
+static std::unordered_map<std::size_t, StructType> structConstVolatileSet;
 
 //------------------------------------------------------------------------------
 
-StructType::StructType(std::size_t id, UStr name, bool constFlag)
-    : Type{constFlag, name}, id_{id}, isComplete_{false}
+StructType::StructType(std::size_t id, UStr name, bool constFlag,
+		       bool volatileFlag)
+    : Type{constFlag, volatileFlag, name}, id_{id}, isComplete_{false}
 {
 }
 
@@ -24,6 +27,8 @@ StructType::init()
 {
     structSet.clear();
     structConstSet.clear();
+    structVolatileSet.clear();
+    structConstVolatileSet.clear();
 }
 
 Type *
@@ -32,8 +37,10 @@ StructType::createIncomplete(UStr name)
     static std::size_t count;
     auto id = count++;
 
-    structSet.emplace(id, StructType{id, name, false});
-    structConstSet.emplace(id, StructType{id, name, true});
+    structSet.emplace(id, StructType{id, name, false, false});
+    structConstSet.emplace(id, StructType{id, name, true, false});
+    structVolatileSet.emplace(id, StructType{id, name, false, true});
+    structConstVolatileSet.emplace(id, StructType{id, name, true, true});
 
     return &structSet.at(id);
 }
@@ -47,7 +54,21 @@ StructType::id() const
 const Type *
 StructType::getConst() const
 {
-    return &structConstSet.at(id());
+    if (hasVolatileFlag()) {
+	return &structConstVolatileSet.at(id());
+    } else {
+	return &structConstSet.at(id());
+    }
+}
+
+const Type *
+StructType::getVolatile() const
+{
+    if (hasConstFlag()) {
+	return &structConstVolatileSet.at(id());
+    } else {
+	return &structVolatileSet.at(id());
+    }
 }
 
 const Type *
@@ -75,6 +96,7 @@ StructType::complete(std::vector<UStr> &&memberName,
 {
     assert(memberName.size() == memberIndex.size());
     assert(memberName.size() == memberType.size());
+
     auto &constStructType = structConstSet.at(id());
     for (std::size_t i = 0; i < memberName.size(); ++i) {
 	constStructType.memberName_.push_back(memberName[i]);	
@@ -82,6 +104,23 @@ StructType::complete(std::vector<UStr> &&memberName,
 	constStructType.memberType_.push_back(memberType[i]->getConst());	
     }
     constStructType.isComplete_ = true;
+
+    auto &volatileStructType = structVolatileSet.at(id());
+    for (std::size_t i = 0; i < memberName.size(); ++i) {
+	volatileStructType.memberName_.push_back(memberName[i]);	
+	volatileStructType.memberIndex_.push_back(memberIndex[i]);	
+	volatileStructType.memberType_.push_back(memberType[i]->getVolatile());	
+    }
+    volatileStructType.isComplete_ = true;
+
+    auto &constVolatileStructType = structConstVolatileSet.at(id());
+    for (std::size_t i = 0; i < memberName.size(); ++i) {
+	constVolatileStructType.memberName_.push_back(memberName[i]);	
+	constVolatileStructType.memberIndex_.push_back(memberIndex[i]);	
+	constVolatileStructType.memberType_.push_back(
+		memberType[i]->getConst()->getVolatile());	
+    }
+    constVolatileStructType.isComplete_ = true;
 
     memberName_ = std::move(memberName);
     memberIndex_ = std::move(memberIndex);

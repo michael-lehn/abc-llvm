@@ -8,15 +8,17 @@ namespace abc {
 class AutoType : public Type
 {
     protected:
-	AutoType(bool constFlag, UStr name);
+	AutoType(bool constFlag, bool volatileFlag, UStr name);
 
-	static const Type *create(bool constFlag, UStr name);
+	static const Type *create(bool constFlag, bool volatileFlag,
+				  UStr name);
 
     public:
 	static void init();
 	static const Type *create();
 
 	const Type *getConst() const override;
+	const Type *getVolatile() const override;
 	const Type *getConstRemoved() const override;
 
 	bool hasSize() const override;

@@ -14,7 +14,8 @@ namespace abc {
 class TypeAlias : public Type
 {
     private:
-	TypeAlias(std::size_t id, UStr name, const Type *type, bool constFlag);
+	TypeAlias(std::size_t id, UStr name, const Type *type,
+		  bool constFlag, bool volatileFlag);
 	std::size_t id;
 	const Type *type;
 
@@ -26,6 +27,7 @@ class TypeAlias : public Type
 	const Type *getUnalias() const override;
 
 	const Type *getConst() const override;
+	const Type *getVolatile() const override;
 	const Type *getConstRemoved() const override;
 };
 

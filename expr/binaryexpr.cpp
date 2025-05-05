@@ -266,37 +266,48 @@ BinaryExpr::loadValue() const
     switch (kind) {
 	case ASSIGN:
 	    return gen::store(right->loadValue(),
-			      left->loadAddress());
+			      left->loadAddress(),
+			      left->type->hasVolatileFlag());
 	case ADD_ASSIGN:
 	    return gen::store(handleArithmetricOperation(ADD),
-			      left->loadAddress());
+			      left->loadAddress(),
+			      left->type->hasVolatileFlag());
 	case SUB_ASSIGN:
 	    return gen::store(handleArithmetricOperation(SUB),
-			      left->loadAddress());
+			      left->loadAddress(),
+			      left->type->hasVolatileFlag());
 	case MUL_ASSIGN:
 	    return gen::store(handleArithmetricOperation(MUL),
-			      left->loadAddress());
+			      left->loadAddress(),
+			      left->type->hasVolatileFlag());
 	case DIV_ASSIGN:
 	    return gen::store(handleArithmetricOperation(DIV),
-			      left->loadAddress());
+			      left->loadAddress(),
+			      left->type->hasVolatileFlag());
 	case MOD_ASSIGN:
 	    return gen::store(handleArithmetricOperation(MOD),
-			      left->loadAddress());
+			      left->loadAddress(),
+			      left->type->hasVolatileFlag());
 	case BITWISE_AND_ASSIGN:
 	    return gen::store(handleArithmetricOperation(BITWISE_AND),
-			      left->loadAddress());
+			      left->loadAddress(),
+			      left->type->hasVolatileFlag());
 	case BITWISE_OR_ASSIGN:
 	    return gen::store(handleArithmetricOperation(BITWISE_OR),
-			      left->loadAddress());
+			      left->loadAddress(),
+			      left->type->hasVolatileFlag());
 	case BITWISE_XOR_ASSIGN:
 	    return gen::store(handleArithmetricOperation(BITWISE_XOR),
-			      left->loadAddress());
+			      left->loadAddress(),
+			      left->type->hasVolatileFlag());
 	case BITWISE_LEFT_SHIFT_ASSIGN:
 	    return gen::store(handleArithmetricOperation(BITWISE_LEFT_SHIFT),
-			      left->loadAddress());
+			      left->loadAddress(),
+			      left->type->hasVolatileFlag());
 	case BITWISE_RIGHT_SHIFT_ASSIGN:
 	    return gen::store(handleArithmetricOperation(BITWISE_RIGHT_SHIFT),
-			      left->loadAddress());
+			      left->loadAddress(),
+			      left->type->hasVolatileFlag());
 	case ADD:
 	case SUB:
 	case MUL:
@@ -338,7 +349,9 @@ BinaryExpr::loadValue() const
 				IntegerType::createBool());
 	    }
 	case INDEX:
-	    return gen::fetch(loadAddress(), left->type->refType());
+	    return gen::fetch(loadAddress(),
+			      left->type->refType(),
+			      left->type->refType()->hasVolatileFlag());
 	    
 	default:
 	    error::out() << "kind = " << int(kind) << std::endl;

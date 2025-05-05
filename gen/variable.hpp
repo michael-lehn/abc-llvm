@@ -34,8 +34,8 @@ std::optional<Constant> pointerConstantDifference(const abc::Type *type,
 Value pointerDifference(const abc::Type *type, Value pointer1, Value pointer2);
 Value pointerToIndex(const abc::Type *type, Value pointer, std::size_t index);
 
-Value fetch(Value addr, const abc::Type *type);
-Value store(Value val, Value addr);
+Value fetch(Value addr, const abc::Type *type, bool isVolatile);
+Value store(Value val, Value addr, bool isVolatile);
 
 // for debugging and educational purposes
 void printGlobalVariableList();

@@ -13,12 +13,13 @@ operator<(const IntegerType &x, const IntegerType &y)
     const auto &tx = std::tuple{x.numBits(),
 				x.ustr().c_str(),
 				x.isSignedInteger(),
-				x.hasConstFlag()};
+				x.hasConstFlag(),
+				x.hasVolatileFlag()};
     const auto &ty = std::tuple{y.numBits(),
 				y.ustr().c_str(),
 				y.isSignedInteger(),
-				y.hasConstFlag()};
-
+				y.hasConstFlag(),
+				y.hasVolatileFlag()};
     return tx < ty;
 }
 
@@ -27,17 +28,19 @@ static std::set<IntegerType> intSet;
 //------------------------------------------------------------------------------
 
 IntegerType::IntegerType(std::size_t numBits, bool signed_, bool constFlag,
-			 UStr name)
-    : Type{constFlag, name}, numBits_{numBits}, isSigned{signed_}
+			 bool volatileFlag, UStr name)
+    : Type{constFlag, volatileFlag, name}, numBits_{numBits}, isSigned{signed_}
 {
 }
 
 const Type *
-IntegerType::create(std::size_t numBits, bool signed_, bool constFlag)
+IntegerType::create(std::size_t numBits, bool signed_,
+		    bool constFlag, bool volatileFlag)
 {
     std::stringstream ss;
     ss << (signed_ ? "i" : "u") << numBits;
-    auto ty = IntegerType{numBits, signed_, constFlag, UStr::create(ss.str())};
+    auto ty = IntegerType{numBits, signed_, constFlag, volatileFlag,
+			  UStr::create(ss.str())};
     return &*intSet.insert(ty).first;
 }
 
@@ -92,25 +95,31 @@ IntegerType::createPtrdiffType()
 const Type *
 IntegerType::createSigned(std::size_t numBits)
 {
-    return create(numBits, true, false);
+    return create(numBits, true, false, false);
 }
 
 const Type *
 IntegerType::createUnsigned(std::size_t numBits)
 {
-    return create(numBits, false, false);
+    return create(numBits, false, false, false);
 }
 
 const Type *
 IntegerType::getConst() const
 {
-    return create(numBits(), isSignedInteger(), true);
+    return create(numBits(), isSignedInteger(), true, hasVolatileFlag());
+}
+
+const Type *
+IntegerType::getVolatile() const
+{
+    return create(numBits(), isSignedInteger(), hasConstFlag(), true);
 }
 
 const Type *
 IntegerType::getConstRemoved() const
 {
-    return create(numBits(), isSignedInteger(), false);
+    return create(numBits(), isSignedInteger(), false, false);
 }
 
 std::size_t

@@ -11,9 +11,11 @@ bool
 operator<(const FloatType &x, const FloatType &y)
 {
     const auto &tx = std::tuple{x.floatKind,
-				x.hasConstFlag()};
+				x.hasConstFlag(),
+				x.hasVolatileFlag()};
     const auto &ty = std::tuple{y.floatKind,
-				y.hasConstFlag()};
+				y.hasConstFlag(),
+				y.hasVolatileFlag()};
     return tx < ty;
 }
 
@@ -21,18 +23,19 @@ static std::set<FloatType> fltSet;
 
 //------------------------------------------------------------------------------
 
-FloatType::FloatType(FloatKind floatKind, bool constFlag, UStr name)
-    : Type{constFlag, name}, floatKind{floatKind}
+FloatType::FloatType(FloatKind floatKind, bool constFlag, bool volatileFlag,
+		     UStr name)
+    : Type{constFlag, volatileFlag, name}, floatKind{floatKind}
 {
 }
 
 const Type *
-FloatType::create(FloatKind floatKind, bool constFlag)
+FloatType::create(FloatKind floatKind, bool constFlag, bool volatileFlag)
 {
     std::string str = floatKind == FLOAT_KIND
 	? "float"
 	: "double";
-    auto ty = FloatType{floatKind, constFlag, UStr::create(str)};
+    auto ty = FloatType{floatKind, constFlag, volatileFlag, UStr::create(str)};
     return &*fltSet.insert(ty).first;
 }
 
@@ -45,25 +48,31 @@ FloatType::init()
 const Type *
 FloatType::createFloat()
 {
-    return create(FLOAT_KIND, false); 
+    return create(FLOAT_KIND, false, false); 
 }
 
 const Type *
 FloatType::createDouble()
 {
-    return create(DOUBLE_KIND, false); 
+    return create(DOUBLE_KIND, false, false); 
 }
 
 const Type *
 FloatType::getConst() const
 {
-    return create(floatKind, true);
+    return create(floatKind, true, hasVolatileFlag());
+}
+
+const Type *
+FloatType::getVolatile() const
+{
+    return create(floatKind, hasConstFlag(), true);
 }
 
 const Type *
 FloatType::getConstRemoved() const
 {
-    return create(floatKind, false);
+    return create(floatKind, false, false);
 }
 
 bool

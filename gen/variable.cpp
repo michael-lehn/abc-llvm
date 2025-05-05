@@ -260,23 +260,26 @@ pointerToIndex(const abc::Type *type, Value pointer, std::size_t index)
 }
 
 Value
-fetch(Value addr, const abc::Type *type)
+fetch(Value addr, const abc::Type *type, bool isVolatile)
 {
     assert(llvmBuilder);
     assert(type);
     assert(functionBuildingInfo.fn);
     reachableCheck();
     auto llvmType = convert(type);
-    return llvmBuilder->CreateLoad(llvmType, addr);
+    auto load = llvmBuilder->CreateLoad(llvmType, addr);
+    load->setVolatile(isVolatile);
+    return load;
 }
 
 Value
-store(Value val, Value addr)
+store(Value val, Value addr, bool isVolatile)
 {
     assert(llvmBuilder);
     assert(functionBuildingInfo.fn);
     reachableCheck();
-    llvmBuilder->CreateStore(val, addr);
+    auto store = llvmBuilder->CreateStore(val, addr);
+    store->setVolatile(isVolatile);
     return val;
 }
 

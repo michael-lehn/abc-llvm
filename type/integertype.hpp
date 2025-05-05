@@ -9,12 +9,12 @@ class IntegerType : public Type
 {
     protected:
 	IntegerType(std::size_t numBits, bool signed_, bool constFlag,
-		    UStr name);
+		    bool volatileFlag, UStr name);
 	std::size_t numBits_;
 	bool isSigned;
 
 	static const Type *create(std::size_t numBits, bool signed_,
-				  bool constFlag);
+				  bool constFlag, bool volatileFlag);
 
     public:
 	static void init();
@@ -29,6 +29,7 @@ class IntegerType : public Type
 	static const Type *createUnsigned(std::size_t numBits);
 
 	const Type *getConst() const override;
+	const Type *getVolatile() const override;
 	const Type *getConstRemoved() const override;
 
 	std::size_t numBits() const override;

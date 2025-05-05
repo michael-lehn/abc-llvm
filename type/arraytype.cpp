@@ -14,11 +14,13 @@ operator<(const ArrayType &x, const ArrayType &y)
     const auto &tx = std::tuple{x.ustr().c_str(),
 				x.refType(),
 				x.dim(),
-				x.hasConstFlag()};
+				x.hasConstFlag(),
+				x.hasVolatileFlag()};
     const auto &ty = std::tuple{y.ustr().c_str(),
 				y.refType(),
 				x.dim(),
-				y.hasConstFlag()};
+				y.hasConstFlag(),
+				y.hasVolatileFlag()};
     return tx < ty;
 }
 
@@ -26,17 +28,19 @@ static std::set<ArrayType> arraySet;
 
 //------------------------------------------------------------------------------
 ArrayType::ArrayType(const Type *refType, std::size_t dim, bool constFlag,
-		     UStr name)
-    : Type{constFlag, name}, refType_{refType}, dim_{dim}
+		     bool volatileFlag, UStr name)
+    : Type{constFlag, volatileFlag, name}, refType_{refType}, dim_{dim}
 {
 }
 
 const Type *
-ArrayType::create(const Type *refType, std::size_t dim, bool constFlag)
+ArrayType::create(const Type *refType, std::size_t dim, bool constFlag,
+		  bool volatileFlag)
 {
     std::stringstream ss;
     ss << "array " << getArrayDimAndType(refType, dim);
-    auto ty = ArrayType{refType, dim, constFlag, UStr::create(ss.str())};
+    auto ty = ArrayType{refType, dim, constFlag, volatileFlag,
+			UStr::create(ss.str())};
     return &*arraySet.insert(ty).first;
 }
 
@@ -49,19 +53,25 @@ ArrayType::init()
 const Type *
 ArrayType::create(const Type *refType, std::size_t dim)
 {
-    return create(refType, dim, false);
+    return create(refType, dim, false, false);
 }
 
 const Type *
 ArrayType::getConst() const
 {
-    return create(refType(), dim(), true);
+    return create(refType(), dim(), true, hasVolatileFlag());
+}
+
+const Type *
+ArrayType::getVolatile() const
+{
+    return create(refType(), dim(), hasConstFlag(), true);
 }
 
 const Type *
 ArrayType::getConstRemoved() const
 {
-    return create(refType(), dim(), false);
+    return create(refType(), dim(), false, false);
 }
 
 bool
@@ -73,11 +83,14 @@ ArrayType::isArray() const
 const Type *
 ArrayType::refType() const
 {
+    auto type = refType_;
     if (hasConstFlag()) {
-	return refType_->getConst();
-    } else {
-	return refType_;
+	type = type->getConst();
     }
+    if (hasVolatileFlag()) {
+	type = type->getVolatile();
+    }
+    return type;
 }
 
 std::size_t

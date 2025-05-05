@@ -10,8 +10,14 @@
 
 namespace abc {
 
+// TODO: remove this constructor
 Type::Type(bool isConst, UStr name)
     : isConst{isConst}, name{name}
+{
+}
+
+Type::Type(bool isConst, bool isVolatile, UStr name)
+    : isConst{isConst}, isVolatile{isVolatile}, name{name}
 {
 }
 
@@ -19,6 +25,9 @@ bool
 Type::equals(const Type *ty1, const Type *ty2)
 {
     if (ty1->hasConstFlag() != ty2->hasConstFlag()) {
+	return false;
+    }
+    if (ty1->hasVolatileFlag() != ty2->hasVolatileFlag()) {
 	return false;
     }
     if (ty1->isVoid() && ty2->isVoid()) {
@@ -117,6 +126,9 @@ convert(const Type *from, const Type *to, bool checkConst)
     if (checkConst && from->hasConstFlag() && !to->hasConstFlag()) {
 	return nullptr;
     }
+    if (checkConst && from->hasVolatileFlag() && !to->hasVolatileFlag()) {
+	return nullptr;
+    }
     from = from->getConstRemoved();
     to = to->getConstRemoved();
     if (Type::equals(from, to)) {
@@ -193,14 +205,24 @@ Type::convert(const Type *from, const Type *to)
 const Type *
 Type::explicitCast(const Type *from, const Type *to)
 {
-    if (auto type = convert(from->getConstRemoved(), to->getConstRemoved())) {
-	// allow const-casts
-	return type;
+    if (abc::convert(from, to, true)) {
+	return to;
     } else if (from->isPointer() && to->isPointer()) {
+	if (explicitCast(from->refType(), to->refType())) {
+	    return to;
+	}
+	return nullptr;
+    } else if (from->isInteger() && to->isPointer()) {
 	return to;
     } else {
 	return nullptr;
     }
+}
+
+const Type *
+Type::getVolatile() const
+{
+    return this;
 }
 
 UStr
@@ -219,6 +241,12 @@ bool
 Type::hasConstFlag() const
 {
     return isAlias() ? getUnalias()->isConst : isConst;
+}
+
+bool
+Type::hasVolatileFlag() const
+{
+    return isAlias() ? getUnalias()->isVolatile : isVolatile;
 }
 
 bool
@@ -502,8 +530,9 @@ std::ostream &
 operator<<(std::ostream &out, const Type *type)
 {
     const char *constFlag = type->isConst ? "readonly " : "";
+    const char *volatileFlag = type->isVolatile ? "volatile " : "";
 
-    out << constFlag << type->ustr();
+    out << constFlag << volatileFlag << type->ustr();
     return out;
 }
 

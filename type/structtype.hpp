@@ -8,7 +8,8 @@ namespace abc {
 class StructType : public Type
 {
     protected:
-	StructType(std::size_t id, UStr name, bool constFlag);
+	StructType(std::size_t id, UStr name, bool constFlag,
+		   bool volatileFlag);
 	std::size_t id_;
 
 	bool isComplete_;
@@ -23,6 +24,7 @@ class StructType : public Type
 	std::size_t id() const override;
 
 	const Type *getConst() const override;
+	const Type *getVolatile() const override;
 	const Type *getConstRemoved() const override;
 
 	bool hasSize() const override;

@@ -139,7 +139,7 @@ gen::Value
 Member::loadValue() const
 {
     assert(type);
-    return gen::fetch(loadAddress(), type);
+    return gen::fetch(loadAddress(), type, type->hasVolatileFlag());
 }
 
 gen::Value

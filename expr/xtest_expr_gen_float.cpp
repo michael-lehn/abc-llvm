@@ -46,7 +46,8 @@ someInstructions()
 				      std::move(fltExpr),
 				      std::move(idExpr));
 
-    gen::returnInstruction(addExpr->loadValue());
+    gen::returnInstruction(addExpr->loadValue(),
+			   addExpr->type->hasVolatileFlag());
 }
 
 void

@@ -92,18 +92,19 @@ functionDefinitionBegin(const char *ident, const abc::Type *fnType,
     for (std::size_t i = 0; i < param.size(); ++i) {
 	//std::cerr << ">> i = " << i << "\n";
 	auto addr = localVariableDefinition(param[i], fnType->paramType()[i]);
-	store(fn->getArg(i), addr);
+	store(fn->getArg(i), addr, fnType->paramType()[i]->hasVolatileFlag());
     }
 
     if (!retType->isVoid()) {
 	functionBuildingInfo.retVal = localVariableDefinition(".retVal",
 							      retType);
 	if (functionBuildingInfo.isMain) {
-	    store(getConstantInt("0", retType), functionBuildingInfo.retVal);
+	    store(getConstantInt("0", retType), functionBuildingInfo.retVal,
+		  retType->hasVolatileFlag());
 	} else {
 	    auto llvmRetType = convert(retType);
 	    store(llvm::UndefValue::get(llvmRetType),
-			     functionBuildingInfo.retVal);
+		  functionBuildingInfo.retVal, retType->hasVolatileFlag());
 	}
     }
 }
@@ -155,7 +156,8 @@ functionDefinitionEnd()
 	llvmBuilder->CreateRetVoid();
     } else {
 	auto retVal = fetch(functionBuildingInfo.retVal,
-			    functionBuildingInfo.retType);
+			    functionBuildingInfo.retType,
+			    functionBuildingInfo.retType->hasVolatileFlag());
 	llvmBuilder->CreateRet(retVal);
     }
 

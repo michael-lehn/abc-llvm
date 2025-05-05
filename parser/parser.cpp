@@ -359,30 +359,42 @@ parseBlock(bool required)
 static const Type *parseUnqualifiedType(bool allowZeroDim);
 
 /*
- * type = [const] unqualified-type
+ * type = {const | volatile} unqualified-type
  */
 const Type *
 parseType(bool allowZeroDim)
 {
-    if (token.kind == TokenKind::CONST) {
-	getToken();
-	auto type = parseUnqualifiedType(allowZeroDim);
-	if (!type) {
-	    error::location(token.loc);
-	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
-		<< error::setColor(error::BOLD_RED) << "error: "
-		<< error::setColor(error::BOLD)
-		<< "unqualified type expected\n"
-		<< error::setColor(error::NORMAL);
-	    error::fatal();
-	    return nullptr;
+    bool isConst = false;
+    bool isVolatile = false;
+    while (true) {
+	if (token.kind == TokenKind::CONST) {
+	    getToken();
+	    isConst = true;
+	} else if (token.kind == TokenKind::VOLATILE) {
+	    getToken();
+	    isVolatile = true;
+	} else {
+	    break;
 	}
-	return type->getConst();
-    } else if (auto type = parseUnqualifiedType(allowZeroDim)) {
-	return type;
-    } else {
+    }
+    auto type = parseUnqualifiedType(allowZeroDim);
+    if (!type && (isConst || isVolatile)) {
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	    << error::setColor(error::BOLD_RED) << "error: "
+	    << error::setColor(error::BOLD)
+	    << "unqualified type expected\n"
+	    << error::setColor(error::NORMAL);
+	error::fatal();
 	return nullptr;
     }
+    if (isConst) {
+	type = type->getConst();
+    }
+    if (isVolatile) {
+	type = type->getVolatile();
+    }
+    return type;
 }
 
 //------------------------------------------------------------------------------
@@ -603,7 +615,7 @@ parseVariableDefinitionList()
 static AstInitializerExprPtr parseInitializerExpression(const Type *type);
 
 /*
- * variable-definition = identifier-list ":" type
+ * variable-definition = identifier-list ":" {const | volatile} type
  *			  [ "=" initializer-expression ]
  */
 static AstVarPtr
@@ -617,9 +629,18 @@ parseVariableDefinition()
 	return nullptr;
     }
     getToken();
-    auto readOnlyType = token.kind == TokenKind::CONST;
-    if (readOnlyType) {
-	getToken();
+    bool isConst = false;
+    bool isVolatile = false;
+    while (true) {
+	if (token.kind == TokenKind::CONST) {
+	    getToken();
+	    isConst = true;
+	} else if (token.kind == TokenKind::VOLATILE) {
+	    getToken();
+	    isVolatile = true;
+	} else {
+	    break;
+	}
     }
     auto autoType = token.kind == TokenKind::EQUAL;
     auto varTypeLoc = token.loc;
@@ -636,8 +657,11 @@ parseVariableDefinition()
 	error::fatal();
 	return nullptr;
     }
-    if (readOnlyType) {
+    if (isConst) {
 	varType = varType->getConst();
+    }
+    if (isVolatile) {
+	varType = varType->getVolatile();
     }
     bool define = !varType->isUnboundArray() && !varType->isAuto();
     auto astVar = std::make_unique<AstVar>(std::move(varName),

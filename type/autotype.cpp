@@ -6,9 +6,11 @@ static bool
 operator<(const AutoType &x, const AutoType &y)
 {
     const auto &tx = std::tuple{x.ustr().c_str(),
-				x.hasConstFlag()};
+				x.hasConstFlag(),
+				x.hasVolatileFlag()};
     const auto &ty = std::tuple{y.ustr().c_str(),
-				y.hasConstFlag()};
+				y.hasConstFlag(),
+				y.hasVolatileFlag()};
 
     return tx < ty;
 }
@@ -17,15 +19,15 @@ static std::set<AutoType> voidSet;
 
 //------------------------------------------------------------------------------
 
-AutoType::AutoType(bool constFlag, UStr name)
-    : Type{constFlag, name}
+AutoType::AutoType(bool constFlag, bool volatileFlag, UStr name)
+    : Type{constFlag, volatileFlag, name}
 {
 }
 
 const Type *
-AutoType::create(bool constFlag, UStr name)
+AutoType::create(bool constFlag, bool volatileFlag, UStr name)
 {
-    auto ty = AutoType{constFlag, name};
+    auto ty = AutoType{constFlag, volatileFlag, name};
     return &*voidSet.insert(ty).first;
 }
 
@@ -38,19 +40,25 @@ AutoType::init()
 const Type *
 AutoType::create()
 {
-    return create(false, UStr::create("auto"));
+    return create(false, false, UStr::create("auto"));
 }
 
 const Type *
 AutoType::getConst() const
 {
-    return create(true, name);
+    return create(true, hasVolatileFlag(), name);
+}
+
+const Type *
+AutoType::getVolatile() const
+{
+    return create(hasConstFlag(), true, name);
 }
 
 const Type *
 AutoType::getConstRemoved() const
 {
-    return create(false, name);
+    return create(false, false, name);
 }
 
 bool

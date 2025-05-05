@@ -51,6 +51,7 @@ enum class TokenKind {
     ENUM,
     TRUE,
     FALSE,
+    VOLATILE,
 
     // punctuators
     NEWLINE,

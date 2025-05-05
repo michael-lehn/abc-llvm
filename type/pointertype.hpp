@@ -8,16 +8,19 @@ namespace abc {
 class PointerType : public Type
 {
     private:
-	PointerType(const Type *refType, bool constFlag, UStr name);
+	PointerType(const Type *refType, bool constFlag, bool volatileFlag,
+		    UStr name);
 	const Type *refType_;
 
-	static const Type *create(const Type *refType, bool constFlag);
+	static const Type *create(const Type *refType, bool constFlag,
+				  bool volatileFlag);
 
     public:
 	static void init();
 	static const Type *create(const Type *refType);
 
 	const Type *getConst() const override;
+	const Type *getVolatile() const override;
 	const Type *getConstRemoved() const override;
 
 	bool isPointer() const override;

@@ -13,10 +13,12 @@ class FloatType : public Type
 	    DOUBLE_KIND
 	};
 
-	FloatType(FloatKind floatKind, bool constFlag, UStr name);
+	FloatType(FloatKind floatKind, bool constFlag, bool volatileFlag,
+		  UStr name);
 	const FloatKind floatKind;
 
-	static const Type *create(FloatKind floatKind, bool constFlag);
+	static const Type *create(FloatKind floatKind, bool constFlag,
+				  bool volatileFlag);
 
     public:
 	static void init();
@@ -24,6 +26,7 @@ class FloatType : public Type
 	static const Type *createDouble();
 
 	const Type *getConst() const override;
+	const Type *getVolatile() const override;
 	const Type *getConstRemoved() const override;
 
 	bool isFloatType() const override;

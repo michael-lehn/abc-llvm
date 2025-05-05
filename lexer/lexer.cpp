@@ -102,6 +102,7 @@ init()
     keyword[UStr::create("while")] = TokenKind::WHILE;
     keyword[UStr::create("true")] = TokenKind::TRUE;
     keyword[UStr::create("false")] = TokenKind::FALSE;
+    keyword[UStr::create("volatile")] = TokenKind::VOLATILE;
 }
 
 const std::set<std::filesystem::path> &

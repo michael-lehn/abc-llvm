@@ -137,7 +137,8 @@ UnaryExpr::loadValue() const
 		    << ": Error: dereferencing null pointer" << std::endl;
 		error::fatal();
 	    }
-	    return gen::fetch(child->loadValue(), type);
+	    return gen::fetch(child->loadValue(),
+			      type, type->hasVolatileFlag());
 	case ADDRESS:
 	    return child->loadAddress();
 	case PREFIX_INC:
@@ -153,7 +154,8 @@ UnaryExpr::loadValue() const
 		    ? gen::pointerIncrement(child->type->refType(),
 					    child->loadValue(), inc)
 		    : gen::instruction(gen::ADD, child->loadValue(), inc);
-		gen::store(val, child->loadAddress());
+		gen::store(val, child->loadAddress(),
+			   child->type->hasVolatileFlag());
 		return val;
 	    }
 	case POSTFIX_INC:
@@ -170,7 +172,8 @@ UnaryExpr::loadValue() const
 		    ? gen::pointerIncrement(child->type->refType(),
 					    prevLeftVal, inc)
 		    : gen::instruction(gen::ADD, prevLeftVal, inc);
-		gen::store(val, child->loadAddress());
+		gen::store(val, child->loadAddress(),
+			   child->type->hasVolatileFlag());
 		return prevLeftVal;
 	    }
 	case MINUS:

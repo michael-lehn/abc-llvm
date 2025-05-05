@@ -63,7 +63,7 @@ Identifier::loadValue() const
     if (type->isFunction()) {
 	return loadAddress();
     }
-    return gen::fetch(loadAddress(), type);
+    return gen::fetch(loadAddress(), type, false);
 }
 
 gen::Constant

@@ -10,12 +10,15 @@ namespace abc {
 
 static std::unordered_map<std::size_t, EnumType> enumMap;
 static std::unordered_map<std::size_t, EnumType> enumConstMap;
+static std::unordered_map<std::size_t, EnumType> enumVolatileMap;
+static std::unordered_map<std::size_t, EnumType> enumConstVolatileMap;
 
 //------------------------------------------------------------------------------
 
 EnumType::EnumType(std::size_t id, UStr name, const Type *intType,
-		   bool constFlag)
-    : Type{constFlag, name}, id_{id}, intType{intType}, isComplete_{false}
+		   bool constFlag, bool volatileFlag)
+    : Type{constFlag, volatileFlag, name}, id_{id}, intType{intType}
+    , isComplete_{false}
 {
 }
 
@@ -24,6 +27,8 @@ EnumType::init()
 {
     enumMap.clear();
     enumConstMap.clear();
+    enumVolatileMap.clear();
+    enumConstVolatileMap.clear();
 }
 
 Type *
@@ -32,8 +37,10 @@ EnumType::createIncomplete(UStr name, const Type *intType)
     static std::size_t count;
     auto id = count++;
 
-    enumMap.emplace(id, EnumType{id, name, intType, false});
-    enumConstMap.emplace(id, EnumType{id, name, intType, true});
+    enumMap.emplace(id, EnumType{id, name, intType, false, false});
+    enumConstMap.emplace(id, EnumType{id, name, intType, true, false});
+    enumVolatileMap.emplace(id, EnumType{id, name, intType, false, true});
+    enumConstVolatileMap.emplace(id, EnumType{id, name, intType, true, true});
 
     return &enumMap.at(id);
 }
@@ -47,7 +54,21 @@ EnumType::id() const
 const Type *
 EnumType::getConst() const
 {
-    return &enumConstMap.at(id_);
+    if (hasVolatileFlag()) {
+	return &enumConstVolatileMap.at(id_);
+    } else {
+	return &enumConstMap.at(id_);
+    }
+}
+
+const Type *
+EnumType::getVolatile() const
+{
+    if (hasConstFlag()) {
+	return &enumConstVolatileMap.at(id_);
+    } else {
+	return &enumVolatileMap.at(id_);
+    }
 }
 
 const Type *
@@ -98,8 +119,10 @@ EnumType::complete(std::vector<UStr> &&constName,
 {
     constName_ = std::move(constName);
     constValue_ = std::move(constValue);
-    isComplete_ = true;
+    enumMap.at(id_).isComplete_ = true;
     enumConstMap.at(id_).isComplete_ = true;
+    enumVolatileMap.at(id_).isComplete_ = true;
+    enumConstVolatileMap.at(id_).isComplete_ = true;
     return this;
 }
 

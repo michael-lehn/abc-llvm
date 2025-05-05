@@ -50,6 +50,9 @@ TokenKindCStr(TokenKind kind)
 	case TokenKind::TYPE: return "TYPE";
 	case TokenKind::UNION: return "UNION";
 	case TokenKind::WHILE: return "WHILE";
+	case TokenKind::TRUE: return "TRUE";
+	case TokenKind::FALSE: return "FALSE";
+	case TokenKind::VOLATILE: return "VOLATILE";
 
 	case TokenKind::NEWLINE: return "NEWLINE";
 	case TokenKind::DOT: return "DOT";
@@ -135,6 +138,9 @@ getCStr(TokenKind kind)
 	case TokenKind::TYPE: return "type";
 	case TokenKind::UNION: return "union";
 	case TokenKind::WHILE: return "while";
+	case TokenKind::TRUE: return "true";
+	case TokenKind::FALSE: return "false";
+	case TokenKind::VOLATILE: return "volatile";
 
 	case TokenKind::NEWLINE: return "\\n";
 	case TokenKind::DOT: return ".";
