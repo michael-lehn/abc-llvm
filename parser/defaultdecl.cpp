@@ -1,5 +1,5 @@
-#include "gen/function.hpp"
 #include "expr/assertexpr.hpp"
+#include "gen/function.hpp"
 #include "type/functiontype.hpp"
 #include "type/integertype.hpp"
 #include "type/pointertype.hpp"
@@ -15,10 +15,9 @@ initDefaultDecl()
     param.push_back(PointerType::create(IntegerType::createChar()));
     param.push_back(PointerType::create(IntegerType::createChar()));
     param.push_back(IntegerType::createInt());
-    
-    auto assertType = FunctionType::create(IntegerType::createBool(),
-					   std::move(param),
-					   false);
+
+    auto assertType =
+      FunctionType::create(IntegerType::createBool(), std::move(param), false);
 
     auto assertName = UStr::create("__assert");
     AssertExpr::setFunction(assertName, assertType);
