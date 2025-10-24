@@ -32,9 +32,11 @@ extern llvm::TargetMachine *targetMachine;
 
 extern const char *moduleName;
 
-void init(const char *name = nullptr,
-	  llvm::OptimizationLevel optLevel = llvm::OptimizationLevel::O0);
-llvm::OptimizationLevel  getOptimizationLevel();
+void
+init(const char *name = nullptr,
+     llvm::OptimizationLevel optLevel = llvm::OptimizationLevel::O0);
+llvm::OptimizationLevel
+getOptimizationLevel();
 
 } // namespace gen
 

@@ -25,7 +25,8 @@ static std::unordered_map<std::string, std::string> stringMap;
 
 // Map with all local variables
 static std::unordered_map<const char *, llvm::AllocaInst *> localVariable;
-static Value lookup(const char *ident);
+static Value
+lookup(const char *ident);
 
 //------------------------------------------------------------------------------
 
@@ -47,19 +48,17 @@ externalVariableDeclaration(const char *ident, const abc::Type *varType)
     auto llvmVarType = convert(varType);
     assert(llvmVarType);
 
-    new llvm::GlobalVariable(*llvmModule,
-			     llvmVarType,
-			     /*isConstant=*/false,
-			     /*Linkage=*/llvm::GlobalValue::ExternalLinkage,
-			     /*Initializer=*/nullptr,
-			     /*Name=*/ident,
-			     nullptr);
+    new llvm::GlobalVariable(*llvmModule, llvmVarType,
+                             /*isConstant=*/false,
+                             /*Linkage=*/llvm::GlobalValue::ExternalLinkage,
+                             /*Initializer=*/nullptr,
+                             /*Name=*/ident, nullptr);
     return true;
 }
 
 void
 globalVariableDefinition(const char *ident, const abc::Type *varType,
-			 Constant initialValue)
+                         Constant initialValue)
 {
     assert(llvmModule);
     assert(!varType->isFunction());
@@ -79,13 +78,11 @@ globalVariableDefinition(const char *ident, const abc::Type *varType,
 	return;
     }
 
-    new llvm::GlobalVariable(*llvmModule,
-			     llvmVarType,
-			     /*isConstant=*/false,
-			     /*Linkage=*/llvm::GlobalValue::InternalLinkage,
-			     /*Initializer=*/initialValue,
-			     /*Name=*/ident,
-			     nullptr);
+    new llvm::GlobalVariable(*llvmModule, llvmVarType,
+                             /*isConstant=*/false,
+                             /*Linkage=*/llvm::GlobalValue::InternalLinkage,
+                             /*Initializer=*/initialValue,
+                             /*Name=*/ident, nullptr);
 }
 
 Constant
@@ -99,14 +96,13 @@ loadStringAddress(const char *stringLiteral)
 	std::stringstream ss;
 	ss << ".L" << stringMap.size();
 	stringMap[str] = ss.str();
-	auto llvmStr = llvm::ConstantDataArray::getString(*llvmContext,
-							  stringLiteral);
-	new llvm::GlobalVariable(*llvmModule,
-				 llvmStr->getType(),
-				 /*isConstant=*/true,
-				 /*Linkage=*/llvm::GlobalValue::InternalLinkage,
-				 /*Initializer=*/llvmStr,
-				 /*Name=*/ss.str().c_str());
+	auto llvmStr =
+	    llvm::ConstantDataArray::getString(*llvmContext, stringLiteral);
+	new llvm::GlobalVariable(*llvmModule, llvmStr->getType(),
+	                         /*isConstant=*/true,
+	                         /*Linkage=*/llvm::GlobalValue::InternalLinkage,
+	                         /*Initializer=*/llvmStr,
+	                         /*Name=*/ss.str().c_str());
     }
     return loadConstantAddress(stringMap.at(str).c_str());
 }
@@ -128,7 +124,7 @@ localVariableDefinition(const char *ident, const abc::Type *varType)
     // always allocate memory at entry of function
     auto fn = functionBuildingInfo.fn;
     llvm::IRBuilder<> tmpBuilder(&fn->getEntryBlock(),
-				 fn->getEntryBlock().begin());
+                                 fn->getEntryBlock().begin());
     localVariable[ident] = tmpBuilder.CreateAlloca(llvmVarType, nullptr, ident);
     return localVariable[ident];
 }
@@ -185,8 +181,8 @@ loadAddress(const char *ident)
 {
     auto addr = lookup(ident);
     if (!addr) {
-	std::cerr << "gen::loadAddress: identifier "
-	    << ident << " was not defined.\n";
+	std::cerr << "gen::loadAddress: identifier " << ident
+	          << " was not defined.\n";
 	assert(0);
     }
     return addr;
@@ -199,7 +195,7 @@ pointerIncrement(const abc::Type *type, Constant pointer, std::uint64_t offset)
     assert(type);
     auto llvmType = convert(type);
 
-    auto addr =  llvmBuilder->CreateConstGEP1_64(llvmType, pointer, offset);
+    auto addr = llvmBuilder->CreateConstGEP1_64(llvmType, pointer, offset);
     return llvm::dyn_cast<llvm::Constant>(addr);
 }
 
@@ -225,7 +221,7 @@ pointerConstantDifference(const abc::Type *type, Value pointer1, Value pointer2)
     auto dl = llvmModule->getDataLayout();
     if (auto diff = pointer1->getPointerOffsetFrom(pointer2, dl)) {
 	return getConstantInt(diff.value() / dl.getTypeAllocSize(llvmType),
-			      abc::IntegerType::createPtrdiffType());
+	                      abc::IntegerType::createPtrdiffType());
     } else {
 	return std::nullopt;
     }
@@ -285,7 +281,7 @@ printGlobalVariableList()
 {
     std::cerr << "printGlobalVariableList:\n";
     for (const auto &var : llvmModule->globals()) {
-	std::cerr << "ident: " << var.getGlobalIdentifier() << std::endl;
+	std::cerr << "ident: " << var.getName().str() << std::endl;
     }
     std::cerr << "----\n\n";
 }

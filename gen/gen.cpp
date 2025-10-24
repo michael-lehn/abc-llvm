@@ -29,6 +29,22 @@ llvm::TargetMachine *targetMachine;
 const char *moduleName;
 static llvm::OptimizationLevel optimizationLevel;
 
+static inline llvm::CodeGenOptLevel
+mapOpt(llvm::OptimizationLevel L)
+{
+    using OL = llvm::OptimizationLevel;
+    if (L == OL::O0)
+	return llvm::CodeGenOptLevel::None;
+    if (L == OL::O1)
+	return llvm::CodeGenOptLevel::Less;
+    if (L == OL::O2)
+	return llvm::CodeGenOptLevel::Default;
+    if (L == OL::O3)
+	return llvm::CodeGenOptLevel::Aggressive;
+    // Fallback
+    return llvm::CodeGenOptLevel::Default;
+}
+
 void
 init(const char *name, llvm::OptimizationLevel optLevel)
 {
@@ -50,23 +66,44 @@ init(const char *name, llvm::OptimizationLevel optLevel)
     llvm::InitializeNativeTargetAsmParser();
     llvm::InitializeNativeTargetAsmPrinter();
 
-    auto targetTriple = llvm::sys::getDefaultTargetTriple();
-    llvmModule->setTargetTriple(targetTriple);
+    auto tripleStr = llvm::sys::getDefaultTargetTriple();
+#if LLVM_VERSION_MAJOR >= 21
+    llvm::Triple TT(tripleStr);
+    llvmModule->setTargetTriple(TT);
+#else
+    llvmModule->setTargetTriple(tripleStr);
+    llvm::Triple TT(tripleStr);
+#endif
 
     std::string error;
-    auto target = llvm::TargetRegistry::lookupTarget(targetTriple, error);
+#if LLVM_VERSION_MAJOR >= 21
+    const llvm::Target *target = llvm::TargetRegistry::lookupTarget(TT, error);
+#else
+    const llvm::Target *target =
+        llvm::TargetRegistry::lookupTarget(tripleStr, error);
+#endif
     if (!target) {
 	llvm::errs() << error;
 	std::exit(1);
     }
 
-    targetMachine = target->createTargetMachine(
-	    targetTriple,
-	    "generic",
-	    "",
-	    llvm::TargetOptions{},
-	    llvm::Reloc::PIC_,
-	    std::nullopt);
+    llvm::TargetOptions topts{};
+    auto relocModel = std::optional<llvm::Reloc::Model>(llvm::Reloc::PIC_);
+    auto codeModel = std::optional<llvm::CodeModel::Model>();
+    llvm::CodeGenOptLevel cgOpt = mapOpt(optLevel);
+
+#if LLVM_VERSION_MAJOR >= 21
+    targetMachine = target->createTargetMachine(TT,
+                                                /*CPU*/ "generic",
+                                                /*Features*/ "", topts,
+                                                relocModel, codeModel, cgOpt);
+#else
+    targetMachine = target->createTargetMachine(tripleStr,
+                                                /*CPU*/ "generic",
+                                                /*Features*/ "", topts,
+                                                relocModel, codeModel, cgOpt);
+#endif
+
     llvmModule->setDataLayout(targetMachine->createDataLayout());
 }
 

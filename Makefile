@@ -13,7 +13,9 @@ ABC := $(build.dir)abc/abc
 ABCFLAGS := -I abc-include
 
 CPPFLAGS += -Wno-unused-parameter -I `$(llvm-config) --includedir`
-CXXFLAGS += `$(llvm-config) --cxxflags`
+#CXXFLAGS += `$(llvm-config) --cxxflags`
+
+
 CFLAGS += `$(llvm-config) --cflags`
 LDFLAGS += `$(llvm-config) --ldflags --system-libs --libs all`
 CXXFLAGS += -std=c++20 -ftrapv
@@ -135,6 +137,11 @@ install: $(ABC) $(abc-std-lib) | $(PREFIX)/bin/ $(LIBDIR) $(INCLUDEDIR)
 	cp $(build.dir)/*.hdr $(INCLUDEDIR)
 	cp $(abc-std-lib) $(LIBDIR)
 	cp $(ABC) $(PREFIX)/bin/
+
+
+.PHONY: clang-version
+clang-version:
+	clang++ --version
 
 .PHONY: clean
 clean:
