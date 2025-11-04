@@ -274,9 +274,9 @@ The following keywords are reserved and cannot be used as identifiers:
 `alignas`   `alignof`   `array`     `break`     `case`
 `const`     `continue`  `default`   `do`        `else`
 `enum`      `extern`    `fn`        `for`       `global`
-`if`        `local`     `nullptr`   `of`        `return`
-`sizeof`    `struct`    `switch`    `then`      `type`
-`union`     `while`
+`goto`      `if`        `label`     `local`     `nullptr`
+`of`        `return`    `sizeof`    `struct`    `switch`
+`then`      `type`      `union`     `while`
 
 Identifiers begin with a letter, i.e., `A` to `Z` and `a` to `z`, or an
 underscore `_`, and are optionally followed by a sequence of more letters,
@@ -335,7 +335,7 @@ The syntax for expressions is very similar to expressions in C, with the followi
 The EBNF grammar for expressions is:
 
 ```ebnf
-               expression = assignment-expression
+          expression-list = assignment-expression { "," assignment-expression}
     assignment-expression = conditional-expression { ("=" | "+=" | "-=" | "*=" | "/=" | "%=") assignment-expression }
    conditional-expression = logical-or-expression
                                 [ ("?" | "then") assignment-expression
@@ -363,6 +363,15 @@ multiplicative-expression = unary-prefix-expression [ ("*" | "/" | "%" ) unary-p
                           | hexadecimal-literal
 ```
 
+
+```ebnf
+            compound-expression = string-literal
+                                | "{" compound-expression-initializer { "," compound-expression-initializer } "}"
+compound-expression-initializer = [designator "=" ] assignment-expression
+                     designator = "." identifier"
+                                | "[" assignment-expression "]" 
+```
+
 For convenience, the precedence and associativity are summarized in the following table:
 
 | Precedence    |   Associativity   |   Operators                           |   Meaning     |
@@ -381,13 +390,14 @@ For convenience, the precedence and associativity are summarized in the followin
 ## Types
 
 ```ebnf
-            type = [const] unqualified-type
-unqualified-type = named-type
-                 | pointer-type
-                 | array-type
-                 | function-type
-    pointer-type = "->" type
-      array-type = "array" "[" expression "]" { "[" expression "]" } "of" type
+                 type = [const] unqualified-type
+     unqualified-type = named-type
+                      | pointer-type
+                      | array-type
+                      | function-type
+         pointer-type = "->" type
+           array-type = "array" array-dim-and-type
+   array-dim-and-type = "[" assignment-expression "]" { "[" assignment-expression "]" } "of" type
 ```
 
 ## Structure of an ABC Program
@@ -398,33 +408,36 @@ top-level-declaration = function-declaration-or-definition
                       | extern-declaration
                       | global-variable-definition
                       | type-declaration
-                      | struct-declaration
                       | enum-declaration
+                      | struct-declaration
 ```
 
 #### Function Declarations and Definitions
 
 ```ebnf
-function-declaration-or-definition = function-type (";" | compound-statement)
+function-declaration-or-definition = function-type (";" | function-body)
                      function-type = "fn" [identifier] "(" function-parameter-list ")" [ ":" type ]
-           function-parameter-list = [ [identifier] ":" type] { "," [identifier] ":" type} } ]
+           function-parameter-list = [ [identifier] ":" type { "," [identifier] ":" type} } ["," "..."] ]
+                     function-body = compound-statement
 ```
 
 ```ebnf
-  extern-declaration = "extern" ( function-declaration | variable-declaration ) ";"
-function-declaration = function-type
-variable-declaration = identifier ":" type
+         extern-declaration = "extern" ( function-declaration | extern-variable-declaration ) ";"
+       function-declaration = function-type
+extern-variable-declaration = identifier-list ":" type { "," identifier-list ":" type }
+            identifier-list = identifier { "," identifier }
+
 ```
 
 #### Global Variable Declarations and Definitions
 
 ```ebnf
-global-variable-definition = "global" variable-declaration-list ";"
- variable-declaration-list = variable-declaration { "," variable-declaration }
-      variable-declaration = identifier ":" type [ "=" initializer ]
-               initializer = expression
-                           | "{" initializer-list "}"
-          initializer-list = [ initializer ] { "," initializer }
+global-variable-definition = "global" variable-definition-list ";"
+  variable-definition-list = variable-definition { "," variable-definition }
+       variable-definition = identifier-list ":" type
+                                [ "=" initializer-expression ]
+    initializer-expression = compound-expression
+                           | assignment-expression
 ```
 
 #### Type Aliases
@@ -437,7 +450,7 @@ type-declaration = "type" identifier ":" type ";"
 
 ```ebnf
        struct-declaration = "struct" identifier (";" | struct-member-declaration )
-struct-member-declaration = "{" { struct-member-list } "}" ";"
+struct-member-declaration = "{" { ( "union" "{" struct-member-list "}"| struct-member-list) } "}" ";"
        struct-member-list = identifier { "," identifier } ":" ( type | struct-declaration ) ";"
 ```
 
@@ -445,7 +458,7 @@ struct-member-declaration = "{" { struct-member-list } "}" ";"
 
 ```ebnf
   enum-declaration = "enum" identifier ":" integer-type "{" { enum-constant-list } "}" ";"
-enum-constant-list = identifier [ "=" expression] { "," identifier [ "=" expression] }
+enum-constant-list = identifier [ "=" assignment-expression] { "," identifier [ "=" assignment-expression] }
 ```
 
 ### Statements
@@ -453,29 +466,33 @@ enum-constant-list = identifier [ "=" expression] { "," identifier [ "=" express
 #### Compound Statements
 
 ```ebnf
-        compound-statement = "{" { statement-or-declaration } "}"
-                 statement = compound-statement
-                           | if-statement
-                           | switch-statement
-                           | while-statement
-                           | for-statement
-                           | return-statement
-                           | break-statement
-                           | continue-statement
-                           | expression-statement
-               declaration = type-declaration
-                           | enum-declaration
-                           | struct-declaration
-                           | global-variable-definition
-                           | local-variable-definition
- local-variable-definition = local-variable-declaration ";"
-local-variable-declaration = "local" variable-declaration-list
+            compound-statement = "{" { statement-or-declaration-list } "}"
+ statement-or-declaration-list = "{" { statement | declaration } "}"
+                     statement = compound-statement
+                               | if-statement
+                               | switch-statement
+                               | while-statement
+                               | do-while-statement
+                               | for-statement
+                               | return-statement
+                               | break-statement
+                               | continue-statement
+                               | goto-statement
+                               | label-definition
+                               | expression-statement
+                   declaration = type-declaration
+                               | enum-declaration
+                               | struct-declaration
+                               | static-variable-definition
+                               | local-variable-definition
+    static-variable-definition = "static" variable-definition-list ";"
+     local-variable-definition = "local" variable-definition-list ";"
 ```
 
 #### Expression Statements
 
 ```ebnf
-expression-statement = [expression] ";"
+expression-statement = [expression-list] ";"
 ```
 
 #### Control Structures
@@ -483,14 +500,15 @@ expression-statement = [expression] ";"
 ##### If-then-(else) statements
 
 ```ebnf
-if-statement      = "if" "(" expression ")" compound-statement [ "else" compound-statement ]
+if-statement      = "if" "(" expression-list ")" compound-statement
+                     [ "else" if-statement | compound-statement ]
 ```
 
 ##### Switch statements
 
 ```ebnf
-        switch-statement = "switch" "(" expression ")" "{" switch-case-or-statement "}"
-switch-case-or-statement = "case" expression ":"
+        switch-statement = "switch" "(" expression-list ")" "{" switch-case-or-statement "}"
+switch-case-or-statement = "case" expression-list ":"
                          | "default" ":"
                          | statement
 ```
@@ -500,23 +518,29 @@ switch-case-or-statement = "case" expression ":"
 ###### While Loops
 
 ```ebnf
-while-statement = "while" "(" expression ")" compound-statement
+while-statement = "while" "(" expression-list ")" compound-statement
+```
+
+###### Do-While Loops
+
+```ebnf
+do-while-statement = do compound-statement "while" "(" expression-list ")" ";"
 ```
 
 ###### For Loops
 
 ```ebnf
 for-statement = "for" "(" [expression-or-local-variable-definition] ";"
-                          [expression] ";" [expression] ")"
+                          [expression-list] ";" [expression-list] ")"
                           compound-statement
-expression-or-local-variable-definition = expression
+expression-or-local-variable-definition = expression-list
                                         | local-variable-declaration
 ```
 
 ###### Break and continue 
 
 ```ebnf
-return-statement = "return" [ expression ] ";"
+return-statement = "return" [ expression-list ] ";"
 ```
 
 ```ebnf
@@ -524,3 +548,9 @@ break-statement = "break" ";"
 continue-statement = "continue" ";"
 ```
 
+###### Goto and labels
+
+```ebnf
+  goto-statement = "goto" identifier ";"
+label-definition = "label" identifier ":"
+```
