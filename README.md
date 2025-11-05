@@ -395,6 +395,7 @@ For convenience, the precedence and associativity are summarized in the followin
                       | pointer-type
                       | array-type
                       | function-type
+           named-type = identifier
          pointer-type = "->" type
            array-type = "array" array-dim-and-type
    array-dim-and-type = "[" assignment-expression "]" { "[" assignment-expression "]" } "of" type
