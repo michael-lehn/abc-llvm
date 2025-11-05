@@ -417,7 +417,7 @@ top-level-declaration = function-declaration-or-definition
 #### Function Declarations and Definitions
 
 ```ebnf
-function-declaration-or-definition = function-type (";" | function-body)
+function-declaration-or-definition = function-header (";" | function-body)
                    function-header = "fn" identifier "(" function-parameter-list ")" [ ":" type ]
            function-parameter-list = [ [identifier] ":" type { "," [identifier] ":" type} } ["," "..."] ]
                      function-body = compound-statement
