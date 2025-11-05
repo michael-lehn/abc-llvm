@@ -134,6 +134,9 @@ parseFunctionDeclarationOrDefinition()
     if (!fnType) {
 	return nullptr;
     }
+    if (fnName.kind != TokenKind::IDENTIFIER) {
+	error::unexpectedAfter(fnName, TokenKind::IDENTIFIER);
+    }
 
     if (fnType->retType()->isVoid()) {
 	error::expectedAfterLastToken(
@@ -183,7 +186,7 @@ parseFunctionType(Token &fnName, std::vector<Token> &fnParamName)
 	fnName = token;
 	getToken();
     } else {
-	error::unexpectedAfter(fnToken, TokenKind::IDENTIFIER);
+	fnName = fnToken;
     }
     if (!error::expectedAfterLastToken(TokenKind::LPAREN)) {
 	return nullptr;

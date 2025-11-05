@@ -71,11 +71,7 @@ unexpected(lexer::Token locToken, lexer::TokenKind expectedTokenKind,
 {
     assert(where == HERE || where == AFTER || where == BEFORE);
 
-    if (where == AFTER) {
-	location(lexer::lastToken.loc);
-    } else if (where == HERE || where == BEFORE) {
-	location(lexer::token.loc);
-    }
+    location(locToken.loc);
     out() << setColor(BOLD) << lexer::token.loc << ": " << setColor(BOLD_RED)
           << "error: " << setColor(BOLD) << "expected " << expectedTokenKind;
     if (where == AFTER) {
