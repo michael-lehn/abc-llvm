@@ -7,4 +7,4 @@
  *
  */
 
- extern fn __assert(msg: -> const char, file: -> const char, line: int): bool;
+extern fn __assert(msg: -> const char, file: -> const char, line: int): bool;

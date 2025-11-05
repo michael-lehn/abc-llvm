@@ -115,7 +115,7 @@ parseTopLevelDeclaration()
 
 //------------------------------------------------------------------------------
 static const Type *
-parseFunctionType(Token &fnName, std::vector<Token> &fnParamName);
+parseFunctionHeader(Token &fnName, std::vector<Token> &fnParamName);
 
 static AstPtr
 parseFunctionBody(bool required = false);
@@ -130,12 +130,9 @@ parseFunctionDeclarationOrDefinition()
     Token fnName;
     std::vector<Token> fnParamName;
 
-    const Type *fnType = parseFunctionType(fnName, fnParamName);
+    const Type *fnType = parseFunctionHeader(fnName, fnParamName);
     if (!fnType) {
 	return nullptr;
-    }
-    if (fnName.kind != TokenKind::IDENTIFIER) {
-	error::unexpectedAfter(fnName, TokenKind::IDENTIFIER);
     }
 
     if (fnType->retType()->isVoid()) {
@@ -163,6 +160,24 @@ parseFunctionDeclarationOrDefinition()
     }
     fnDef->appendBody(std::move(fnBody));
     return fnDef;
+}
+
+//------------------------------------------------------------------------------
+static const Type *
+parseFunctionType(Token &fnName, std::vector<Token> &fnParamName);
+
+/*
+ * function-header
+ *	= "fn" identifier "(" function-parameter-list ")" [ ":" type ]
+ */
+static const Type *
+parseFunctionHeader(Token &fnName, std::vector<Token> &fnParamName)
+{
+    const Type *fnType = parseFunctionType(fnName, fnParamName);
+    if (fnType && fnName.kind != TokenKind::IDENTIFIER) {
+	error::unexpectedAfter(fnName, TokenKind::IDENTIFIER);
+    }
+    return fnType;
 }
 
 //------------------------------------------------------------------------------
@@ -285,6 +300,7 @@ parseFunctionParameterList(std::vector<Token> &paramName,
 //------------------------------------------------------------------------------
 static const Type *
 parseFunctionDeclaration(Token &fnIdent, std::vector<Token> &param);
+
 static AstListPtr
 parseExternVariableDeclaration();
 
@@ -331,12 +347,12 @@ parseExternDeclaration()
 
 //------------------------------------------------------------------------------
 /*
- * function-declaration = function-type
+ * function-declaration = function-header
  */
 static const Type *
 parseFunctionDeclaration(Token &fnIdent, std::vector<Token> &param)
 {
-    return parseFunctionType(fnIdent, param);
+    return parseFunctionHeader(fnIdent, param);
 }
 
 //------------------------------------------------------------------------------
