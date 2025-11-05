@@ -1133,7 +1133,6 @@ parseDoWhileStatement()
  *			compound-statement
  *  expression-or-variable-definition = expression-list ";"
  *				      | local-variable-declaration
- *				      | static-variable-declaration
  */
 static AstPtr
 parseForStatement()
@@ -1151,13 +1150,11 @@ parseForStatement()
     AstPtr forInitDecl;
     ExprPtr forInitExpr;
     if (!(forInitDecl = parseLocalVariableDefinition())) {
-	if (!(forInitDecl = parseStaticVariableDefinition())) {
-	    forInitExpr = parseExpressionList();
-	    if (!error::expected(TokenKind::SEMICOLON)) {
-		return nullptr;
-	    }
-	    getToken();
+	forInitExpr = parseExpressionList();
+	if (!error::expected(TokenKind::SEMICOLON)) {
+	    return nullptr;
 	}
+	getToken();
     }
     auto forCond = parseExpressionList();
     if (!error::expected(TokenKind::SEMICOLON)) {
