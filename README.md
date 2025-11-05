@@ -399,6 +399,7 @@ For convenience, the precedence and associativity are summarized in the followin
          pointer-type = "->" type
            array-type = "array" array-dim-and-type
    array-dim-and-type = "[" assignment-expression "]" { "[" assignment-expression "]" } "of" type
+        function-type = "fn" [identifier] "(" function-parameter-list ")" [ ":" type ]
 ```
 
 ## Structure of an ABC Program
@@ -417,7 +418,7 @@ top-level-declaration = function-declaration-or-definition
 
 ```ebnf
 function-declaration-or-definition = function-type (";" | function-body)
-                     function-type = "fn" [identifier] "(" function-parameter-list ")" [ ":" type ]
+                   function-header = "fn" identifier "(" function-parameter-list ")" [ ":" type ]
            function-parameter-list = [ [identifier] ":" type { "," [identifier] ":" type} } ["," "..."] ]
                      function-body = compound-statement
 ```

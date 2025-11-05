@@ -173,6 +173,8 @@ parseFunctionParameterList(std::vector<Token> &paramName,
 /*
  * function-type
  *	= "fn" [identifier] "(" function-parameter-list ")" [ ":" type ]
+ * function-header
+ *	= "fn" identifier "(" function-parameter-list ")" [ ":" type ]
  */
 static const Type *
 parseFunctionType(Token &fnName, std::vector<Token> &fnParamName)
