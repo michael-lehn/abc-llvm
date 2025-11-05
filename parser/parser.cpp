@@ -1128,10 +1128,10 @@ parseDoWhileStatement()
 
 //------------------------------------------------------------------------------
 /*
- * for-statement = "for" "(" [expression-or-variable-definition] ";"
+ * for-statement = "for" "(" [expression-or-variable-definition]
  *			[expression-list] ";" [expression-list] ")"
  *			compound-statement
- *  expression-or-variable-definition = expression-list
+ *  expression-or-variable-definition = expression-list ";"
  *				      | local-variable-declaration
  *				      | static-variable-declaration
  */
