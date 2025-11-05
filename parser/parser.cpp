@@ -1132,7 +1132,7 @@ parseDoWhileStatement()
  *			[expression-list] ";" [expression-list] ")"
  *			compound-statement
  *  expression-or-variable-definition = expression-list ";"
- *				      | local-variable-declaration
+ *				      | local-variable-definition
  */
 static AstPtr
 parseForStatement()
