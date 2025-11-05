@@ -9,7 +9,8 @@
 #include "lexer.hpp"
 #include "symtab/symtab.hpp"
 
-namespace abc { namespace error {
+namespace abc {
+namespace error {
 
 std::ostream &
 out(int indent)
@@ -37,21 +38,18 @@ undefinedIdentifier(const lexer::Loc &loc, UStr name)
 {
     auto didYouMean = Symtab::didYouMean(name);
     location(loc);
-    out() << setColor(BOLD) << loc << ": "
-	<< setColor(BOLD_RED) << "error: " << setColor(BOLD)
-	<< "undefined identifier\n"
-	<< setColor(NORMAL);
+    out() << setColor(BOLD) << loc << ": " << setColor(BOLD_RED)
+          << "error: " << setColor(BOLD) << "undefined identifier\n"
+          << setColor(NORMAL);
     if (didYouMean.size()) {
-	out() << setColor(BOLD) << loc << ": "
-	    << setColor(BOLD_BLUE) << "note: "
-	    << setColor(BOLD)
-	    << "did you mean: "
-	    << setColor(NORMAL);
+	out() << setColor(BOLD) << loc << ": " << setColor(BOLD_BLUE)
+	      << "note: " << setColor(BOLD)
+	      << "did you mean: " << setColor(NORMAL);
 	for (std::size_t i = 0; i < didYouMean.size(); ++i) {
 	    out() << "'" << didYouMean[i] << "'";
 	    if (i + 2 == didYouMean.size()) {
 		out() << ", or ";
-	    } else  if (i + 1 < didYouMean.size()) {
+	    } else if (i + 1 < didYouMean.size()) {
 		out() << ", ";
 	    }
 	}
@@ -60,11 +58,57 @@ undefinedIdentifier(const lexer::Loc &loc, UStr name)
     fatal();
 }
 
-enum ExpectedLoc {
+enum ExpectedLoc
+{
     HERE,
     AFTER,
     BEFORE,
 };
+
+static void
+unexpected(lexer::Token locToken, lexer::TokenKind expectedTokenKind,
+           ExpectedLoc where)
+{
+    assert(where == HERE || where == AFTER || where == BEFORE);
+
+    if (where == AFTER) {
+	location(lexer::lastToken.loc);
+    } else if (where == HERE || where == BEFORE) {
+	location(lexer::token.loc);
+    }
+    out() << setColor(BOLD) << lexer::token.loc << ": " << setColor(BOLD_RED)
+          << "error: " << setColor(BOLD) << "expected " << expectedTokenKind;
+    if (where == AFTER) {
+	out() << " after '";
+    } else if (where == BEFORE) {
+	out() << " before '";
+    }
+    if (locToken.kind == lexer::TokenKind::IDENTIFIER) {
+	out() << locToken.val;
+    } else {
+	out() << locToken.kind;
+    }
+    out() << "'\n" << setColor(NORMAL);
+    fatal();
+}
+
+void
+unexpected(lexer::Token locToken, lexer::TokenKind expectedTokenKind)
+{
+    unexpected(locToken, expectedTokenKind, HERE);
+}
+
+void
+unexpectedAfter(lexer::Token locToken, lexer::TokenKind expectedTokenKind)
+{
+    unexpected(locToken, expectedTokenKind, AFTER);
+}
+
+void
+unexpectedBefore(lexer::Token locToken, lexer::TokenKind expectedTokenKind)
+{
+    unexpected(locToken, expectedTokenKind, BEFORE);
+}
 
 bool
 expected(const std::vector<lexer::TokenKind> &kind, ExpectedLoc where)
@@ -73,7 +117,7 @@ expected(const std::vector<lexer::TokenKind> &kind, ExpectedLoc where)
 
     bool ok = false;
 
-    for (const auto &k: kind) {
+    for (const auto &k : kind) {
 	if (k == lexer::token.kind) {
 	    ok = true;
 	}
@@ -87,9 +131,8 @@ expected(const std::vector<lexer::TokenKind> &kind, ExpectedLoc where)
 	}
 
 	out() << setColor(BOLD) << lexer::token.loc << ": "
-	    << setColor(BOLD_RED) << "error: "
-	    << setColor(BOLD)
-	    << "expected ";
+	      << setColor(BOLD_RED) << "error: " << setColor(BOLD)
+	      << "expected ";
 	for (std::size_t i = 0; i < kind.size(); ++i) {
 	    out() << "'" << kind[i] << "'";
 	    if (i + 2 == kind.size()) {
@@ -156,12 +199,13 @@ expectedAfterLastToken(const std::vector<lexer::TokenKind> &kind)
 }
 
 static std::unordered_map<Color, std::string> colorMap = {
-    { NORMAL, "\033[0m"},
-    { BOLD, "\033[0m" "\033[1;10m"},
-    { RED, "\033[0;31m"},
-    { BLUE, "\033[0;34m"},
-    { BOLD_RED, "\033[1;31m"},
-    { BOLD_BLUE, "\033[1;34m"},
+    {NORMAL, "\033[0m"},
+    {BOLD, "\033[0m"
+           "\033[1;10m"},
+    {RED, "\033[0;31m"},
+    {BLUE, "\033[0;34m"},
+    {BOLD_RED, "\033[1;31m"},
+    {BOLD_BLUE, "\033[1;34m"},
 };
 
 std::string
@@ -177,26 +221,26 @@ expandTabs(const std::string &str)
     std::size_t pos = 0;
     constexpr unsigned tabSize = 8;
 
-    for(char c: str) {
-        if(c == '\t') {
-            result.append(tabSize - pos % tabSize, ' ');
-            pos = 0;
-        } else {
-            result += c;
-            pos = (c == '\n') ? 0 : pos + 1;
-        }
+    for (char c : str) {
+	if (c == '\t') {
+	    result.append(tabSize - pos % tabSize, ' ');
+	    pos = 0;
+	} else {
+	    result += c;
+	    pos = (c == '\n') ? 0 : pos + 1;
+	}
     }
     return result;
 }
 
-static std::pair <std::size_t, std::size_t>
+static std::pair<std::size_t, std::size_t>
 printLine(std::ostream &out, const char *path, std::size_t lineNumber)
 {
     std::fstream file{path};
 
     file.seekg(std::ios::beg);
     for (std::size_t i = 0; i + 1 < lineNumber; ++i) {
-        file.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+	file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
     std::string line;
     std::getline(file, line);
@@ -227,4 +271,5 @@ location(const lexer::Loc &loc)
     return out;
 }
 
-} } // namespace error, abc
+} // namespace error
+} // namespace abc

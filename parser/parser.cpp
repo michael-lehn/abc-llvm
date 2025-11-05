@@ -177,10 +177,13 @@ parseFunctionType(Token &fnName, std::vector<Token> &fnParamName)
     if (token.kind != TokenKind::FN) {
 	return nullptr;
     }
+    auto fnToken = token;
     getToken();
     if (isIdentifierToken(token)) {
 	fnName = token;
 	getToken();
+    } else {
+	error::unexpectedAfter(fnToken, TokenKind::IDENTIFIER);
     }
     if (!error::expectedAfterLastToken(TokenKind::LPAREN)) {
 	return nullptr;
