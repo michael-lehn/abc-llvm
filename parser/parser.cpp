@@ -122,7 +122,7 @@ parseFunctionBody(bool required = false);
 
 /*
  * function-declaration-or-definition
- *	= function-type (";" | function-body)
+ *	= function-header (";" | function-body)
  */
 static AstPtr
 parseFunctionDeclarationOrDefinition()
