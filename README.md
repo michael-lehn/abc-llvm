@@ -351,12 +351,12 @@ multiplicative-expression = unary-prefix-expression [ ("*" | "/" | "%" ) unary-p
        postfix-expression = primary-expression
                           | postfix-expression "." identifier
                           | postfix-expression "->" [ identifier ]
-                          | postfix-expression "[" expression "]"
-                          | postfix-expression "(" expression ")" 
+                          | postfix-expression "[" expression-list "]"
+                          | postfix-expression "(" expression-list ")" 
                           | postfix-expression "++" 
                           | postfix-expression "--"
        primary-expression = identifier
-                          | "sizeof" "(" (type | expression) ")"
+                          | "sizeof" "(" (type | expression-list) ")"
                           | "nullptr"
                           | decimal-literal
                           | octal-literal
