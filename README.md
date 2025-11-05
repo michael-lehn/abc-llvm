@@ -534,7 +534,7 @@ for-statement = "for" "(" [expression-or-local-variable-definition]
                           [expression-list] ";" [expression-list] ")"
                           compound-statement
 expression-or-local-variable-definition = expression-list ";"
-                                        | local-variable-declaration
+                                        | local-variable-definition
 ```
 
 ###### Break and continue 
