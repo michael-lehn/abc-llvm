@@ -52,6 +52,76 @@ mapOpt(llvm::OptimizationLevel L)
     return llvm::CodeGenOptLevel::Default;
 }
 
+std::string
+getEffectiveTargetTriple()
+{
+    using namespace opt;
+
+    if (!target.empty() && mcu.empty()) {
+	return target;
+    }
+    if (target.empty() && !mcu.empty()) {
+	if (mcu.starts_with("atmega") || mcu.starts_with("attiny")) {
+	    llvm::errs() << "note: inferring target 'avr' from MCU '" << mcu
+	                 << "'\n";
+	    return "avr";
+	} else if (mcu.starts_with("cortex-")) {
+	    llvm::errs() << "note: inferring target 'arm-none-eabi' from MCU '"
+	                 << mcu << "'\n";
+	    return "arm-none-eabi";
+	} else {
+	    llvm::errs() << "warning: unknown MCU '" << mcu
+	                 << "', ignoring --mmcu\n";
+	    return llvm::sys::getDefaultTargetTriple();
+	}
+    }
+    if (!target.empty() && !mcu.empty()) {
+	if (target == "avr" &&
+	    (mcu.starts_with("atmega") || mcu.starts_with("attiny"))) {
+	    return target;
+	}
+	if (target == "arm-none-eabi" && mcu.starts_with("cortex-")) {
+	    return target;
+	}
+
+	llvm::errs() << "warning: target '" << target
+	             << "' does not match MCU '" << mcu << "', ignoring both\n";
+	return llvm::sys::getDefaultTargetTriple();
+    }
+    return llvm::sys::getDefaultTargetTriple();
+}
+
+std::string
+getCpu()
+{
+    using namespace opt;
+
+    if (opt::mcu.empty())
+	return "generic";
+
+    if (mcu.starts_with("atmega") || mcu.starts_with("attiny"))
+	return mcu;
+    if (mcu.starts_with("cortex-"))
+	return mcu.substr(7); // "cortex-m3" → "m3"
+
+    llvm::errs() << "warning: unknown MCU '" << mcu << "', using generic CPU\n";
+    return "generic";
+}
+
+std::string
+getFeatures()
+{
+    return "";
+}
+
+llvm::Reloc::Model
+getRelocModel(const std::string &targetTriple)
+{
+    return (targetTriple == "avr" || targetTriple == "arm-none-eabi")
+               ? llvm::Reloc::Static
+               : llvm::Reloc::PIC_;
+}
+
 void
 init(const char *name, llvm::OptimizationLevel optLevel)
 {
@@ -68,48 +138,30 @@ init(const char *name, llvm::OptimizationLevel optLevel)
     llvmBB = nullptr;
 
     llvm::InitializeAllTargetInfos();
-    llvm::InitializeNativeTarget();
+    llvm::InitializeAllTargets();
     llvm::InitializeAllTargetMCs();
-    llvm::InitializeNativeTargetAsmParser();
-    llvm::InitializeNativeTargetAsmPrinter();
+    llvm::InitializeAllAsmParsers();
+    llvm::InitializeAllAsmPrinters();
 
-    auto tripleStr = llvm::sys::getDefaultTargetTriple();
-#if LLVM_VERSION_MAJOR >= 21
+    auto tripleStr = getEffectiveTargetTriple();
     llvm::Triple TT(tripleStr);
     llvmModule->setTargetTriple(TT);
-#else
-    llvmModule->setTargetTriple(tripleStr);
-    llvm::Triple TT(tripleStr);
-#endif
 
     std::string error;
-#if LLVM_VERSION_MAJOR >= 21
     const llvm::Target *target = llvm::TargetRegistry::lookupTarget(TT, error);
-#else
-    const llvm::Target *target =
-        llvm::TargetRegistry::lookupTarget(tripleStr, error);
-#endif
     if (!target) {
 	llvm::errs() << error;
 	std::exit(1);
     }
 
     llvm::TargetOptions topts{};
-    auto relocModel = std::optional<llvm::Reloc::Model>(llvm::Reloc::PIC_);
+    auto relocModel = getRelocModel(tripleStr);
     auto codeModel = std::optional<llvm::CodeModel::Model>();
     llvm::CodeGenOptLevel cgOpt = mapOpt(optLevel);
 
-#if LLVM_VERSION_MAJOR >= 21
-    targetMachine = target->createTargetMachine(TT,
-                                                /*CPU*/ "generic",
-                                                /*Features*/ "", topts,
+    auto cpu = getCpu();
+    targetMachine = target->createTargetMachine(TT, cpu, getFeatures(), topts,
                                                 relocModel, codeModel, cgOpt);
-#else
-    targetMachine = target->createTargetMachine(tripleStr,
-                                                /*CPU*/ "generic",
-                                                /*Features*/ "", topts,
-                                                relocModel, codeModel, cgOpt);
-#endif
 
     llvmModule->setDataLayout(targetMachine->createDataLayout());
 }
