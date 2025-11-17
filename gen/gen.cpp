@@ -26,6 +26,13 @@ std::unique_ptr<llvm::IRBuilder<>> llvmBuilder;
 llvm::BasicBlock *llvmBB;
 llvm::TargetMachine *targetMachine;
 
+namespace opt {
+
+std::string target;
+std::string mcu;
+
+} // namespace opt
+
 const char *moduleName;
 static llvm::OptimizationLevel optimizationLevel;
 

@@ -1,6 +1,8 @@
 #ifndef GEN_GEN_HPP
 #define GEN_GEN_HPP
 
+#include <string>
+
 #ifdef SUPPORT_SOLARIS
 // has to be included as first llvm header
 #include "llvm/Support/Solaris/sys/regset.h"
@@ -29,6 +31,13 @@ extern std::unique_ptr<llvm::Module> llvmModule;
 extern std::unique_ptr<llvm::IRBuilder<>> llvmBuilder;
 extern llvm::BasicBlock *llvmBB;
 extern llvm::TargetMachine *targetMachine;
+
+namespace opt {
+
+extern std::string target;
+extern std::string mcu;
+
+} // namespace opt
 
 extern const char *moduleName;
 
