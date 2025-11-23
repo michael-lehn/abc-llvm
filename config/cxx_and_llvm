@@ -1,19 +1,28 @@
 include config/os
 
 ifeq (Darwin,$(ostype))
-    CXX ?= clang++
+    ifneq ($(origin CXX), command line)
+	CXX = g++
+    endif
     llvm-config ?= llvm-config
 else ifeq (Linux,$(ostype))
-    CXX ?= $(shell which clang++ >/dev/null 2>&1 && \
-		echo clang++ || echo clang++-21)
+    ifneq ($(origin CXX), command line)
+	CXX ?= $(shell which clang++ >/dev/null 2>&1 && \
+		    echo clang++ || echo clang++-21)
+    endif
     llvm-config ?= $(shell which llvm-config-21 >/dev/null 2>&1 && \
 		echo llvm-config || echo llvm-config-21)
 else ifeq (SunOS,$(ostype))
-    CXX ?= clang++
+    ifneq ($(origin CXX), command line)
+	CXX ?= clang++
+    endif
     llvm-config ?= llvm-config
     CPPFLAGS += -DSUPPORT_SOLARIS
     CPPFLAGS += -D_GLIBCXX_BITS_SPECFUN_H
 endif
+
+$(info using CXX=$(CXX))
+$(info using llvm-config=$(llvm-config))
 
 check_cxx := $(shell which $(CXX) > /dev/null; echo $$?)
 check_llvm := $(shell which $(llvm-config) > /dev/null; echo $$?)
