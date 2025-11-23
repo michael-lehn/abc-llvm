@@ -124,10 +124,11 @@ sudo pacman -S llvm clang
 sudo dnf install llvm clang
 ```
 
-**Windows:**  
-Use the official LLVM installer or build from source:  
-https://llvm.org
+**Windows:**
 
+Windows is not supported natively.  
+Please install **WSL (Windows Subsystem for Linux)** and use the Linux
+instructions above.
 
 ## Declarations in C and ABC
 
