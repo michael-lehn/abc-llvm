@@ -84,6 +84,13 @@ make
 sudo make install
 ```
 
+If needed, you can explicitly specify the C++ compiler and `llvm-config` when
+invoking `make`, for example:
+
+```bash
+make CXX=g++ llvm-config=llvm-config-21
+```
+
 ### Hints on Installing LLVM
 
 ABC requires **LLVM 21** (including `llvm-config` and `clang`).  
