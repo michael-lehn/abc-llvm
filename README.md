@@ -68,14 +68,58 @@ execute programs*. It is suitable for use in:
 
 ## Installation
 
-Clone the repository, build the compiler with `make`, install it with `make install`:
+Verify that the correct LLVM version is used:
 
+```bash
+llvm-config --version
+# should print 21.x (or higher)
 ```
+
+Clone the repository, build, and install:
+
+```bash
 git clone https://github.com/michael-lehn/abc-llvm.git
 cd abc-llvm
 make
 sudo make install
 ```
+
+### Hints on Installing LLVM
+
+ABC requires **LLVM 21** (including `llvm-config` and `clang`).  
+Earlier LLVM versions will **not** work.
+
+**macOS (recommended):**
+
+```bash
+brew install llvm@21
+```
+
+After installation, make sure the Homebrew LLVM tools are in your `PATH`:
+
+```bash
+export PATH="$(brew --prefix llvm@21)/bin:$PATH"
+```
+
+**Debian/Ubuntu-based Linux:**  
+Packages are available via the official LLVM APT repository:  
+https://apt.llvm.org
+
+**Arch Linux:**
+
+```bash
+sudo pacman -S llvm clang
+```
+
+**Fedora / RHEL / CentOS:**
+
+```bash
+sudo dnf install llvm clang
+```
+
+**Windows:**  
+Use the official LLVM installer or build from source:  
+https://llvm.org
 
 
 ## Declarations in C and ABC

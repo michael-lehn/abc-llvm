@@ -4,8 +4,10 @@ ifeq (Darwin,$(ostype))
     CXX ?= clang++
     llvm-config ?= llvm-config
 else ifeq (Linux,$(ostype))
-    CXX ?= clang++-19
-    llvm-config ?= llvm-config-19
+    CXX ?= $(shell which clang++ >/dev/null 2>&1 && \
+		echo clang++ || echo clang++-21)
+    llvm-config ?= $(shell which llvm-config-21 >/dev/null 2>&1 && \
+		echo llvm-config || echo llvm-config-21)
 else ifeq (SunOS,$(ostype))
     CXX ?= clang++
     llvm-config ?= llvm-config
@@ -34,9 +36,13 @@ endif
 llvm-config.version := $(shell $(llvm-config) --version)
 llvm-config.version.major = $(firstword $(subst ., ,$(llvm-config.version)))
 
-
 $(info llvm-config.version = $(firstword $(subst ., ,$(llvm-config.version))))
 
 CPPFLAGS += -DLLVM_MAJOR_VERSION=$(llvm-config.version.major)
+
+ifeq ($(shell [ $(llvm-config.version.major) -ge 21 ] && echo ok),)
+    $(error LLVM version 21 or higher required \
+	    (found $(llvm-config.version.major)))
+endif
 
 
