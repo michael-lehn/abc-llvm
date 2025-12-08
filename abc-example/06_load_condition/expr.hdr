@@ -27,12 +27,12 @@ enum BinaryExprKind : i32
 struct Expr
 {
     union {
-	primary:	struct PrimaryExpr {
+	primary:    struct PrimaryExpr {
 			kind:   PrimaryExprKind;
 			val:    i64;
 			ident:  array[TOKEN_VAL_MAX_LEN + 1] of char;
 		    };
-	binary:	struct BinaryExpr {
+	binary:	    struct BinaryExpr {
 			op: BinaryExprKind;
 			left, right: -> const Expr;
 		    };
