@@ -41,6 +41,10 @@ src.o := \
 	$(patsubst %,$(build.dir)%,\
 		$(src.abc:.abc=.o))
 
+src.o.compile_cmd := \
+	$(patsubst %,$(build.dir)%.compile_cmd,\
+		$(src.cpp:.cpp=.o))
+
 src.d := \
 	$(src.o:.o=.d)
 
@@ -95,10 +99,27 @@ $(build.dir)abc/abc.o : abc/abc.cpp \
 		$(build.dir)libdir \
 		$(build.dir)includedir \
 		| $(build.subdir)
+	@echo "{ \"directory\": \"$(PWD)\", \"file\": \"$<\", \
+		\"command\": \"$(COMPILE.cpp) -I. -o $@ -MT '$@' -MMD -MP $<\" \
+		}" > $@.compile_cmd
 	$(COMPILE.cpp) -I. -o $@ -MT '$@' -MMD -MP $<
+
+$(build.dir)abc/abc.o.compile_cmd : abc/abc.cpp \
+		$(build.dir)prefix \
+		$(build.dir)libdir \
+		$(build.dir)includedir \
+		| $(build.subdir)
+	@echo "{ \"directory\": \"$(PWD)\", \"file\": \"$<\", \
+		\"command\": \"$(COMPILE.cpp) -I. -o $@ -MT '$@' -MMD -MP $<\" \
+		}" > $@
 
 $(build.dir)%.o : %.cpp | $(build.subdir)
 	$(COMPILE.cpp) -I. -o $@ -MT '$@' -MMD -MP $<
+
+$(build.dir)%.o.compile_cmd : %.cpp | $(build.subdir)
+	@echo "{ \"directory\": \"$(PWD)\", \"file\": \"$<\", \
+		\"command\": \"$(COMPILE.cpp) -I. -o $@ -MT '$@' -MMD -MP $<\" \
+		}" > $@
 
 $(build.dir)% : $(build.dir)%.o $(lib.cpp.o)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $^ $(LDFLAGS) $(TARGET_ARCH) -o $@
@@ -129,7 +150,14 @@ $(info INCLUDEDIR=$(INCLUDEDIR))
 
 .DEFAULT_GOAL := all
 .PHONY: all
-all: $(ABC) $(abc-std-lib) $(prg.cpp.exe) $(lib.cpp.o) $(prg.cpp.o) $(gen)
+all: $(ABC) $(abc-std-lib) $(prg.cpp.exe) $(lib.cpp.o) $(prg.cpp.o) $(gen) \
+	compile_cmd
+
+.PHONY: compile_cmd
+compile_cmd: $(src.o.compile_cmd)
+	@echo '[' > compile_commands.json
+	@cat $(src.o.compile_cmd) >> compile_commands.json
+	@echo ']' >> compile_commands.json
 
 .PHONY: install
 install: $(ABC) $(abc-std-lib) | $(PREFIX)/bin/ $(LIBDIR) $(INCLUDEDIR)

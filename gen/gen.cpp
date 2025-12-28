@@ -1,5 +1,3 @@
-#include <iostream>
-
 #ifdef SUPPORT_SOLARIS
 // has to be included as first llvm header
 #include "llvm/Support/Solaris/sys/regset.h"
@@ -9,10 +7,8 @@
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/TargetParser/Host.h"
-#include "llvm/Transforms/InstCombine/InstCombine.h"
 #include "llvm/Transforms/Scalar/GVN.h"
 #include "llvm/Transforms/Scalar/Reassociate.h"
-#include "llvm/Transforms/Scalar/SimplifyCFG.h"
 
 #include "gen.hpp"
 #include "gentype.hpp"
@@ -52,7 +48,7 @@ mapOpt(llvm::OptimizationLevel L)
     return llvm::CodeGenOptLevel::Default;
 }
 
-std::string
+static std::string
 getEffectiveTargetTriple()
 {
     using namespace opt;
@@ -91,7 +87,7 @@ getEffectiveTargetTriple()
     return llvm::sys::getDefaultTargetTriple();
 }
 
-std::string
+static std::string
 getCpu()
 {
     using namespace opt;
@@ -108,13 +104,13 @@ getCpu()
     return "generic";
 }
 
-std::string
+static std::string
 getFeatures()
 {
     return "";
 }
 
-llvm::Reloc::Model
+static llvm::Reloc::Model
 getRelocModel(const std::string &targetTriple)
 {
     return (targetTriple == "avr" || targetTriple == "arm-none-eabi")
