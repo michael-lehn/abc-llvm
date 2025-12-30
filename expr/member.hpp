@@ -1,8 +1,8 @@
 #ifndef EXPR_MEMBERACCESS_HPP
 #define EXPR_MEMBERACCESS_HPP
 
-#include "type/type.hpp"
 #include "lexer/loc.hpp"
+#include "type/type.hpp"
 
 #include "expr.hpp"
 
@@ -16,7 +16,7 @@ class Member : public Expr
 
     public:
 	static ExprPtr create(ExprPtr &&structure, bool derefStructPtr,
-			      UStr member, lexer::Loc loc = lexer::Loc{});
+	                      UStr member, lexer::Loc loc = lexer::Loc{});
 
 	const ExprPtr structure;
 	const UStr member;

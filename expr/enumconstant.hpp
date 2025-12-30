@@ -12,11 +12,11 @@ class EnumConstant : public Expr
 {
     protected:
 	EnumConstant(UStr name, std::int64_t value, const Type *type,
-		     lexer::Loc loc);
+	             lexer::Loc loc);
 
     public:
 	static ExprPtr create(UStr name, std::int64_t value, const Type *type,
-			      lexer::Loc loc);		
+	                      lexer::Loc loc);
 
 	const UStr name;
 	const std::int64_t value;
@@ -39,5 +39,5 @@ class EnumConstant : public Expr
 };
 
 } // namespace abc
- 
+
 #endif // EXPR_ENUMCONSTANT_HPP

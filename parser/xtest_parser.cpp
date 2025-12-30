@@ -10,10 +10,9 @@
 void
 usage(const char *prog)
 {
-    std::cerr << "usage: " << prog
-	<< "[ -o outfile ] "
-	<< "[ -Idir... ] "
-	<< "infile" << std::endl;
+    std::cerr << "usage: " << prog << "[ -o outfile ] "
+              << "[ -Idir... ] "
+              << "infile" << std::endl;
     std::exit(1);
 }
 
@@ -26,28 +25,28 @@ main(int argc, char *argv[])
     for (int i = 1; i < argc; ++i) {
 	if (argv[i][0] == '-') {
 	    switch (argv[i][1]) {
-		case 'o':
-		    if (outfile.empty() && !argv[i][2] && i + 1 < argc) {
-			outfile = argv[i + 1];
-			++i;
-		    } else if (outfile.empty() && argv[i][2]) {
-			outfile = &argv[i][2];
-		    } else {
-			usage(argv[0]);
-		    }
-		    break;
-		case 'I':
-		    if (!argv[i][2] && i + 1 < argc) {
-			abc::lexer::addSearchPath(argv[i + 1]);
-			++i;
-		    } else if (argv[i][2]) {
-			abc::lexer::addSearchPath(&argv[i][2]);
-		    } else {
-			usage(argv[0]);
-		    }
-		    break;
-		default:
+	    case 'o':
+		if (outfile.empty() && !argv[i][2] && i + 1 < argc) {
+		    outfile = argv[i + 1];
+		    ++i;
+		} else if (outfile.empty() && argv[i][2]) {
+		    outfile = &argv[i][2];
+		} else {
 		    usage(argv[0]);
+		}
+		break;
+	    case 'I':
+		if (!argv[i][2] && i + 1 < argc) {
+		    abc::lexer::addSearchPath(argv[i + 1]);
+		    ++i;
+		} else if (argv[i][2]) {
+		    abc::lexer::addSearchPath(&argv[i][2]);
+		} else {
+		    usage(argv[0]);
+		}
+		break;
+	    default:
+		usage(argv[0]);
 	    }
 	} else {
 	    if (infile.empty()) {
@@ -64,10 +63,9 @@ main(int argc, char *argv[])
 	outfile = infile.filename().replace_extension("bc");
     }
 
-
     if (!abc::lexer::openInputfile(infile.c_str())) {
 	std::cerr << argv[0] << ": error: can not open '" << infile.c_str()
-	    << "'\n";
+	          << "'\n";
 	return 1;
     }
     abc::lexer::init();

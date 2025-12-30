@@ -24,10 +24,10 @@ cast(Value val, const abc::Type *fromType, const abc::Type *toType)
     if (fromType->isInteger() && toType->isInteger()) {
 	if (toType->numBits() > fromType->numBits()) {
 	    return fromType->isUnsignedInteger()
-		? llvmBuilder->CreateZExtOrBitCast(val, llvmToType)
-		: llvmBuilder->CreateSExtOrBitCast(val, llvmToType); 
+	               ? llvmBuilder->CreateZExtOrBitCast(val, llvmToType)
+	               : llvmBuilder->CreateSExtOrBitCast(val, llvmToType);
 	} else {
-	    return llvmBuilder->CreateTruncOrBitCast(val, llvmToType); 
+	    return llvmBuilder->CreateTruncOrBitCast(val, llvmToType);
 	}
     } else if (fromType->isFloatType() && toType->isFloatType()) {
 	if (fromType->isFloat() && toType->isDouble()) {
@@ -39,19 +39,19 @@ cast(Value val, const abc::Type *fromType, const abc::Type *toType)
 	}
     } else if (fromType->isInteger() && toType->isFloatType()) {
 	return fromType->isUnsignedInteger()
-	    ? llvmBuilder->CreateUIToFP(val, llvmToType)
-	    : llvmBuilder->CreateSIToFP(val, llvmToType);
+	           ? llvmBuilder->CreateUIToFP(val, llvmToType)
+	           : llvmBuilder->CreateSIToFP(val, llvmToType);
     } else if (fromType->isFloatType() && toType->isInteger()) {
 	return toType->isUnsignedInteger()
-	    ? llvmBuilder->CreateFPToUI(val, llvmToType)
-	    : llvmBuilder->CreateFPToSI(val, llvmToType); 
+	           ? llvmBuilder->CreateFPToUI(val, llvmToType)
+	           : llvmBuilder->CreateFPToSI(val, llvmToType);
     } else if (fromType->isPointer() && toType->isPointer()) {
 	return val;
     } else if (fromType->isArray() && toType->isArray()) {
 	return val;
     }
     std::cerr << "gen::cat: can not cast '" << fromType << "' to '" << toType
-	<< "'\n";
+              << "'\n";
     assert(0);
     return nullptr;
 }
@@ -66,4 +66,3 @@ cast(Constant val, const abc::Type *fromType, const abc::Type *toType)
 }
 
 } // namespace gen
-

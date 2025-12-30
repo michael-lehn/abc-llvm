@@ -10,55 +10,51 @@
 
 namespace abc {
 
-Type::Type(bool isConst, UStr name)
-  : isConst{ isConst }
-  , name{ name }
-{
-}
+Type::Type(bool isConst, UStr name) : isConst{isConst}, name{name} {}
 
 bool
 Type::equals(const Type *ty1, const Type *ty2)
 {
     if (ty1->hasConstFlag() != ty2->hasConstFlag()) {
-        return false;
+	return false;
     }
     if (ty1->isVoid() && ty2->isVoid()) {
-        return true;
+	return true;
     } else if (ty1->isInteger() && ty2->isInteger()) {
-        return ty1->isSignedInteger() == ty2->isSignedInteger() &&
-               ty1->numBits() == ty2->numBits();
+	return ty1->isSignedInteger() == ty2->isSignedInteger() &&
+	       ty1->numBits() == ty2->numBits();
     } else if (ty1->isFloatType() && ty2->isFloatType()) {
-        return (ty1->isFloat() && ty2->isFloat()) ||
-               (ty1->isDouble() && ty2->isDouble());
+	return (ty1->isFloat() && ty2->isFloat()) ||
+	       (ty1->isDouble() && ty2->isDouble());
     } else if (ty1->isPointer() && ty2->isPointer()) {
-        if (ty1->isNullptr() || ty2->isNullptr()) {
-            return ty1->isNullptr() == ty2->isNullptr();
-        } else {
-            return equals(ty1->refType(), ty2->refType());
-        }
+	if (ty1->isNullptr() || ty2->isNullptr()) {
+	    return ty1->isNullptr() == ty2->isNullptr();
+	} else {
+	    return equals(ty1->refType(), ty2->refType());
+	}
     } else if (ty1->isStruct() && ty2->isStruct()) {
-        return ty1->id() == ty2->id();
+	return ty1->id() == ty2->id();
     } else if (ty1->isArray() && ty2->isArray()) {
-        return ty1->dim() == ty2->dim() &&
-               equals(ty1->refType(), ty2->refType());
+	return ty1->dim() == ty2->dim() &&
+	       equals(ty1->refType(), ty2->refType());
     } else if (ty1->isFunction() && ty2->isFunction()) {
-        if (!equals(ty1->retType(), ty2->retType())) {
-            return false;
-        }
-        if (ty1->hasVarg() != ty2->hasVarg()) {
-            return false;
-        }
-        const auto &paramType1 = ty1->paramType();
-        const auto &paramType2 = ty2->paramType();
-        if (paramType1.size() != paramType2.size()) {
-            return false;
-        }
-        for (std::size_t i = 0; i < paramType1.size(); ++i) {
-            if (!equals(paramType1[i], paramType2[i])) {
-                return false;
-            }
-        }
-        return true;
+	if (!equals(ty1->retType(), ty2->retType())) {
+	    return false;
+	}
+	if (ty1->hasVarg() != ty2->hasVarg()) {
+	    return false;
+	}
+	const auto &paramType1 = ty1->paramType();
+	const auto &paramType2 = ty2->paramType();
+	if (paramType1.size() != paramType2.size()) {
+	    return false;
+	}
+	for (std::size_t i = 0; i < paramType1.size(); ++i) {
+	    if (!equals(paramType1[i], paramType2[i])) {
+		return false;
+	    }
+	}
+	return true;
     }
     return false;
 }
@@ -71,33 +67,33 @@ Type::common(const Type *ty1, const Type *ty2)
 
     // if types are integer and floating point always have float type in ty1
     if (ty1->isInteger() && ty2->isFloatType()) {
-        std::swap(ty1, ty2);
+	std::swap(ty1, ty2);
     }
 
     const Type *common = nullptr;
     if (equals(ty1->getConstRemoved(), ty2->getConstRemoved())) {
-        common = ty1;
+	common = ty1;
     } else if (ty1->isArray() && ty2->isArray()) {
-        // both types are arrays but refernce type or dimension are different
-        if (equals(ty1->refType(), ty2->refType())) {
-            common = PointerType::create(ty1->refType());
-        }
+	// both types are arrays but refernce type or dimension are different
+	if (equals(ty1->refType(), ty2->refType())) {
+	    common = PointerType::create(ty1->refType());
+	}
     } else if (ty1->isFloatType() && ty2->isInteger()) {
-        common = ty1;
+	common = ty1;
     } else if (ty1->isInteger() && ty2->isInteger()) {
-        auto size = std::max(ty1->numBits(), ty2->numBits());
-        if (ty1->isUnsignedInteger() || ty2->isUnsignedInteger()) {
-            common = IntegerType::createUnsigned(size);
-        } else {
-            common = IntegerType::createSigned(size);
-        }
+	auto size = std::max(ty1->numBits(), ty2->numBits());
+	if (ty1->isUnsignedInteger() || ty2->isUnsignedInteger()) {
+	    common = IntegerType::createUnsigned(size);
+	} else {
+	    common = IntegerType::createSigned(size);
+	}
     } else if (ty1->isPointer() && ty2->isNullptr()) {
-        common = ty1;
+	common = ty1;
     } else if (ty1->isNullptr() && ty2->isPointer()) {
-        common = ty2;
+	common = ty2;
     }
     if (common && (ty1->hasConstFlag() || ty2->hasConstFlag())) {
-        common->getConst();
+	common->getConst();
     }
     return common;
 }
@@ -106,9 +102,9 @@ bool
 Type::assignable(const Type *type)
 {
     if (type->isArray()) {
-        return assignable(type->refType());
+	return assignable(type->refType());
     } else {
-        return !type->hasConstFlag();
+	return !type->hasConstFlag();
     }
 }
 
@@ -116,78 +112,78 @@ static const Type *
 convert(const Type *from, const Type *to, bool checkConst)
 {
     if (checkConst && from->hasConstFlag() && !to->hasConstFlag()) {
-        return nullptr;
+	return nullptr;
     }
     from = from->getConstRemoved();
     to = to->getConstRemoved();
     if (Type::equals(from, to)) {
-        return to;
+	return to;
     } else if (to->isBool()) {
-        if (from->isInteger()) {
-            return to;
-        } else if (from->isPointer()) {
-            return to;
-        } else {
-            return nullptr;
-        }
+	if (from->isInteger()) {
+	    return to;
+	} else if (from->isPointer()) {
+	    return to;
+	} else {
+	    return nullptr;
+	}
     } else if (to->isFloatType()) {
-        if (from->isInteger() || from->isFloatType()) {
-            return to;
-        } else {
-            return nullptr;
-        }
+	if (from->isInteger() || from->isFloatType()) {
+	    return to;
+	} else {
+	    return nullptr;
+	}
     } else if (to->isInteger()) {
-        if (from->isInteger() || from->isFloatType()) {
-            return to;
-        } else {
-            return nullptr;
-        }
+	if (from->isInteger() || from->isFloatType()) {
+	    return to;
+	} else {
+	    return nullptr;
+	}
     } else if (to->isPointer() && from->isArray()) {
-        assert(!to->isNullptr());
-        if (from->isNullptr()) {
-            return to;
-        }
-        if (convert(from->refType(), to->refType(), true)) {
-            return to;
-        } else {
-            return nullptr;
-        }
+	assert(!to->isNullptr());
+	if (from->isNullptr()) {
+	    return to;
+	}
+	if (convert(from->refType(), to->refType(), true)) {
+	    return to;
+	} else {
+	    return nullptr;
+	}
     } else if (to->isPointer() && from->isPointer()) {
-        assert(!to->isNullptr());
-        if (from->isNullptr()) {
-            return to;
-        }
-        if (from->refType()->isVoid() || to->refType()->isVoid()) {
-            return to;
-        }
-        if (convert(from->refType(), to->refType(), true)) {
-            auto fromRefTy = from->refType()->getConstRemoved();
-            auto toRefTy = to->refType()->getConstRemoved();
-            if (Type::equals(fromRefTy, toRefTy)) {
-                return to;
-            } else {
-                return nullptr;
-            }
-        } else {
-            return nullptr;
-        }
+	assert(!to->isNullptr());
+	if (from->isNullptr()) {
+	    return to;
+	}
+	if (from->refType()->isVoid() || to->refType()->isVoid()) {
+	    return to;
+	}
+	if (convert(from->refType(), to->refType(), true)) {
+	    auto fromRefTy = from->refType()->getConstRemoved();
+	    auto toRefTy = to->refType()->getConstRemoved();
+	    if (Type::equals(fromRefTy, toRefTy)) {
+		return to;
+	    } else {
+		return nullptr;
+	    }
+	} else {
+	    return nullptr;
+	}
     } else if (from->isStruct() && to->isStruct()) {
-        if (Type::equals(from, to)) {
-            return to;
-        } else {
-            return nullptr;
-        }
+	if (Type::equals(from, to)) {
+	    return to;
+	} else {
+	    return nullptr;
+	}
     } else if (to->isArray() && from->isArray()) {
-        if (to->dim() != from->dim() && !to->isUnboundArray()) {
-            return nullptr;
-        }
-        if (convert(from->refType(), to->refType(), checkConst)) {
-            return to;
-        } else {
-            return nullptr;
-        }
+	if (to->dim() != from->dim() && !to->isUnboundArray()) {
+	    return nullptr;
+	}
+	if (convert(from->refType(), to->refType(), checkConst)) {
+	    return to;
+	} else {
+	    return nullptr;
+	}
     } else {
-        return nullptr;
+	return nullptr;
     }
 }
 
@@ -201,12 +197,12 @@ const Type *
 Type::explicitCast(const Type *from, const Type *to)
 {
     if (auto type = convert(from->getConstRemoved(), to->getConstRemoved())) {
-        // allow const-casts
-        return type;
+	// allow const-casts
+	return type;
     } else if (from->isPointer() && to->isPointer()) {
-        return to;
+	return to;
     } else {
-        return nullptr;
+	return nullptr;
     }
 }
 
@@ -238,12 +234,12 @@ std::size_t
 Type::aggregateSize() const
 {
     if (isScalar()) {
-        return 1;
+	return 1;
     } else if (isArray()) {
-        return dim();
+	return dim();
     } else {
-        assert(0);
-        return 0;
+	assert(0);
+	return 0;
     }
 }
 
@@ -253,12 +249,12 @@ Type::aggregateType(std::size_t index) const
     assert(isUnboundArray() || index < aggregateSize());
 
     if (isScalar()) {
-        return this;
+	return this;
     } else if (isArray()) {
-        return refType();
+	return refType();
     } else {
-        assert(0);
-        return nullptr;
+	assert(0);
+	return nullptr;
     }
 }
 
@@ -380,7 +376,7 @@ bool
 Type::isUnboundArray() const
 {
     if (isArray() && dim() == 0) {
-        return true;
+	return true;
     }
     return false;
 }
@@ -402,9 +398,9 @@ Type::patchUnboundArray(const Type *type, std::size_t dim)
 {
     assert(type);
     if (type->isUnboundArray()) {
-        return ArrayType::create(type->refType(), dim);
+	return ArrayType::create(type->refType(), dim);
     } else {
-        return type;
+	return type;
     }
 }
 
@@ -445,7 +441,7 @@ const Type *
 Type::complete(std::vector<UStr> &&, std::vector<std::int64_t> &&)
 {
     if (isAlias() && getUnalias()->isEnum()) {
-        assert(0 && "Alias type can not be completed");
+	assert(0 && "Alias type can not be completed");
     }
     assert(0 && "Type can not be completed");
     return nullptr;
@@ -463,7 +459,7 @@ Type::complete(std::vector<UStr> &&, std::vector<std::size_t> &&,
                std::vector<const Type *> &&)
 {
     if (isAlias() && getUnalias()->isStruct()) {
-        assert(0 && "Alias type can not be completed");
+	assert(0 && "Alias type can not be completed");
     }
     assert(0 && "Type can not be completed");
     return nullptr;

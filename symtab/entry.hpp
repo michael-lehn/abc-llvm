@@ -5,29 +5,32 @@
 #include "lexer/loc.hpp"
 #include "type/type.hpp"
 
-namespace abc { namespace symtab {
+namespace abc {
+namespace symtab {
 
 class Entry
 {
     private:
-	enum Kind {
+	enum Kind
+	{
 	    VAR,
 	    TYPE,
 	    EXPR,
 	};
 
-	enum Linkage {
-            NO_LINKAGE,
-            EXTERNAL_LINKAGE,
-            INTERNAL_LINKAGE,
-        };
+	enum Linkage
+	{
+	    NO_LINKAGE,
+	    EXTERNAL_LINKAGE,
+	    INTERNAL_LINKAGE,
+	};
 
 	Entry(Kind kind, lexer::Loc loc, UStr id, const Type *type);
 	Entry(lexer::Loc loc, UStr id, const Expr *expr);
 
 	bool definitionFlag = false;
-        Linkage linkage = NO_LINKAGE;
-        UStr id;
+	Linkage linkage = NO_LINKAGE;
+	UStr id;
 
     public:
 	static Entry createVarEntry(lexer::Loc loc, UStr id, const Type *type);
@@ -40,22 +43,23 @@ class Entry
 	const Type *type;
 	const Expr *expr;
 
-        const UStr getId() const;
+	const UStr getId() const;
 
 	bool typeDeclaration() const;
 	bool variableDeclaration() const;
 	bool expressionDeclaration() const;
 
 	bool setDefinitionFlag();
-        bool setExternalLinkage();
-        bool setInternalLinkage();
-        bool setLinkage();
+	bool setExternalLinkage();
+	bool setInternalLinkage();
+	bool setLinkage();
 
 	friend bool operator!=(const Entry &a, const Entry &b);
 };
 
 bool operator!=(const Entry &a, const Entry &b);
 
-} } // namespace symtab, abc
+} // namespace symtab
+} // namespace abc
 
 #endif // SYMTAB_ENTRY

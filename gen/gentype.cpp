@@ -1,11 +1,10 @@
 #include <cassert>
-#include <cstdint>
 #include <iostream>
 #include <unordered_map>
 #include <vector>
 
-#include "gentype.hpp"
 #include "gen.hpp"
+#include "gentype.hpp"
 
 #ifdef SUPPORT_SOLARIS
 // has to be included as first llvm header
@@ -19,7 +18,7 @@ namespace gen {
 static std::unordered_map<const abc::Type *, llvm::Type *> typeMap;
 
 static std::vector<llvm::Type *>
-    convert(const std::vector<const abc::Type *> &type);
+convert(const std::vector<const abc::Type *> &type);
 
 void
 initTypeMap()
@@ -36,7 +35,6 @@ convert(const abc::Type *abcType)
 
     llvm::Type *llvmType = nullptr;
 
-
     if (abcType->isVoid()) {
 	llvmType = llvm::Type::getVoidTy(*llvmContext);
     } else if (abcType->isFloat()) {
@@ -45,35 +43,34 @@ convert(const abc::Type *abcType)
 	llvmType = llvm::Type::getDoubleTy(*llvmContext);
     } else if (abcType->isInteger()) {
 	switch (abcType->numBits()) {
-	    case 1:
-		llvmType = llvm::Type::getInt1Ty(*llvmContext);
-		break;
-	    case 8:
-		llvmType = llvm::Type::getInt8Ty(*llvmContext);
-		break;
-	    case 16:
-		llvmType = llvm::Type::getInt16Ty(*llvmContext);
-		break;
-	    case 32:
-		llvmType = llvm::Type::getInt32Ty(*llvmContext);
-		break;
-	    case 64:
-		llvmType = llvm::Type::getInt64Ty(*llvmContext);
-		break;
-	    default:
-		llvmType = llvm::Type::getIntNTy(*llvmContext,
-						 abcType->numBits());
-		break;
+	case 1:
+	    llvmType = llvm::Type::getInt1Ty(*llvmContext);
+	    break;
+	case 8:
+	    llvmType = llvm::Type::getInt8Ty(*llvmContext);
+	    break;
+	case 16:
+	    llvmType = llvm::Type::getInt16Ty(*llvmContext);
+	    break;
+	case 32:
+	    llvmType = llvm::Type::getInt32Ty(*llvmContext);
+	    break;
+	case 64:
+	    llvmType = llvm::Type::getInt64Ty(*llvmContext);
+	    break;
+	default:
+	    llvmType = llvm::Type::getIntNTy(*llvmContext, abcType->numBits());
+	    break;
 	}
     } else if (abcType->isFunction()) {
 	llvmType = llvm::FunctionType::get(convert(abcType->retType()),
-					   convert(abcType->paramType()),
-					   abcType->hasVarg());
+	                                   convert(abcType->paramType()),
+	                                   abcType->hasVarg());
     } else if (abcType->isPointer()) {
 	llvmType = llvm::PointerType::get(*llvmContext, 0);
     } else if (abcType->isArray()) {
-	llvmType = llvm::ArrayType::get(convert(abcType->refType()),
-					abcType->dim());
+	llvmType =
+	    llvm::ArrayType::get(convert(abcType->refType()), abcType->dim());
     } else if (abcType->isStruct()) {
 	auto abcMemberType = abcType->memberType();
 	auto abcMemberIndex = abcType->memberIndex();

@@ -52,15 +52,14 @@ class Type
 	virtual bool isVoid() const;
 	virtual bool isNullptr() const;
 
-
-	// for integer (sub-)types 
+	// for integer (sub-)types
 	virtual bool isBool() const;
 	virtual bool isInteger() const;
 	virtual bool isSignedInteger() const;
 	virtual bool isUnsignedInteger() const;
 	virtual std::size_t numBits() const;
 
-	// for floating point type (sub-)types 
+	// for floating point type (sub-)types
 	virtual bool isFloatType() const;
 	virtual bool isFloat() const;
 	virtual bool isDouble() const;
@@ -73,7 +72,7 @@ class Type
 	virtual std::size_t dim() const;
 	static const Type *patchUnboundArray(const Type *type, std::size_t dim);
 
-	// for function (sub-)types 
+	// for function (sub-)types
 	virtual bool isFunction() const;
 	virtual const Type *retType() const;
 	virtual const std::vector<const Type *> &paramType() const;
@@ -82,13 +81,13 @@ class Type
 	// for enum (sub-)types
 	virtual bool isEnum() const;
 	virtual const Type *complete(std::vector<UStr> &&constName,
-				     std::vector<std::int64_t> &&constValue);
+	                             std::vector<std::int64_t> &&constValue);
 
 	// for struct (sub-)types
 	virtual bool isStruct() const;
 	virtual const Type *complete(std::vector<UStr> &&memberName,
-				     std::vector<std::size_t> &&memberIndex,
-				     std::vector<const Type *> &&memberType);
+	                             std::vector<std::size_t> &&memberIndex,
+	                             std::vector<const Type *> &&memberType);
 	virtual const std::vector<UStr> &memberName() const;
 	virtual const std::vector<std::size_t> &memberIndex() const;
 	virtual std::optional<std::size_t> memberIndex(UStr name) const;

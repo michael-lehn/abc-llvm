@@ -9,23 +9,25 @@
 
 #include "loc.hpp"
 
-namespace abc { namespace lexer {
+namespace abc {
+namespace lexer {
 
-struct ReaderInfo {
-    int			ch;
-    UStr		path;
-    Loc::Pos		start;
-    Loc::Pos		pos;	
-    std::string		val;
-    std::ifstream	infile;
-    std::istream	*in;
+struct ReaderInfo
+{
+	int ch;
+	UStr path;
+	Loc::Pos start;
+	Loc::Pos pos;
+	std::string val;
+	std::ifstream infile;
+	std::istream *in;
 
-    ReaderInfo();
-    ReaderInfo(const char *path);
+	ReaderInfo();
+	ReaderInfo(const char *path);
 
-    bool eof() const;
-    bool valid() const;
-    void resetStart();
+	bool eof() const;
+	bool valid() const;
+	void resetStart();
 };
 
 extern std::unique_ptr<ReaderInfo> reader;
@@ -40,6 +42,7 @@ const std::vector<std::filesystem::path> &getSearchPath();
 // read next character and update reader
 char nextCh();
 
-} } // namespace lexer, abc
+} // namespace lexer
+} // namespace abc
 
 #endif // LEXER_READER_HPP

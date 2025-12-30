@@ -21,9 +21,8 @@ void
 addVar(const char *name)
 {
     using namespace abc;
-    auto addDecl = Symtab::addDeclaration(lexer::Loc{},
-					  UStr::create(name),
-					  IntegerType::createSigned(32));
+    auto addDecl = Symtab::addDeclaration(lexer::Loc{}, UStr::create(name),
+                                          IntegerType::createSigned(32));
 
     std::cerr << "add: var = " << name << "\n";
     std::cerr << "added = " << addDecl.second << "\n";
@@ -37,9 +36,8 @@ void
 addType(const char *name)
 {
     using namespace abc;
-    auto addDecl = Symtab::addType(lexer::Loc{},
-				   UStr::create(name),
-				   IntegerType::createSigned(32));
+    auto addDecl = Symtab::addType(lexer::Loc{}, UStr::create(name),
+                                   IntegerType::createSigned(32));
 
     std::cerr << "add: type = " << name << "\n";
     std::cerr << "added = " << addDecl.second << "\n";

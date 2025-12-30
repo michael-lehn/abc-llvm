@@ -1,21 +1,20 @@
 #include <cassert>
-#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 
-#include "lexer.hpp"
 #include "reader.hpp"
 #include "util/ustr.hpp"
 
-namespace abc { namespace lexer {
+namespace abc {
+namespace lexer {
 
 ReaderInfo::ReaderInfo()
-    : ch{0}, path{UStr::create("<stdin>")}, val{} , infile{} , in{&std::cin}
+    : ch{0}, path{UStr::create("<stdin>")}, val{}, infile{}, in{&std::cin}
 {
 }
 
 ReaderInfo::ReaderInfo(const char *path)
-    : ch{0}, path{UStr::create(path)}, val{} , infile{path}, in{nullptr}
+    : ch{0}, path{UStr::create(path)}, val{}, infile{path}, in{nullptr}
 {
     in = infile.is_open() ? &infile : nullptr;
 }
@@ -77,7 +76,7 @@ nextCh()
 std::filesystem::path
 searchFile(std::filesystem::path path)
 {
-    for (auto sp: searchPath) {
+    for (auto sp : searchPath) {
 	sp /= path;
 	std::ifstream f(sp.c_str());
 	if (f.good()) {
@@ -95,9 +94,8 @@ openInputfile(std::filesystem::path path)
 	assert(reader->valid());
 	openReader.push_back(std::move(reader));
     }
-    reader = !path.empty()
-	? std::make_unique<ReaderInfo>(path.c_str())
-	: std::make_unique<ReaderInfo>();
+    reader = !path.empty() ? std::make_unique<ReaderInfo>(path.c_str())
+                           : std::make_unique<ReaderInfo>();
     if (!reader->valid()) {
 	return false;
     } else {
@@ -118,4 +116,5 @@ getSearchPath()
     return searchPath;
 }
 
-} } // namespace lexer, abc
+} // namespace lexer
+} // namespace abc

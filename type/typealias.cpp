@@ -10,12 +10,12 @@ static std::unordered_map<std::size_t, TypeAlias> aliasConstSet;
 //------------------------------------------------------------------------------
 //
 TypeAlias::TypeAlias(std::size_t id, UStr name, const Type *type,
-		     bool constFlag)
-    : Type{constFlag, name}, id{id}, type{type} 
+                     bool constFlag)
+    : Type{constFlag, name}, id{id}, type{type}
 {
 }
 
-void 
+void
 TypeAlias::init()
 {
     aliasSet.clear();
@@ -31,7 +31,7 @@ TypeAlias::create(UStr name, const Type *type)
     aliasSet.emplace(id, TypeAlias{id, name, type, false});
     aliasConstSet.emplace(id, TypeAlias{id, name, type, true});
 
-    return  &aliasSet.at(id);
+    return &aliasSet.at(id);
 }
 
 bool

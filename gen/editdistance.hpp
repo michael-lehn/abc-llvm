@@ -1,6 +1,8 @@
 #ifndef GEN_EDITDISTANCE_HPP
 #define GEN_EDITDISTANCE_HPP
 
+#include <string>
+
 namespace gen {
 
 unsigned editDistance(const std::string &s1, const std::string &s2);

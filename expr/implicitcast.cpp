@@ -13,8 +13,7 @@ namespace abc {
 
 bool output = true;
 
-ImplicitCast::ImplicitCast(ExprPtr &&expr, const Type *toType,
-			   lexer::Loc loc)
+ImplicitCast::ImplicitCast(ExprPtr &&expr, const Type *toType, lexer::Loc loc)
     : Expr{loc, toType}, expr{std::move(expr)}
 {
 }
@@ -25,11 +24,11 @@ ImplicitCast::create(ExprPtr &&expr, const Type *toType)
     auto loc = expr->loc;
     if (!expr) {
 	error::location(loc);
-	error::out() << error::setColor(error::BOLD) << loc
-	    << ": " << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << ": expected non-empty expression\n"
-	    << error::setColor(error::NORMAL);
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << ": expected non-empty expression\n"
+	             << error::setColor(error::NORMAL);
 	error::fatal();
     }
     assert(expr->type);
@@ -38,8 +37,8 @@ ImplicitCast::create(ExprPtr &&expr, const Type *toType)
 	return expr;
     } else if (toType->isUnboundArray() && Type::convert(expr->type, toType)) {
 	return expr;
-    } else if (toType->isAuto()
-	    || (toType->isArray() && toType->refType()->isAuto())) {
+    } else if (toType->isAuto() ||
+               (toType->isArray() && toType->refType()->isAuto())) {
 	return expr;
     } else {
 	auto loc = expr->loc;
@@ -47,11 +46,12 @@ ImplicitCast::create(ExprPtr &&expr, const Type *toType)
 	if (!type) {
 	    error::location(loc);
 	    error::out() << error::setColor(error::BOLD) << loc << ": "
-		<< error::setColor(error::BOLD_RED) << "error: "
-		<< error::setColor(error::BOLD)
-		<< "can not convert an expression of "
-		" type '" << expr->type << "' to type '" << toType << "'\n"
-		<< error::setColor(error::NORMAL);
+	                 << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD)
+	                 << "can not convert an expression of "
+	                    " type '"
+	                 << expr->type << "' to type '" << toType << "'\n"
+	                 << error::setColor(error::NORMAL);
 	    error::fatal();
 	    return nullptr;
 	} else {
@@ -126,12 +126,13 @@ ImplicitCast::loadValue() const
 	    auto val = llvm::dyn_cast<T>(expr->loadConstant());
 	    if (val->isNegative()) {
 		error::location(loc);
-		error::out() << error::setColor(error::BOLD) << loc << ": "
-		    << error::setColor(error::BOLD_RED) << "error: "
-		    << error::setColor(error::BOLD)
+		error::out()
+		    << error::setColor(error::BOLD) << loc << ": "
+		    << error::setColor(error::BOLD_RED)
+		    << "error: " << error::setColor(error::BOLD)
 		    << "conversion of out of range value from "
-		    " '" << expr->type << "' to '" << type
-		    << "' is undefined\n"
+		       " '"
+		    << expr->type << "' to '" << type << "' is undefined\n"
 		    << error::setColor(error::NORMAL);
 		error::fatal();
 	    }

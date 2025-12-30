@@ -1,17 +1,16 @@
 #include <iostream>
 
+#include "floattype.hpp"
 #include "functiontype.hpp"
 #include "integertype.hpp"
-#include "floattype.hpp"
 
 void
 intExample(bool signedInt, std::size_t numBits, const char *alias)
 {
     using namespace abc;
 
-    auto ty = signedInt
-	? IntegerType::createSigned(numBits)
-	: IntegerType::createUnsigned(numBits);
+    auto ty = signedInt ? IntegerType::createSigned(numBits)
+                        : IntegerType::createUnsigned(numBits);
     auto tyConst = ty->getConst();
     auto tyCheck = tyConst->getConstRemoved();
 
@@ -19,22 +18,22 @@ intExample(bool signedInt, std::size_t numBits, const char *alias)
     auto tyAliasConst = tyAlias->getConst();
     auto tyAliasCheck = tyAliasConst->getConstRemoved();
 
-    std::cerr << (signedInt? "Signed" : "Unsigned")
-	<< " Integer with " << numBits << " bits\n";
+    std::cerr << (signedInt ? "Signed" : "Unsigned") << " Integer with "
+              << numBits << " bits\n";
 
     std::cerr << "  ty = " << ty << ", (void *)ty = " << (void *)ty << "\n";
     std::cerr << "  tyConst = " << tyConst
-	<< ", (void *)tyConst = " << (void *)tyConst << "\n";
+              << ", (void *)tyConst = " << (void *)tyConst << "\n";
     std::cerr << "  tyCheck = " << tyCheck
-	<< ", (void *)tyCheck = " << (void *)tyCheck << "\n";
+              << ", (void *)tyCheck = " << (void *)tyCheck << "\n";
 
     std::cerr << "Type alias " << alias << "\n";
     std::cerr << "  tyAlias = " << tyAlias
-	<< ", (void *)tyAlias = " << (void *)tyAlias << "\n";
+              << ", (void *)tyAlias = " << (void *)tyAlias << "\n";
     std::cerr << "  tyAliasConst = " << tyAliasConst
-	<< ", (void *)tyAliasConst = " << (void *)tyAliasConst << "\n";
+              << ", (void *)tyAliasConst = " << (void *)tyAliasConst << "\n";
     std::cerr << "  tyAliasCheck = " << tyAliasCheck
-	<< ", (void *)tyAliasCheck = " << (void *)tyAliasCheck << "\n";
+              << ", (void *)tyAliasCheck = " << (void *)tyAliasCheck << "\n";
     std::cerr << "\n";
 }
 
@@ -54,17 +53,17 @@ floatExample(const char *alias)
     std::cerr << "float with alias " << alias << "\n";
     std::cerr << "  ty = " << ty << ", (void *)ty = " << (void *)ty << "\n";
     std::cerr << "  tyConst = " << tyConst
-	<< ", (void *)tyConst = " << (void *)tyConst << "\n";
+              << ", (void *)tyConst = " << (void *)tyConst << "\n";
     std::cerr << "  tyCheck = " << tyCheck
-	<< ", (void *)tyCheck = " << (void *)tyCheck << "\n";
+              << ", (void *)tyCheck = " << (void *)tyCheck << "\n";
 
     std::cerr << "Type alias " << alias << "\n";
     std::cerr << "  tyAlias = " << tyAlias
-	<< ", (void *)tyAlias = " << (void *)tyAlias << "\n";
+              << ", (void *)tyAlias = " << (void *)tyAlias << "\n";
     std::cerr << "  tyAliasConst = " << tyAliasConst
-	<< ", (void *)tyAliasConst = " << (void *)tyAliasConst << "\n";
+              << ", (void *)tyAliasConst = " << (void *)tyAliasConst << "\n";
     std::cerr << "  tyAliasCheck = " << tyAliasCheck
-	<< ", (void *)tyAliasCheck = " << (void *)tyAliasCheck << "\n";
+              << ", (void *)tyAliasCheck = " << (void *)tyAliasCheck << "\n";
     std::cerr << "\n";
 }
 
@@ -84,17 +83,17 @@ doubleExample(const char *alias)
     std::cerr << "double with alias " << alias << "\n";
     std::cerr << "  ty = " << ty << ", (void *)ty = " << (void *)ty << "\n";
     std::cerr << "  tyConst = " << tyConst
-	<< ", (void *)tyConst = " << (void *)tyConst << "\n";
+              << ", (void *)tyConst = " << (void *)tyConst << "\n";
     std::cerr << "  tyCheck = " << tyCheck
-	<< ", (void *)tyCheck = " << (void *)tyCheck << "\n";
+              << ", (void *)tyCheck = " << (void *)tyCheck << "\n";
 
     std::cerr << "Type alias " << alias << "\n";
     std::cerr << "  tyAlias = " << tyAlias
-	<< ", (void *)tyAlias = " << (void *)tyAlias << "\n";
+              << ", (void *)tyAlias = " << (void *)tyAlias << "\n";
     std::cerr << "  tyAliasConst = " << tyAliasConst
-	<< ", (void *)tyAliasConst = " << (void *)tyAliasConst << "\n";
+              << ", (void *)tyAliasConst = " << (void *)tyAliasConst << "\n";
     std::cerr << "  tyAliasCheck = " << tyAliasCheck
-	<< ", (void *)tyAliasCheck = " << (void *)tyAliasCheck << "\n";
+              << ", (void *)tyAliasCheck = " << (void *)tyAliasCheck << "\n";
     std::cerr << "\n";
 }
 
@@ -103,11 +102,11 @@ fnExample()
 {
     using namespace abc;
 
-    auto ret =  IntegerType::createSigned(32)->getAlias("int");
+    auto ret = IntegerType::createSigned(32)->getAlias("int");
     std::vector<const Type *> param = {
-	IntegerType::createSigned(32)->getAlias("int"),
-	IntegerType::createSigned(16)->getAlias("short"),
-	IntegerType::createUnsigned(32)->getAlias("unsigned"),
+        IntegerType::createSigned(32)->getAlias("int"),
+        IntegerType::createSigned(16)->getAlias("short"),
+        IntegerType::createUnsigned(32)->getAlias("unsigned"),
     };
     auto fn = FunctionType::create(ret, std::move(param), true);
     auto fnAlias = fn->getAlias("foo");

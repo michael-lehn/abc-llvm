@@ -1,4 +1,3 @@
-#include <memory>
 #include <set>
 #include <sstream>
 #include <tuple>
@@ -7,17 +6,13 @@
 
 namespace abc {
 
-static bool
+bool
 operator<(const IntegerType &x, const IntegerType &y)
 {
-    const auto &tx = std::tuple{x.numBits(),
-				x.ustr().c_str(),
-				x.isSignedInteger(),
-				x.hasConstFlag()};
-    const auto &ty = std::tuple{y.numBits(),
-				y.ustr().c_str(),
-				y.isSignedInteger(),
-				y.hasConstFlag()};
+    const auto &tx = std::tuple{x.numBits(), x.ustr().c_str(),
+                                x.isSignedInteger(), x.hasConstFlag()};
+    const auto &ty = std::tuple{y.numBits(), y.ustr().c_str(),
+                                y.isSignedInteger(), y.hasConstFlag()};
 
     return tx < ty;
 }
@@ -27,7 +22,7 @@ static std::set<IntegerType> intSet;
 //------------------------------------------------------------------------------
 
 IntegerType::IntegerType(std::size_t numBits, bool signed_, bool constFlag,
-			 UStr name)
+                         UStr name)
     : Type{constFlag, name}, numBits_{numBits}, isSigned{signed_}
 {
 }
@@ -41,7 +36,7 @@ IntegerType::create(std::size_t numBits, bool signed_, bool constFlag)
     return &*intSet.insert(ty).first;
 }
 
-void 
+void
 IntegerType::init()
 {
     intSet.clear();

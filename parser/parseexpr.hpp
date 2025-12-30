@@ -5,7 +5,7 @@
 #include "type/type.hpp"
 
 namespace abc {
-    
+
 ExprPtr parseCompoundExpression(const Type *type);
 ExprPtr parseExpressionList();
 ExprPtr parseAssignmentExpression();

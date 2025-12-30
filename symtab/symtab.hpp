@@ -18,8 +18,8 @@ namespace abc {
 class Symtab
 {
     public:
-
-	enum Scope {
+	enum Scope
+	{
 	    AnyScope,
 	    CurrentScope,
 	};
@@ -35,22 +35,22 @@ class Symtab
 	static const symtab::Entry *constant(UStr name, Scope inScope);
 
 	static std::pair<symtab::Entry *, bool>
-	    addDeclaration(lexer::Loc loc, UStr name, const Type *type);
+	addDeclaration(lexer::Loc loc, UStr name, const Type *type);
 
 	static std::pair<symtab::Entry *, bool>
-	    addDefinition(lexer::Loc loc, UStr name, const Type *type);
+	addDefinition(lexer::Loc loc, UStr name, const Type *type);
 
 	static std::pair<symtab::Entry *, bool>
-	    addType(lexer::Loc loc, UStr name, const Type *type);
+	addType(lexer::Loc loc, UStr name, const Type *type);
 
 	static std::pair<symtab::Entry *, bool>
-	    addExpression(lexer::Loc loc, UStr name, const Expr *expr);
+	addExpression(lexer::Loc loc, UStr name, const Expr *expr);
 
 	static void print(std::ostream &out);
 
     private:
-	static std::pair<symtab::Entry *, bool>
-	    add(UStr name, symtab::Entry &&entry);
+	static std::pair<symtab::Entry *, bool> add(UStr name,
+	                                            symtab::Entry &&entry);
 
 	static UStr getId(UStr name);
 
@@ -59,7 +59,7 @@ class Symtab
 	static std::size_t scopeSize;
 	static UStr scopePrefix;
 };
-	
+
 } // namespace abc
 
 #endif // SYMTAB_SYMTAB

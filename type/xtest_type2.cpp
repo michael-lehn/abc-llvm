@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include "functiontype.hpp"
 #include "integertype.hpp"
 #include "pointertype.hpp"
 
@@ -16,7 +15,7 @@ main()
     auto ptrTy1 = abc::PointerType::create(ty1);
     auto ptrTy2 = abc::PointerType::create(ty2);
     std::cerr << "ptrTy1 = " << ptrTy1
-	<< ", (void *)ptrTy1 = " << (void *)ptrTy1 << "\n";
+              << ", (void *)ptrTy1 = " << (void *)ptrTy1 << "\n";
     std::cerr << "ptrTy2 = " << ptrTy2
-	<< ", (void *)ptrTy2 = " << (void *)ptrTy2 << "\n";
+              << ", (void *)ptrTy2 = " << (void *)ptrTy2 << "\n";
 }

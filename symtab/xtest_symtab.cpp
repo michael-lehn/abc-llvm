@@ -9,9 +9,8 @@ void
 add(const char *name)
 {
     using namespace abc;
-    auto addDecl = Symtab::addDeclaration(lexer::Loc{},
-					  UStr::create(name),
-					  IntegerType::createSigned(32));
+    auto addDecl = Symtab::addDeclaration(lexer::Loc{}, UStr::create(name),
+                                          IntegerType::createSigned(32));
 
     std::cerr << "add: name = " << name << "\n";
     std::cerr << "added = " << addDecl.second << "\n";

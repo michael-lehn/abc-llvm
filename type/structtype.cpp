@@ -1,8 +1,4 @@
 #include <cassert>
-#include <iostream>
-#include <memory>
-#include <sstream>
-#include <tuple>
 #include <unordered_map>
 
 #include "structtype.hpp"
@@ -19,7 +15,7 @@ StructType::StructType(std::size_t id, UStr name, bool constFlag)
 {
 }
 
-void 
+void
 StructType::init()
 {
     structSet.clear();
@@ -70,16 +66,16 @@ StructType::isStruct() const
 
 const Type *
 StructType::complete(std::vector<UStr> &&memberName,
-		     std::vector<std::size_t> &&memberIndex,
-		     std::vector<const Type *> &&memberType)
+                     std::vector<std::size_t> &&memberIndex,
+                     std::vector<const Type *> &&memberType)
 {
     assert(memberName.size() == memberIndex.size());
     assert(memberName.size() == memberType.size());
     auto &constStructType = structConstSet.at(id());
     for (std::size_t i = 0; i < memberName.size(); ++i) {
-	constStructType.memberName_.push_back(memberName[i]);	
-	constStructType.memberIndex_.push_back(memberIndex[i]);	
-	constStructType.memberType_.push_back(memberType[i]->getConst());	
+	constStructType.memberName_.push_back(memberName[i]);
+	constStructType.memberIndex_.push_back(memberIndex[i]);
+	constStructType.memberType_.push_back(memberType[i]->getConst());
     }
     constStructType.isComplete_ = true;
 

@@ -1,8 +1,8 @@
 #ifndef EXPR_IDENTIFIER_HPP
 #define EXPR_IDENTIFIER_HPP
 
-#include "type/type.hpp"
 #include "lexer/loc.hpp"
+#include "type/type.hpp"
 
 #include "expr.hpp"
 
@@ -15,7 +15,7 @@ class Identifier : public Expr
 
     public:
 	static ExprPtr create(UStr name, UStr id, const Type *type,
-			      lexer::Loc loc = lexer::Loc{});
+	                      lexer::Loc loc = lexer::Loc{});
 
 	const UStr name;
 	const UStr id;

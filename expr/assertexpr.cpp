@@ -7,13 +7,10 @@
 #include "gen/instruction.hpp"
 #include "gen/label.hpp"
 #include "gen/variable.hpp"
-#include "lexer/error.hpp"
-#include "type/functiontype.hpp"
 #include "type/integertype.hpp"
 
 #include "assertexpr.hpp"
 #include "implicitcast.hpp"
-#include "promotion.hpp"
 
 namespace abc {
 
@@ -86,16 +83,16 @@ AssertExpr::loadValue() const
     ImplicitCast::setOutput(old);
     argValue.push_back(gen::loadStringAddress(ss.str().c_str()));
     argValue.push_back(gen::loadStringAddress(loc.path.c_str()));
-    argValue.push_back(gen::getConstantInt(loc.from.line,
-					   IntegerType::createInt()));
-    
+    argValue.push_back(
+        gen::getConstantInt(loc.from.line, IntegerType::createInt()));
+
     // argValue.push_back(a->loadValue());
     auto fnAddr = gen::loadAddress(assertFnName.c_str());
     gen::functionCall(fnAddr, assertFnType, argValue);
 
     gen::jumpInstruction(trueLabel);
     gen::defineLabel(trueLabel);
-    
+
     return gen::getFalse();
 }
 

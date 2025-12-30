@@ -21,14 +21,12 @@ main()
     std::cerr << "signed val   = " << intExpr->getSignedIntValue() << "\n";
     std::cerr << "unsigned val = " << intExpr->getUnsignedIntValue() << "\n";
 
-    auto idExpr = Identifier::create(UStr::create("a"),
-				     UStr::create("a"),
-				     IntegerType::createSigned(32));
+    auto idExpr = Identifier::create(UStr::create("a"), UStr::create("a"),
+                                     IntegerType::createSigned(32));
     std::cerr << idExpr << "\n";
 
-    auto addExpr = BinaryExpr::create(BinaryExpr::ADD,
-				      std::move(intExpr),
-				      std::move(idExpr));
+    auto addExpr = BinaryExpr::create(BinaryExpr::ADD, std::move(intExpr),
+                                      std::move(idExpr));
     std::cerr << addExpr << "\n";
 
     auto np = Nullptr::create();

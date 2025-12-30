@@ -1,19 +1,18 @@
 #include <set>
 #include <sstream>
+#include <tuple>
 
 #include "pointertype.hpp"
 
 namespace abc {
 
-static bool
+bool
 operator<(const PointerType &x, const PointerType &y)
 {
-    const auto &tx = std::tuple{x.ustr().c_str(),
-				x.refType(),
-				x.hasConstFlag()};
-    const auto &ty = std::tuple{y.ustr().c_str(),
-				y.refType(),
-				y.hasConstFlag()};
+    const auto &tx =
+        std::tuple{x.ustr().c_str(), x.refType(), x.hasConstFlag()};
+    const auto &ty =
+        std::tuple{y.ustr().c_str(), y.refType(), y.hasConstFlag()};
     return tx < ty;
 }
 
@@ -35,7 +34,7 @@ PointerType::create(const Type *refType, bool constFlag)
     return &*pointerSet.insert(ty).first;
 }
 
-void 
+void
 PointerType::init()
 {
     pointerSet.clear();

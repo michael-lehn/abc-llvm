@@ -1,14 +1,14 @@
+#include <set>
+
 #include "autotype.hpp"
 
 namespace abc {
 
-static bool
+bool
 operator<(const AutoType &x, const AutoType &y)
 {
-    const auto &tx = std::tuple{x.ustr().c_str(),
-				x.hasConstFlag()};
-    const auto &ty = std::tuple{y.ustr().c_str(),
-				y.hasConstFlag()};
+    const auto &tx = std::tuple{x.ustr().c_str(), x.hasConstFlag()};
+    const auto &ty = std::tuple{y.ustr().c_str(), y.hasConstFlag()};
 
     return tx < ty;
 }
@@ -17,10 +17,7 @@ static std::set<AutoType> voidSet;
 
 //------------------------------------------------------------------------------
 
-AutoType::AutoType(bool constFlag, UStr name)
-    : Type{constFlag, name}
-{
-}
+AutoType::AutoType(bool constFlag, UStr name) : Type{constFlag, name} {}
 
 const Type *
 AutoType::create(bool constFlag, UStr name)
@@ -29,7 +26,7 @@ AutoType::create(bool constFlag, UStr name)
     return &*voidSet.insert(ty).first;
 }
 
-void 
+void
 AutoType::init()
 {
     voidSet.clear();

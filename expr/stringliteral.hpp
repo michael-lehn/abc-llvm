@@ -14,9 +14,9 @@ class StringLiteral : public Expr
 
     public:
 	static ExprPtr create(UStr val, UStr valRaw,
-			      lexer::Loc loc = lexer::Loc{});
+	                      lexer::Loc loc = lexer::Loc{});
 
-	UStr		    val, valRaw;
+	UStr val, valRaw;
 
 	bool hasConstantAddress() const override;
 	bool hasAddress() const override;
@@ -29,7 +29,7 @@ class StringLiteral : public Expr
 	gen::Constant loadConstantAddress() const override;
 	gen::Value loadAddress() const override;
 	void condition(gen::Label trueLabel,
-		       gen::Label falseLabel) const override;
+	               gen::Label falseLabel) const override;
 
 	// for debugging and educational purposes
 	void print(int indent) const override;

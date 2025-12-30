@@ -75,24 +75,18 @@ call(ExprPtr &&fn, std::vector<ExprPtr> &&arg, lexer::Loc *loc)
 /*
  * Rules for binary expressions
  */
-static BinaryResult
-binaryErr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
-          lexer::Loc *loc);
-static BinaryResult
-binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
-          lexer::Loc *loc);
-static BinaryResult
-binaryFlt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
-          lexer::Loc *loc);
-static BinaryResult
-binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
-          lexer::Loc *loc);
-static BinaryResult
-binaryArray(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
-            lexer::Loc *loc);
-static BinaryResult
-binaryStruct(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
-             lexer::Loc *loc);
+static BinaryResult binaryErr(BinaryExpr::Kind kind, ExprPtr &&left,
+                              ExprPtr &&right, lexer::Loc *loc);
+static BinaryResult binaryInt(BinaryExpr::Kind kind, ExprPtr &&left,
+                              ExprPtr &&right, lexer::Loc *loc);
+static BinaryResult binaryFlt(BinaryExpr::Kind kind, ExprPtr &&left,
+                              ExprPtr &&right, lexer::Loc *loc);
+static BinaryResult binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left,
+                              ExprPtr &&right, lexer::Loc *loc);
+static BinaryResult binaryArray(BinaryExpr::Kind kind, ExprPtr &&left,
+                                ExprPtr &&right, lexer::Loc *loc);
+static BinaryResult binaryStruct(BinaryExpr::Kind kind, ExprPtr &&left,
+                                 ExprPtr &&right, lexer::Loc *loc);
 
 BinaryResult
 binary(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right, lexer::Loc *loc)
@@ -532,8 +526,8 @@ binaryStruct(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 
 using UnaryResult = std::pair<ExprPtr, const Type *>;
 
-static UnaryResult
-unaryErr(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc);
+static UnaryResult unaryErr(UnaryExpr::Kind kind, ExprPtr &&child,
+                            lexer::Loc *loc);
 
 UnaryResult
 unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)

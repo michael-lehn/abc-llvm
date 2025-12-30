@@ -2,8 +2,6 @@
 #define TYPE_ALIAS_HPP
 
 #include <cstddef>
-#include <ostream>
-#include <vector>
 
 #include "util/ustr.hpp"
 

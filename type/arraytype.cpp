@@ -8,17 +8,13 @@ namespace abc {
 
 static std::string getArrayDimAndType(const Type *refType, std::size_t dim);
 
-static bool
+bool
 operator<(const ArrayType &x, const ArrayType &y)
 {
-    const auto &tx = std::tuple{x.ustr().c_str(),
-				x.refType(),
-				x.dim(),
-				x.hasConstFlag()};
-    const auto &ty = std::tuple{y.ustr().c_str(),
-				y.refType(),
-				x.dim(),
-				y.hasConstFlag()};
+    const auto &tx =
+        std::tuple{x.ustr().c_str(), x.refType(), x.dim(), x.hasConstFlag()};
+    const auto &ty =
+        std::tuple{y.ustr().c_str(), y.refType(), x.dim(), y.hasConstFlag()};
     return tx < ty;
 }
 
@@ -26,7 +22,7 @@ static std::set<ArrayType> arraySet;
 
 //------------------------------------------------------------------------------
 ArrayType::ArrayType(const Type *refType, std::size_t dim, bool constFlag,
-		     UStr name)
+                     UStr name)
     : Type{constFlag, name}, refType_{refType}, dim_{dim}
 {
 }
@@ -40,7 +36,7 @@ ArrayType::create(const Type *refType, std::size_t dim, bool constFlag)
     return &*arraySet.insert(ty).first;
 }
 
-void 
+void
 ArrayType::init()
 {
     arraySet.clear();

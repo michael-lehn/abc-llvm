@@ -10,7 +10,8 @@
 #include "macro.hpp"
 #include "reader.hpp"
 
-namespace abc { namespace lexer {
+namespace abc {
+namespace lexer {
 
 Token token, lastToken;
 
@@ -117,8 +118,8 @@ setToken(TokenKind kind, std::string processed)
     auto val = UStr::create(reader->val);
 
     token = processed.empty() && kind != TokenKind::STRING_LITERAL
-	? Token(loc, kind, val)
-	: Token(loc, kind, val, UStr::create(processed));
+                ? Token(loc, kind, val)
+                : Token(loc, kind, val, UStr::create(processed));
     return kind;
 }
 
@@ -140,8 +141,8 @@ getToken()
 	}
 
 	// check if an identifier is actually a keyword
-	if (token.kind == TokenKind::IDENTIFIER
-		&& keyword.contains(token.val)) {
+	if (token.kind == TokenKind::IDENTIFIER &&
+	    keyword.contains(token.val)) {
 	    token = Token(token.loc, keyword.at(token.val), token.val);
 	}
     } while (macro::ignoreToken());
@@ -153,7 +154,7 @@ getToken_(bool skipNewline)
 {
     // skip white spaces and newlines
     while (isWhiteSpace(reader->ch) || (skipNewline && reader->ch == '\n')) {
-        nextCh();
+	nextCh();
     }
 
     reader->resetStart();
@@ -170,32 +171,38 @@ getToken_(bool skipNewline)
 	parseAddDirective();
 	return getToken();
     } else if (isLetter(reader->ch)) {
-        while (isLetter(reader->ch) || isDecDigit(reader->ch)) {
-            nextCh();
-        }
-        return setToken(TokenKind::IDENTIFIER);
+	while (isLetter(reader->ch) || isDecDigit(reader->ch)) {
+	    nextCh();
+	}
+	return setToken(TokenKind::IDENTIFIER);
     } else if (isDecDigit(reader->ch)) {
-	enum {OCTAL, DECIMAL, HEXADECIMAL} repr;
+	enum
+	{
+	    OCTAL,
+	    DECIMAL,
+	    HEXADECIMAL
+	} repr;
 	bool octal_to_float = false;
 
 	std::optional<TokenKind> literalKind;
 
-        // parse literal
-        if (reader->ch == '0') {
-            nextCh();
-            if (reader->ch == 'x' || reader->ch == 'X') {
+	// parse literal
+	if (reader->ch == '0') {
+	    nextCh();
+	    if (reader->ch == 'x' || reader->ch == 'X') {
 		repr = HEXADECIMAL;
-                nextCh();
-                if (!isHexDigit(reader->ch)) {
-		    error::out() << token.loc
-			<<  ": invalid hexadecimal constant" << std::endl;
+		nextCh();
+		if (!isHexDigit(reader->ch)) {
+		    error::out()
+		        << token.loc << ": invalid hexadecimal constant"
+		        << std::endl;
 		    error::fatal();
 		    return setToken(TokenKind::BAD);
 		}
 		do {
 		    nextCh();
 		} while (isHexDigit(reader->ch));
-            } else {
+	    } else {
 		repr = OCTAL;
 		while (isOctDigit(reader->ch)) {
 		    nextCh();
@@ -209,66 +216,66 @@ getToken_(bool skipNewline)
 		    } while (isDecDigit(reader->ch));
 		}
 	    }
-        } else {
+	} else {
 	    repr = DECIMAL;
-            while (isDecDigit(reader->ch)) {
-                nextCh();
-            }
-        }
+	    while (isDecDigit(reader->ch)) {
+		nextCh();
+	    }
+	}
 	switch (reader->ch) {
-	    case '.':
-		if (repr == DECIMAL || repr == OCTAL) {
-		    octal_to_float = false; // already taken care of
-		    parseDecimalFloatingConstant();
-		    literalKind = TokenKind::FLOAT_DECIMAL_LITERAL;
-		} else {
-		    parseHexadecimalFloatingConstant();
-		    literalKind = TokenKind::FLOAT_HEXADECIMAL_LITERAL;
-		}
-		break;
-
-	    case 'p':
-	    case 'P':
-		if (repr != HEXADECIMAL) {
-		    break;
-		}
-		/* hexadecimal floating constant */
-		parseHexadecimalFloatingConstant();
-		literalKind = TokenKind::FLOAT_HEXADECIMAL_LITERAL;
-		break;
-
-	    case 'e':
-	    case 'E':
-		/* decimal floating point constant */
+	case '.':
+	    if (repr == DECIMAL || repr == OCTAL) {
 		octal_to_float = false; // already taken care of
-		if (repr != DECIMAL && repr != OCTAL) {
-		    break;
-		}
 		parseDecimalFloatingConstant();
 		literalKind = TokenKind::FLOAT_DECIMAL_LITERAL;
+	    } else {
+		parseHexadecimalFloatingConstant();
+		literalKind = TokenKind::FLOAT_HEXADECIMAL_LITERAL;
+	    }
+	    break;
+
+	case 'p':
+	case 'P':
+	    if (repr != HEXADECIMAL) {
 		break;
-	    default:
+	    }
+	    /* hexadecimal floating constant */
+	    parseHexadecimalFloatingConstant();
+	    literalKind = TokenKind::FLOAT_HEXADECIMAL_LITERAL;
+	    break;
+
+	case 'e':
+	case 'E':
+	    /* decimal floating point constant */
+	    octal_to_float = false; // already taken care of
+	    if (repr != DECIMAL && repr != OCTAL) {
 		break;
+	    }
+	    parseDecimalFloatingConstant();
+	    literalKind = TokenKind::FLOAT_DECIMAL_LITERAL;
+	    break;
+	default:
+	    break;
 	}
 	if (octal_to_float) {
 	    // leading 0 with non-octal digits following
 	    // which did not turn into a decimal floating constant
-	    error::out() << token.loc
-		<<  ": invalid octal constant" << std::endl;
+	    error::out() << token.loc << ": invalid octal constant"
+	                 << std::endl;
 	    error::fatal();
 	    return setToken(TokenKind::BAD);
 	}
 	if (!literalKind) {
 	    switch (repr) {
-		case HEXADECIMAL:
-		    literalKind = TokenKind::HEXADECIMAL_LITERAL;
-		    break;
-		case OCTAL:
-		    literalKind = TokenKind::OCTAL_LITERAL;
-		    break;
-		case DECIMAL:
-		    literalKind = TokenKind::DECIMAL_LITERAL;
-		    break;
+	    case HEXADECIMAL:
+		literalKind = TokenKind::HEXADECIMAL_LITERAL;
+		break;
+	    case OCTAL:
+		literalKind = TokenKind::OCTAL_LITERAL;
+		break;
+	    case DECIMAL:
+		literalKind = TokenKind::DECIMAL_LITERAL;
+		break;
 	    }
 	}
 	return setToken(*literalKind);
@@ -374,15 +381,16 @@ getToken_(bool skipNewline)
 		}
 	    }
 	    if (reader->ch == EOF) {
-		error::out() << token.loc
-		    <<  ": multi line comment not terminated" << std::endl;
+		error::out()
+		    << token.loc << ": multi line comment not terminated"
+		    << std::endl;
 		error::fatal();
 		return setToken(TokenKind::BAD);
 	    }
 	    return getToken();
 	}
 	return setToken(TokenKind::SLASH);
-     } else if (reader->ch == '%') {
+    } else if (reader->ch == '%') {
 	nextCh();
 	if (reader->ch == '=') {
 	    nextCh();
@@ -462,19 +470,19 @@ getToken_(bool skipNewline)
     }
 }
 
-// 
+//
 // from: https://github.com/afborchert/astl-c/blob/master/astl-c/scanner.cpp
-// 
+//
 
 static unsigned
 hexToVal(char ch)
 {
     if (ch >= '0' && ch <= '9') {
-        return ch - '0';
+	return ch - '0';
     } else if (ch >= 'a' && ch <= 'f') {
-        return 10 + ch - 'a';
+	return 10 + ch - 'a';
     } else {
-        return 10 + ch - 'A';
+	return 10 + ch - 'A';
     }
 }
 
@@ -486,111 +494,110 @@ parseStringLiteral()
     // ch == '"'
     nextCh();
     while (reader->ch != '"') {
-        if (reader->ch == '\n') {
+	if (reader->ch == '\n') {
 	    error::out() << token.loc << ": newline in string literal"
-		<< std::endl;
+	                 << std::endl;
 	    error::fatal();
-        } else if (reader->ch == '\\') {
-            nextCh();
-            if (isOctDigit(reader->ch)) {
-                unsigned octalval = reader->ch - '0';
-                nextCh();
-                if (isOctDigit(reader->ch)) {
-                    octalval = octalval * 8 + reader->ch - '0';
-                    nextCh();
-                }
-                if (isOctDigit(reader->ch)) {
-                    octalval = octalval * 8 + reader->ch - '0';
-                    nextCh();
-                }
-                reader->ch = octalval;
+	} else if (reader->ch == '\\') {
+	    nextCh();
+	    if (isOctDigit(reader->ch)) {
+		unsigned octalval = reader->ch - '0';
+		nextCh();
+		if (isOctDigit(reader->ch)) {
+		    octalval = octalval * 8 + reader->ch - '0';
+		    nextCh();
+		}
+		if (isOctDigit(reader->ch)) {
+		    octalval = octalval * 8 + reader->ch - '0';
+		    nextCh();
+		}
+		reader->ch = octalval;
 		processed += reader->ch;
-            } else {
-                switch (reader->ch) {
-                    // simple-escape-sequence
-                    case '\'':
-                        processed += '\'';
-                        nextCh();
-                        break;
-                    case '"':
-                        processed += '\"';
-                        nextCh();
-                        break;
-                    case '?':
-                        processed += '\?';
-                        nextCh();
-                        break;
-                    case '\\':
-                        processed += '\\';
-                        nextCh();
-                        break;
-                    case 'a':
-                        processed += '\a';
-                        nextCh();
-                        break;
-                    case 'b':
-                        processed += '\b';
-                        nextCh();
-                        break;
-                    case 'f':
-                        processed += '\f';
-                        nextCh();
-                        break;
-                    case 'n':
-                        processed += '\n';
-                        nextCh();
-                        break;
-                    case 'r':
-                        processed += '\r';
-                        nextCh();
-                        break;
-                    case 't':
-                        processed += '\t';
-                        nextCh();
-                        break;
-                    case 'v':
-                        processed += '\v';
-                        nextCh();
-                        break;
-                    case 'x': {
-                        nextCh();
-                        if (!isHexDigit(reader->ch)) {
-			    error::out() << token.loc
-				<< ": expected hex digit" << std::endl;
-			    error::fatal();
-                        }
-                        unsigned hexval = hexToVal(reader->ch);
-                        nextCh();
-                        while (isHexDigit(reader->ch)) {
-                            hexval = hexval * 16 + hexToVal(reader->ch);
-                            nextCh();
-                        }
-			processed += hexval;
-                        break;
-                    }
-                    default:
-			error::out() << token.loc
-			    << ": invalid character '" << reader->ch
-			    << "'" << std::endl;
+	    } else {
+		switch (reader->ch) {
+		// simple-escape-sequence
+		case '\'':
+		    processed += '\'';
+		    nextCh();
+		    break;
+		case '"':
+		    processed += '\"';
+		    nextCh();
+		    break;
+		case '?':
+		    processed += '\?';
+		    nextCh();
+		    break;
+		case '\\':
+		    processed += '\\';
+		    nextCh();
+		    break;
+		case 'a':
+		    processed += '\a';
+		    nextCh();
+		    break;
+		case 'b':
+		    processed += '\b';
+		    nextCh();
+		    break;
+		case 'f':
+		    processed += '\f';
+		    nextCh();
+		    break;
+		case 'n':
+		    processed += '\n';
+		    nextCh();
+		    break;
+		case 'r':
+		    processed += '\r';
+		    nextCh();
+		    break;
+		case 't':
+		    processed += '\t';
+		    nextCh();
+		    break;
+		case 'v':
+		    processed += '\v';
+		    nextCh();
+		    break;
+		case 'x': {
+		    nextCh();
+		    if (!isHexDigit(reader->ch)) {
+			error::out()
+			    << token.loc << ": expected hex digit" << std::endl;
 			error::fatal();
-                }
-            }
-        } else if (reader->ch == EOF) {
+		    }
+		    unsigned hexval = hexToVal(reader->ch);
+		    nextCh();
+		    while (isHexDigit(reader->ch)) {
+			hexval = hexval * 16 + hexToVal(reader->ch);
+			nextCh();
+		    }
+		    processed += hexval;
+		    break;
+		}
+		default:
+		    error::out() << token.loc << ": invalid character '"
+		                 << reader->ch << "'" << std::endl;
+		    error::fatal();
+		}
+	    }
+	} else if (reader->ch == EOF) {
 	    error::out() << token.loc << ": end of file in string literal"
-		<< std::endl;
+	                 << std::endl;
 	    error::fatal();
-        } else {
+	} else {
 	    processed += reader->ch;
-            nextCh();
-        }
+	    nextCh();
+	}
     }
     nextCh();
     return processed;
 }
 
-// 
+//
 // from: https://github.com/afborchert/astl-c/blob/master/astl-c/scanner.cpp
-// 
+//
 static unsigned
 parseCharacterLiteral()
 {
@@ -599,108 +606,108 @@ parseCharacterLiteral()
     nextCh();
     if (reader->ch == '\'') {
 	error::out() << token.loc << ": single quote as character literal"
-	    << std::endl;
+	             << std::endl;
 	error::fatal();
     }
     do {
-        if (reader->ch == '\n') {
+	if (reader->ch == '\n') {
 	    error::out() << token.loc << ": newline as character literal"
-		<< std::endl;
+	                 << std::endl;
 	    error::fatal();
 	    break;
-        } else if (reader->ch == '\\') {
-            nextCh();
-            if (isOctDigit(reader->ch)) {
-                val = reader->ch - '0';
-                nextCh();
-                if (isOctDigit(reader->ch)) {
-                    val = val * 8 + reader->ch - '0';
-                    nextCh();
-                }
-                if (isOctDigit(reader->ch)) {
-                    val = val * 8 + reader->ch - '0';
-                    nextCh();
-                }
-                break;
-            } else {
-                switch (reader->ch) {
-                    // simple-escape-sequence
-                    case '\'':
-                        val = '\'';
-                        nextCh();
-                        break;
-                    case '"':
-                        val = '\"';
-                        nextCh();
-                        break;
-                    case '?':
-                        val = '\?';
-                        nextCh();
-                        break;
-                    case '\\':
-                        val = '\\';
-                        nextCh();
-                        break;
-                    case 'a':
-                        val = '\a';
-                        nextCh();
-                        break;
-                    case 'b':
-                        val = '\b';
-                        nextCh();
-                        break;
-                    case 'f':
-                        val = '\f';
-                        nextCh();
-                        break;
-                    case 'n':
-                        val = '\n';
-                        nextCh();
-                        break;
-                    case 'r':
-                        val = '\r';
-                        nextCh();
-                        break;
-                    case 't':
-                        val = '\t';
-                        nextCh();
-                        break;
-                    case 'v':
-                        val = '\v';
-                        nextCh();
-                        break;
-                    case 'x': {
-                        nextCh();
-                        if (!isHexDigit(reader->ch)) {
-			    error::out() << token.loc
-				<< ": expected hex digit" << std::endl;
-			    error::fatal();
-                        }
-                        val = hexToVal(reader->ch);
-                        nextCh();
-                        while (isHexDigit(reader->ch)) {
-                            val = val * 16 + hexToVal(reader->ch);
-                            nextCh();
-                        }
-			break;
-                    }
-                    default:
-			error::out() << token.loc
-			    << ": invalid character literal" << std::endl;
+	} else if (reader->ch == '\\') {
+	    nextCh();
+	    if (isOctDigit(reader->ch)) {
+		val = reader->ch - '0';
+		nextCh();
+		if (isOctDigit(reader->ch)) {
+		    val = val * 8 + reader->ch - '0';
+		    nextCh();
+		}
+		if (isOctDigit(reader->ch)) {
+		    val = val * 8 + reader->ch - '0';
+		    nextCh();
+		}
+		break;
+	    } else {
+		switch (reader->ch) {
+		// simple-escape-sequence
+		case '\'':
+		    val = '\'';
+		    nextCh();
+		    break;
+		case '"':
+		    val = '\"';
+		    nextCh();
+		    break;
+		case '?':
+		    val = '\?';
+		    nextCh();
+		    break;
+		case '\\':
+		    val = '\\';
+		    nextCh();
+		    break;
+		case 'a':
+		    val = '\a';
+		    nextCh();
+		    break;
+		case 'b':
+		    val = '\b';
+		    nextCh();
+		    break;
+		case 'f':
+		    val = '\f';
+		    nextCh();
+		    break;
+		case 'n':
+		    val = '\n';
+		    nextCh();
+		    break;
+		case 'r':
+		    val = '\r';
+		    nextCh();
+		    break;
+		case 't':
+		    val = '\t';
+		    nextCh();
+		    break;
+		case 'v':
+		    val = '\v';
+		    nextCh();
+		    break;
+		case 'x': {
+		    nextCh();
+		    if (!isHexDigit(reader->ch)) {
+			error::out()
+			    << token.loc << ": expected hex digit" << std::endl;
 			error::fatal();
-                        break;
-                }
-            }
-        } else if (reader->ch == EOF) {
-	    error::out() << token.loc
-		<< ": end of file in character literal" << std::endl;
+		    }
+		    val = hexToVal(reader->ch);
+		    nextCh();
+		    while (isHexDigit(reader->ch)) {
+			val = val * 16 + hexToVal(reader->ch);
+			nextCh();
+		    }
+		    break;
+		}
+		default:
+		    error::out() << token.loc << ": invalid character literal"
+		                 << std::endl;
+		    error::fatal();
+		    break;
+		}
+	    }
+	} else if (reader->ch == EOF) {
+	    error::out() << token.loc << ": end of file in character literal"
+	                 << std::endl;
 	    error::fatal();
 	    break;
-        } else {
-	    val = reader->ch; 
-            nextCh();
+	} else {
+	    val = reader->ch;
+	    nextCh();
 	    break;
-        }
+	}
     } while (reader->ch != '\'');
     nextCh();
     return val;
@@ -719,13 +726,13 @@ parseAddDirective()
     if (token.kind == TokenKind::IDENTIFIER && token.val == ifdefKw) {
 	getToken_(false);
 	if (token.kind != TokenKind::IDENTIFIER) {
-	    error::out() << token.loc
-		<< ": expected identifier" << std::endl;
+	    error::out() << token.loc << ": expected identifier" << std::endl;
 	    error::fatal();
 	}
 	if (!macro::ifndefDirective(token)) {
 	    error::out() << token.loc
-		<< ": sorry, nested @ifdef are not supported" << std::endl;
+	                 << ": sorry, nested @ifdef are not supported"
+	                 << std::endl;
 	    error::fatal();
 	}
     } else if (token.kind == TokenKind::IDENTIFIER && token.val == endifKw) {
@@ -733,8 +740,7 @@ parseAddDirective()
     } else if (token.kind == TokenKind::IDENTIFIER && token.val == defineKw) {
 	getToken_(false);
 	if (token.kind != TokenKind::IDENTIFIER) {
-	    error::out() << token.loc
-		<< ": expected identifier" << std::endl;
+	    error::out() << token.loc << ": expected identifier" << std::endl;
 	    error::fatal();
 	}
 	auto from = token;
@@ -745,8 +751,8 @@ parseAddDirective()
 	    getToken_(false);
 	}
 	if (!macro::defineDirective(from, std::move(to))) {
-	    error::out() << token.loc
-		<< ": macro '" << from << "' already defined" << std::endl;
+	    error::out() << token.loc << ": macro '" << from
+	                 << "' already defined" << std::endl;
 	    error::fatal();
 	}
 
@@ -758,8 +764,8 @@ parseAddDirective()
 	    return;
 	}
 	if (!openInputfile(token.processedVal.c_str())) {
-	    error::out() << token.loc
-		<< ": can not open file " << token.val << std::endl;
+	    error::out() << token.loc << ": can not open file " << token.val
+	                 << std::endl;
 	    error::fatal();
 	}
 	includedFiles_.insert(token.processedVal.c_str());
@@ -772,8 +778,8 @@ parseAddDirective()
 	nextCh();
 	auto path = searchFile(str);
 	if (path.empty()) {
-	    error::out() << token.loc
-		<< ": can not find file " << str << std::endl;
+	    error::out() << token.loc << ": can not find file " << str
+	                 << std::endl;
 	    error::fatal();
 	}
 	if (macro::ignoreToken() || includedFiles_.contains(path)) {
@@ -781,13 +787,13 @@ parseAddDirective()
 	}
 	includedFiles_.insert(path);
 	if (!openInputfile(path)) {
-	    error::out() << token.loc
-		<< ": can not open file " << path << std::endl;
+	    error::out() << token.loc << ": can not open file " << path
+	                 << std::endl;
 	    error::fatal();
 	}
     } else {
-	error::out() << token.loc
-	    << ": expected directive or filename" << std::endl;
+	error::out() << token.loc << ": expected directive or filename"
+	             << std::endl;
 	error::fatal();
     }
 }
@@ -810,8 +816,8 @@ parseDecimalFloatingConstant()
 	    nextCh();
 	}
 	if (!isDecDigit(reader->ch)) {
-	    error::out() << token.loc
-		<< ": digits missing in exponent" << std::endl;
+	    error::out() << token.loc << ": digits missing in exponent"
+	                 << std::endl;
 	    error::fatal();
 	}
 	nextCh();
@@ -833,8 +839,8 @@ parseHexadecimalFloatingConstant()
     }
     if (reader->ch != 'p' && reader->ch != 'P') {
 	error::out() << token.loc
-	    << ": exponent missing in hexadecimal floating constant"
-	    << std::endl;
+	             << ": exponent missing in hexadecimal floating constant"
+	             << std::endl;
 	error::fatal();
     }
     nextCh();
@@ -844,7 +850,7 @@ parseHexadecimalFloatingConstant()
     }
     if (!isDecDigit(reader->ch)) {
 	error::out() << token.loc << ": digits missing in exponent"
-	    << std::endl;
+	             << std::endl;
 	error::fatal();
     }
     nextCh();
@@ -853,4 +859,5 @@ parseHexadecimalFloatingConstant()
     }
 }
 
-} } // namespace lexer, abc
+} // namespace lexer
+} // namespace abc

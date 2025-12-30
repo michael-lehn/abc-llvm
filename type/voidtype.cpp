@@ -1,14 +1,15 @@
+#include <set>
+#include <tuple>
+
 #include "voidtype.hpp"
 
 namespace abc {
 
-static bool
+bool
 operator<(const VoidType &x, const VoidType &y)
 {
-    const auto &tx = std::tuple{x.ustr().c_str(),
-				x.hasConstFlag()};
-    const auto &ty = std::tuple{y.ustr().c_str(),
-				y.hasConstFlag()};
+    const auto &tx = std::tuple{x.ustr().c_str(), x.hasConstFlag()};
+    const auto &ty = std::tuple{y.ustr().c_str(), y.hasConstFlag()};
 
     return tx < ty;
 }
@@ -17,10 +18,7 @@ static std::set<VoidType> voidSet;
 
 //------------------------------------------------------------------------------
 
-VoidType::VoidType(bool constFlag, UStr name)
-    : Type{constFlag, name}
-{
-}
+VoidType::VoidType(bool constFlag, UStr name) : Type{constFlag, name} {}
 
 const Type *
 VoidType::create(bool constFlag, UStr name)
@@ -29,7 +27,7 @@ VoidType::create(bool constFlag, UStr name)
     return &*voidSet.insert(ty).first;
 }
 
-void 
+void
 VoidType::init()
 {
     voidSet.clear();

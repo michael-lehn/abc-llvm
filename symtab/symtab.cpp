@@ -19,8 +19,8 @@ std::size_t idCount;
 Symtab::Symtab(UStr scopePrefix_)
 {
     // prefix required one below root scope (identify function)
-    assert((scopeSize == 1 && scopePrefix_.c_str())
-	|| (scopeSize != 1 && !scopePrefix_.c_str()));
+    assert((scopeSize == 1 && scopePrefix_.c_str()) ||
+           (scopeSize != 1 && !scopePrefix_.c_str()));
 
     if (scopePrefix_.c_str() || scopeSize == 0) {
 	scopePrefix = scopePrefix_;
@@ -44,7 +44,7 @@ Symtab::didYouMean(UStr name_)
 
     unsigned max = 2;
     for (auto s = scope.cbegin(); s != scope.cend(); ++s, max = 1) {
-	for (const auto &node: **s) {
+	for (const auto &node : **s) {
 	    if (!node.second.typeDeclaration()) {
 		std::string id{node.first.c_str()};
 		if (gen::editDistance(id, name) <= max) {
@@ -60,7 +60,7 @@ const symtab::Entry *
 Symtab::find(UStr name, Scope inScope)
 {
     for (auto s = scope.cbegin(); s != scope.cend(); ++s) {
-	for (const auto &node: **s) {
+	for (const auto &node : **s) {
 	    if (node.first == name) {
 		return &node.second;
 	    }
@@ -116,15 +116,15 @@ Symtab::addDefinition(lexer::Loc loc, UStr name, const Type *type)
     if (!decl.first->setDefinitionFlag()) {
 	error::location(loc);
 	error::out() << error::setColor(error::BOLD) << loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << name << " already defined in this scope.\n"
-	    << error::setColor(error::NORMAL);
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD) << name
+	             << " already defined in this scope.\n"
+	             << error::setColor(error::NORMAL);
 	assert(decl.first);
 	error::location(decl.first->loc);
 	error::out() << error::setColor(error::BOLD) << decl.first->loc
-	    << ": defined here.\n"
-	    << error::setColor(error::NORMAL);
+	             << ": defined here.\n"
+	             << error::setColor(error::NORMAL);
 	error::fatal();
 
 	return {nullptr, false};
@@ -150,20 +150,18 @@ void
 Symtab::print(std::ostream &out)
 {
     out << "Symtab (from current scope to root scope):\n";
-    std::for_each(scope.begin(), scope.end(),
-	    [&](const auto &s) {
-		for (const auto &item: *s) {
-		    out << item.first << ": "
-			<< item.second.getId() << ", ";
-		    if (item.second.expressionDeclaration()) {
-			out << item.second.expr;
-		    } else {
-			out << item.second.type;
-		    }
-		    out << "\n";
-		}
-		out << "---\n";
-	    });
+    std::for_each(scope.begin(), scope.end(), [&](const auto &s) {
+	for (const auto &item : *s) {
+	    out << item.first << ": " << item.second.getId() << ", ";
+	    if (item.second.expressionDeclaration()) {
+		out << item.second.expr;
+	    } else {
+		out << item.second.type;
+	    }
+	    out << "\n";
+	}
+	out << "---\n";
+    });
     out << "End of symtab\n";
 }
 
@@ -179,11 +177,11 @@ Symtab::add(UStr name, symtab::Entry &&entry)
 
 	    // check exceptions ...
 	    if (entry.variableDeclaration() && found.variableDeclaration()) {
-		bool fixUnbound = found.type->isUnboundArray()
-		     && entry.type->isArray()
-		     && found.type->refType() == entry.type->refType();
-		bool resolveAuto = found.type->isAuto()
-		    && entry.type->hasSize();
+		bool fixUnbound =
+		    found.type->isUnboundArray() && entry.type->isArray() &&
+		    found.type->refType() == entry.type->refType();
+		bool resolveAuto =
+		    found.type->isAuto() && entry.type->hasSize();
 
 		ok = fixUnbound || resolveAuto;
 		if (ok) {
@@ -195,18 +193,17 @@ Symtab::add(UStr name, symtab::Entry &&entry)
 	    if (!ok) {
 		error::location(entry.loc);
 		error::out() << error::setColor(error::BOLD) << entry.loc
-		    << ": " << error::setColor(error::BOLD_RED) << "error: "
-		    << error::setColor(error::BOLD)
-		    << "incompatible redefinition with type '"
-		    << entry.type << "'\n"
-		    << error::setColor(error::NORMAL);
+		             << ": " << error::setColor(error::BOLD_RED)
+		             << "error: " << error::setColor(error::BOLD)
+		             << "incompatible redefinition with type '"
+		             << entry.type << "'\n"
+		             << error::setColor(error::NORMAL);
 		error::location(found.loc);
-		error::out() << error::setColor(error::BOLD) << found.loc
-		    << ": " << error::setColor(error::BOLD_RED) << "error: "
-		    << error::setColor(error::BOLD)
-		    << "previous definition with type '"
-		    << found.type
-		    << "'\n"
+		error::out()
+		    << error::setColor(error::BOLD) << found.loc << ": "
+		    << error::setColor(error::BOLD_RED)
+		    << "error: " << error::setColor(error::BOLD)
+		    << "previous definition with type '" << found.type << "'\n"
 		    << error::setColor(error::NORMAL);
 		error::fatal();
 		return {nullptr, false};

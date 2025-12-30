@@ -23,6 +23,6 @@ defineLabel(Label label)
     functionBuildingInfo.fn->insert(functionBuildingInfo.fn->end(), label);
     llvmBuilder->SetInsertPoint(label);
     functionBuildingInfo.bbClosed = false;
-} 
+}
 
 } // namespace gen

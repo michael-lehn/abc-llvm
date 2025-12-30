@@ -1,7 +1,4 @@
 #include <cassert>
-#include <memory>
-#include <sstream>
-#include <tuple>
 #include <unordered_map>
 
 #include "enumtype.hpp"
@@ -14,12 +11,12 @@ static std::unordered_map<std::size_t, EnumType> enumConstMap;
 //------------------------------------------------------------------------------
 
 EnumType::EnumType(std::size_t id, UStr name, const Type *intType,
-		   bool constFlag)
+                   bool constFlag)
     : Type{constFlag, name}, id_{id}, intType{intType}, isComplete_{false}
 {
 }
 
-void 
+void
 EnumType::init()
 {
     enumMap.clear();
@@ -94,7 +91,7 @@ EnumType::isEnum() const
 
 const Type *
 EnumType::complete(std::vector<UStr> &&constName,
-		   std::vector<std::int64_t> &&constValue)
+                   std::vector<std::int64_t> &&constValue)
 {
     constName_ = std::move(constName);
     constValue_ = std::move(constValue);

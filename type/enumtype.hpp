@@ -9,7 +9,7 @@ class EnumType : public Type
 {
     protected:
 	EnumType(std::size_t id, UStr name, const Type *intType,
-		 bool constFlag);
+	         bool constFlag);
 	std::size_t id_;
 	const Type *intType;
 
@@ -35,7 +35,7 @@ class EnumType : public Type
 
 	bool isEnum() const override;
 	const Type *complete(std::vector<UStr> &&constName,
-			     std::vector<std::int64_t> &&constValue) override;
+	                     std::vector<std::int64_t> &&constValue) override;
 	const std::vector<UStr> &constName() const;
 	const std::vector<std::int64_t> &constValue() const;
 };

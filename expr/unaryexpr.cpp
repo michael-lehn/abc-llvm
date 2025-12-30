@@ -1,6 +1,6 @@
 #include <cassert>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
 #include "gen/constant.hpp"
 #include "gen/instruction.hpp"
@@ -11,14 +11,14 @@
 #include "promotion.hpp"
 #include "unaryexpr.hpp"
 
-static const char * kindStr(abc::UnaryExpr::Kind kind);
+static const char *kindStr(abc::UnaryExpr::Kind kind);
 
 //------------------------------------------------------------------------------
 
 namespace abc {
 
 UnaryExpr::UnaryExpr(Kind kind, ExprPtr &&child, const Type *type,
-		     lexer::Loc loc)
+                     lexer::Loc loc)
     : Expr{loc, type}, kind{kind}, child{std::move(child)}
 {
 }
@@ -28,15 +28,13 @@ UnaryExpr::create(Kind kind, ExprPtr &&child, lexer::Loc loc)
 {
     if (!child) {
 	error::out() << loc << "error: expression expected after operator '"
-	    << kindStr(kind) << "'" << std::endl;
+	             << kindStr(kind) << "'" << std::endl;
 	error::fatal();
 	return nullptr;
     }
     auto promotion = promotion::unary(kind, std::move(child), &loc);
-    auto p = new UnaryExpr{kind,
-			   std::move(std::get<0>(promotion)),
-			   std::move(std::get<1>(promotion)),
-			   loc};
+    auto p = new UnaryExpr{kind, std::move(std::get<0>(promotion)),
+                           std::move(std::get<1>(promotion)), loc};
     return std::unique_ptr<UnaryExpr>{p};
 }
 
@@ -63,28 +61,28 @@ UnaryExpr::isLValue() const
     return kind == ARROW_DEREF || kind == ASTERISK_DEREF;
 }
 
-//-- for checking constness 
+//-- for checking constness
 
 bool
 UnaryExpr::isConst() const
 {
     switch (kind) {
-	case LOGICAL_NOT:
-	    return child->isConst();
-	case MINUS:
-	    return child->isConst();
-	case ADDRESS:
-	    return child->hasConstantAddress();
-	case ARROW_DEREF:
-	case ASTERISK_DEREF:
-	case POSTFIX_INC:
-	case POSTFIX_DEC:
-	case PREFIX_DEC:
-	case PREFIX_INC:
-	    return false;
-	default:
-	    assert(0 && "internal error: case not handled");
-	    return false;
+    case LOGICAL_NOT:
+	return child->isConst();
+    case MINUS:
+	return child->isConst();
+    case ADDRESS:
+	return child->hasConstantAddress();
+    case ARROW_DEREF:
+    case ASTERISK_DEREF:
+    case POSTFIX_INC:
+    case POSTFIX_DEC:
+    case PREFIX_DEC:
+    case PREFIX_INC:
+	return false;
+    default:
+	assert(0 && "internal error: case not handled");
+	return false;
     }
 }
 
@@ -94,23 +92,22 @@ UnaryExpr::loadConstant() const
     assert(type);
     assert(isConst());
     switch (kind) {
-	default:
-	    assert(0);
-	    return nullptr;
-	case LOGICAL_NOT:
-	    if (child->type->isPointer()) {
-		return gen::getTrue();
-	    } else {
-		return gen::instruction(gen::EQ,
-					gen::getConstantZero(child->type),
-					child->loadConstant());
-	    }
-	case MINUS:
-	    return gen::instruction(type->isFloatType() ? gen::FSUB : gen::SUB,
-				    gen::getConstantZero(type), 
-				    child->loadConstant());
-	case ADDRESS:
-	    return child->loadConstantAddress();
+    default:
+	assert(0);
+	return nullptr;
+    case LOGICAL_NOT:
+	if (child->type->isPointer()) {
+	    return gen::getTrue();
+	} else {
+	    return gen::instruction(gen::EQ, gen::getConstantZero(child->type),
+	                            child->loadConstant());
+	}
+    case MINUS:
+	return gen::instruction(type->isFloatType() ? gen::FSUB : gen::SUB,
+	                        gen::getConstantZero(type),
+	                        child->loadConstant());
+    case ADDRESS:
+	return child->loadConstantAddress();
     }
 }
 
@@ -126,60 +123,53 @@ UnaryExpr::loadValue() const
     }
 
     switch (kind) {
-	case LOGICAL_NOT:
-	    return gen::instruction(gen::NE,
-				    gen::getConstantZero(child->type),
-				    child->loadValue());
-	case ARROW_DEREF:
-	case ASTERISK_DEREF:
-	    if (child->type->isNullptr()) {
-		error::out() << loc
-		    << ": Error: dereferencing null pointer" << std::endl;
-		error::fatal();
-	    }
-	    return gen::fetch(child->loadValue(), type);
-	case ADDRESS:
-	    return child->loadAddress();
-	case PREFIX_INC:
-	case PREFIX_DEC:
-	    {
-		auto incType = type->isPointer()
-		    ? IntegerType::createSigned(8)
-		    : child->type;
-		auto inc = kind == PREFIX_INC
-		    ? gen::getConstantInt(1, incType)
-		    : gen::getConstantInt(-1, incType);
-		gen::Value val = type->isPointer()
-		    ? gen::pointerIncrement(child->type->refType(),
-					    child->loadValue(), inc)
-		    : gen::instruction(gen::ADD, child->loadValue(), inc);
-		gen::store(val, child->loadAddress());
-		return val;
-	    }
-	case POSTFIX_INC:
-	case POSTFIX_DEC:
-	    {
-		auto prevLeftVal = child->loadValue();
-		auto incType = type->isPointer()
-		    ? IntegerType::createSigned(8)
-		    : child->type;
-		auto inc = kind == POSTFIX_INC
-		    ? gen::getConstantInt(1, incType)
-		    : gen::getConstantInt(-1, incType);
-		gen::Value val = type->isPointer()
-		    ? gen::pointerIncrement(child->type->refType(),
-					    prevLeftVal, inc)
-		    : gen::instruction(gen::ADD, prevLeftVal, inc);
-		gen::store(val, child->loadAddress());
-		return prevLeftVal;
-	    }
-	case MINUS:
-	    return gen::instruction(type->isFloatType() ? gen::FSUB : gen::SUB,
-				    gen::getConstantZero(type), 
-				    child->loadValue());
-	default:
-	    assert(0);
-	    return nullptr;
+    case LOGICAL_NOT:
+	return gen::instruction(gen::NE, gen::getConstantZero(child->type),
+	                        child->loadValue());
+    case ARROW_DEREF:
+    case ASTERISK_DEREF:
+	if (child->type->isNullptr()) {
+	    error::out() << loc << ": Error: dereferencing null pointer"
+	                 << std::endl;
+	    error::fatal();
+	}
+	return gen::fetch(child->loadValue(), type);
+    case ADDRESS:
+	return child->loadAddress();
+    case PREFIX_INC:
+    case PREFIX_DEC: {
+	auto incType =
+	    type->isPointer() ? IntegerType::createSigned(8) : child->type;
+	auto inc = kind == PREFIX_INC ? gen::getConstantInt(1, incType)
+	                              : gen::getConstantInt(-1, incType);
+	gen::Value val =
+	    type->isPointer()
+	        ? gen::pointerIncrement(child->type->refType(),
+	                                child->loadValue(), inc)
+	        : gen::instruction(gen::ADD, child->loadValue(), inc);
+	gen::store(val, child->loadAddress());
+	return val;
+    }
+    case POSTFIX_INC:
+    case POSTFIX_DEC: {
+	auto prevLeftVal = child->loadValue();
+	auto incType =
+	    type->isPointer() ? IntegerType::createSigned(8) : child->type;
+	auto inc = kind == POSTFIX_INC ? gen::getConstantInt(1, incType)
+	                               : gen::getConstantInt(-1, incType);
+	gen::Value val = type->isPointer()
+	                     ? gen::pointerIncrement(child->type->refType(),
+	                                             prevLeftVal, inc)
+	                     : gen::instruction(gen::ADD, prevLeftVal, inc);
+	gen::store(val, child->loadAddress());
+	return prevLeftVal;
+    }
+    case MINUS:
+	return gen::instruction(type->isFloatType() ? gen::FSUB : gen::SUB,
+	                        gen::getConstantZero(type), child->loadValue());
+    default:
+	assert(0);
+	return nullptr;
     }
 }
 
@@ -207,16 +197,14 @@ UnaryExpr::condition(gen::Label trueLabel, gen::Label falseLabel) const
 {
     assert(type);
     switch (kind) {
-	case LOGICAL_NOT:
-	    {
-		child->condition(falseLabel, trueLabel);
-		return;
-	    }
-	default:
-	    Expr::condition(trueLabel, falseLabel);
+    case LOGICAL_NOT: {
+	child->condition(falseLabel, trueLabel);
+	return;
+    }
+    default:
+	Expr::condition(trueLabel, falseLabel);
     }
 }
-
 
 void
 UnaryExpr::print(int indent) const
@@ -232,53 +220,98 @@ void
 UnaryExpr::printFlat(std::ostream &out, int prec) const
 {
     switch (kind) {
-	case UnaryExpr::ARROW_DEREF:
-	    if (prec > 16) { out << "("; }
-	    child->printFlat(out, 16); out << "->";
-	    if (prec > 16) { out << ")"; }
-	    break;
-	case UnaryExpr::ASTERISK_DEREF:
-	    if (prec > 15) { out << "("; }
-	    out << "*"; child->printFlat(out, 15);
-	    if (prec > 15) { out << ")"; }
-	    break;
-	case UnaryExpr::LOGICAL_NOT:
-	    if (prec > 15) { out << "("; }
-	    out << "!"; child->printFlat(out, 15);
-	    if (prec > 15) { out << ")"; }
-	    break;
-	case UnaryExpr::ADDRESS:
-	    if (prec > 15) { out << "("; }
-	    out << "&"; child->printFlat(out, 15);
-	    if (prec > 15) { out << ")"; }
-	    break;
-	case UnaryExpr::PREFIX_INC:
-	    if (prec > 15) { out << "("; }
-	    out << "++"; child->printFlat(out, 15);
-	    if (prec > 15) { out << ")"; }
-	    break;
-	case UnaryExpr::PREFIX_DEC:
-	    if (prec > 15) { out << "("; }
-	    out << "--"; child->printFlat(out, 15);
-	    if (prec > 15) { out << ")"; }
-	    break;
-	case UnaryExpr::POSTFIX_INC:
-	    if (prec > 16) { out << "("; }
-	    child->printFlat(out, 16); out << "++";
-	    if (prec > 16) { out << ")"; }
-	    break;
-	case UnaryExpr::POSTFIX_DEC:
-	    if (prec > 16) { out << "("; }
-	    child->printFlat(out, 16); out << "--";
-	    if (prec > 16) { out << ")"; }
-	    break;
-	case UnaryExpr::MINUS:
-	    if (prec > 16) { out << "("; }
-	    out << "-"; child->printFlat(out, 16);
-	    if (prec > 16) { out << ")"; }
-	    break;
-	default:
-	    out << " <unary kind " << kind << ">";
+    case UnaryExpr::ARROW_DEREF:
+	if (prec > 16) {
+	    out << "(";
+	}
+	child->printFlat(out, 16);
+	out << "->";
+	if (prec > 16) {
+	    out << ")";
+	}
+	break;
+    case UnaryExpr::ASTERISK_DEREF:
+	if (prec > 15) {
+	    out << "(";
+	}
+	out << "*";
+	child->printFlat(out, 15);
+	if (prec > 15) {
+	    out << ")";
+	}
+	break;
+    case UnaryExpr::LOGICAL_NOT:
+	if (prec > 15) {
+	    out << "(";
+	}
+	out << "!";
+	child->printFlat(out, 15);
+	if (prec > 15) {
+	    out << ")";
+	}
+	break;
+    case UnaryExpr::ADDRESS:
+	if (prec > 15) {
+	    out << "(";
+	}
+	out << "&";
+	child->printFlat(out, 15);
+	if (prec > 15) {
+	    out << ")";
+	}
+	break;
+    case UnaryExpr::PREFIX_INC:
+	if (prec > 15) {
+	    out << "(";
+	}
+	out << "++";
+	child->printFlat(out, 15);
+	if (prec > 15) {
+	    out << ")";
+	}
+	break;
+    case UnaryExpr::PREFIX_DEC:
+	if (prec > 15) {
+	    out << "(";
+	}
+	out << "--";
+	child->printFlat(out, 15);
+	if (prec > 15) {
+	    out << ")";
+	}
+	break;
+    case UnaryExpr::POSTFIX_INC:
+	if (prec > 16) {
+	    out << "(";
+	}
+	child->printFlat(out, 16);
+	out << "++";
+	if (prec > 16) {
+	    out << ")";
+	}
+	break;
+    case UnaryExpr::POSTFIX_DEC:
+	if (prec > 16) {
+	    out << "(";
+	}
+	child->printFlat(out, 16);
+	out << "--";
+	if (prec > 16) {
+	    out << ")";
+	}
+	break;
+    case UnaryExpr::MINUS:
+	if (prec > 16) {
+	    out << "(";
+	}
+	out << "-";
+	child->printFlat(out, 16);
+	if (prec > 16) {
+	    out << ")";
+	}
+	break;
+    default:
+	out << " <unary kind " << kind << ">";
     }
 }
 
@@ -294,13 +327,21 @@ static const char *
 kindStr(abc::UnaryExpr::Kind kind)
 {
     switch (kind) {
-	case abc::UnaryExpr::ASTERISK_DEREF: return "* (deref)";
-	case abc::UnaryExpr::ARROW_DEREF: return "-> (deref)";
-	case abc::UnaryExpr::LOGICAL_NOT: return "! (logical)";
-	case abc::UnaryExpr::ADDRESS: return "& (address)";
-	case abc::UnaryExpr::POSTFIX_INC: return "++ (postfix)";
-	case abc::UnaryExpr::POSTFIX_DEC: return "-- (postfix)";
-	case abc::UnaryExpr::MINUS: return "- (unary)";
-	default: return "?? (unary)";
+    case abc::UnaryExpr::ASTERISK_DEREF:
+	return "* (deref)";
+    case abc::UnaryExpr::ARROW_DEREF:
+	return "-> (deref)";
+    case abc::UnaryExpr::LOGICAL_NOT:
+	return "! (logical)";
+    case abc::UnaryExpr::ADDRESS:
+	return "& (address)";
+    case abc::UnaryExpr::POSTFIX_INC:
+	return "++ (postfix)";
+    case abc::UnaryExpr::POSTFIX_DEC:
+	return "-- (postfix)";
+    case abc::UnaryExpr::MINUS:
+	return "- (unary)";
+    default:
+	return "?? (unary)";
     }
 }

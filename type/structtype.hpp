@@ -29,8 +29,8 @@ class StructType : public Type
 
 	bool isStruct() const override;
 	const Type *complete(std::vector<UStr> &&memberName,
-			     std::vector<std::size_t> &&memberIndex,
-			     std::vector<const Type *> &&memberType) override;
+	                     std::vector<std::size_t> &&memberIndex,
+	                     std::vector<const Type *> &&memberType) override;
 	const std::vector<UStr> &memberName() const override;
 	const std::vector<std::size_t> &memberIndex() const override;
 	std::optional<std::size_t> memberIndex(UStr name) const override;

@@ -111,13 +111,13 @@ ExplicitCast::loadValue() const
 	    if (val->isNegative()) {
 		error::location(loc);
 		error::out()
-		        << error::setColor(error::BOLD) << loc << ": "
-		        << error::setColor(error::BOLD_RED)
-		        << "error: " << error::setColor(error::BOLD)
-		        << "conversion of out of range value from "
-		           " '"
-		        << expr->type << "' to '" << type << "' is undefined\n"
-		        << error::setColor(error::NORMAL);
+		    << error::setColor(error::BOLD) << loc << ": "
+		    << error::setColor(error::BOLD_RED)
+		    << "error: " << error::setColor(error::BOLD)
+		    << "conversion of out of range value from "
+		       " '"
+		    << expr->type << "' to '" << type << "' is undefined\n"
+		    << error::setColor(error::NORMAL);
 		error::fatal();
 	    }
 	}

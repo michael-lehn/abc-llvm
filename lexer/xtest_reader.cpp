@@ -1,4 +1,3 @@
-#include <cstdio>
 #include <filesystem>
 #include <iostream>
 
@@ -7,9 +6,8 @@
 void
 usage(const char *prog)
 {
-    std::cerr << "usage: " << prog
-	<< "[ -Idir... ] "
-	<< "[ infile ]" << std::endl;
+    std::cerr << "usage: " << prog << "[ -Idir... ] "
+              << "[ infile ]" << std::endl;
     std::exit(1);
 }
 
@@ -24,26 +22,25 @@ main(int argc, char *argv[])
     for (int i = 1; i < argc; ++i) {
 	if (argv[i][0] == '-') {
 	    switch (argv[i][1]) {
-		case 'I':
-		    if (!argv[i][2] && i + 1 < argc) {
-			lexer::addSearchPath(argv[i + 1]);
-			++i;
-		    } else if (argv[i][2]) {
-			lexer::addSearchPath(&argv[i][2]);
-		    } else {
-			usage(argv[0]);
-		    }
-		    break;
-		default:
+	    case 'I':
+		if (!argv[i][2] && i + 1 < argc) {
+		    lexer::addSearchPath(argv[i + 1]);
+		    ++i;
+		} else if (argv[i][2]) {
+		    lexer::addSearchPath(&argv[i][2]);
+		} else {
 		    usage(argv[0]);
+		}
+		break;
+	    default:
+		usage(argv[0]);
 	    }
 	} else {
 	    infile = argv[i];
 	}
     }
-    infile.empty()
-	? lexer::openInputfile("")
-	: lexer::openInputfile(infile.c_str());
+    infile.empty() ? lexer::openInputfile("")
+                   : lexer::openInputfile(infile.c_str());
 
     do {
 	if (lexer::reader->ch == '\n') {
@@ -54,10 +51,8 @@ main(int argc, char *argv[])
 	    lexer::nextCh();
 	}
 
-	std::cerr
-	    << lexer::reader->path << ":"
-	    << lexer::reader->pos << ": "
-	    << "'" << char(lexer::reader->ch) << "'\n";
-	    std::cerr << "val = '" << lexer::reader->val << "'\n";
+	std::cerr << lexer::reader->path << ":" << lexer::reader->pos << ": "
+	          << "'" << char(lexer::reader->ch) << "'\n";
+	std::cerr << "val = '" << lexer::reader->val << "'\n";
     } while (!lexer::reader->eof());
 }

@@ -2,12 +2,13 @@
 #define LEXER_LEXER_HPP
 
 #include <filesystem>
+#include <set>
 
-#include "loc.hpp"
 #include "token.hpp"
 #include "tokenkind.hpp"
 
-namespace abc { namespace lexer {
+namespace abc {
+namespace lexer {
 
 void init();
 const std::set<std::filesystem::path> &includedFiles();
@@ -16,7 +17,7 @@ extern Token token, lastToken;
 
 TokenKind getToken();
 
-
-} } // namespace lexer, abc
+} // namespace lexer
+} // namespace abc
 
 #endif // LEXER_LEXER_HPP

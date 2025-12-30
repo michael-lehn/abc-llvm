@@ -1,10 +1,8 @@
 #ifndef UTIL_USTR_HPP
 #define UTIL_USTR_HPP
 
-#include <cstdint>
 #include <functional>
 #include <ostream>
-#include <set>
 #include <string>
 
 namespace abc {
@@ -15,11 +13,10 @@ class UStr
 	UStr();
 	UStr(const UStr &) = default;
 
-    protected:	
+    protected:
 	UStr(const std::string &s);
 
     public:
-
 	static void init();
 	static UStr create(const char *s);
 	static UStr create(const std::string &s);
@@ -72,14 +69,13 @@ operator<(const UStr &a, const UStr &b)
 
 } // namespace abc
 
-template<>
-struct std::hash<abc::UStr>
+template <> struct std::hash<abc::UStr>
 {
-    std::size_t operator()(const abc::UStr& s) const noexcept
-    {
-        return std::hash<const char *>{}(s.c_str());
-    }
+	std::size_t
+	operator()(const abc::UStr &s) const noexcept
+	{
+	    return std::hash<const char *>{}(s.c_str());
+	}
 };
-
 
 #endif // UTIL_USTR_HPP

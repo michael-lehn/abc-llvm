@@ -9,9 +9,8 @@
 
 #include "integerliteral.hpp"
 
-static const abc::Type *
-getIntType(const char *s, const char *end, std::uint8_t radix,
-           abc::lexer::Loc loc);
+static const abc::Type *getIntType(const char *s, const char *end,
+                                   std::uint8_t radix, abc::lexer::Loc loc);
 
 //------------------------------------------------------------------------------
 

@@ -9,12 +9,12 @@ class IntegerType : public Type
 {
     protected:
 	IntegerType(std::size_t numBits, bool signed_, bool constFlag,
-		    UStr name);
+	            UStr name);
 	std::size_t numBits_;
 	bool isSigned;
 
 	static const Type *create(std::size_t numBits, bool signed_,
-				  bool constFlag);
+	                          bool constFlag);
 
     public:
 	static void init();

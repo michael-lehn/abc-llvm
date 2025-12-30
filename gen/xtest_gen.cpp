@@ -23,9 +23,8 @@ defineGlobalVariable()
     externalVariableDeclaration("foo_global", intType);
 
     // definition with initializer
-    globalVariableDefinition("foo_global",
-			     intType, 
-			     getConstantInt("42", intType, 10));
+    globalVariableDefinition("foo_global", intType,
+                             getConstantInt("42", intType, 10));
 }
 
 void
@@ -54,14 +53,11 @@ getMainFnType()
     return FunctionType::create(intType, std::vector<const Type *>{});
 }
 
-
 void
 defineMain()
 {
-    gen::functionDefinitionBegin("main",
-				 getMainFnType(),
-				 std::vector<const char *>{},
-				 false);
+    gen::functionDefinitionBegin("main", getMainFnType(),
+                                 std::vector<const char *>{}, false);
     someInstructions();
     gen::functionDefinitionEnd();
 }

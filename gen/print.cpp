@@ -1,4 +1,3 @@
-#include <iostream>
 #include <system_error>
 
 #ifdef SUPPORT_SOLARIS
@@ -23,8 +22,8 @@ print(std::filesystem::path path, FileType fileType)
     auto f = llvm::raw_fd_ostream{path.c_str(), ec, llvm::sys::fs::OF_None};
 
     if (ec) {
-	llvm::errs() << "Could not open file: " << path << ". "
-	    << ec.message() << "\n";
+	llvm::errs() << "Could not open file: " << path << ". " << ec.message()
+	             << "\n";
 	std::exit(1);
     }
 
@@ -40,8 +39,8 @@ print(std::filesystem::path path, FileType fileType)
     PB.registerLoopAnalyses(LAM);
     PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
 
-    llvm::ModulePassManager MPM
-	= PB.buildPerModuleDefaultPipeline(getOptimizationLevel());
+    llvm::ModulePassManager MPM =
+        PB.buildPerModuleDefaultPipeline(getOptimizationLevel());
     MPM.run(*llvmModule, MAM);
 
     if (fileType == LLVM_FILE) {
@@ -52,13 +51,12 @@ print(std::filesystem::path path, FileType fileType)
     llvm::legacy::PassManager pass;
     auto llvmFileType = fileType == OBJECT_FILE
 #if LLVM_MAJOR_VERSION >= 18
-        ? llvm::CodeGenFileType::ObjectFile
-        : llvm::CodeGenFileType::AssemblyFile;
+                            ? llvm::CodeGenFileType::ObjectFile
+                            : llvm::CodeGenFileType::AssemblyFile;
 #else
-	? llvm::CodeGenFileType::CGFT_ObjectFile
-	: llvm::CodeGenFileType::CGFT_AssemblyFile;
+                            ? llvm::CodeGenFileType::CGFT_ObjectFile
+                            : llvm::CodeGenFileType::CGFT_AssemblyFile;
 #endif
-
 
     if (targetMachine->addPassesToEmitFile(pass, f, nullptr, llvmFileType)) {
 	llvm::errs() << "can't emit a file of this type";

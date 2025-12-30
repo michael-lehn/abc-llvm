@@ -1,5 +1,5 @@
-#include <iostream>
 #include <cinttypes>
+#include <iostream>
 
 #define OUT(x) std::cout << "@define " #x " \"" << x << "\"\n";
 

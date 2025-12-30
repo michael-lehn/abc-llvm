@@ -10,12 +10,11 @@ namespace gen {
 bool externalVariableDeclaration(const char *ident, const abc::Type *varType);
 
 void globalVariableDefinition(const char *ident, const abc::Type *varType,
-			      Constant initialValue = nullptr);
+                              Constant initialValue = nullptr);
 
 Constant loadStringAddress(const char *str);
 
 Value localVariableDefinition(const char *ident, const abc::Type *varType);
-
 
 void forgetAllVariables();
 void forgetAllLocalVariables();
@@ -25,12 +24,12 @@ Constant loadConstantAddress(const char *ident);
 Value loadAddress(const char *ident);
 
 Constant pointerIncrement(const abc::Type *type, Constant pointer,
-			  std::uint64_t offset);
+                          std::uint64_t offset);
 Value pointerIncrement(const abc::Type *type, Value pointer, Value offset);
 
 std::optional<Constant> pointerConstantDifference(const abc::Type *type,
-						  Value pointer1,
-						  Value pointer2);
+                                                  Value pointer1,
+                                                  Value pointer2);
 Value pointerDifference(const abc::Type *type, Value pointer1, Value pointer2);
 Value pointerToIndex(const abc::Type *type, Value pointer, std::size_t index);
 

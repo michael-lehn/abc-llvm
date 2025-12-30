@@ -4,9 +4,10 @@
 #include <vector>
 
 #include "token.hpp"
-#include "util/ustr.hpp"
 
-namespace abc { namespace lexer { namespace macro {
+namespace abc {
+namespace lexer {
+namespace macro {
 
 void init();
 bool ignoreToken();
@@ -18,6 +19,8 @@ bool expandMacro(Token identifier);
 bool hasToken();
 Token getToken();
 
-} } } // namespace macro, lexer, abc
+} // namespace macro
+} // namespace lexer
+} // namespace abc
 
 #endif // LEXER_MACRO_HPP

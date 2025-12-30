@@ -14,7 +14,8 @@ namespace abc {
 class CompoundExpr : public Expr
 {
     public:
-	enum DisplayOpt {
+	enum DisplayOpt
+	{
 	    NONE,
 	    PAREN,
 	    BRACE,
@@ -24,9 +25,8 @@ class CompoundExpr : public Expr
 
     protected:
 	CompoundExpr(std::vector<ExprPtr> &&expr, const Type *type,
-		     std::vector<Designator> &&designator,
-		     std::vector<const Expr *> &&parsedExpr,
-		     lexer::Loc loc);
+	             std::vector<Designator> &&designator,
+	             std::vector<const Expr *> &&parsedExpr, lexer::Loc loc);
 
 	UStr tmpId;
 	mutable DisplayOpt displayOpt = NONE;
@@ -38,9 +38,8 @@ class CompoundExpr : public Expr
 
     public:
 	static ExprPtr create(std::vector<Designator> &&designator,
-			      std::vector<ExprPtr> &&parsedExpr,
-			      const Type *type,
-			      lexer::Loc loc = lexer::Loc{});
+	                      std::vector<ExprPtr> &&parsedExpr,
+	                      const Type *type, lexer::Loc loc = lexer::Loc{});
 	void setDisplayOpt(DisplayOpt opt) const;
 
 	const std::vector<ExprPtr> expr;

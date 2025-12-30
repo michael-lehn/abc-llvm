@@ -1,20 +1,17 @@
+#include <set>
 #include <sstream>
 
 #include "functiontype.hpp"
 
 namespace abc {
 
-static bool
+bool
 operator<(const FunctionType &x, const FunctionType &y)
 {
-    const auto &tx = std::tuple{x.retType(),
-				x.ustr().c_str(),
-				x.paramType(),
-				x.hasConstFlag()};
-    const auto &ty = std::tuple{y.retType(),
-				y.ustr().c_str(),
-				y.paramType(),
-				y.hasConstFlag()};
+    const auto &tx = std::tuple{x.retType(), x.ustr().c_str(), x.paramType(),
+                                x.hasConstFlag()};
+    const auto &ty = std::tuple{y.retType(), y.ustr().c_str(), y.paramType(),
+                                y.hasConstFlag()};
     return tx < ty;
 }
 
@@ -23,20 +20,20 @@ static std::set<FunctionType> fnSet;
 //------------------------------------------------------------------------------
 
 FunctionType::FunctionType(const Type *ret, std::vector<const Type *> &&param,
-			   bool varg, bool constFlag, UStr name)
+                           bool varg, bool constFlag, UStr name)
     : Type{constFlag, name}, ret{ret}, param{std::move(param)}, varg{varg}
 {
 }
 
 const Type *
 FunctionType::create(const Type *ret, std::vector<const Type *> &&param,
-		     bool varg, bool constFlag, UStr alias)
+                     bool varg, bool constFlag, UStr alias)
 {
     auto ty = FunctionType{ret, std::move(param), varg, constFlag, alias};
     return &*fnSet.insert(ty).first;
 }
 
-void 
+void
 FunctionType::init()
 {
     fnSet.clear();
@@ -44,7 +41,7 @@ FunctionType::init()
 
 const Type *
 FunctionType::create(const Type *ret, std::vector<const Type *> &&param,
-		     bool varg)
+                     bool varg)
 {
     std::stringstream ss;
     ss << "fn (";
@@ -57,7 +54,6 @@ FunctionType::create(const Type *ret, std::vector<const Type *> &&param,
     ss << "): " << ret;
     return create(ret, std::move(param), varg, false, UStr::create(ss.str()));
 }
-
 
 const Type *
 FunctionType::getConst() const
@@ -79,7 +75,7 @@ FunctionType::hasSize() const
     return false;
 }
 
-// for function (sub-)types 
+// for function (sub-)types
 bool
 FunctionType::isFunction() const
 {

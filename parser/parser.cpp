@@ -46,8 +46,7 @@ isIdentifierToken(Token token)
 }
 
 //------------------------------------------------------------------------------
-static AstPtr
-parseTopLevelDeclaration();
+static AstPtr parseTopLevelDeclaration();
 
 /*
  * input-sequence = {top-level-declaration} EOI
@@ -78,18 +77,12 @@ parser()
 }
 
 //------------------------------------------------------------------------------
-static AstPtr
-parseFunctionDeclarationOrDefinition();
-static AstPtr
-parseExternDeclaration();
-static AstPtr
-parseGlobalVariableDefinition();
-static AstPtr
-parseTypeDeclaration();
-static AstPtr
-parseStructDeclaration();
-static AstPtr
-parseEnumDeclaration();
+static AstPtr parseFunctionDeclarationOrDefinition();
+static AstPtr parseExternDeclaration();
+static AstPtr parseGlobalVariableDefinition();
+static AstPtr parseTypeDeclaration();
+static AstPtr parseStructDeclaration();
+static AstPtr parseEnumDeclaration();
 
 /*
  * top-level-declaration = function-declaration-or-definition
@@ -114,11 +107,10 @@ parseTopLevelDeclaration()
 }
 
 //------------------------------------------------------------------------------
-static const Type *
-parseFunctionHeader(Token &fnName, std::vector<Token> &fnParamName);
+static const Type *parseFunctionHeader(Token &fnName,
+                                       std::vector<Token> &fnParamName);
 
-static AstPtr
-parseFunctionBody(bool required = false);
+static AstPtr parseFunctionBody(bool required = false);
 
 /*
  * function-declaration-or-definition
@@ -163,8 +155,8 @@ parseFunctionDeclarationOrDefinition()
 }
 
 //------------------------------------------------------------------------------
-static const Type *
-parseFunctionType(Token &fnName, std::vector<Token> &fnParamName);
+static const Type *parseFunctionType(Token &fnName,
+                                     std::vector<Token> &fnParamName);
 
 /*
  * function-header
@@ -181,9 +173,9 @@ parseFunctionHeader(Token &fnName, std::vector<Token> &fnParamName)
 }
 
 //------------------------------------------------------------------------------
-static bool
-parseFunctionParameterList(std::vector<Token> &paramName,
-                           std::vector<const Type *> &paramType, bool &hasVarg);
+static bool parseFunctionParameterList(std::vector<Token> &paramName,
+                                       std::vector<const Type *> &paramType,
+                                       bool &hasVarg);
 
 /*
  * function-type
@@ -298,11 +290,10 @@ parseFunctionParameterList(std::vector<Token> &paramName,
 }
 
 //------------------------------------------------------------------------------
-static const Type *
-parseFunctionDeclaration(Token &fnIdent, std::vector<Token> &param);
+static const Type *parseFunctionDeclaration(Token &fnIdent,
+                                            std::vector<Token> &param);
 
-static AstListPtr
-parseExternVariableDeclaration();
+static AstListPtr parseExternVariableDeclaration();
 
 /*
  * extern-declaration
@@ -356,8 +347,7 @@ parseFunctionDeclaration(Token &fnIdent, std::vector<Token> &param)
 }
 
 //------------------------------------------------------------------------------
-static AstPtr
-parseStatementOrDeclarationList();
+static AstPtr parseStatementOrDeclarationList();
 
 /*
  * function-body = "{" statement-or-declaration-list "}"
@@ -386,8 +376,7 @@ parseFunctionBody(bool required)
 }
 
 //------------------------------------------------------------------------------
-static const Type *
-parseUnqualifiedType(bool allowZeroDim);
+static const Type *parseUnqualifiedType(bool allowZeroDim);
 
 /*
  * type = [const] unqualified-type
@@ -417,10 +406,8 @@ parseType(bool allowZeroDim)
 }
 
 //------------------------------------------------------------------------------
-static const Type *
-parsePointerType();
-static const Type *
-parseArrayType(bool allowZeroDim);
+static const Type *parsePointerType();
+static const Type *parseArrayType(bool allowZeroDim);
 
 /*
  * unqualified-type = identifier
@@ -451,10 +438,8 @@ parseUnqualifiedType(bool allowZeroDim)
 }
 
 //------------------------------------------------------------------------------
-static AstPtr
-parseDeclaration();
-static AstPtr
-parseStatement();
+static AstPtr parseDeclaration();
+static AstPtr parseStatement();
 
 /*
  * statement-or-declaration-list = "{" { statement | declaration } "}"
@@ -471,8 +456,7 @@ parseStatementOrDeclarationList()
 }
 
 //------------------------------------------------------------------------------
-static bool
-parseIdentifierList(std::vector<Token> &identifier);
+static bool parseIdentifierList(std::vector<Token> &identifier);
 
 /*
  * extern-variable-declaration = identifier-list ":" type
@@ -538,8 +522,7 @@ parseIdentifierList(std::vector<Token> &identifier)
 }
 
 //------------------------------------------------------------------------------
-static AstListPtr
-parseVariableDefinitionList();
+static AstListPtr parseVariableDefinitionList();
 
 /*
  * global-variable-definition = "global" variable-definition-list ";"
@@ -600,8 +583,7 @@ parseStaticVariableDefinition()
 }
 
 //------------------------------------------------------------------------------
-static AstVarPtr
-parseVariableDefinition();
+static AstVarPtr parseVariableDefinition();
 
 /*
  * variable-definition-list = variable-definition { "," variable-definition }
@@ -635,8 +617,7 @@ parseVariableDefinitionList()
 }
 
 //------------------------------------------------------------------------------
-static AstInitializerExprPtr
-parseInitializerExpression(const Type *type);
+static AstInitializerExprPtr parseInitializerExpression(const Type *type);
 
 /*
  * variable-definition = identifier-list ":" type
@@ -768,8 +749,7 @@ parseInitializerExpression(const Type *type)
 }
 
 //------------------------------------------------------------------------------
-static AstPtr
-parseLocalVariableDefinition();
+static AstPtr parseLocalVariableDefinition();
 
 /*
  * declaration = type-declaration
@@ -820,30 +800,18 @@ parseLocalVariableDefinition()
 }
 
 //------------------------------------------------------------------------------
-static AstPtr
-parseCompoundStatement(bool required = false);
-static AstPtr
-parseIfStatement();
-static AstPtr
-parseSwitchStatement();
-static AstPtr
-parseWhileStatement();
-static AstPtr
-parseDoWhileStatement();
-static AstPtr
-parseForStatement();
-static AstPtr
-parseReturnStatement();
-static AstPtr
-parseBreakStatement();
-static AstPtr
-parseContinueStatement();
-static AstPtr
-parseGotoStatement();
-static AstPtr
-parseLabelDefinition();
-static AstPtr
-parseExpressionStatement();
+static AstPtr parseCompoundStatement(bool required = false);
+static AstPtr parseIfStatement();
+static AstPtr parseSwitchStatement();
+static AstPtr parseWhileStatement();
+static AstPtr parseDoWhileStatement();
+static AstPtr parseForStatement();
+static AstPtr parseReturnStatement();
+static AstPtr parseBreakStatement();
+static AstPtr parseContinueStatement();
+static AstPtr parseGotoStatement();
+static AstPtr parseLabelDefinition();
+static AstPtr parseExpressionStatement();
 
 /*
  * statement = compound-statement
@@ -1373,8 +1341,7 @@ parseTypeDeclaration()
 }
 
 //------------------------------------------------------------------------------
-static bool
-parseEnumConstantDeclaration(AstEnumDeclPtr &enumDecl);
+static bool parseEnumConstantDeclaration(AstEnumDeclPtr &enumDecl);
 
 /*
  * enum-declaration
@@ -1428,8 +1395,7 @@ parseEnumDeclaration()
 }
 
 //------------------------------------------------------------------------------
-static bool
-parseEnumConstantList(AstEnumDeclPtr &enumDecl);
+static bool parseEnumConstantList(AstEnumDeclPtr &enumDecl);
 
 /*
  * enum-constant-declaration = "{" enum-constant-list "}" ";"
@@ -1503,8 +1469,7 @@ parseEnumConstantList(AstEnumDeclPtr &enumDecl)
 }
 
 //------------------------------------------------------------------------------
-static bool
-parseStructMemberDeclaration(AstStructDecl *structDecl);
+static bool parseStructMemberDeclaration(AstStructDecl *structDecl);
 
 /*
  * struct-declaration = "struct" identifier (";" | struct-member-declaration )
@@ -1542,9 +1507,8 @@ parseStructDeclaration()
 }
 
 //------------------------------------------------------------------------------
-static bool
-parseStructMemberList(AstStructDecl *structDecl, std::size_t &index,
-                      bool unionSection);
+static bool parseStructMemberList(AstStructDecl *structDecl, std::size_t &index,
+                                  bool unionSection);
 
 /*
  * struct-member-declaration = "{" { struct-member-list } "}" ";"
@@ -1700,8 +1664,7 @@ parsePointerType()
 }
 
 //------------------------------------------------------------------------------
-static const Type *
-parseArrayDimAndType(bool allowZeroDim = false);
+static const Type *parseArrayDimAndType(bool allowZeroDim = false);
 
 /*
  * array-type = "array" array-dim-and-type

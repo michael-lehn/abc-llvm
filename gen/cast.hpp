@@ -3,7 +3,6 @@
 
 #include "type/type.hpp"
 
-#include "constant.hpp"
 #include "gen.hpp"
 
 namespace gen {
@@ -14,4 +13,3 @@ Constant cast(Constant val, const abc::Type *fromType, const abc::Type *toType);
 } // namespace gen
 
 #endif // GEN_CAST_HPP
-

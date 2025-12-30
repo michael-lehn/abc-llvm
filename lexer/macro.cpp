@@ -1,21 +1,21 @@
 #include <cassert>
-#include <iostream>
 #include <unordered_set>
 #include <vector>
 
 #include "macro.hpp"
 
-template<>
-struct std::hash<abc::lexer::Token>
+template <> struct std::hash<abc::lexer::Token>
 {
-    std::size_t operator()(const abc::lexer::Token& token) const noexcept
-    {
-        return std::hash<const char *>{}(token.val.c_str());
-    }
+	std::size_t
+	operator()(const abc::lexer::Token &token) const noexcept
+	{
+	    return std::hash<const char *>{}(token.val.c_str());
+	}
 };
 
-
-namespace abc { namespace lexer { namespace macro {
+namespace abc {
+namespace lexer {
+namespace macro {
 
 static std::unordered_map<Token, std::vector<Token>> define;
 static bool insideIfdef;
@@ -115,4 +115,6 @@ getToken()
     return t;
 }
 
-} } } // namespace macro, lexer, abc
+} // namespace macro
+} // namespace lexer
+} // namespace abc

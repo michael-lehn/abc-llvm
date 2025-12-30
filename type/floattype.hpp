@@ -8,7 +8,8 @@ namespace abc {
 class FloatType : public Type
 {
     protected:
-	enum FloatKind {
+	enum FloatKind
+	{
 	    FLOAT_KIND,
 	    DOUBLE_KIND
 	};
@@ -30,8 +31,7 @@ class FloatType : public Type
 	bool isFloat() const override;
 	bool isDouble() const override;
 
-	friend bool
-	    operator<(const FloatType &x, const FloatType &y);
+	friend bool operator<(const FloatType &x, const FloatType &y);
 };
 
 } // namespace abc

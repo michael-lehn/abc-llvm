@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "constant.hpp"
 #include "gen.hpp"
 #include "gentype.hpp"
@@ -64,8 +62,8 @@ getConstantFloat(double val, const abc::Type *type)
     return constFP;
 }
 
-Constant getConstantArray(const std::vector<Constant> &val,
-			  const abc::Type *arrayType)
+Constant
+getConstantArray(const std::vector<Constant> &val, const abc::Type *arrayType)
 {
     assert(arrayType);
     assert(arrayType->isArray());
@@ -74,8 +72,8 @@ Constant getConstantArray(const std::vector<Constant> &val,
     return llvm::ConstantArray::get(llvmArrayType, val);
 }
 
-Constant getConstantStruct(const std::vector<Constant> &val,
-			   const abc::Type *structType)
+Constant
+getConstantStruct(const std::vector<Constant> &val, const abc::Type *structType)
 {
     assert(structType);
     assert(structType->isStruct());

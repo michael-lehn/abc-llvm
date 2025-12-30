@@ -11,17 +11,16 @@ namespace abc {
 class IntegerLiteral : public Expr
 {
     protected:
-	IntegerLiteral(UStr val, std::uint8_t  radix, const Type *type,
-		       lexer::Loc loc);
+	IntegerLiteral(UStr val, std::uint8_t radix, const Type *type,
+	               lexer::Loc loc);
 
     public:
-	static ExprPtr create(UStr val, std::uint8_t  radix = 10,
-			      const Type *type = nullptr,
-			      lexer::Loc loc = lexer::Loc{});
+	static ExprPtr create(UStr val, std::uint8_t radix = 10,
+	                      const Type *type = nullptr,
+	                      lexer::Loc loc = lexer::Loc{});
 
-	static ExprPtr create(std::int64_t val,
-			      const Type *type = nullptr,
-			      lexer::Loc loc = lexer::Loc{});
+	static ExprPtr create(std::int64_t val, const Type *type = nullptr,
+	                      lexer::Loc loc = lexer::Loc{});
 
 	const UStr val;
 	const std::uint8_t radix;
@@ -44,5 +43,5 @@ class IntegerLiteral : public Expr
 };
 
 } // namespace abc
- 
+
 #endif // EXPR_INTEGERLITERAL_HPP

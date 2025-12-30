@@ -1,16 +1,16 @@
 #include <cassert>
+#include <set>
+#include <tuple>
 
 #include "nullptrtype.hpp"
 
 namespace abc {
 
-static bool
+bool
 operator<(const NullptrType &x, const NullptrType &y)
 {
-    const auto &tx = std::tuple{x.ustr().c_str(),
-				x.hasConstFlag()};
-    const auto &ty = std::tuple{y.ustr().c_str(),
-				y.hasConstFlag()};
+    const auto &tx = std::tuple{x.ustr().c_str(), x.hasConstFlag()};
+    const auto &ty = std::tuple{y.ustr().c_str(), y.hasConstFlag()};
 
     return tx < ty;
 }
@@ -19,10 +19,7 @@ static std::set<NullptrType> nullptrSet;
 
 //------------------------------------------------------------------------------
 
-NullptrType::NullptrType(bool constFlag, UStr name)
-    : Type{constFlag, name}
-{
-}
+NullptrType::NullptrType(bool constFlag, UStr name) : Type{constFlag, name} {}
 
 const Type *
 NullptrType::create(bool constFlag, UStr name)
@@ -31,7 +28,7 @@ NullptrType::create(bool constFlag, UStr name)
     return &*nullptrSet.insert(ty).first;
 }
 
-void 
+void
 NullptrType::init()
 {
     nullptrSet.clear();

@@ -3,12 +3,12 @@
 
 #include "type/type.hpp"
 
-#include "constant.hpp"
 #include "gen.hpp"
 
 namespace gen {
 
-enum InstructionOp {
+enum InstructionOp
+{
     FADD,
     FSUB,
     FMUL,
@@ -40,7 +40,7 @@ enum InstructionOp {
     AND,
     OR,
     XOR,
-    SHL, // shift left
+    SHL,  // shift left
     LSHR, // logical shift right
     ASHR, // arithmetic shift right
 };
@@ -53,7 +53,7 @@ JumpOrigin jumpInstruction(Value condition, Label trueLabel, Label falseLabel);
 
 using CaseLabel = std::pair<ConstantInt, Label>;
 JumpOrigin jumpInstruction(Value condition, Label defaultLabel,
-			   const std::vector<CaseLabel> &caseLabel);
+                           const std::vector<CaseLabel> &caseLabel);
 
 Value phi(Value a, Label labelA, Value b, Label labelB, const abc::Type *type);
 

@@ -1,9 +1,9 @@
 #include <cassert>
-#include <iostream>
 
 #include "entry.hpp"
 
-namespace abc { namespace symtab {
+namespace abc {
+namespace symtab {
 
 Entry::Entry(Kind kind, lexer::Loc loc, UStr id, const Type *type)
     : id{id}, kind{kind}, loc{loc}, type{type}, expr{nullptr}
@@ -74,7 +74,7 @@ Entry::setExternalLinkage()
     assert(variableDeclaration());
     // external declaration **can not** follow a static declaration
     if (linkage == INTERNAL_LINKAGE) {
-        return false;
+	return false;
     }
     linkage = EXTERNAL_LINKAGE;
     return true;
@@ -99,8 +99,8 @@ Entry::setLinkage()
 {
     assert(variableDeclaration());
     if (linkage == NO_LINKAGE) {
-        // By default linkage is internal
-        setInternalLinkage();
+	// By default linkage is internal
+	setInternalLinkage();
     }
     return true;
 }
@@ -121,5 +121,5 @@ operator!=(const Entry &a, const Entry &b)
     return false;
 }
 
-} } // namespace symtab, abc
-
+} // namespace symtab
+} // namespace abc

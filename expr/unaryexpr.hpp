@@ -8,7 +8,7 @@ namespace abc {
 
 class UnaryExpr : public Expr
 {
-   public:
+    public:
 	enum Kind
 	{
 	    ADDRESS,
@@ -27,7 +27,7 @@ class UnaryExpr : public Expr
 
     public:
 	static ExprPtr create(Kind kind, ExprPtr &&child,
-			      lexer::Loc loc = lexer::Loc{});
+	                      lexer::Loc loc = lexer::Loc{});
 
 	const Kind kind;
 	const ExprPtr child;
@@ -50,7 +50,7 @@ class UnaryExpr : public Expr
 	gen::Constant loadConstantAddress() const override;
 	gen::Value loadAddress() const override;
 	void condition(gen::Label trueLabel,
-		       gen::Label falseLabel) const override;
+	               gen::Label falseLabel) const override;
 
 	// for debugging and educational purposes
 	void print(int indent) const override;

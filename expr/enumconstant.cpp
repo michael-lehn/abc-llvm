@@ -1,12 +1,7 @@
-#include <charconv>
 #include <iomanip>
 #include <iostream>
-#include <sstream>
 
 #include "gen/constant.hpp"
-#include "gen/instruction.hpp"
-#include "lexer/error.hpp"
-#include "type/integertype.hpp"
 
 #include "enumconstant.hpp"
 
@@ -15,14 +10,14 @@
 namespace abc {
 
 EnumConstant::EnumConstant(UStr name, std::int64_t value, const Type *type,
-			   lexer::Loc loc)
+                           lexer::Loc loc)
     : Expr{loc, type}, name{name}, value{value}
 {
 }
 
 ExprPtr
 EnumConstant::create(UStr name, std::int64_t value, const Type *type,
-		     lexer::Loc loc)
+                     lexer::Loc loc)
 {
     assert(!name.empty());
     auto p = new EnumConstant{name, value, type, loc};

@@ -41,12 +41,10 @@ extern std::string mcu;
 
 extern const char *moduleName;
 
-void
-init(const char *name = nullptr,
-     llvm::OptimizationLevel optLevel = llvm::OptimizationLevel::O0);
+void init(const char *name = nullptr,
+          llvm::OptimizationLevel optLevel = llvm::OptimizationLevel::O0);
 
-llvm::OptimizationLevel
-getOptimizationLevel();
+llvm::OptimizationLevel getOptimizationLevel();
 
 } // namespace gen
 

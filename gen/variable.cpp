@@ -25,8 +25,7 @@ static std::unordered_map<std::string, std::string> stringMap;
 
 // Map with all local variables
 static std::unordered_map<const char *, llvm::AllocaInst *> localVariable;
-static Value
-lookup(const char *ident);
+static Value lookup(const char *ident);
 
 //------------------------------------------------------------------------------
 

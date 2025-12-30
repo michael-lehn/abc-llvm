@@ -9,7 +9,8 @@
 #include "expr.hpp"
 #include "unaryexpr.hpp"
 
-namespace abc { namespace promotion {
+namespace abc {
+namespace promotion {
 
 /*
  * Rules for call expressions
@@ -26,7 +27,7 @@ CallResult call(ExprPtr &&fn, std::vector<ExprPtr> &&param, lexer::Loc *loc);
 using BinaryResult = std::tuple<ExprPtr, ExprPtr, const Type *>;
 
 BinaryResult binary(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
-		    lexer::Loc *loc = nullptr);
+                    lexer::Loc *loc = nullptr);
 
 /*
  * Rules for unary expressions
@@ -35,8 +36,9 @@ BinaryResult binary(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 using UnaryResult = std::pair<ExprPtr, const Type *>;
 
 UnaryResult unary(UnaryExpr::Kind kind, ExprPtr &&child,
-		  lexer::Loc *loc = nullptr);
+                  lexer::Loc *loc = nullptr);
 
-} } // namespace promotion, abc
+} // namespace promotion
+} // namespace abc
 
 #endif // EXPR_PROMOTION_HPP

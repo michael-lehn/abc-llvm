@@ -1,4 +1,3 @@
-#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -9,10 +8,9 @@
 void
 usage(const char *prog)
 {
-    std::cerr << "usage: " << prog
-	<< "[ -o outfile ] "
-	<< "[ -Idir... ] "
-	<< "[ infile ]" << std::endl;
+    std::cerr << "usage: " << prog << "[ -o outfile ] "
+              << "[ -Idir... ] "
+              << "[ infile ]" << std::endl;
     std::exit(1);
 }
 
@@ -27,36 +25,35 @@ main(int argc, char *argv[])
     for (int i = 1; i < argc; ++i) {
 	if (argv[i][0] == '-') {
 	    switch (argv[i][1]) {
-		case 'o':
-		    if (!argv[i][2] && i + 1 < argc) {
-			outfile = argv[i + 1];
-			++i;
-		    } else if (argv[i][2]) {
-			outfile = &argv[i][2];
-		    } else {
-			usage(argv[0]);
-		    }
-		    break;
-		case 'I':
-		    if (!argv[i][2] && i + 1 < argc) {
-			lexer::addSearchPath(argv[i + 1]);
-			++i;
-		    } else if (argv[i][2]) {
-			lexer::addSearchPath(&argv[i][2]);
-		    } else {
-			usage(argv[0]);
-		    }
-		    break;
-		default:
+	    case 'o':
+		if (!argv[i][2] && i + 1 < argc) {
+		    outfile = argv[i + 1];
+		    ++i;
+		} else if (argv[i][2]) {
+		    outfile = &argv[i][2];
+		} else {
 		    usage(argv[0]);
+		}
+		break;
+	    case 'I':
+		if (!argv[i][2] && i + 1 < argc) {
+		    lexer::addSearchPath(argv[i + 1]);
+		    ++i;
+		} else if (argv[i][2]) {
+		    lexer::addSearchPath(&argv[i][2]);
+		} else {
+		    usage(argv[0]);
+		}
+		break;
+	    default:
+		usage(argv[0]);
 	    }
 	} else {
 	    infile = argv[i];
 	}
     }
-    infile.empty()
-	? lexer::openInputfile("")
-	: lexer::openInputfile(infile.c_str());
+    infile.empty() ? lexer::openInputfile("")
+                   : lexer::openInputfile(infile.c_str());
 
     std::ostream *fp = &std::cout;
     std::ofstream fout;

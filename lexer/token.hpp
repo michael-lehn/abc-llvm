@@ -5,7 +5,8 @@
 #include "tokenkind.hpp"
 #include "util/ustr.hpp"
 
-namespace abc { namespace lexer {
+namespace abc {
+namespace lexer {
 
 class Token
 {
@@ -15,25 +16,28 @@ class Token
 	Token(const Token &) = default;
 	Token(Loc loc, TokenKind kind, UStr val)
 	    : loc{loc}, kind{kind}, val{val}, processedVal{val}
-	{}
+	{
+	}
 
 	Token(Loc loc, TokenKind kind, UStr val, UStr processedVal)
 	    : loc{loc}, kind{kind}, val{val}, processedVal{processedVal}
-	{}
+	{
+	}
 
 	Token &operator=(const Token &) = default;
 	Token &operator=(Token &&) = default;
 
-	Loc	    loc;
-	TokenKind   kind = TokenKind::BAD;
-	UStr	    val;
-	UStr	    processedVal;
+	Loc loc;
+	TokenKind kind = TokenKind::BAD;
+	UStr val;
+	UStr processedVal;
 };
 
 std::ostream &operator<<(std::ostream &out, const Token &token);
 
 bool operator==(const abc::lexer::Token &x, const abc::lexer::Token &y);
 
-} } // namespace lexer, abc
+} // namespace lexer
+} // namespace abc
 
 #endif // LEXER_TOKEN_HPP
