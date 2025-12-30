@@ -1,8 +1,6 @@
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
-#include "gen/constant.hpp"
-#include "gen/instruction.hpp"
 #include "gen/variable.hpp"
 #include "lexer/error.hpp"
 
@@ -11,40 +9,39 @@
 namespace abc {
 
 Member::Member(ExprPtr &&structure, UStr member, const Type *type,
-	       std::size_t index, lexer::Loc loc)
-    : Expr{loc, type}, structure{std::move(structure)}, member{member}
-    , index{index}
+               std::size_t index, lexer::Loc loc)
+    : Expr{loc, type}, structure{std::move(structure)}, member{member},
+      index{index}
 {
 }
 
 ExprPtr
 Member::create(ExprPtr &&structure, bool derefStructPtr, UStr member,
-	       lexer::Loc loc)
+               lexer::Loc loc)
 {
     assert(structure);
     assert(structure->type);
 
     if (derefStructPtr && !structure->type->isPointer()) {
 	error::location(loc);
-	error::out() << error::setColor(error::BOLD) << loc
-	    << ": " << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << structure << " is not a pointer\n"
-	    << error::setColor(error::NORMAL);
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD) << structure
+	             << " is not a pointer\n"
+	             << error::setColor(error::NORMAL);
 	error::fatal();
     }
 
-    auto structureType = derefStructPtr
-	? structure->type->refType()
-	: structure->type;
+    auto structureType =
+        derefStructPtr ? structure->type->refType() : structure->type;
 
     if (!structure->hasAddress()) {
 	error::location(loc);
-	error::out() << error::setColor(error::BOLD) << structure->loc
-	    << ": " << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << structure << " has no address (internal compiler error)\n"
-	    << error::setColor(error::NORMAL);
+	error::out() << error::setColor(error::BOLD) << structure->loc << ": "
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD) << structure
+	             << " has no address (internal compiler error)\n"
+	             << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
@@ -65,38 +62,37 @@ Member::create(ExprPtr &&structure, bool derefStructPtr, UStr member,
     } else if (structureType->isStruct() && !structureType->hasSize()) {
 	error::location(loc);
 	error::out() << error::setColor(error::BOLD) << loc << ": "
-	    << ": " << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << "'" << structureType
-	    << "' is an incomplete struct\n"
-	    << error::setColor(error::NORMAL);
+	             << ": " << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD) << "'"
+	             << structureType << "' is an incomplete struct\n"
+	             << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     } else {
 	error::location(loc);
-	error::out() << error::setColor(error::BOLD) << loc
-	    << ": " << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << "type " << structureType << " is not a struct\n"
-	    << error::setColor(error::NORMAL);
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD) << "type "
+	             << structureType << " is not a struct\n"
+	             << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;
     }
     if (!type) {
 	error::location(loc);
 	error::out() << error::setColor(error::BOLD) << loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << structure << " of type "
-	    << structure->type << " has no member " << member << "\n"
-	    << error::setColor(error::NORMAL);
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD) << structure
+	             << " of type " << structure->type << " has no member "
+	             << member << "\n"
+	             << error::setColor(error::NORMAL);
 	if (structureType->isStruct()) {
 	    error::out() << error::setColor(error::BOLD) << "members are:\n";
 	    const auto &memberName = structureType->memberName();
 	    const auto &memberType = structureType->memberType();
 	    for (std::size_t i = 0; i < memberName.size(); ++i) {
-		error::out() << "\t" <<  memberName[i] << " of type "
-		    << memberType[i] << "\n";
+		error::out() << "\t" << memberName[i] << " of type "
+		             << memberType[i] << "\n";
 	    }
 	    error::out() << error::setColor(error::NORMAL);
 	}
@@ -146,11 +142,11 @@ gen::Value
 Member::loadAddress() const
 {
     auto structureType = structure->type->isPointer()
-	? structure->type->refType()
-	: structure->type;
+                             ? structure->type->refType()
+                             : structure->type;
     auto structureAddress = structure->type->isPointer()
-	? structure->loadValue()
-	: structure->loadAddress();
+                                ? structure->loadValue()
+                                : structure->loadAddress();
     return gen::pointerToIndex(structureType, structureAddress, index);
 }
 
@@ -161,11 +157,10 @@ Member::print(int indent) const
     if (indent) {
 	std::cerr << std::setfill(' ') << std::setw(indent) << ' ';
     }
-    std::cerr << structure
-	<< (structure->type->isPointer() ? "->" : ".") << member
-	<< " [ " << type << " ] " << std::endl;
+    std::cerr << structure << (structure->type->isPointer() ? "->" : ".")
+              << member << " [ " << type << " ] " << std::endl;
 }
-    
+
 void
 Member::printFlat(std::ostream &out, int prec) const
 {

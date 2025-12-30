@@ -2,12 +2,9 @@
 #include <iostream>
 #include <sstream>
 
-#include "gen/cast.hpp"
 #include "gen/constant.hpp"
-#include "gen/instruction.hpp"
 #include "gen/variable.hpp"
 #include "lexer/error.hpp"
-#include "type/arraytype.hpp"
 #include "type/integertype.hpp"
 
 #include "compoundexpr.hpp"
@@ -16,11 +13,11 @@
 namespace abc {
 
 CompoundExpr::CompoundExpr(std::vector<ExprPtr> &&expr, const Type *type,
-			   std::vector<Designator> &&designator,
-			   std::vector<const Expr *> &&parsedExpr,
-			   lexer::Loc loc)
-    : Expr{loc, type}, designator{std::move(designator)}
-    , parsedExpr{std::move(parsedExpr)}, expr{std::move(expr)}
+                           std::vector<Designator> &&designator,
+                           std::vector<const Expr *> &&parsedExpr,
+                           lexer::Loc loc)
+    : Expr{loc, type}, designator{std::move(designator)},
+      parsedExpr{std::move(parsedExpr)}, expr{std::move(expr)}
 {
     static std::size_t idCount;
     std::stringstream ss;
@@ -43,9 +40,8 @@ CompoundExpr::initTmp() const
     } else if (type->isArray()) {
 	for (std::size_t i = 0; i < type->dim(); ++i) {
 	    auto index = gen::getConstantInt(i, IntegerType::createSizeType());
-	    auto elementAddr = gen::pointerIncrement(type->refType(),
-						     tmpAddr,
-						     index);
+	    auto elementAddr =
+	        gen::pointerIncrement(type->refType(), tmpAddr, index);
 	    gen::store(val[i], elementAddr);
 	}
     } else if (type->isStruct()) {
@@ -60,8 +56,8 @@ CompoundExpr::initTmp() const
 
 ExprPtr
 CompoundExpr::create(std::vector<Designator> &&designator,
-		     std::vector<ExprPtr> &&parsedExpr, const Type *type,
-		     lexer::Loc loc)
+                     std::vector<ExprPtr> &&parsedExpr, const Type *type,
+                     lexer::Loc loc)
 {
     assert(type);
     assert(type->hasSize());
@@ -86,27 +82,23 @@ CompoundExpr::create(std::vector<Designator> &&designator,
 	}
 	if (expr[index]) {
 	    error::location(parsedExpr[i]->loc);
-	    error::out() << error::setColor(error::BOLD)
-		<< parsedExpr[i]->loc << ": "
-		<< error::setColor(error::BOLD_BLUE) << "warning: "
-		<< error::setColor(error::BOLD)
-		<< "initializer overrides prior initialization\n"
-		<< error::setColor(error::NORMAL);
+	    error::out() << error::setColor(error::BOLD) << parsedExpr[i]->loc
+	                 << ": " << error::setColor(error::BOLD_BLUE)
+	                 << "warning: " << error::setColor(error::BOLD)
+	                 << "initializer overrides prior initialization\n"
+	                 << error::setColor(error::NORMAL);
 	    error::location(expr[index]->loc);
-	    error::out() << error::setColor(error::BOLD)
-		<< expr[index]->loc << ": "
-		<< error::setColor(error::BOLD_BLUE) << "note: "
-		<< error::setColor(error::BOLD)
-		<< "previous initialization here\n"
-		<< error::setColor(error::NORMAL);
+	    error::out() << error::setColor(error::BOLD) << expr[index]->loc
+	                 << ": " << error::setColor(error::BOLD_BLUE)
+	                 << "note: " << error::setColor(error::BOLD)
+	                 << "previous initialization here\n"
+	                 << error::setColor(error::NORMAL);
 	}
 	expr[index] = ImplicitCast::create(std::move(parsedExpr[i]), ty);
 	parsedExpr_.push_back(expr[index].get());
     }
-    auto p = new CompoundExpr{std::move(expr), type,
-			      std::move(designator),
-			      std::move(parsedExpr_),
-			      loc};
+    auto p = new CompoundExpr{std::move(expr), type, std::move(designator),
+                              std::move(parsedExpr_), loc};
     return std::unique_ptr<CompoundExpr>{p};
 }
 
@@ -131,7 +123,7 @@ CompoundExpr::isLValue() const
 bool
 CompoundExpr::isConst() const
 {
-    for (const auto &e: expr) {
+    for (const auto &e : expr) {
 	if (e && !e->isConst()) {
 	    return false;
 	}

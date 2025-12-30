@@ -1,21 +1,15 @@
-#include <charconv>
 #include <iomanip>
 #include <iostream>
-#include <sstream>
 
 #include "gen/constant.hpp"
 #include "gen/instruction.hpp"
-#include "lexer/error.hpp"
 #include "type/nullptrtype.hpp"
 
 #include "nullptr.hpp"
 
 namespace abc {
 
-Nullptr::Nullptr(lexer::Loc loc)
-    : Expr{loc, NullptrType::create()}
-{
-}
+Nullptr::Nullptr(lexer::Loc loc) : Expr{loc, NullptrType::create()} {}
 
 ExprPtr
 Nullptr::create(lexer::Loc loc)

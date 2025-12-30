@@ -4,28 +4,28 @@
 #include <sstream>
 
 #include "gen/constant.hpp"
-#include "gen/instruction.hpp"
 #include "lexer/error.hpp"
 #include "type/integertype.hpp"
 
 #include "integerliteral.hpp"
 
-static const abc::Type *getIntType(const char *s, const char *end,
-			           std::uint8_t radix, abc::lexer::Loc loc);
+static const abc::Type *
+getIntType(const char *s, const char *end, std::uint8_t radix,
+           abc::lexer::Loc loc);
 
 //------------------------------------------------------------------------------
 
 namespace abc {
 
-IntegerLiteral::IntegerLiteral(UStr val, std::uint8_t  radix, const Type *type,
-			       lexer::Loc loc)
+IntegerLiteral::IntegerLiteral(UStr val, std::uint8_t radix, const Type *type,
+                               lexer::Loc loc)
     : Expr{loc, type}, val{val}, radix{radix}
 {
 }
 
 ExprPtr
-IntegerLiteral::create(UStr val, std::uint8_t  radix, const Type *type,
-		       lexer::Loc loc)
+IntegerLiteral::create(UStr val, std::uint8_t radix, const Type *type,
+                       lexer::Loc loc)
 {
     assert(val.c_str());
     assert(val.length());
@@ -116,7 +116,7 @@ IntegerLiteral::printFlat(std::ostream &out, int prec) const
 template <typename IntType, std::uint8_t numBits>
 static bool
 getIntType(const char *s, const char *end, std::uint8_t radix,
-	   const abc::Type *&ty)
+           const abc::Type *&ty)
 {
     IntType result;
     auto [ptr, ec] = std::from_chars(s, end, result, radix);
@@ -124,25 +124,23 @@ getIntType(const char *s, const char *end, std::uint8_t radix,
 	ty = abc::IntegerType::createSigned(numBits);
 	return true;
     }
-    ty = nullptr; 
+    ty = nullptr;
     return false;
 }
 
 static const abc::Type *
 getIntType(const char *s, const char *end, std::uint8_t radix,
-	   abc::lexer::Loc loc)
+           abc::lexer::Loc loc)
 {
-    //TODO: Handle type of integer literals like in Rust. Currently handled
+    // TODO: Handle type of integer literals like in Rust. Currently handled
     //	    like in C, i.e. it is at least of type 'int' (where i32 is choosen)
     const abc::Type *ty = nullptr;
-    if (getIntType<std::int32_t, 32>(s, end, radix, ty)
-     || getIntType<std::int64_t, 64>(s, end, radix, ty))
-    {
+    if (getIntType<std::int32_t, 32>(s, end, radix, ty) ||
+        getIntType<std::int64_t, 64>(s, end, radix, ty)) {
 	return ty;
     }
     abc::error::out() << loc << ": warning: signed integer '" << s
-	<< "' does not fit into 64 bits"
-	<< std::endl;
+                      << "' does not fit into 64 bits" << std::endl;
     abc::error::warning();
     return abc::IntegerType::createSigned(64);
 }

@@ -1,12 +1,8 @@
-#include <charconv>
 #include <iomanip>
 #include <iostream>
-#include <sstream>
 
 #include "gen/constant.hpp"
-#include "gen/instruction.hpp"
 #include "gen/gentype.hpp"
-#include "lexer/error.hpp"
 #include "type/integertype.hpp"
 
 #include "sizeof.hpp"
@@ -14,8 +10,8 @@
 namespace abc {
 
 Sizeof::Sizeof(const Type *sizeofType, ExprPtr &&sizeofExpr, lexer::Loc loc)
-    : Expr{loc, IntegerType::createSizeType()}, sizeofType{sizeofType}
-    , sizeofExpr{std::move(sizeofExpr)}
+    : Expr{loc, IntegerType::createSizeType()}, sizeofType{sizeofType},
+      sizeofExpr{std::move(sizeofExpr)}
 {
 }
 
@@ -58,7 +54,7 @@ Sizeof::isConst() const
 gen::Constant
 Sizeof::loadConstant() const
 {
-    auto size =  gen::getSizeof(sizeofType ? sizeofType : sizeofExpr->type);
+    auto size = gen::getSizeof(sizeofType ? sizeofType : sizeofExpr->type);
     return gen::getConstantInt(size, IntegerType::createSizeType());
 }
 

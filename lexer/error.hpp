@@ -3,7 +3,6 @@
 
 #include <ostream>
 
-#include "lexer.hpp"
 #include "loc.hpp"
 #include "token.hpp"
 

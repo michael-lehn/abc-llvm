@@ -15,8 +15,7 @@ BraceWrapping:
     BeforeCatch: false
     IndentBraces: false
 
-AlwaysBreakAfterReturnType: All
-AlwaysBreakAfterDefinitionReturnType: All
+BreakAfterReturnType: AllDefinitions
 
 DerivePointerAlignment: false
 PointerAlignment: Right
@@ -25,3 +24,5 @@ AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 
+IndentAccessModifiers: true
+AlignAfterOpenBracket: true

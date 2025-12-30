@@ -1,15 +1,14 @@
-#include <unordered_map>
 #include <iostream>
+#include <unordered_map>
 
-#include "expr/expr.hpp"
 #include "expr/compoundexpr.hpp"
+#include "expr/expr.hpp"
 #include "expr/implicitcast.hpp"
 #include "gen/function.hpp"
 #include "gen/instruction.hpp"
 #include "gen/label.hpp"
 #include "gen/variable.hpp"
 #include "lexer/error.hpp"
-#include "type/arraytype.hpp"
 #include "type/enumtype.hpp"
 #include "type/structtype.hpp"
 #include "type/typealias.hpp"
@@ -30,8 +29,7 @@ unusedFilter(UStr name)
 static std::function<bool(Ast *)>
 createSetBreakLabel(gen::Label breakLabel)
 {
-    return [=](Ast *ast) -> bool
-    {
+    return [=](Ast *ast) -> bool {
 	if (auto astBreak = dynamic_cast<AstBreak *>(ast)) {
 	    if (!astBreak->label) {
 		astBreak->label = breakLabel;
@@ -44,8 +42,7 @@ createSetBreakLabel(gen::Label breakLabel)
 static std::function<bool(Ast *)>
 createSetContinueLabel(gen::Label continueLabel)
 {
-    return [=](Ast *ast) -> bool
-    {
+    return [=](Ast *ast) -> bool {
 	if (auto astContinue = dynamic_cast<AstContinue *>(ast)) {
 	    if (!astContinue->label) {
 		astContinue->label = continueLabel;
@@ -58,8 +55,7 @@ createSetContinueLabel(gen::Label continueLabel)
 static std::function<bool(Ast *)>
 createSetReturnType(const Type *retType)
 {
-    return [=](Ast *ast) -> bool
-    {
+    return [=](Ast *ast) -> bool {
 	if (auto astReturn = dynamic_cast<AstReturn *>(ast)) {
 	    astReturn->retType = retType;
 	}
@@ -70,16 +66,15 @@ createSetReturnType(const Type *retType)
 static std::function<bool(Ast *)>
 createFindLabel(std::unordered_map<UStr, gen::Label> &label)
 {
-    return [&](Ast *ast) -> bool
-    {
+    return [&](Ast *ast) -> bool {
 	if (auto astLabel = dynamic_cast<AstLabel *>(ast)) {
 	    if (label.contains(astLabel->labelName)) {
 		error::location(astLabel->loc);
 		error::out() << error::setColor(error::BOLD) << astLabel->loc
-		    << ": " << error::setColor(error::BOLD_RED) << "error: "
-		    << error::setColor(error::BOLD)
-		    << "label already defined within function\n"
-		    << error::setColor(error::NORMAL);
+		             << ": " << error::setColor(error::BOLD_RED)
+		             << "error: " << error::setColor(error::BOLD)
+		             << "label already defined within function\n"
+		             << error::setColor(error::NORMAL);
 		error::fatal();
 	    } else {
 		label[astLabel->labelName] = astLabel->label;
@@ -92,16 +87,15 @@ createFindLabel(std::unordered_map<UStr, gen::Label> &label)
 static std::function<bool(Ast *)>
 createSetGotoLabel(const std::unordered_map<UStr, gen::Label> &label)
 {
-    return [&](Ast *ast) -> bool
-    {
+    return [&](Ast *ast) -> bool {
 	if (auto astLabel = dynamic_cast<AstGoto *>(ast)) {
 	    if (!label.contains(astLabel->labelName)) {
 		error::location(astLabel->loc);
 		error::out() << error::setColor(error::BOLD) << astLabel->loc
-		    << ": " << error::setColor(error::BOLD_RED) << "error: "
-		    << error::setColor(error::BOLD)
-		    << ": error: label not defined within function\n"
-		    << error::setColor(error::NORMAL);
+		             << ": " << error::setColor(error::BOLD_RED)
+		             << "error: " << error::setColor(error::BOLD)
+		             << ": error: label not defined within function\n"
+		             << error::setColor(error::NORMAL);
 		error::fatal();
 	    } else {
 		astLabel->label = label.at(astLabel->labelName);
@@ -150,7 +144,7 @@ AstList::append(AstPtr &&ast)
 void
 AstList::print(int indent) const
 {
-    for (const auto &n: node) {
+    for (const auto &n : node) {
 	n->print(indent);
 	error::out() << "\n";
     }
@@ -159,7 +153,7 @@ AstList::print(int indent) const
 void
 AstList::codegen()
 {
-    for (const auto &n: node) {
+    for (const auto &n : node) {
 	n->codegen();
     }
 }
@@ -168,7 +162,7 @@ void
 AstList::apply(std::function<bool(Ast *)> op)
 {
     if (op(this)) {
-	for (const auto &n: node) {
+	for (const auto &n : node) {
 	    n->apply(op);
 	}
     }
@@ -178,13 +172,13 @@ AstList::apply(std::function<bool(Ast *)> op)
  * AstFunctionDecl
  */
 AstFuncDecl::AstFuncDecl(lexer::Token fnName, const Type *fnType,
-			 std::vector<lexer::Token> &&fnParamName,
-			 bool externalLinkage)
-    : fnName{fnName}, fnType{fnType}, fnParamName{std::move(fnParamName)}
-    , externalLinkage{externalLinkage}
+                         std::vector<lexer::Token> &&fnParamName,
+                         bool externalLinkage)
+    : fnName{fnName}, fnType{fnType}, fnParamName{std::move(fnParamName)},
+      externalLinkage{externalLinkage}
 {
-    assert(this->fnParamName.size() == this->fnType->paramType().size()
-	    || this->fnParamName.size() == 0);
+    assert(this->fnParamName.size() == this->fnType->paramType().size() ||
+           this->fnParamName.size() == 0);
 
     auto addDecl = Symtab::addDeclaration(fnName.loc, fnName.val, fnType);
     assert(addDecl.first);
@@ -193,17 +187,15 @@ AstFuncDecl::AstFuncDecl(lexer::Token fnName, const Type *fnType,
 	externalLinkage = true;
     }
 
-    bool ok = externalLinkage
-	? addDecl.first->setExternalLinkage()
-	: addDecl.first->setLinkage();
+    bool ok = externalLinkage ? addDecl.first->setExternalLinkage()
+                              : addDecl.first->setLinkage();
     if (!ok) {
 	error::location(fnName.loc);
 	error::out() << error::setColor(error::BOLD) << fnName.loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << "'" << fnName.val
-	    << "' can not be re-declared as extern\n"
-	    << error::setColor(error::NORMAL);
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD) << "'"
+	             << fnName.val << "' can not be re-declared as extern\n"
+	             << error::setColor(error::NORMAL);
 	error::fatal();
     }
     fnId = addDecl.first->getId();
@@ -262,9 +254,8 @@ AstFuncDef::appendParamName(std::vector<lexer::Token> &&fnParamName_)
     fnParamName = std::move(fnParamName_);
     assert(fnParamName.size() == fnType->paramType().size());
     for (size_t i = 0; i < fnParamName.size(); ++i) {
-	auto addDecl = Symtab::addDeclaration(fnParamName[i].loc,
-					      fnParamName[i].val,
-					      fnType->paramType()[i]);
+	auto addDecl = Symtab::addDeclaration(
+	    fnParamName[i].loc, fnParamName[i].val, fnType->paramType()[i]);
 	assert(addDecl.first);
 	assert(addDecl.second);
 	fnParamId.push_back(addDecl.first->getId().c_str());
@@ -321,9 +312,10 @@ AstFuncDef::codegen()
     }
     if (!gen::functionDefinitionEnd()) {
 	error::location(fnName.loc);
-	error::out() << error::setColor(error::BOLD) << fnName.loc
-	    << ": " << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
+	error::out()
+	    << error::setColor(error::BOLD) << fnName.loc << ": "
+	    << error::setColor(error::BOLD_RED)
+	    << "error: " << error::setColor(error::BOLD)
 	    << "non-void function does not return a value in all control "
 	    << "paths\n"
 	    << error::setColor(error::NORMAL);
@@ -336,7 +328,7 @@ AstFuncDef::codegen()
  */
 
 AstInitializerExpr::AstInitializerExpr(const Type *destType, ExprPtr &&expr)
-    : expr{ImplicitCast::create(std::move(expr), destType)}  
+    : expr{ImplicitCast::create(std::move(expr), destType)}
 {
 }
 
@@ -352,16 +344,16 @@ AstInitializerExpr::print(int indent) const
  * AstVar
  */
 AstVar::AstVar(lexer::Token varName, lexer::Loc varTypeLoc, const Type *varType,
-	       bool define)
+               bool define)
     : varType{1}, varDeclType{varType}, varName{varName}, varTypeLoc{varTypeLoc}
 {
     init(define);
 }
 
 AstVar::AstVar(std::vector<lexer::Token> &&varName, lexer::Loc varTypeLoc,
-	       const Type *varType, bool define)
-    : varType{varName.size()}, varDeclType{varType}
-    , varName{std::move(varName)}, varTypeLoc{varTypeLoc}
+               const Type *varType, bool define)
+    : varType{varName.size()}, varDeclType{varType},
+      varName{std::move(varName)}, varTypeLoc{varTypeLoc}
 {
     init(define);
 }
@@ -374,17 +366,17 @@ AstVar::init(bool define)
     if (!varDeclType->hasSize() && !varDeclType->isAuto()) {
 	error::location(varTypeLoc);
 	error::out() << error::setColor(error::BOLD) << varTypeLoc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << "type '" << varDeclType << "' is incomplete\n"
-	    << error::setColor(error::NORMAL);
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD) << "type '"
+	             << varDeclType << "' is incomplete\n"
+	             << error::setColor(error::NORMAL);
 	error::fatal();
     }
     for (std::size_t i = 0; i < varName.size(); ++i) {
 	auto ty = varType[i] = varDeclType;
-	auto addDecl = define
-	    ? Symtab::addDefinition(varName[i].loc, varName[i].val, ty)
-	    : Symtab::addDeclaration(varName[i].loc, varName[i].val, ty);
+	auto addDecl =
+	    define ? Symtab::addDefinition(varName[i].loc, varName[i].val, ty)
+	           : Symtab::addDeclaration(varName[i].loc, varName[i].val, ty);
 	assert(addDecl.first);
 	varEntry.push_back(addDecl.first);
 	varId.push_back(addDecl.first->getId());
@@ -397,32 +389,29 @@ AstVar::addInitializerExpr(AstInitializerExprPtr &&initializerExpr_)
     initializerExpr = std::move(initializerExpr_);
     auto initExpr = getInitializerExpr();
     assert(!varDeclType->isUnboundArray() || initExpr->type->isArray());
-    if (varDeclType->isAuto()
-	    || (varDeclType->isUnboundArray() && initExpr->type->isArray())) {
+    if (varDeclType->isAuto() ||
+        (varDeclType->isUnboundArray() && initExpr->type->isArray())) {
 	if (count() == 1) {
 	    varType[0] = initExpr->type;
-	    auto addDecl = Symtab::addDefinition(varName[0].loc,
-						 varName[0].val,
-						 varType[0]);
+	    auto addDecl = Symtab::addDefinition(varName[0].loc, varName[0].val,
+	                                         varType[0]);
 	    assert(addDecl.first);
 	} else {
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initExpr);
 	    if (!compExpr) {
 		error::location(initExpr->loc);
-		error::out() << error::setColor(error::BOLD)
-		    << initExpr->loc << ": "
-		    << error::setColor(error::BOLD_RED) << "error: "
-		    << error::setColor(error::BOLD)
-		    << "compound expression expected\n"
-		    << error::setColor(error::NORMAL);
+		error::out() << error::setColor(error::BOLD) << initExpr->loc
+		             << ": " << error::setColor(error::BOLD_RED)
+		             << "error: " << error::setColor(error::BOLD)
+		             << "compound expression expected\n"
+		             << error::setColor(error::NORMAL);
 		error::fatal();
 	    }
 	    for (std::size_t i = 0; i < varName.size(); ++i) {
 		assert(compExpr->expr[i]);
 		varType[i] = compExpr->expr[i]->type;
-		auto addDecl = Symtab::addDefinition(varName[i].loc,
-						     varName[i].val,
-						     varType[i]);
+		auto addDecl = Symtab::addDefinition(
+		    varName[i].loc, varName[i].val, varType[i]);
 		assert(addDecl.first);
 	    }
 	}
@@ -463,17 +452,17 @@ void
 AstVar::setExternalLinkage()
 {
     for (std::size_t i = 0; i < varEntry.size(); ++i) {
-        if (!varEntry[i]->setExternalLinkage()) {
-            error::location(varName[i].loc);
-            error::out() << error::setColor(error::BOLD) << varTypeLoc << ": "
-                << error::setColor(error::BOLD_RED) << "error: "
-                << error::setColor(error::BOLD)
-                << "'" << varName[i].val
-                << "' can not be re-declared as external\n"
-                << error::setColor(error::NORMAL);
-            error::fatal();
-        }
-        varId[i] = varEntry[i]->getId();
+	if (!varEntry[i]->setExternalLinkage()) {
+	    error::location(varName[i].loc);
+	    error::out() << error::setColor(error::BOLD) << varTypeLoc << ": "
+	                 << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD) << "'"
+	                 << varName[i].val
+	                 << "' can not be re-declared as external\n"
+	                 << error::setColor(error::NORMAL);
+	    error::fatal();
+	}
+	varId[i] = varEntry[i]->getId();
     }
 }
 
@@ -481,9 +470,9 @@ void
 AstVar::setLinkage()
 {
     for (std::size_t i = 0; i < varEntry.size(); ++i) {
-        varEntry[i]->setLinkage();
-        varId[i] = varEntry[i]->getId();
-        gen::globalVariableDefinition(varId[i].c_str(), varType[i]);
+	varEntry[i]->setLinkage();
+	varId[i] = varEntry[i]->getId();
+	gen::globalVariableDefinition(varId[i].c_str(), varType[i]);
     }
 }
 
@@ -491,18 +480,18 @@ void
 AstVar::setInternalLinkage()
 {
     for (std::size_t i = 0; i < varEntry.size(); ++i) {
-        if (!varEntry[i]->setInternalLinkage()) {
-            error::location(varName[i].loc);
-            error::out() << error::setColor(error::BOLD) << varTypeLoc << ": "
-                << error::setColor(error::BOLD_RED) << "error: "
-                << error::setColor(error::BOLD)
-                << "'" << varName[i].val
-                << "' can not be re-declared as static\n"
-                << error::setColor(error::NORMAL);
-            error::fatal();
-        }
-        varId[i] = varEntry[i]->getId();
-        gen::globalVariableDefinition(varId[i].c_str(), varType[i]);
+	if (!varEntry[i]->setInternalLinkage()) {
+	    error::location(varName[i].loc);
+	    error::out() << error::setColor(error::BOLD) << varTypeLoc << ": "
+	                 << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD) << "'"
+	                 << varName[i].val
+	                 << "' can not be re-declared as static\n"
+	                 << error::setColor(error::NORMAL);
+	    error::fatal();
+	}
+	varId[i] = varEntry[i]->getId();
+	gen::globalVariableDefinition(varId[i].c_str(), varType[i]);
     }
 }
 
@@ -542,8 +531,8 @@ AstExternVar::AstExternVar(AstListPtr &&declList)
     : declList{std::move(declList)}
 {
     for (auto &decl : this->declList->node) {
-        auto var = dynamic_cast<AstVar *>(decl.get());
-        var->setExternalLinkage();
+	auto var = dynamic_cast<AstVar *>(decl.get());
+	var->setExternalLinkage();
     }
 }
 
@@ -557,7 +546,7 @@ AstExternVar::print(int indent) const
 	    auto var = dynamic_cast<const AstVar *>(decl.get());
 	    assert(var);
 	    var->print(indent + 4);
-	    if (i + 1< declList->size()) {
+	    if (i + 1 < declList->size()) {
 		error::out() << ", ";
 	    } else {
 		error::out() << "; ";
@@ -575,26 +564,26 @@ void
 AstExternVar::codegen()
 {
     for (const auto &decl : declList->node) {
-        auto var = dynamic_cast<const AstVar *>(decl.get());
-        assert(var);
-        for (std::size_t i = 0; i < var->count(); ++i) {
-            const auto &id = var->getId(i);
+	auto var = dynamic_cast<const AstVar *>(decl.get());
+	assert(var);
+	for (std::size_t i = 0; i < var->count(); ++i) {
+	    const auto &id = var->getId(i);
 	    const auto &ty = var->getType(i);
-            if (!gen::externalVariableDeclaration(id.c_str(), ty)) {
-                const auto &tok = var->varName[i];
-                error::location(tok.loc);
-                error::out() << error::setColor(error::BOLD) << tok.loc << ": "
-                    << error::setColor(error::BOLD_RED) << "error: "
-                    << error::setColor(error::BOLD)
-                    << "var '" << tok.val << "' is static\n"
-                    << error::setColor(error::NORMAL);
-                error::out() << error::setColor(error::BOLD_BLUE)
-                    << "In C this would be accepted "
-                    << "by \"ignoring\" the extern declaration\n"
-                    << error::setColor(error::NORMAL);
-                error::fatal();
-            }
-        }
+	    if (!gen::externalVariableDeclaration(id.c_str(), ty)) {
+		const auto &tok = var->varName[i];
+		error::location(tok.loc);
+		error::out() << error::setColor(error::BOLD) << tok.loc << ": "
+		             << error::setColor(error::BOLD_RED)
+		             << "error: " << error::setColor(error::BOLD)
+		             << "var '" << tok.val << "' is static\n"
+		             << error::setColor(error::NORMAL);
+		error::out() << error::setColor(error::BOLD_BLUE)
+		             << "In C this would be accepted "
+		             << "by \"ignoring\" the extern declaration\n"
+		             << error::setColor(error::NORMAL);
+		error::fatal();
+	    }
+	}
     }
 }
 
@@ -615,7 +604,7 @@ AstGlobalVar::print(int indent) const
 	for (std::size_t i = 0; const auto &item : declList->node) {
 	    auto var = dynamic_cast<const AstVar *>(item.get());
 	    var->print(indent + 4);
-	    if (i + 1< declList->size()) {
+	    if (i + 1 < declList->size()) {
 		error::out() << ", ";
 	    } else {
 		error::out() << "; ";
@@ -637,11 +626,11 @@ AstGlobalVar::codegen()
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	if (var->count() == 1) {
 	    gen::globalVariableDefinition(var->getId(0).c_str(),
-					  var->getType(0));
+	                                  var->getType(0));
 	} else {
 	    for (std::size_t i = 0; i < var->count(); ++i) {
 		gen::globalVariableDefinition(var->getId(i).c_str(),
-					      var->getType(i));
+		                              var->getType(i));
 	    }
 	}
     }
@@ -655,29 +644,25 @@ AstGlobalVar::codegen()
 	if (initializer && !initializer->isConst()) {
 	    error::location(initializer->loc);
 	    error::out() << error::setColor(error::BOLD) << initializer->loc
-		<< ": " << error::setColor(error::BOLD_RED) << "error: "
-		<< error::setColor(error::BOLD)
-		<< "initializer is not a compile-time constant\n"
-		<< error::setColor(error::NORMAL);
+	                 << ": " << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD)
+	                 << "initializer is not a compile-time constant\n"
+	                 << error::setColor(error::NORMAL);
 	    error::fatal();
 	}
 	if (var->count() == 1) {
-	    auto initialValue = initializer
-		? initializer->loadConstant()
-		: nullptr;
+	    auto initialValue =
+	        initializer ? initializer->loadConstant() : nullptr;
 	    gen::globalVariableDefinition(var->getId(0).c_str(),
-					  var->getType(0),
-					  initialValue);
+	                                  var->getType(0), initialValue);
 	} else {
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
 	    assert(!initializer || compExpr);
 	    for (std::size_t i = 0; i < var->count(); ++i) {
-		auto initialValue = initializer
-		    ? compExpr->loadConstant(i)
-		    : nullptr;
+		auto initialValue =
+		    initializer ? compExpr->loadConstant(i) : nullptr;
 		gen::globalVariableDefinition(var->getId(i).c_str(),
-					      var->getType(i),
-					      initialValue);
+		                              var->getType(i), initialValue);
 	    }
 	}
     }
@@ -690,8 +675,8 @@ AstStaticVar::AstStaticVar(AstListPtr &&declList)
     : declList{std::move(declList)}
 {
     for (auto &decl : this->declList->node) {
-        auto var = dynamic_cast<AstVar *>(decl.get());
-        var->setInternalLinkage();
+	auto var = dynamic_cast<AstVar *>(decl.get());
+	var->setInternalLinkage();
     }
 }
 
@@ -704,7 +689,7 @@ AstStaticVar::print(int indent) const
 	for (std::size_t i = 0; const auto &item : declList->node) {
 	    auto var = dynamic_cast<const AstVar *>(item.get());
 	    var->print(indent + 4);
-	    if (i + 1< declList->size()) {
+	    if (i + 1 < declList->size()) {
 		error::out() << ", ";
 	    } else {
 		error::out() << "; ";
@@ -726,11 +711,11 @@ AstStaticVar::codegen()
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	if (var->count() == 1) {
 	    gen::globalVariableDefinition(var->getId(0).c_str(),
-					  var->getType(0));
+	                                  var->getType(0));
 	} else {
 	    for (std::size_t i = 0; i < var->count(); ++i) {
 		gen::globalVariableDefinition(var->getId(i).c_str(),
-					      var->getType(i));
+		                              var->getType(i));
 	    }
 	}
     }
@@ -741,26 +726,24 @@ AstStaticVar::codegen()
 	if (initializer && !initializer->isConst()) {
 	    error::location(initializer->loc);
 	    error::out() << error::setColor(error::BOLD) << initializer->loc
-		<< ": " << error::setColor(error::BOLD_RED) << "error: "
-		<< error::setColor(error::BOLD)
-		<< "initializer is not a compile-time constant\n"
-		<< error::setColor(error::NORMAL);
+	                 << ": " << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD)
+	                 << "initializer is not a compile-time constant\n"
+	                 << error::setColor(error::NORMAL);
 	    error::fatal();
 	}
 	if (var->count() == 1) {
-	    auto initialValue = initializer
-		? initializer->loadConstant()
-		: nullptr;
+	    auto initialValue =
+	        initializer ? initializer->loadConstant() : nullptr;
 	    gen::globalVariableDefinition(var->getId(0).c_str(),
-					  var->getType(0),
-					  initialValue);
+	                                  var->getType(0), initialValue);
 	} else {
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
 	    assert(compExpr);
 	    for (std::size_t i = 0; i < var->count(); ++i) {
 		gen::globalVariableDefinition(var->getId(i).c_str(),
-					      var->getType(i),
-					      compExpr->loadConstant(i));
+		                              var->getType(i),
+		                              compExpr->loadConstant(i));
 	    }
 	}
     }
@@ -769,8 +752,7 @@ AstStaticVar::codegen()
 /*
  * AstLocalVar
  */
-AstLocalVar::AstLocalVar(AstListPtr &&declList)
-    : declList{std::move(declList)}
+AstLocalVar::AstLocalVar(AstListPtr &&declList) : declList{std::move(declList)}
 {
 }
 
@@ -783,7 +765,7 @@ AstLocalVar::print(int indent) const
 	    error::out() << "\n";
 	    auto var = dynamic_cast<const AstVar *>(item.get());
 	    var->print(indent + 4);
-	    if (i + 1< declList->size()) {
+	    if (i + 1 < declList->size()) {
 		error::out() << ", ";
 	    } else {
 		error::out() << "; ";
@@ -806,22 +788,22 @@ AstLocalVar::codegen()
 	auto initializer = var->getInitializerExpr();
 	if (var->count() == 1) {
 	    gen::localVariableDefinition(var->getId(0).c_str(),
-					 var->getType(0));
+	                                 var->getType(0));
 	    if (initializer) {
 		gen::store(initializer->loadValue(),
-			   gen::loadAddress(var->getId(0).c_str()));
+		           gen::loadAddress(var->getId(0).c_str()));
 	    }
 	} else {
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
 	    assert(!initializer || compExpr);
 	    for (std::size_t i = 0; i < var->count(); ++i) {
 		gen::localVariableDefinition(var->getId(i).c_str(),
-					     var->getType(i));
+		                             var->getType(i));
 	    }
 	    for (std::size_t i = 0; i < var->count(); ++i) {
 		if (initializer) {
 		    gen::store(compExpr->loadValue(i),
-			       gen::loadAddress(var->getId(i).c_str()));
+		               gen::loadAddress(var->getId(i).c_str()));
 		}
 	    }
 	}
@@ -833,7 +815,8 @@ AstLocalVar::codegen()
  */
 AstReturn::AstReturn(lexer::Loc loc, ExprPtr &&expr)
     : loc{loc}, expr{std::move(expr)}
-{}
+{
+}
 
 void
 AstReturn::print(int indent) const
@@ -858,10 +841,10 @@ AstReturn::codegen()
 	if (expr) {
 	    error::location(expr->loc);
 	    error::out() << error::setColor(error::BOLD) << expr->loc << ": "
-		<< error::setColor(error::BOLD_RED) << "error: "
-		<< error::setColor(error::BOLD)
-		<< ": void function should not return a value\n"
-		<< error::setColor(error::NORMAL);
+	                 << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD)
+	                 << ": void function should not return a value\n"
+	                 << error::setColor(error::NORMAL);
 	    error::fatal();
 	    return;
 	}
@@ -870,10 +853,10 @@ AstReturn::codegen()
 	if (!expr) {
 	    error::location(expr->loc);
 	    error::out() << error::setColor(error::BOLD) << expr->loc << ": "
-		<< error::setColor(error::BOLD_RED) << "error: "
-		<< error::setColor(error::BOLD)
-		<< ": non-void function should return a value\n"
-		<< error::setColor(error::NORMAL);
+	                 << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD)
+	                 << ": non-void function should return a value\n"
+	                 << error::setColor(error::NORMAL);
 	    error::fatal();
 	    return;
 	}
@@ -887,7 +870,8 @@ AstReturn::codegen()
  */
 AstGoto::AstGoto(lexer::Loc loc, UStr labelName)
     : loc{loc}, labelName{labelName}
-{}
+{
+}
 
 void
 AstGoto::print(int indent) const
@@ -901,11 +885,11 @@ AstGoto::codegen()
     if (!label) {
 	error::location(loc);
 	error::out() << error::setColor(error::BOLD) << loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << " no label '" << labelName.c_str()
-	    << "' within function\n"
-	    << error::setColor(error::NORMAL);
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << " no label '" << labelName.c_str()
+	             << "' within function\n"
+	             << error::setColor(error::NORMAL);
 	error::fatal();
     } else {
 	gen::jumpInstruction(label);
@@ -917,7 +901,8 @@ AstGoto::codegen()
  */
 AstLabel::AstLabel(lexer::Loc loc, UStr labelName)
     : loc{loc}, labelName{labelName}, label{gen::getLabel(labelName.c_str())}
-{}
+{
+}
 
 void
 AstLabel::print(int indent) const
@@ -934,9 +919,7 @@ AstLabel::codegen()
 /*
  * AstBreak
  */
-AstBreak::AstBreak(lexer::Loc loc)
-    : loc{loc}
-{}
+AstBreak::AstBreak(lexer::Loc loc) : loc{loc} {}
 
 void
 AstBreak::print(int indent) const
@@ -950,10 +933,10 @@ AstBreak::codegen()
     if (!label) {
 	error::location(loc);
 	error::out() << error::setColor(error::BOLD) << loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << ": break statement not within loop or switch\n"
-	    << error::setColor(error::NORMAL);
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << ": break statement not within loop or switch\n"
+	             << error::setColor(error::NORMAL);
 	error::fatal();
 	return;
     }
@@ -963,9 +946,7 @@ AstBreak::codegen()
 /*
  * AstContinue
  */
-AstContinue::AstContinue(lexer::Loc loc)
-    : loc{loc}
-{}
+AstContinue::AstContinue(lexer::Loc loc) : loc{loc} {}
 
 void
 AstContinue::print(int indent) const
@@ -979,10 +960,10 @@ AstContinue::codegen()
     if (!label) {
 	error::location(loc);
 	error::out() << error::setColor(error::BOLD) << loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << "continue statement not within loop\n"
-	    << error::setColor(error::NORMAL);
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << "continue statement not within loop\n"
+	             << error::setColor(error::NORMAL);
 	error::fatal();
 	return;
     }
@@ -992,9 +973,7 @@ AstContinue::codegen()
 /*
  * AstExpr
  */
-AstExpr::AstExpr(ExprPtr &&expr)
-    : expr(std::move(expr))
-{}
+AstExpr::AstExpr(ExprPtr &&expr) : expr(std::move(expr)) {}
 
 void
 AstExpr::print(int indent) const
@@ -1014,10 +993,10 @@ AstExpr::codegen()
     }
     if (!gen::bbOpen()) {
 	error::out() << expr->loc
-	    << ": warning: expression statement not reachabel\n";
+	             << ": warning: expression statement not reachabel\n";
 	return;
     }
-    expr->loadValue(); 
+    expr->loadValue();
 }
 
 /*
@@ -1025,13 +1004,15 @@ AstExpr::codegen()
  */
 AstIf::AstIf(lexer::Loc loc, ExprPtr &&cond, AstPtr &&thenBody)
     : loc{loc}, cond{std::move(cond)}, thenBody{std::move(thenBody)}
-{}
+{
+}
 
 AstIf::AstIf(lexer::Loc loc, ExprPtr &&cond, AstPtr &&thenBody,
-	     AstPtr &&elseBody)
-    : loc{loc}, cond{std::move(cond)}, thenBody{std::move(thenBody)}
-    , elseBody{std::move(elseBody)}
-{}
+             AstPtr &&elseBody)
+    : loc{loc}, cond{std::move(cond)}, thenBody{std::move(thenBody)},
+      elseBody{std::move(elseBody)}
+{
+}
 
 void
 AstIf::print(int indent) const
@@ -1099,7 +1080,7 @@ AstIf::codegen()
     if (gen::bbOpen()) {
 	endLabelUsed = true;
 	gen::jumpInstruction(endLabel); // connect with 'end'
-					// (even if 'else' is empyt)
+	                                // (even if 'else' is empyt)
     }
     if (endLabelUsed) {
 	gen::defineLabel(endLabel);
@@ -1120,9 +1101,9 @@ AstIf::apply(std::function<bool(Ast *)> op)
 /*
  * AstSwitch
  */
-AstSwitch::AstSwitch(ExprPtr &&expr)
-    : hasDefault{false}, expr{std::move(expr)}
-{}
+AstSwitch::AstSwitch(ExprPtr &&expr) : hasDefault{false}, expr{std::move(expr)}
+{
+}
 
 void
 AstSwitch::appendCase(ExprPtr &&caseExpr_)
@@ -1130,11 +1111,11 @@ AstSwitch::appendCase(ExprPtr &&caseExpr_)
     if (!caseExpr_ || !caseExpr_->isConst() || !caseExpr_->type->isInteger()) {
 	error::location(caseExpr_->loc);
 	error::out() << error::setColor(error::BOLD) << caseExpr_->loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << ": case expression has "
-	    << "to be a constant integer expression\n"
-	    << error::setColor(error::NORMAL);
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << ": case expression has "
+	             << "to be a constant integer expression\n"
+	             << error::setColor(error::NORMAL);
 	error::fatal();
     }
     caseExpr_ = ImplicitCast::create(std::move(caseExpr_), expr->type);
@@ -1163,8 +1144,8 @@ void
 AstSwitch::complete()
 {
     auto bs = body.size();
-    if ((casePos.size() && casePos.back() == bs)
-	    || (hasDefault && defaultPos == bs)) {
+    if ((casePos.size() && casePos.back() == bs) ||
+        (hasDefault && defaultPos == bs)) {
 	body.append(std::make_unique<AstExpr>(ExprPtr{}));
     }
     if (!hasDefault && expr->type->isEnum()) {
@@ -1178,7 +1159,7 @@ AstSwitch::complete()
 	    valToEnum[type->constValue()[i]] = type->constName()[i];
 	    valUsed[type->constValue()[i]] = false;
 	}
-	for (const auto &c: caseExpr) {
+	for (const auto &c : caseExpr) {
 	    valUsed[c->getSignedIntValue()] = true;
 	}
 
@@ -1196,17 +1177,16 @@ AstSwitch::complete()
 
 	if (notHandled) {
 	    error::location(expr->loc);
-	    error::out() << error::setColor(error::BOLD)
-		<< expr->loc << ": "
-		<< error::setColor(error::BOLD_RED) << "error: "
-		<< error::setColor(error::BOLD)
-		<< "enumeration value"
-		<< (notHandled == 1 ? " " : "s ")
-		<< str << " not handled in switch\n"
-		<< error::setColor(error::NORMAL);
+	    error::out() << error::setColor(error::BOLD) << expr->loc << ": "
+	                 << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD)
+	                 << "enumeration value"
+	                 << (notHandled == 1 ? " " : "s ") << str
+	                 << " not handled in switch\n"
+	                 << error::setColor(error::NORMAL);
 	    error::out() << error::setColor(error::BOLD_BLUE)
-		<< "use a default label or handle all enum constants\n"
-		<< error::setColor(error::NORMAL);
+	                 << "use a default label or handle all enum constants\n"
+	                 << error::setColor(error::NORMAL);
 	    error::fatal();
 	}
     }
@@ -1217,13 +1197,13 @@ AstSwitch::print(int indent) const
 {
     error::out(indent) << "switch (" << expr << ") {\n";
     for (std::size_t i = 0, casePosIndex = 0; i < body.size(); ++i) {
-	if ((!casePos.size() || (casePos.size() && i < casePos[0]))
-		&& (!hasDefault || (hasDefault && i < defaultPos))) {
+	if ((!casePos.size() || (casePos.size() && i < casePos[0])) &&
+	    (!hasDefault || (hasDefault && i < defaultPos))) {
 	    error::out(indent + 4) << "// never reached\n";
 	}
 	while (casePosIndex < casePos.size() && i == casePos[casePosIndex]) {
-	    error::out(indent + 4) << "case " << caseExpr[casePosIndex++]
-		<< ":\n";
+	    error::out(indent + 4)
+	        << "case " << caseExpr[casePosIndex++] << ":\n";
 	}
 	if (hasDefault && i == defaultPos) {
 	    error::out(indent + 4) << "default:\n";
@@ -1244,8 +1224,8 @@ AstSwitch::codegen()
     std::vector<std::pair<gen::ConstantInt, gen::Label>> caseLabel;
     std::set<std::uint64_t> usedCaseVal;
 
-    for (const auto &e: caseExpr) {
-	caseLabel.push_back({ e->getConstantInt(), gen::getLabel("case") });
+    for (const auto &e : caseExpr) {
+	caseLabel.push_back({e->getConstantInt(), gen::getLabel("case")});
 	auto val = e->getUnsignedIntValue();
 	if (usedCaseVal.contains(val)) {
 	    error::out() << e->loc << ": duplicate case value '" << e << "'\n";
@@ -1282,7 +1262,8 @@ AstSwitch::apply(std::function<bool(Ast *)> op)
  */
 AstWhile::AstWhile(ExprPtr &&cond, AstPtr &&body)
     : cond{std::move(cond)}, body{std::move(body)}
-{}
+{
+}
 
 void
 AstWhile::print(int indent) const
@@ -1325,7 +1306,8 @@ AstWhile::apply(std::function<bool(Ast *)> op)
  */
 AstDoWhile::AstDoWhile(ExprPtr &&cond, AstPtr &&body)
     : cond{std::move(cond)}, body{std::move(body)}
-{}
+{
+}
 
 void
 AstDoWhile::print(int indent) const
@@ -1366,14 +1348,13 @@ AstDoWhile::apply(std::function<bool(Ast *)> op)
  * AstFor
  */
 AstFor::AstFor(ExprPtr &&init, ExprPtr &&cond, ExprPtr &&update)
-    : initExpr{std::move(init)}, cond{std::move(cond)}
-    , update{std::move(update)}
+    : initExpr{std::move(init)}, cond{std::move(cond)},
+      update{std::move(update)}
 {
 }
 
 AstFor::AstFor(AstPtr &&init, ExprPtr &&cond, ExprPtr &&update)
-    : initAst{std::move(init)}, cond{std::move(cond)}
-    , update{std::move(update)}
+    : initAst{std::move(init)}, cond{std::move(cond)}, update{std::move(update)}
 {
 }
 
@@ -1456,18 +1437,18 @@ AstTypeDecl::AstTypeDecl(lexer::Token name, const Type *type)
 	if (found->type->getUnalias() != type) {
 	    error::location(name.loc);
 	    error::out() << error::setColor(error::BOLD) << name.loc << ": "
-		<< error::setColor(error::BOLD_RED) << "error: "
-		<< error::setColor(error::BOLD)
-		<< "incompatible redefinition of '"
-		<< name.val << "'\n"
-		<< error::setColor(error::NORMAL);
+	                 << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD)
+	                 << "incompatible redefinition of '" << name.val
+	                 << "'\n"
+	                 << error::setColor(error::NORMAL);
 	    if (found->loc) {
 		error::location(found->loc);
 		error::out() << error::setColor(error::BOLD) << found->loc
-		    << ": " << error::setColor(error::BOLD_BLUE) << "note: "
-		    << error::setColor(error::BOLD)
-		    << ": previous definition is here\n"
-		    << error::setColor(error::NORMAL);
+		             << ": " << error::setColor(error::BOLD_BLUE)
+		             << "note: " << error::setColor(error::BOLD)
+		             << ": previous definition is here\n"
+		             << error::setColor(error::NORMAL);
 	    }
 	    error::fatal();
 	}
@@ -1497,10 +1478,10 @@ AstEnumDecl::AstEnumDecl(lexer::Token name, const Type *intType)
     if (!intType->isInteger() || intType->isEnum()) {
 	error::location(enumTypeName.loc);
 	error::out() << error::setColor(error::BOLD) << enumTypeName.loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << "enum type has to be an integer type\n"
-	    << error::setColor(error::NORMAL);
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << "enum type has to be an integer type\n"
+	             << error::setColor(error::NORMAL);
 	error::fatal();
     }
 
@@ -1510,18 +1491,17 @@ AstEnumDecl::AstEnumDecl(lexer::Token name, const Type *intType)
 	if (!found->type->isEnum() || found->type->hasSize()) {
 	    error::location(name.loc);
 	    error::out() << error::setColor(error::BOLD) << name.loc << ": "
-		<< error::setColor(error::BOLD_RED) << "error: "
-		<< error::setColor(error::BOLD)
-		<< "incompatible redefinition of '"
-		<< name.val << "\n"
-		<< error::setColor(error::NORMAL);
+	                 << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD)
+	                 << "incompatible redefinition of '" << name.val << "\n"
+	                 << error::setColor(error::NORMAL);
 	    if (found->loc) {
 		error::location(found->loc);
 		error::out() << error::setColor(error::BOLD) << found->loc
-		    << ": " << error::setColor(error::BOLD_BLUE) << "note: "
-		    << error::setColor(error::BOLD)
-		    << ": previous definition is here\n"
-		    << error::setColor(error::NORMAL);
+		             << ": " << error::setColor(error::BOLD_BLUE)
+		             << "note: " << error::setColor(error::BOLD)
+		             << ": previous definition is here\n"
+		             << error::setColor(error::NORMAL);
 	    }
 	    error::fatal();
 	} else {
@@ -1577,7 +1557,6 @@ AstEnumDecl::complete()
     enumType->complete(std::move(constName), std::move(constValue));
 }
 
-
 void
 AstEnumDecl::print(int indent) const
 {
@@ -1618,8 +1597,7 @@ AstEnumDecl::codegen()
 /*
  * AstStructDecl
  */
-AstStructDecl::AstStructDecl(lexer::Token name)
-    : structTypeName{name}
+AstStructDecl::AstStructDecl(lexer::Token name) : structTypeName{name}
 {
     if (auto found = Symtab::type(name.val, Symtab::CurrentScope)) {
 	// if <name> is already a type declaration it has to be an incomplete
@@ -1627,18 +1605,17 @@ AstStructDecl::AstStructDecl(lexer::Token name)
 	if (!found->type->isStruct() || found->type->hasSize()) {
 	    error::location(name.loc);
 	    error::out() << error::setColor(error::BOLD) << name.loc << ": "
-		<< error::setColor(error::BOLD_RED) << "error: "
-		<< error::setColor(error::BOLD)
-		<< "incompatible redefinition of '"
-		<< name.val << "\n"
-		<< error::setColor(error::NORMAL);
+	                 << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD)
+	                 << "incompatible redefinition of '" << name.val << "\n"
+	                 << error::setColor(error::NORMAL);
 	    if (found->loc) {
 		error::location(found->loc);
 		error::out() << error::setColor(error::BOLD) << found->loc
-		    << ": " << error::setColor(error::BOLD_BLUE) << "note: "
-		    << error::setColor(error::BOLD)
-		    << ": previous definition is here\n"
-		    << error::setColor(error::NORMAL);
+		             << ": " << error::setColor(error::BOLD_BLUE)
+		             << "note: " << error::setColor(error::BOLD)
+		             << ": previous definition is here\n"
+		             << error::setColor(error::NORMAL);
 	    }
 	    error::fatal();
 	} else {
@@ -1657,24 +1634,23 @@ AstStructDecl::AstStructDecl(lexer::Token name)
 
 void
 AstStructDecl::add(std::vector<lexer::Token> &&memberName,
-		   std::vector<std::size_t> &&memberIndex, 
-		   const Type *memberType)
+                   std::vector<std::size_t> &&memberIndex,
+                   const Type *memberType)
 {
     assert(memberType);
     memberDecl.push_back({std::move(memberName), memberType});
-    for (auto index: memberIndex) {
+    for (auto index : memberIndex) {
 	this->memberIndex.push_back(index);
     }
 }
 
 void
 AstStructDecl::add(std::vector<lexer::Token> &&memberName,
-		   std::vector<std::size_t> &&memberIndex,
-		   AstPtr &&memberType)
+                   std::vector<std::size_t> &&memberIndex, AstPtr &&memberType)
 {
     assert(memberType);
     memberDecl.push_back({std::move(memberName), std::move(memberType)});
-    for (auto index: memberIndex) {
+    for (auto index : memberIndex) {
 	this->memberIndex.push_back(index);
     }
 }
@@ -1686,7 +1662,7 @@ AstStructDecl::complete()
     std::vector<UStr> memberName;
     std::vector<const Type *> memberType;
 
-    for (const auto &decl: memberDecl) {
+    for (const auto &decl : memberDecl) {
 	const Type *type = nullptr;
 	if (std::holds_alternative<const Type *>(decl.second)) {
 	    type = std::get<const Type *>(decl.second);
@@ -1700,19 +1676,19 @@ AstStructDecl::complete()
 	for (std::size_t i = 0; i < decl.first.size(); ++i) {
 	    if (memberMap.contains(decl.first[i].val)) {
 		error::location(decl.first[i].loc);
-		error::out() << error::setColor(error::BOLD)
-		    << decl.first[i].loc
-		    << ": " << error::setColor(error::BOLD_RED) << "error: "
-		    << error::setColor(error::BOLD)
-		    << "member '" << decl.first[i].val << "' already defined.\n"
+		error::out()
+		    << error::setColor(error::BOLD) << decl.first[i].loc << ": "
+		    << error::setColor(error::BOLD_RED)
+		    << "error: " << error::setColor(error::BOLD) << "member '"
+		    << decl.first[i].val << "' already defined.\n"
 		    << error::setColor(error::NORMAL);
 		error::location(memberMap[decl.first[i].val]);
 		error::out() << error::setColor(error::BOLD)
-		    << memberMap[decl.first[i].val]
-		    << ": " << error::setColor(error::BOLD_RED) << "error: "
-		    << error::setColor(error::BOLD)
-		    << "previous definition here.\n"
-		    << error::setColor(error::NORMAL);
+		             << memberMap[decl.first[i].val] << ": "
+		             << error::setColor(error::BOLD_RED)
+		             << "error: " << error::setColor(error::BOLD)
+		             << "previous definition here.\n"
+		             << error::setColor(error::NORMAL);
 
 		error::fatal();
 	    }
@@ -1723,8 +1699,8 @@ AstStructDecl::complete()
     }
 
     structType->complete(std::move(memberName),
-			 std::vector<std::size_t>{memberIndex},
-			 std::move(memberType));
+                         std::vector<std::size_t>{memberIndex},
+                         std::move(memberType));
 }
 
 const Type *
@@ -1744,7 +1720,7 @@ AstStructDecl::print(int indent) const
 
 	std::size_t pos = 0;
 	bool unionSection = false;
-	for (const auto &decl: memberDecl) {
+	for (const auto &decl : memberDecl) {
 	    bool lastPos = pos + 1 == memberIndex.size();
 	    if (!unionSection) {
 		if (!lastPos && memberIndex[pos] == memberIndex[pos + 1]) {

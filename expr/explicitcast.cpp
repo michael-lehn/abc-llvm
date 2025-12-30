@@ -11,8 +11,7 @@
 
 namespace abc {
 
-ExplicitCast::ExplicitCast(ExprPtr &&expr, const Type *toType,
-			   lexer::Loc loc)
+ExplicitCast::ExplicitCast(ExprPtr &&expr, const Type *toType, lexer::Loc loc)
     : Expr{loc, toType}, expr{std::move(expr)}
 {
 }
@@ -22,11 +21,11 @@ ExplicitCast::create(ExprPtr &&expr, const Type *toType, lexer::Loc loc)
 {
     if (!expr) {
 	error::location(loc);
-	error::out() << error::setColor(error::BOLD) << loc
-	    << ": " << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << ": expected non-empty expression\n"
-	    << error::setColor(error::NORMAL);
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << ": expected non-empty expression\n"
+	             << error::setColor(error::NORMAL);
 	error::fatal();
     }
     assert(expr->type);
@@ -39,11 +38,12 @@ ExplicitCast::create(ExprPtr &&expr, const Type *toType, lexer::Loc loc)
 	if (!type) {
 	    error::location(loc);
 	    error::out() << error::setColor(error::BOLD) << loc << ": "
-		<< error::setColor(error::BOLD_RED) << "error: "
-		<< error::setColor(error::BOLD)
-		<< "can not cast an expression of "
-		<< "type '" << expr->type << "' to type '" << toType << "'\n"
-		<< error::setColor(error::NORMAL);
+	                 << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD)
+	                 << "can not cast an expression of "
+	                 << "type '" << expr->type << "' to type '" << toType
+	                 << "'\n"
+	                 << error::setColor(error::NORMAL);
 	    error::fatal();
 	    return nullptr;
 	} else {
@@ -110,13 +110,14 @@ ExplicitCast::loadValue() const
 	    auto val = llvm::dyn_cast<T>(expr->loadConstant());
 	    if (val->isNegative()) {
 		error::location(loc);
-		error::out() << error::setColor(error::BOLD) << loc << ": "
-		    << error::setColor(error::BOLD_RED) << "error: "
-		    << error::setColor(error::BOLD)
-		    << "conversion of out of range value from "
-		    " '" << expr->type << "' to '" << type
-		    << "' is undefined\n"
-		    << error::setColor(error::NORMAL);
+		error::out()
+		        << error::setColor(error::BOLD) << loc << ": "
+		        << error::setColor(error::BOLD_RED)
+		        << "error: " << error::setColor(error::BOLD)
+		        << "conversion of out of range value from "
+		           " '"
+		        << expr->type << "' to '" << type << "' is undefined\n"
+		        << error::setColor(error::NORMAL);
 		error::fatal();
 	    }
 	}

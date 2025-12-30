@@ -6,9 +6,7 @@
 
 namespace abc {
 
-Expr::Expr(lexer::Loc  loc, const Type  *type)
-    : loc{loc}, type{type}
-{}
+Expr::Expr(lexer::Loc loc, const Type *type) : loc{loc}, type{type} {}
 
 bool
 Expr::hasConstantAddress() const
@@ -29,10 +27,10 @@ Expr::condition(gen::Label trueLabel, gen::Label falseLabel) const
     if (!type->isScalar()) {
 	error::location(loc);
 	error::out() << error::setColor(error::BOLD) << loc << ": "
-	    << error::setColor(error::BOLD_RED) << "error: "
-	    << error::setColor(error::BOLD)
-	    << "error: scalar required\n"
-	    << error::setColor(error::NORMAL);
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << "error: scalar required\n"
+	             << error::setColor(error::NORMAL);
 	error::fatal();
     }
     auto zero = gen::getConstantZero(type);

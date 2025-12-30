@@ -17,8 +17,8 @@ auto
 makeIdentifierToken(const char *name)
 {
     return abc::lexer::Token{abc::lexer::Loc{},
-			     abc::lexer::TokenKind::IDENTIFIER,
-			     abc::UStr::create(name)};
+                             abc::lexer::TokenKind::IDENTIFIER,
+                             abc::UStr::create(name)};
 }
 
 auto
@@ -29,7 +29,7 @@ makeExternVarDecl()
     auto varName = makeIdentifierToken("foo");
     auto varType = abc::IntegerType::createSigned(32);
     auto varDecl = std::make_unique<abc::AstVar>(varName, abc::lexer::Loc{},
-						 varType, false);
+                                                 varType, false);
     varDeclList->append(std::move(varDecl));
     return std::make_unique<abc::AstExternVar>(std::move(varDeclList));
 }
@@ -42,14 +42,11 @@ makeMainDecl()
     auto fnName = makeIdentifierToken("main");
     auto fnRetType = intType;
     auto fnParamType = std::vector<const abc::Type *>{intType};
-    auto fnType = abc::FunctionType::create(fnRetType,
-					    std::move(fnParamType),
-					    false);
+    auto fnType =
+        abc::FunctionType::create(fnRetType, std::move(fnParamType), false);
     auto fnParamName = std::vector<abc::lexer::Token>{};
-    auto fnMainDecl = std::make_unique<abc::AstFuncDecl>(fnName,
-							 fnType,
-							 std::move(fnParamName),
-							 true);
+    auto fnMainDecl = std::make_unique<abc::AstFuncDecl>(
+        fnName, fnType, std::move(fnParamName), true);
     return fnMainDecl;
 }
 
@@ -69,10 +66,9 @@ makeExpr()
     auto intType = abc::IntegerType::createSigned(32)->getAlias("int");
     auto intExpr = abc::IntegerLiteral::create(-1, intType);
 
-    auto addExpr = abc::BinaryExpr::create(abc::BinaryExpr::ADD,
-					   std::move(argcExpr),
-					   std::move(intExpr));
-    return addExpr; 
+    auto addExpr = abc::BinaryExpr::create(
+        abc::BinaryExpr::ADD, std::move(argcExpr), std::move(intExpr));
+    return addExpr;
 }
 
 auto
@@ -83,19 +79,17 @@ makeMainDef()
     auto fnName = makeIdentifierToken("main");
     auto fnRetType = intType;
     auto fnParamType = std::vector<const abc::Type *>{intType};
-    auto fnType = abc::FunctionType::create(fnRetType,
-					    std::move(fnParamType),
-					    false);
+    auto fnType =
+        abc::FunctionType::create(fnRetType, std::move(fnParamType), false);
 
     auto fnMainDef = std::make_unique<abc::AstFuncDef>(fnName, fnType);
     abc::Symtab guard(abc::UStr::create("main"));
 
     fnMainDef->appendParamName({makeIdentifierToken("argc")});
 
-
     auto body = std::make_unique<abc::AstList>();
-    body->append(std::make_unique<abc::AstReturn>(abc::lexer::Loc{},
-						  makeExpr()));
+    body->append(
+        std::make_unique<abc::AstReturn>(abc::lexer::Loc{}, makeExpr()));
     fnMainDef->appendBody(std::move(body));
 
     return fnMainDef;

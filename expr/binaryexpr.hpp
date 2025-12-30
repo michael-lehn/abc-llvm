@@ -10,7 +10,7 @@ namespace abc {
 
 class BinaryExpr : public Expr
 {
-   public:
+    public:
 	enum Kind
 	{
 	    // index operator
@@ -56,11 +56,11 @@ class BinaryExpr : public Expr
 
     protected:
 	BinaryExpr(Kind kind, ExprPtr &&left, ExprPtr &&right, const Type *type,
-		   lexer::Loc loc);
+	           lexer::Loc loc);
 
     public:
 	static ExprPtr create(Kind kind, ExprPtr &&left, ExprPtr &&right,
-			      lexer::Loc loc = lexer::Loc{});
+	                      lexer::Loc loc = lexer::Loc{});
 
 	const Kind kind;
 	const ExprPtr left, right;
@@ -73,18 +73,20 @@ class BinaryExpr : public Expr
 
 	// for code generation
 	gen::Constant loadConstant() const override;
+
     private:
 	gen::Value handleArithmetricOperation(Kind kind) const;
+
     public:
 	gen::Value loadValue() const override;
 	gen::Constant loadConstantAddress() const override;
 	gen::Value loadAddress() const override;
 	void condition(gen::Label trueLabel,
-		       gen::Label falseLabel) const override;
+	               gen::Label falseLabel) const override;
 
 	// for debugging and educational purposes
 	void print(int indent) const override;
-  
+
 	// for printing error messages
 	virtual void printFlat(std::ostream &out, int prec) const override;
 };
