@@ -1,8 +1,6 @@
 #ifndef EXPR_ASSERTEXPR_HPP
 #define EXPR_ASSERTEXPR_HPP
 
-#include "lexer/token.hpp"
-
 #include "expr.hpp"
 
 namespace abc {
@@ -27,7 +25,7 @@ class AssertExpr : public Expr
 	gen::Value loadValue() const override;
 	gen::Value loadAddress() const override;
 	void condition(gen::Label trueLabel,
-		       gen::Label falseLabel) const override;
+	               gen::Label falseLabel) const override;
 
 	// for debugging and educational purposes
 	void print(int indent) const override;

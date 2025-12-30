@@ -1,11 +1,7 @@
-#include <charconv>
 #include <iomanip>
 #include <iostream>
-#include <sstream>
 
 #include "gen/constant.hpp"
-#include "gen/instruction.hpp"
-#include "lexer/error.hpp"
 #include "type/integertype.hpp"
 
 #include "characterliteral.hpp"
@@ -15,7 +11,7 @@
 namespace abc {
 
 CharacterLiteral::CharacterLiteral(unsigned processedVal, UStr val,
-				   lexer::Loc loc)
+                                   lexer::Loc loc)
     : Expr{loc, IntegerType::createChar()}, processedVal{processedVal}, val{val}
 {
 }

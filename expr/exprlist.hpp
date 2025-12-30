@@ -4,14 +4,12 @@
 #include <vector>
 
 #include "expr.hpp"
-#include "lexer/loc.hpp"
 
 namespace abc {
 
 class ExprList : public Expr
 {
     public:
-
     protected:
 	ExprList(std::vector<ExprPtr> &&exprVec);
 

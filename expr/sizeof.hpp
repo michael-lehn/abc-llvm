@@ -1,8 +1,6 @@
 #ifndef EXPR_SIZEOF_HPP
 #define EXPR_SIZEOF_HPP
 
-#include <cstdint>
-
 #include "expr.hpp"
 #include "lexer/loc.hpp"
 
@@ -15,9 +13,9 @@ class Sizeof : public Expr
 
     public:
 	static ExprPtr create(const Type *sizeofType,
-			      lexer::Loc loc = lexer::Loc{});
+	                      lexer::Loc loc = lexer::Loc{});
 	static ExprPtr create(ExprPtr &&sizeofExpr,
-			      lexer::Loc loc = lexer::Loc{});
+	                      lexer::Loc loc = lexer::Loc{});
 
 	const Type *sizeofType;
 	const ExprPtr sizeofExpr;
@@ -40,5 +38,5 @@ class Sizeof : public Expr
 };
 
 } // namespace abc
- 
+
 #endif // EXPR_SIZEOF_HPP

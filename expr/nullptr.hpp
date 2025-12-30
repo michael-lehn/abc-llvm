@@ -1,8 +1,6 @@
 #ifndef EXPR_NULLPTRLITERAL_HPP
 #define EXPR_NULLPTRLITERAL_HPP
 
-#include <cstdint>
-
 #include "expr.hpp"
 #include "lexer/loc.hpp"
 
@@ -26,7 +24,7 @@ class Nullptr : public Expr
 	gen::Value loadValue() const override;
 	gen::Value loadAddress() const override;
 	void condition(gen::Label trueLabel,
-		       gen::Label falseLabel) const override;
+	               gen::Label falseLabel) const override;
 
 	// for debugging and educational purposes
 	void print(int indent) const override;
@@ -36,5 +34,5 @@ class Nullptr : public Expr
 };
 
 } // namespace abc
- 
+
 #endif // EXPR_NULLPTRLITERAL_HPP

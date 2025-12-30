@@ -1,8 +1,6 @@
 #ifndef EXPR_FLOATLITERAL_HPP
 #define EXPR_FLOATLITERAL_HPP
 
-#include <cstdint>
-
 #include "expr.hpp"
 #include "lexer/loc.hpp"
 #include "type/floattype.hpp"
@@ -16,12 +14,12 @@ class FloatLiteral : public Expr
 
     public:
 	static ExprPtr create(UStr val,
-			      const Type *type = FloatType::createDouble(),
-			      lexer::Loc loc = lexer::Loc{});
+	                      const Type *type = FloatType::createDouble(),
+	                      lexer::Loc loc = lexer::Loc{});
 
 	static ExprPtr create(double val,
-			      const Type *type = FloatType::createDouble(),
-			      lexer::Loc loc = lexer::Loc{});
+	                      const Type *type = FloatType::createDouble(),
+	                      lexer::Loc loc = lexer::Loc{});
 
 	const UStr val;
 
@@ -43,5 +41,5 @@ class FloatLiteral : public Expr
 };
 
 } // namespace abc
- 
+
 #endif // EXPR_FLOATLITERAL_HPP

@@ -1,11 +1,8 @@
 #include <iomanip>
 #include <iostream>
 
-#include "gen/constant.hpp"
 #include "gen/function.hpp"
-#include "gen/instruction.hpp"
 #include "gen/variable.hpp"
-#include "lexer/error.hpp"
 
 #include "callexpr.hpp"
 #include "promotion.hpp"
@@ -13,7 +10,7 @@
 namespace abc {
 
 CallExpr::CallExpr(ExprPtr &&fn, std::vector<ExprPtr> &&arg, const Type *type,
-		   lexer::Loc loc)
+                   lexer::Loc loc)
     : Expr{loc, type}, fn{std::move(fn)}, arg{std::move(arg)}
 {
     static std::size_t idCount;
@@ -35,9 +32,8 @@ CallExpr::create(ExprPtr &&fn, std::vector<ExprPtr> &&arg, lexer::Loc loc)
     assert(fn);
     auto promotion = promotion::call(std::move(fn), std::move(arg), &loc);
     auto p = new CallExpr{std::move(std::get<0>(promotion)),
-			  std::move(std::get<1>(promotion)),
-			  std::get<2>(promotion),
-			  loc};
+                          std::move(std::get<1>(promotion)),
+                          std::get<2>(promotion), loc};
     return std::unique_ptr<CallExpr>{p};
 }
 

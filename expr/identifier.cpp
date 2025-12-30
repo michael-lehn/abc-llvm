@@ -1,10 +1,7 @@
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
-#include "gen/constant.hpp"
-#include "gen/instruction.hpp"
 #include "gen/variable.hpp"
-#include "lexer/error.hpp"
 
 #include "identifier.hpp"
 
@@ -91,7 +88,7 @@ Identifier::print(int indent) const
     }
     std::cerr << name << " [ " << type << " ] " << std::endl;
 }
-    
+
 void
 Identifier::printFlat(std::ostream &out, int prec) const
 {

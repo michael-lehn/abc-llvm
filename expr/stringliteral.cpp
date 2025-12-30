@@ -1,10 +1,9 @@
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
 #include "gen/constant.hpp"
 #include "gen/instruction.hpp"
 #include "gen/variable.hpp"
-#include "lexer/error.hpp"
 #include "type/arraytype.hpp"
 #include "type/integertype.hpp"
 
@@ -13,7 +12,7 @@
 namespace abc {
 
 StringLiteral::StringLiteral(const Type *type, UStr val, UStr valRaw,
-			     lexer::Loc loc)
+                             lexer::Loc loc)
     : Expr{loc, type}, val{val}, valRaw{valRaw}
 {
 }
@@ -70,7 +69,6 @@ StringLiteral::loadConstantAddress() const
     return gen::loadStringAddress(val.c_str());
 }
 
-
 gen::Value
 StringLiteral::loadAddress() const
 {
@@ -92,7 +90,7 @@ StringLiteral::print(int indent) const
     }
     std::cerr << "\"" << val << "\" [ " << type << " ] " << std::endl;
 }
-    
+
 void
 StringLiteral::printFlat(std::ostream &out, int prec) const
 {

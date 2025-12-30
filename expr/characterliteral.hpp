@@ -1,8 +1,6 @@
 #ifndef EXPR_CHARACTERLITERAL_HPP
 #define EXPR_CHARACTERLITERAL_HPP
 
-#include <cstdint>
-
 #include "expr.hpp"
 #include "lexer/loc.hpp"
 
@@ -15,7 +13,7 @@ class CharacterLiteral : public Expr
 
     public:
 	static ExprPtr create(UStr processedVal, UStr val,
-			      lexer::Loc loc = lexer::Loc{});
+	                      lexer::Loc loc = lexer::Loc{});
 
 	const unsigned processedVal;
 	const UStr val;
@@ -38,5 +36,5 @@ class CharacterLiteral : public Expr
 };
 
 } // namespace abc
- 
+
 #endif // EXPR_CHARACTERLITERAL_HPP
