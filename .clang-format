@@ -2,6 +2,7 @@ BasedOnStyle: LLVM
 IndentWidth: 4
 TabWidth: 8
 UseTab: ForIndentation
+ContinuationIndentWidth: 4
 
 BreakBeforeBraces: Custom
 BraceWrapping:
