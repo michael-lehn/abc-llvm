@@ -2,6 +2,7 @@
 #define TYPE_TYPE_HPP
 
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <ostream>
 #include <vector>
