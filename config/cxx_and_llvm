@@ -11,7 +11,7 @@ else ifeq (Linux,$(ostype))
 		    echo clang++ || echo clang++-21)
     endif
     llvm-config ?= $(shell which llvm-config-21 >/dev/null 2>&1 && \
-		echo llvm-config || echo llvm-config-21)
+		echo llvm-config-21 || echo llvm-config)
 else ifeq (SunOS,$(ostype))
     ifneq ($(origin CXX), command line)
 	CXX ?= clang++
