@@ -201,6 +201,8 @@ Type::explicitCast(const Type *from, const Type *to)
 	return type;
     } else if (from->isPointer() && to->isPointer()) {
 	return to;
+    } else if (from->isInteger() && to->isPointer()) {
+	return to;
     } else {
 	return nullptr;
     }

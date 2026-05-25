@@ -47,6 +47,8 @@ cast(Value val, const abc::Type *fromType, const abc::Type *toType)
 	           : llvmBuilder->CreateFPToSI(val, llvmToType);
     } else if (fromType->isPointer() && toType->isPointer()) {
 	return val;
+    } else if (fromType->isInteger() && toType->isPointer()) {
+	return llvmBuilder->CreateIntToPtr(val, llvmToType);
     } else if (fromType->isArray() && toType->isArray()) {
 	return val;
     }
