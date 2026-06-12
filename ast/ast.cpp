@@ -31,9 +31,7 @@ createSetBreakLabel(gen::Label breakLabel)
 {
     return [=](Ast *ast) -> bool {
 	if (auto astBreak = dynamic_cast<AstBreak *>(ast)) {
-	    if (!astBreak->label) {
-		astBreak->label = breakLabel;
-	    }
+	    astBreak->label = breakLabel;
 	}
 	return true;
     };
@@ -44,9 +42,7 @@ createSetContinueLabel(gen::Label continueLabel)
 {
     return [=](Ast *ast) -> bool {
 	if (auto astContinue = dynamic_cast<AstContinue *>(ast)) {
-	    if (!astContinue->label) {
-		astContinue->label = continueLabel;
-	    }
+	    astContinue->label = continueLabel;
 	}
 	return true;
     };
