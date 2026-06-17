@@ -847,8 +847,8 @@ AstReturn::codegen()
 	gen::returnInstruction(nullptr);
     } else {
 	if (!expr) {
-	    error::location(expr->loc);
-	    error::out() << error::setColor(error::BOLD) << expr->loc << ": "
+	    error::location(loc);
+	    error::out() << error::setColor(error::BOLD) << loc << ": "
 	                 << error::setColor(error::BOLD_RED)
 	                 << "error: " << error::setColor(error::BOLD)
 	                 << ": non-void function should return a value\n"
