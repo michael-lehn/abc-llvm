@@ -1616,6 +1616,16 @@ parseStructMemberList(AstStructDecl *structDecl, std::size_t &index,
     getToken();
     auto type = parseType();
     if (type) {
+	if (!type->hasSize()) {
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	                 << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD)
+	                 << "Array has incomplete element type '" << type
+	                 << "'\n";
+	    error::setColor(error::NORMAL);
+	    error::fatal();
+	}
 	if (!error::expected(TokenKind::SEMICOLON)) {
 	    return false;
 	}
@@ -1742,6 +1752,16 @@ parseArrayDimAndType(bool allowZeroDim)
 	                 << "error: " << error::setColor(error::BOLD)
 	                 << "type expected\n"
 	                 << error::setColor(error::NORMAL);
+	    error::fatal();
+	}
+	if (!type->hasSize()) {
+	    error::location(token.loc);
+	    error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	                 << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD)
+	                 << "Array has incomplete element type '" << type
+	                 << "'\n";
+	    error::setColor(error::NORMAL);
 	    error::fatal();
 	}
 	return ArrayType::create(type, dim);
