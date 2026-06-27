@@ -1596,10 +1596,13 @@ parseStructMemberDeclaration(AstStructDecl *structDecl)
 	}
 	if (token.kind == TokenKind::RBRACE) {
 	    getToken();
-	    if (!error::expected(TokenKind::SEMICOLON)) {
+	    if (section.top().kind == Section::Root &&
+	        !error::expected(TokenKind::SEMICOLON)) {
 		return false;
 	    }
-	    getToken();
+	    if (token.kind == TokenKind::SEMICOLON) {
+		getToken();
+	    }
 	    index = section.top().nextIndex;
 	    section.pop();
 	    if (section.empty()) {
