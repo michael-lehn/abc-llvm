@@ -36,8 +36,8 @@ someInstructions()
     auto intType = IntegerType::createSigned(32)->getAlias("int");
 
     auto intExpr = IntegerLiteral::create(-1, intType);
-    auto idExpr = Identifier::create(UStr::create("foo_global"),
-                                     UStr::create("foo_global"), intType);
+    auto idExpr = Identifier::create(
+        UStr::create("foo_global"), UStr::create("foo_global"), intType, false);
     auto addExpr = BinaryExpr::create(BinaryExpr::ADD, std::move(intExpr),
                                       std::move(idExpr));
 

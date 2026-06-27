@@ -638,7 +638,9 @@ parsePrimary()
 	    return expr;
 	} else if (auto sym = Symtab::variable(tok.val, Symtab::AnyScope)) {
 	    auto ty = sym->type;
-	    auto expr = Identifier::create(tok.val, sym->getId(), ty, tok.loc);
+	    auto hasLinkage = sym->hasLinkage();
+	    auto expr = Identifier::create(tok.val, sym->getId(), ty,
+	                                   hasLinkage, tok.loc);
 	    return expr;
 	} else {
 	    error::undefinedIdentifier(tok.loc, tok.val);

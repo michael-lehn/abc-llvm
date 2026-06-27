@@ -38,7 +38,7 @@ someInstructions()
 
     auto fltExpr = FloatLiteral::create(1.25, fltType);
     auto idExpr = Identifier::create(UStr::create("foo_global"),
-                                     UStr::create("foo_global"), fltType);
+                                     UStr::create("foo_global"), fltType, true);
     auto addExpr = BinaryExpr::create(BinaryExpr::ADD, std::move(fltExpr),
                                       std::move(idExpr));
 

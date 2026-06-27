@@ -53,6 +53,7 @@ class Entry
 	bool setExternalLinkage();
 	bool setInternalLinkage();
 	bool setLinkage();
+	bool hasLinkage() const;
 
 	friend bool operator!=(const Entry &a, const Entry &b);
 };

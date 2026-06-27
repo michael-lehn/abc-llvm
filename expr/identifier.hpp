@@ -11,14 +11,16 @@ namespace abc {
 class Identifier : public Expr
 {
     protected:
-	Identifier(UStr name, UStr id, const Type *type, lexer::Loc loc);
+	Identifier(UStr name, UStr id, const Type *type, bool hasLinkage,
+	           lexer::Loc loc);
 
     public:
 	static ExprPtr create(UStr name, UStr id, const Type *type,
-	                      lexer::Loc loc = lexer::Loc{});
+	                      bool hasLinkage, lexer::Loc loc = lexer::Loc{});
 
 	const UStr name;
 	const UStr id;
+	const bool hasLinkage;
 
 	virtual bool hasConstantAddress() const override;
 	bool hasAddress() const override;

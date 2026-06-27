@@ -20,7 +20,7 @@ main()
     std::cerr << unaryExpr << "\n";
 
     auto idExpr = Identifier::create(UStr::create("a"), UStr::create("a"),
-                                     unaryExpr->type);
+                                     unaryExpr->type, true);
     std::cerr << idExpr << "\n";
 
     auto addExpr = BinaryExpr::create(BinaryExpr::ADD, std::move(unaryExpr),

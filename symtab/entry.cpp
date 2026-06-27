@@ -106,6 +106,12 @@ Entry::setLinkage()
 }
 
 bool
+Entry::hasLinkage() const
+{
+    return linkage != NO_LINKAGE;
+}
+
+bool
 operator!=(const Entry &a, const Entry &b)
 {
     if (a.kind != b.kind) {

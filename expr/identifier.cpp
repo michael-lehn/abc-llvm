@@ -2,28 +2,32 @@
 #include <iostream>
 
 #include "gen/variable.hpp"
+#include "symtab/symtab.hpp"
 
 #include "identifier.hpp"
 
 namespace abc {
 
-Identifier::Identifier(UStr name, UStr id, const Type *type, lexer::Loc loc)
-    : Expr{loc, type}, name{name}, id{id}
+Identifier::Identifier(UStr name, UStr id, const Type *type, bool hasLinkage,
+                       lexer::Loc loc)
+    : Expr{loc, type}, name{name}, id{id}, hasLinkage{hasLinkage}
 {
 }
 
 ExprPtr
-Identifier::create(UStr name, UStr id, const Type *type, lexer::Loc loc)
+Identifier::create(UStr name, UStr id, const Type *type, bool hasLinkage,
+                   lexer::Loc loc)
 {
     assert(type);
-    auto p = new Identifier{name, id, type, loc};
+    auto p = new Identifier{name, id, type, hasLinkage, loc};
     return std::unique_ptr<Identifier>{p};
 }
 
 bool
 Identifier::hasConstantAddress() const
 {
-    return gen::hasConstantAddress(id.c_str());
+    // return gen::hasConstantAddress(id.c_str());
+    return hasLinkage;
 }
 
 bool
@@ -86,7 +90,9 @@ Identifier::print(int indent) const
     if (indent) {
 	std::cerr << std::setfill(' ') << std::setw(indent) << ' ';
     }
-    std::cerr << name << " [ " << type << " ] " << std::endl;
+    std::cerr << name << " [ " << type << ", "
+              << (hasLinkage ? "has linkage" : "no linkage") << " ] "
+              << std::endl;
 }
 
 void
