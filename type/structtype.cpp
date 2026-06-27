@@ -69,6 +69,7 @@ StructType::complete(std::vector<UStr> &&memberName,
                      std::vector<std::size_t> &&memberIndex,
                      std::vector<const Type *> &&memberType)
 {
+    assert(memberIndex.size());
     assert(memberName.size() == memberIndex.size());
     assert(memberName.size() == memberType.size());
     auto &constStructType = structConstSet.at(id());

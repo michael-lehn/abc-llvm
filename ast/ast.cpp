@@ -1693,7 +1693,15 @@ AstStructDecl::complete()
 	    memberType.push_back(type);
 	}
     }
-
+    if (memberName.empty()) {
+	error::location(structTypeName.loc);
+	error::out() << error::setColor(error::BOLD) << structTypeName.loc
+	             << ": " << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << "struct has no member\n"
+	             << error::setColor(error::NORMAL);
+	error::fatal();
+    }
     structType->complete(std::move(memberName),
                          std::vector<std::size_t>{memberIndex},
                          std::move(memberType));
