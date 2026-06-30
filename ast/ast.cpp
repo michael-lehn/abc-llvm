@@ -1702,6 +1702,20 @@ AstStructDecl::complete()
 	             << error::setColor(error::NORMAL);
 	error::fatal();
     }
+
+    // begin temporary hack: keep members sorted by memberIndex.
+    // TODO: Remove once nested struct/union declarations are handled properly.
+    for (std::size_t i = 0; i + 1 < memberIndex.size(); ++i) {
+	for (std::size_t j = 0; j + 1 < memberIndex.size() - i; ++j) {
+	    if (memberIndex[j] > memberIndex[j + 1]) {
+		std::swap(memberIndex[j], memberIndex[j + 1]);
+		std::swap(memberName[j], memberName[j + 1]);
+		std::swap(memberType[j], memberType[j + 1]);
+	    }
+	}
+    }
+    // end temporary hack
+
     structType->complete(std::move(memberName),
                          std::vector<std::size_t>{memberIndex},
                          std::move(memberType));

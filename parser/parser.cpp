@@ -1603,10 +1603,18 @@ parseStructMemberDeclaration(AstStructDecl *structDecl)
 	    if (token.kind == TokenKind::SEMICOLON) {
 		getToken();
 	    }
+	    /*
+	    std::cerr << "closing scope of " << section.top().kind
+	              << ", startIndex = " << section.top().startIndex
+	              << ", nextIndex = " << section.top().nextIndex << "\n";
+	    */
 	    index = section.top().nextIndex;
 	    section.pop();
 	    if (section.empty()) {
 		break;
+	    }
+	    if (section.top().kind == Section::Union) {
+		index = section.top().startIndex;
 	    }
 	}
     }

@@ -6,12 +6,12 @@
 #include <variant>
 #include <vector>
 
-#include "expr/expr.hpp"
 #include "expr/enumconstant.hpp"
+#include "expr/expr.hpp"
 #include "lexer/loc.hpp"
 #include "lexer/token.hpp"
-#include "type/type.hpp"
 #include "symtab/symtab.hpp"
+#include "type/type.hpp"
 
 namespace abc {
 
@@ -53,11 +53,11 @@ class AstFuncDecl : public Ast
 {
     public:
 	AstFuncDecl(lexer::Token fnName, const Type *fnType,
-		    std::vector<lexer::Token> &&fnParamName,
-		    bool externalLinkage);
+	            std::vector<lexer::Token> &&fnParamName,
+	            bool externalLinkage);
 
 	const lexer::Token fnName;
-	const Type * const fnType;
+	const Type *const fnType;
 	const std::vector<lexer::Token> fnParamName;
 	const bool externalLinkage;
 	UStr fnId;
@@ -79,9 +79,8 @@ class AstFuncDef : public Ast
 	AstFuncDef(lexer::Token fnName, const Type *fnType);
 
 	const lexer::Token fnName;
-	const Type * const fnType;
+	const Type *const fnType;
 	UStr fnId;
-
 
 	void appendParamName(std::vector<lexer::Token> &&fnParamName);
 	void appendBody(AstPtr &&body);
@@ -111,14 +110,14 @@ class AstVar : public Ast
 	AstInitializerExprPtr initializerExpr;
 	void init(bool define);
 
-        std::vector<symtab::Entry *> varEntry;
-        std::vector<UStr> varId;
-        std::vector<const Type *> varType;
+	std::vector<symtab::Entry *> varEntry;
+	std::vector<UStr> varId;
+	std::vector<const Type *> varType;
 	const Type *varDeclType;
 
     public:
-	AstVar(lexer::Token varName, lexer::Loc varTypeLoc,
-	       const Type *varType, bool define);
+	AstVar(lexer::Token varName, lexer::Loc varTypeLoc, const Type *varType,
+	       bool define);
 	AstVar(std::vector<lexer::Token> &&varName, lexer::Loc varTypeLoc,
 	       const Type *varType, bool define);
 
@@ -128,13 +127,13 @@ class AstVar : public Ast
 	const std::vector<lexer::Token> varName;
 	const lexer::Loc varTypeLoc;
 
-        std::size_t count() const;
-        const UStr getId(std::size_t index) const;
-        const Type *getType(std::size_t index) const;
+	std::size_t count() const;
+	const UStr getId(std::size_t index) const;
+	const Type *getType(std::size_t index) const;
 
-        void setExternalLinkage();
-        void setInternalLinkage();
-        void setLinkage();
+	void setExternalLinkage();
+	void setInternalLinkage();
+	void setLinkage();
 
 	void print(int indent) const override;
 };
@@ -384,7 +383,7 @@ class AstTypeDecl : public Ast
 	AstTypeDecl(lexer::Token name, const Type *type);
 
 	const lexer::Token name;
-	const Type * const type;
+	const Type *const type;
 
 	void print(int indent) const override;
 };
@@ -399,8 +398,8 @@ class AstEnumDecl : public Ast
 
 	Type *enumType;
 	std::int64_t enumLastVal = 0;
-	std::vector<ExprPtr> enumExpr;	    // expr found by parser after '='
-	std::vector<ExprPtr> enumConstant;  // gets referenced in symtab
+	std::vector<ExprPtr> enumExpr;     // expr found by parser after '='
+	std::vector<ExprPtr> enumConstant; // gets referenced in symtab
 
     public:
 	AstEnumDecl(lexer::Token enumTypeName, const Type *intType);
@@ -432,11 +431,10 @@ class AstStructDecl : public Ast
 	AstStructDecl(lexer::Token structTypeName);
 
 	void add(std::vector<lexer::Token> &&memberName,
-		 std::vector<std::size_t> &&memberIndex,
-		 const Type *memberType);
+	         std::vector<std::size_t> &&memberIndex,
+	         const Type *memberType);
 	void add(std::vector<lexer::Token> &&memberName,
-		 std::vector<std::size_t> &&memberIndex,
-		 AstPtr &&memberType);
+	         std::vector<std::size_t> &&memberIndex, AstPtr &&memberType);
 	void complete();
 	const Type *getStructType() const;
 
