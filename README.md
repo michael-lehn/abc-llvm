@@ -71,8 +71,8 @@ execute programs*. It is suitable for use in:
 ### `examples/`
 
 Contains a collection of small example programs illustrating different language
-features, including recursion, pointers, dynamic memory allocation, linked
-lists, and a self-hosting compiler.
+features, including recursion, pointers, dynamic memory allocation, and linked
+lists.
 
 A good starting point is the classic "Hello, World!" example.
 
