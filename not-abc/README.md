@@ -8,6 +8,18 @@ High Performance Computing*. It is considerably easier to read than the
 self-hosting version because it still makes use of language features such as
 structures, enumerations, and member access.
 
+One of the main design goals of the project is a clean separation between the
+compiler frontend and the code generator. The parser, semantic analysis, and
+intermediate representation are shared by all compiler variants. Different
+backends can then target different architectures without modifying the frontend
+itself.
+
+This directory therefore builds multiple versions of the compiler from the same
+frontend:
+- one generating assembly for the custom ULM architecture used in the course,
+- and one generating LLVM IR, allowing the same compiler frontend to produce
+  native executables on virtually any modern platform.
+
 ## Building
 
 This directory assumes that the ABC compiler has already been built and
