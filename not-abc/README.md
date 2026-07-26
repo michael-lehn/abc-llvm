@@ -20,6 +20,27 @@ frontend:
 - and one generating LLVM IR, allowing the same compiler frontend to produce
   native executables on virtually any modern platform.
 
+## Relationship to the Self-Hosting Compiler
+
+This repository contains the **ABC** implementation of the `not-abc` compiler.
+
+The corresponding self-hosting compiler can be found in the companion repository
+
+https://github.com/michael-lehn/not-abc
+
+That repository contains a detailed description of the `not-abc` language itself.
+
+The initial LLVM IR (`not-abc.ll`) of the self-hosting compiler was generated
+by compiling `examples/not-abc.abc` with
+
+```sh
+./not-abc-written-in-abc_llvm < examples/not-abc.abc > not-abc.ll
+```
+
+Once `not-abc.ll` has been compiled with Clang, the resulting executable is
+able to compile its own source code and is therefore self-hosting.
+
+
 ## Building
 
 This directory assumes that the ABC compiler has already been built and
@@ -40,24 +61,6 @@ not-abc-written-in-abc_BACKEND
 It reads `not-abc` source code from **stdin** and writes the generated code to
 **stdout**.
 
-## Relationship to the Self-Hosting Compiler
-
-This repository contains the **ABC** implementation of the `not-abc` compiler.
-
-The corresponding self-hosting compiler can be found in the companion repository
-
-https://github.com/michael-lehn/not-abc
-
-That repository contains a detailed description of the `not-abc` language itself.
-
-The initial LLVM IR (`not-abc.ll`) of the self-hosting compiler was generated
-by compiling `examples/not-abc.abc` with
-
-```sh
-./not-abc-written-in-abc_llvm < examples/not-abc.abc > not-abc.ll
-```
-
-Once `not-abc.ll` has been compiled with Clang, the resulting executable is able to compile its own source code and is therefore self-hosting.
 ## Compiler Backends
 
 Several compiler variants are built.
