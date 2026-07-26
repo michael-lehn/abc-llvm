@@ -69,12 +69,12 @@ case ":$PATH:" in
 esac
 
 install_program \
-    "$script_dir/myabc-wrapper/myabc_simple" \
-    "$install_dir/myabc_simple"
+    "$script_dir/not-abc-wrapper/not-abc_simple" \
+    "$install_dir/not-abc_simple"
 
 install_program \
-    "$script_dir/myabc-wrapper/myabc_llvm" \
-    "$install_dir/myabc_llvm"
+    "$script_dir/not-abc-wrapper/not-abc_llvm" \
+    "$install_dir/not-abc_llvm"
 
 install_program \
     "$script_dir/simple/ulmas" \
@@ -88,7 +88,7 @@ install_program \
     "$script_dir/simple/udb-tui" \
     "$install_dir/udb-tui_simple"
 
-for xtest_abc in $script_dir/xtest_abc_*; do
+for xtest_abc in $script_dir/not-abc-witten-in-abc_*; do
     install_program \
 	${xtest_abc} \
 	"$install_dir/"

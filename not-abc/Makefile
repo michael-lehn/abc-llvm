@@ -17,7 +17,7 @@ gen_obj := $(gen_src:%.abc=$(obj.dir)/%.o)
 
 backend := $(patsubst gen_%,%,$(basename $(notdir $(gen_src))))
 
-target_src := $(wildcard x*.abc)
+target_src := $(wildcard x*.abc) not-abc-witten-in-abc.abc
 target_obj := $(target_src:%.abc=$(obj.dir)/%.o)
 target := $(foreach b,$(backend), \
              $(patsubst %.o,%_$(b),$(notdir $(target_obj))))
