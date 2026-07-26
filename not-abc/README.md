@@ -34,7 +34,7 @@ make
 The main compiler executable is
 
 ```text
-not-abc-written-in-abc
+not-abc-written-in-abc_BACKEND
 ```
 
 It reads `not-abc` source code from **stdin** and writes the generated code to
