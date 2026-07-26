@@ -1,0 +1,21 @@
+fn printInt(n)
+{
+    if (n < 0) {
+	putchar('-');
+	printInt(-n);
+    } else if (n == 0) {
+	putchar('0');
+    } else {
+	if (n >= 10) {
+	    printInt(n / 10);
+	}
+	putchar(n % 10 + '0');
+    }
+ }
+
+ fn main()
+ {
+     printInt(-123); putchar('\n');
+     printInt(123); putchar('\n');
+     printInt(0); putchar('\n');
+ }

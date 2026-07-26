@@ -1,0 +1,39 @@
+@ "gen.hdr"
+
+fn main()
+{
+    genInitCode();
+
+    // fn sum(a, b) {
+    genFuncDefParam(UStrCreate("a"));
+    genFuncDefParam(UStrCreate("b"));
+    genFuncDefBegin(UStrCreate("sum"));
+
+    //     a + b;
+    local a: GenReg = genFetch(genLoadAddr(UStrCreate("a")));
+    local b: GenReg = genFetch(genLoadAddr(UStrCreate("b")));
+    genReleaseReg(a);
+    genReleaseReg(b);
+    genReturn(genInstr(GEN_ADD, a, b));
+    // }
+    genFuncDefEnd();
+
+    // fn main() {
+    genFuncDefBegin(UStrCreate("main"));
+    //     local foo, bar;
+    genAddLocal(UStrCreate("foo"));
+    genAddLocal(UStrCreate("bar"));
+
+    //     foo = 20;
+    genStore(genConstant(UStrCreate("20")), genLoadAddr(UStrCreate("foo")));
+    //     bar = 22;
+    genStore(genConstant(UStrCreate("32")), genLoadAddr(UStrCreate("bar")));
+
+    // 	   sum(foo, bar);
+    genCallBegin(UStrCreate("sum"), 2);
+    genCallAddArg(genFetch(genLoadAddr(UStrCreate("foo"))), 0);
+    genCallAddArg(genFetch(genLoadAddr(UStrCreate("bar"))), 1);
+    genReturn(genCallEnd());
+    // }
+    genFuncDefEnd();
+}

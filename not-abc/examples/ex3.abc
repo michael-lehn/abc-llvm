@@ -1,0 +1,8 @@
+global a, b;
+
+fn main()
+{
+    a = 6; b = 7;
+    a * b;
+}
+

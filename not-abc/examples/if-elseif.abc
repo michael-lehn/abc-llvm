@@ -1,0 +1,22 @@
+fn println(s)
+{
+    while (#s) {
+	putchar(#s);
+	s = s + 1;
+    }
+    putchar('\n');
+}
+
+fn main()
+{
+    local a, b;
+    a = 1;
+    b = 1;
+    if (a) {
+	println("a");
+    } else if (b) {
+	println("b");
+    } else {
+	println("else");
+    }
+}

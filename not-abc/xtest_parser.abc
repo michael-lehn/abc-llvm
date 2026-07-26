@@ -1,0 +1,16 @@
+@ <stdio.hdr>
+@ "expr.hdr"
+@ "gen.hdr"
+@ "lexer.hdr"
+@ "parser.hdr"
+
+fn main()
+{
+    getToken();
+    local expr: -> Expr = parseExpr();
+    if (expr && token.kind == EOI) {
+	printExprTree(expr);
+    } else {
+	printf("syntax error\n");
+    }
+}

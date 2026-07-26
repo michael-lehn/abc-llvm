@@ -1,0 +1,3 @@
+struct UStr;
+
+extern fn UStrCreate(s: -> readonly char): -> UStr;

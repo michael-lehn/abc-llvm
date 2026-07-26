@@ -1,0 +1,105 @@
+@ <stdlib.hdr>
+@ <stdio.hdr>
+
+@ "gen.hdr"
+@ "symtab.hdr"
+
+struct Node {
+    ident: ->UStr;
+    offset: int;
+    next: -> Node;
+};
+
+global globalVar, localVar: -> Node;
+
+fn isInList(list: -> readonly Node, ident: ->UStr): -> readonly Node
+{
+    for (; list; list = list->next) {
+	if (ident == list->ident) {
+	    return list;
+	}
+    }
+    return nullptr;
+}
+
+fn symtabGetInfo(ident: ->UStr, info: -> SymtabInfo): bool
+{
+    local found: -> readonly Node;
+    if (found = isInList(localVar, ident)) {
+	if (info) {
+	    info->isGlobal = false;
+	    info->offset = found->offset;
+	}
+	return true;
+    } else if (found = isInList(globalVar, ident)) {
+	if (info) {
+	    info->isGlobal = true;
+	}
+	return true;
+    } else {
+	return false;
+    }
+}
+
+fn symtabIsDefined(ident: ->UStr): bool
+{
+    return symtabGetInfo(ident, nullptr);
+}
+
+fn symtabAddGlobal(ident: ->UStr): bool
+{
+    if (isInList(globalVar, ident)) {
+	return false;
+    }
+
+    local n: -> Node = malloc(sizeof(*n));
+    if (!n) {
+        printf("out of memory\n");
+        exit(1);
+    }
+    n->ident = ident;
+    n->next = globalVar;
+    globalVar = n;
+    return true;
+}
+
+fn symtabAddLocal(ident: ->UStr, offset: int): bool
+{
+    if (isInList(localVar, ident)) {
+	return false;
+    }
+
+    local n: -> Node = malloc(sizeof(*n));
+    if (!n) {
+        printf("out of memory\n");
+        exit(1);
+    }
+    n->ident = ident;
+    n->offset = offset;
+    n->next = localVar;
+    localVar = n;
+    return true;
+}
+
+fn symtabFreeLocals()
+{
+    while (localVar) {
+	local next: -> Node = localVar->next;
+	free(localVar);
+	localVar = next;
+    }
+}
+
+fn symtabPrintGlobals()
+{
+    for (local n: -> Node = globalVar; n; n = n->next) {
+        genDefGlobal(n->ident);                    
+    }
+}
+
+fn symtabPrintLocals()
+{
+    for (local n: -> Node = localVar; n; n = n->next) {
+	printf("%s has offset %d\n", n->ident, n->offset);
+    }
+}

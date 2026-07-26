@@ -1,0 +1,2138 @@
+//
+// Simple output
+//
+fn print(s)
+{
+    while (s && #s) {
+	putchar(#s);
+	s = s + 1;
+    }
+    1;
+}
+
+fn println(s)
+{
+    print(s);
+    putchar('\n');
+    1;
+}
+
+fn printInt(n)
+{
+    if (n < 0) {
+	putchar('-');
+	n = -n;
+    }
+    if (n == 0) {
+	putchar('0');
+    } else {
+	if (n / 10 > 0) {
+	    printInt(n / 10);
+	}
+	putchar(n % 10 + '0');
+    }
+}
+
+fn sprintInt(n, s)
+{
+    if (n < 0) {
+	#s = '-'; s = s + 1;
+	n = -n;
+    }
+    if (n == 0) {
+	#s = '0'; s = s + 1;
+    } else {
+	if (n / 10 > 0) {
+	    s = sprintInt(n / 10, s);
+	}
+	#s = n % 10 + '0'; s = s + 1;
+    }
+    #s = 0;
+    s;
+}
+
+//
+// String functions
+//
+fn strcpy(dest, src)
+{
+    while (#src) {
+	#dest = #src;
+	dest = dest + 1;
+	src = src + 1;
+    }
+    #dest = #src;
+}
+
+fn strcmp(s1, s2)
+{
+    while (#s1 && #s1 == #s2) {
+	s1 = s1 + 1;
+	s2 = s2 + 1;
+    }
+    #s1 - #s2;
+}
+
+fn strlen(s)
+{
+    local n;
+    n = 0;
+    while (#s) {
+	n = n + 1;
+	s = s + 1;
+    }
+    n;
+}
+
+//
+// UStr - Unique Strings
+//
+
+global ustrList;
+
+fn UStrCreate(s)
+{
+    local ustr; ustr = 0;
+    local n; n = ustrList;
+
+    while (n) {
+	if (!strcmp(n + 8, s)) {
+	    ustr = n + 8;
+	    n = 0;
+	} else {
+	    n = *n;
+	}
+    }
+    if (!ustr) {
+	local hack;
+	hack = 8 + strlen(s) + 1;
+	hack = (hack + 7) / 8 * 8;
+	n = malloc(hack);
+	*n = ustrList;
+	strcpy(n+8, s);
+	ustrList = n;
+	ustr = n + 8;
+    }
+    ustr;
+}
+
+fn testUStr()
+{
+    local s1, s2, s3;
+    s1 = UStrCreate("hallo");
+    printInt(s1); print(" is address for ustr '"); print(s1); println("'.");
+    s2 = UStrCreate("hello");
+    printInt(s2); print(" is address for ustr '"); print(s2); println("'.");
+    s3 = UStrCreate("hallo");
+    printInt(s3); print(" is address for ustr '"); print(s3); println("'.");
+}
+
+//
+// lexer
+//
+// token kinds: 
+//      0 bad token
+//      1 EOI
+//      2 decimal literal
+//      3 identifier
+//      4 =
+//      5 ;
+//      6 ,
+//      7 +
+//      8 -
+//      9 *
+//     10 /
+//     11 )
+//     12 (
+//     13 {
+//     14 }
+//     15 string literal
+//     16 character literal
+//     17 if
+//     18 while
+//     19 global
+//     20 local
+//     21 else
+//     22 do
+//     23 fn
+// 
+//     24 <=
+//     25 <
+//     26 >
+//     27 >=
+//     28 ==
+//     29 !
+//     30 !=
+//     31 %
+//     32 #
+//     33 &
+//     34 &&
+//     35 |
+//     36 ||
+//
+//  token offsets:
+//     0   kind
+//     8   value (pointer to UStr)
+//     16  row
+//     24  col
+
+
+global lexerCh;
+global lexerCurrentRow, lexerCurrentCol;
+global lexerUpdateVal;
+global lexerLengthVal;
+global lexerInternalVal;
+global lexerInternalValCapacity;
+
+global kw_if, kw_while, kw_global, kw_local, kw_else, kw_do, kw_fn;
+
+global token;
+
+fn initLexer()
+{
+    lexerInternalValCapacity = 256;
+    lexerInternalVal = malloc(lexerInternalValCapacity);
+    lexerCurrentRow = 1;
+    lexerCurrentCol = 0;
+
+    kw_if = UStrCreate("if");
+    kw_while = UStrCreate("while");
+    kw_global = UStrCreate("global");
+    kw_local = UStrCreate("local");
+    kw_else = UStrCreate("else");
+    kw_do = UStrCreate("do");
+    kw_fn = UStrCreate("fn");
+
+    token = "[kind  ][val   ][row   ][col   ]";
+}
+
+fn nextCh()
+{
+    if (lexerUpdateVal) {
+	if (lexerLengthVal + 1 > lexerInternalValCapacity) {
+	    println("TODO: support realloc");
+	}
+        #(lexerInternalVal + lexerLengthVal) = lexerCh;
+	lexerLengthVal = lexerLengthVal + 1;
+        #(lexerInternalVal + lexerLengthVal) = 0;
+    } else {
+        lexerLengthVal = 0;
+    }
+    lexerCh = getchar();
+    if (lexerCh == '\n') {
+	lexerCurrentRow = lexerCurrentRow + 1;
+	lexerCurrentCol = 0;
+    } else {
+	lexerCurrentCol = lexerCurrentCol + 1;
+    }
+}
+
+fn isDigit(ch)
+{
+    ch >= '0' && ch <= '9';
+}
+
+fn isLetter(ch)
+{
+    ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch == '_';
+}
+
+fn isWhitespace(ch)
+{
+    ch == ' ' || ch == '\n' || ch == '\t';
+}
+
+fn getToken()
+{
+    lexerLengthVal = 0;
+    lexerUpdateVal = 0;
+    while (lexerCh == 0 || isWhitespace(lexerCh)) {
+        nextCh();
+    }
+    lexerUpdateVal = 1;
+    *(token + 16) = lexerCurrentRow;
+    *(token + 24) = lexerCurrentCol;
+    if (isDigit(lexerCh)) {
+        while (isDigit(lexerCh)) {
+            nextCh();
+        }
+        *token = 2; // decimal literal
+    } else if (isLetter(lexerCh)) {
+        while (isLetter(lexerCh) || isDigit(lexerCh)) {
+            nextCh();
+        }
+        *token = 3; // identifier
+    } else if (lexerCh == '=') {
+        nextCh();
+	if (lexerCh == '=') {
+	    nextCh();
+	    *token = 28; // ==
+	} else {
+	    *token = 4; // =
+	}
+    } else if (lexerCh == '<') {
+        nextCh();
+	if (lexerCh == '=') {
+	    nextCh();
+	    *token = 24; // <=
+	} else {
+	    *token = 25; // <
+	}
+    } else if (lexerCh == '>') {
+        nextCh();
+	if (lexerCh == '=') {
+	    nextCh();
+	    *token = 27; // >=
+	} else {
+	    *token = 26; // >
+	}
+    } else if (lexerCh == '!') {
+        nextCh();
+	if (lexerCh == '=') {
+	    nextCh();
+	    *token = 30; // !=
+	} else {
+	    *token = 29; // !
+	}
+    } else if (lexerCh == '%') {
+        nextCh();
+	*token = 31; // %
+    } else if (lexerCh == '#') {
+        nextCh();
+	*token = 32; // #
+    } else if (lexerCh == '&') {
+        nextCh();
+	if (lexerCh == '&') {
+	    nextCh();
+	    *token = 34; // &&
+	} else {
+	    *token = 33; // &
+	}
+    } else if (lexerCh == '|') {
+        nextCh();
+	if (lexerCh == '|') {
+	    nextCh();
+	    *token = 36; // ||
+	} else {
+	    *token = 35; // |
+	}
+    } else if (lexerCh == ';') {
+        nextCh();
+	*token = 5; // ;
+    } else if (lexerCh == ',') {
+        nextCh();
+	*token = 6; // ,
+    } else if (lexerCh == '+') {
+        nextCh();
+	*token = 7; // +
+    } else if (lexerCh == '-') {
+        nextCh();
+	*token = 8; // -
+    } else if (lexerCh == '*') {
+        nextCh();
+	*token = 9; // *
+    } else if (lexerCh == '/') {
+        nextCh();
+	if (lexerCh == '/') {
+	    while (lexerCh != '\n') {
+		nextCh();
+	    }
+	    *token = getToken();
+	} else {
+	    *token = 10; // '/'
+	}
+    } else if (lexerCh == '(') {
+        nextCh();
+	*token = 12; // (
+    } else if (lexerCh == ')') {
+        nextCh();
+	*token = 11; // )
+    } else if (lexerCh == '{') {
+        nextCh();
+	*token = 13; // {
+    } else if (lexerCh == '}') {
+        nextCh();
+	*token = 14; // }
+    } else if (lexerCh == '"') {
+        nextCh();
+	*token = 15;
+	while (lexerCh != '"') {
+	    nextCh();
+	    if (lexerCh == '\n' || lexerCh == -1) {
+		*token = 0;
+	    }
+	}
+	if (*token) {
+	    nextCh();
+	}
+    } else if (lexerCh == '\'') {
+	local escape; escape = 0;
+        nextCh();
+	*token = 16;
+	while (escape || lexerCh != '\'') {
+	    if (escape) {
+		escape = 0;
+	    } else if (!escape && lexerCh == '\\') {
+		escape = 1;
+	    }
+	    nextCh();
+	    if (lexerCh == '\n' || lexerCh == -1) {
+		*token = 0;
+	    }
+	}
+	if (*token) {
+	    nextCh();
+	}
+    } else if (lexerCh == -1) {
+	*token = 1;
+    } else {
+        nextCh();
+        *token = 0;
+    }
+    *(token + 8) = UStrCreate(lexerInternalVal);
+    if (*token == 3) {
+	if (*(token + 8) == kw_if) {
+	    *token = 17;
+	} else if (*(token + 8) == kw_while) {
+	    *token = 18;
+	} else if (*(token + 8) == kw_global) {
+	    *token = 19;
+	} else if (*(token + 8) == kw_local) {
+	    *token = 20;
+	} else if (*(token + 8) == kw_else) {
+	    *token = 21;
+	} else if (*(token + 8) == kw_do) {
+	    *token = 22;
+	} else if (*(token + 8) == kw_fn) {
+	    *token = 23;
+	}
+    }
+    *token;
+}
+
+fn testLexer()
+{
+    initLexer();
+    while (getToken() != 1) {
+	printInt(*(token + 16)); print("."); printInt(*(token + 24));
+	print(": ("); printInt(*(token + 0)); print(") "); 
+	println(*(token + 8));
+    }
+}
+
+//
+// symtab
+//
+// Offset in symtab info:
+// 	0 isGlobal
+// 	8 offset (used if isGlobal == 0)
+//
+// Offset in symtab nodes
+// 	 0 next
+// 	 8 ident
+// 	16 offset (only exists for nodes in symtabLocalVar)
+
+global symtabGlobalVar, symtabLocalVar;
+
+fn symtab_isInList(list, ident)
+{
+    local found; found = 0;
+
+    while (list && !found) {
+	if (ident == *(list + 8)) {
+	    found = list;
+	}
+	list = *list;
+    }
+    found;
+}
+
+fn symtabGetInfo(ident, infoPtr)
+{
+    local found;
+    if (found = symtab_isInList(symtabLocalVar, ident)) {
+	if (infoPtr) {
+	    *(infoPtr + 0) = 0;
+	    *(infoPtr + 8) = *(found + 16);
+	}
+    } else if (found = symtab_isInList(symtabGlobalVar, ident)) {
+	if (infoPtr) {
+	    *(infoPtr + 0) = 1;
+	}
+    }
+    found != 0;
+}
+
+fn symtabIsDefined(ident)
+{
+    symtabGetInfo(ident, 0);
+}
+
+fn symtabAddGlobal(ident)
+{
+    local added, n;
+
+    if (symtab_isInList(symtabGlobalVar, ident)) {
+	added = 0;
+    } else {
+	n = malloc(16);
+	if (!n) {
+	    println("out of memory");
+	    added = 0;
+	} else {
+	    *(n + 0) = symtabGlobalVar;
+	    *(n + 8) = ident;
+	    symtabGlobalVar = n;
+	    added = 1;
+	}
+    }
+    added;
+}
+
+fn symtabAddLocal(ident, offset)
+{
+    local added, n;
+
+    if (symtab_isInList(symtabLocalVar, ident)) {
+	added = 0;
+    } else {
+	n = malloc(24);
+	if (!n) {
+	    println("out of memory");
+	    added = 0;
+	} else {
+	    *(n +  0) = symtabLocalVar;
+	    *(n +  8) = ident;
+	    *(n + 16) = offset;
+	    symtabLocalVar = n;
+	    added = 1;
+	}
+    }
+    added;
+}
+
+fn symtabFreeLocals()
+{
+    local next;
+
+    while (symtabLocalVar) {
+	next = *(symtabLocalVar + 0);
+	free(symtabLocalVar);
+	symtabLocalVar = next;
+    }
+}
+
+fn symtabPrintGlobals()
+{
+    local n;
+
+    n = symtabGlobalVar;
+    while (n) {
+	genDefGlobal(*(n + 8));
+	n = *n;
+    }
+}
+
+fn symtabPrintLocals()
+{
+    local n;
+
+    n = symtabLocalVar;
+    while (n) {
+	print(*(n + 8)); print(" has offset "); printInt(*(n+16)); println(0);
+	n = *n;
+    }
+}
+
+fn checkInfo(ident) {
+    local infoPtr;
+
+    infoPtr = "16 bytes ......"; // 0-byte included
+
+    if (symtabIsDefined(ident)) {
+	print(ident); println(" is defined");
+    } else {
+	print(ident); println(" is not defined");
+    }
+
+    if (symtabGetInfo(ident, infoPtr)) {
+	if (*(infoPtr + 0)) {
+	    print(ident); println(" is global");
+	} else {
+	    print(ident); print(" is local with offset ");
+	    printInt(*(infoPtr + 8)); println(0);
+	}
+    } else {
+	print("unknown identifier "); println(ident);
+    }
+}
+
+fn testSymtab()
+{
+    // add some global and local variables
+    symtabAddGlobal(UStrCreate("foo")) || print("error\n");
+    checkInfo(UStrCreate("foo"));
+
+    symtabAddGlobal(UStrCreate("bar")) || print("error\n");
+    symtabAddLocal(UStrCreate("foo"), -8) || print("error\n");
+
+    checkInfo(UStrCreate("foo"));
+    checkInfo(UStrCreate("bar"));
+    checkInfo(UStrCreate("barx"));
+}
+
+//
+// Code Generator
+//
+
+global genUsedReg;
+global genLastUsedReg;
+
+fn genGetReg()
+{
+    genLastUsedReg = genUsedReg;
+    genUsedReg = genUsedReg + 1;
+    genLastUsedReg;
+}
+
+fn genResetReg()
+{
+    genLastUsedReg = genUsedReg = 0;
+}
+
+
+// offsets in genFunctionBuildingInfo
+// 	 0	fnName
+//  	 8	bbClosed
+// 	16 	retReg
+
+global genFunctionBuildingInfo;
+
+fn genInitCode()
+{
+    genFunctionBuildingInfo = "[fnName][bbClos][retRe]";
+    println("declare i32 @getchar()");
+    println("declare void @putchar(i64)");
+    println("declare i64 @malloc(i64)");
+    println("declare void @free(i64)");
+}
+
+global genLabelCount;
+
+fn genGetLabel()
+{
+    local ret;
+    ret = genLabelCount;
+    genLabelCount = genLabelCount + 1;
+    ret;
+}
+
+fn genDefLabel(labelIdent)
+{
+    if (*genFunctionBuildingInfo && !*(genFunctionBuildingInfo + 8)) {
+	genJump(labelIdent);
+    }
+    print(".L"); printInt(labelIdent); println(":");
+    *(genFunctionBuildingInfo + 8) = 0;
+}
+
+fn genJump(labelIdent)
+{
+    print("	br label %.L"); printInt(labelIdent); println(0);
+    *(genFunctionBuildingInfo + 8) = 1;
+}
+
+fn genJumpIfTrue(condVal, labelIdent)
+{
+    local condReg; condReg = genGetReg();
+    local cmpReg; cmpReg = genGetReg();
+
+    print("	%"); printInt(condReg); print(" = sub i64 %");
+    printInt(condVal); println(", 0");
+    print("	%"); printInt(cmpReg); print(" = icmp ne i64 %");
+    printInt(condReg); println(", 0");
+
+    local contLabel; contLabel = genGetLabel();
+    print("	br i1 %"); printInt(cmpReg);
+    print(", label %.L"); printInt(labelIdent);
+    print(", label %.L"); printInt(contLabel);
+    println(0);
+    *(genFunctionBuildingInfo + 8) = 1;
+    genDefLabel(contLabel);
+}
+
+fn genJumpIfFalse(condVal, labelIdent)
+{
+    local condReg; condReg = genGetReg();
+    local cmpReg; cmpReg = genGetReg();
+
+    print("	%"); printInt(condReg); print(" = sub i64 %");
+    printInt(condVal); println(", 0");
+    print("	%"); printInt(cmpReg); print(" = icmp eq i64 %");
+    printInt(condReg); println(", 0");
+
+    local contLabel; contLabel = genGetLabel();
+    print("	br i1 %"); printInt(cmpReg);
+    print(", label %.L"); printInt(labelIdent);
+    print(", label %.L"); printInt(contLabel);
+    println(0);
+    *(genFunctionBuildingInfo + 8) = 1;
+    genDefLabel(contLabel);
+}
+
+// offsets in genStringList
+//     0	next
+//     8	ident
+//     16	cStr
+
+global genStringList;
+global genStringCount;
+
+fn genDefString(val)
+{
+    local name; name = ".STRxxxxxxxxxx";
+    sprintInt(genStringCount, name + 4);
+    genStringCount = genStringCount + 1;
+    local ident; ident = UStrCreate(name);
+
+    local n; n = malloc(24);
+    *(n +  0) = genStringList;
+    *(n +  8) = ident;
+    *(n + 16) = malloc(strlen(val) + 1);
+    strcpy(*(n + 16), val);
+
+    *(n + 16) = malloc(strlen(val) + 1);
+    strcpy(*(n + 16), val);
+    #(*(n + 16) + strlen(*(n + 16)) - 1) = 0; // hack: kill last '"'
+
+    genStringList = n;
+    ident;
+}
+
+fn genPrintStringList()
+{
+    while (genStringList) {
+	print("@"); print(*(genStringList + 8));
+	print(" = global ["); printInt(strlen(*(genStringList + 16)));
+	print(" x i8] c"); print(*(genStringList + 16));
+	putchar(92); print("00"); putchar(34); println(", align 8");
+
+	local n; n = genStringList;
+	genStringList = *genStringList;
+	free(*(n + 16));
+	free(n);
+    }
+}
+
+fn parseEscape(c)
+{
+    local ascii;
+    if (c == 'n') {
+	ascii = '\n';
+    } else if (c == 't') {
+	ascii = '\t';
+    } else if (c == 'r') {
+	ascii = '\r';
+    } else if (c == '0') {
+	ascii = '\0';
+    } else if (c == '\\') {
+	ascii = '\\';
+    } else if (c == '\'') {
+	ascii = '\'';
+    } else if (c == '"') {
+	ascii = '"';
+    } else {
+	ascii = c;
+    }
+
+    ascii;
+}
+
+fn genConstant(val)
+{
+    local reg; reg = genGetReg();
+    print("	; load constant "); print(val); print(" into %"); printInt(reg);
+    println(0);
+    if (#val == '\'') {
+	local ascii;
+	if (#(val + 1) == '\\') {
+	    ascii = parseEscape(#(val + 2));
+	} else {
+	    ascii = #(val + 1);
+	}
+	print("	%"); printInt(reg); print(" = add i64 "); printInt(ascii);
+	println(", 0");
+    } else {
+	print("	%"); printInt(reg); print(" = add i64 "); print(val);
+	println(", 0");
+    }
+    reg;
+}
+
+// offsets in genFnParamList and genFnParamListLast:
+// 	 0	next
+//  	 8	ident  	
+// 	16 	reg
+
+global genFnParamList, genFnParamListLast;
+
+fn genFuncDefParam(ident)
+{
+    local n; n = malloc(24);
+    *(n + 0) = 0;
+    *(n + 8) = ident;
+
+    if (!genFnParamList) {
+	genFnParamList = genFnParamListLast = n;
+    } else {
+	genFnParamListLast = *genFnParamListLast = n;
+    }
+    symtabAddLocal(ident, 0);
+}
+
+fn genFuncDefBegin(name)
+{
+    genResetReg();
+
+    print("; function "); println(name);
+    print("define i64 @"); print(name); print("("); 
+    local n; n = genFnParamList;
+    while (n) {
+	*(n + 16) = genGetReg();
+	print("i64 %"); printInt(*(n + 16));
+	if (*n) {
+	    print(", ");
+	}
+	n = *n;
+    }
+    println(") {");
+
+    local entryLabel; entryLabel = genGetLabel();
+    genDefLabel(entryLabel);
+
+    n = genFnParamList;
+    while (n) {
+	symtabAddLocal(*(n + 8), 0);
+	print("	%"); print(*(n + 8)); println(" = alloca i64, align 8");
+	print("	store i64 %"); printInt(*(n + 16));
+	print(", ptr %"); print(*(n + 8)); println(", align 8");
+	local f; f = n;
+	n = *n;
+	free(f);
+    }
+    genFnParamList = 0;
+
+    *(genFunctionBuildingInfo + 16) = genGetReg();
+    print("	%"); printInt(*(genFunctionBuildingInfo + 16));
+    println(" = alloca i64, align 8 ; ptr to ret val");
+
+    // hack: set *after* genDefLabel(entryLabel)
+    *genFunctionBuildingInfo = name;
+}
+
+fn genFuncDefEnd()
+{
+    local dest; dest = genGetReg();
+
+    local leaveLabel; leaveLabel = genGetLabel();
+    genDefLabel(leaveLabel);
+    print("	%"); printInt(dest); print("= load i64, ptr %");
+    printInt(*(genFunctionBuildingInfo + 16)); println(", align 8");
+    print("	ret i64 %"); printInt(dest); println(0);
+    println("}"); println(0);
+
+    *genFunctionBuildingInfo = 0;
+    genPrintStringList();
+}
+
+//
+// instr (instruction code)
+//
+// 	 0	add
+// 	 1	sub
+// 	 2	mul
+// 	 3	div
+// 	 4	mod
+// 	 5	eq
+// 	 6	ne
+// 	 7	le
+// 	 8	lt
+// 	 9	ge
+// 	10	gt
+//
+
+fn genInstr(instr, left, right)
+{
+    local dest; dest = genGetReg();
+    if (instr == 0) {
+	print("	%"); printInt(dest);
+	print(" = add");
+	print(" i64 %"); printInt(right); print(", %"); printInt(left);
+	println(0);
+    } else if (instr == 1) {
+	print("	%"); printInt(dest);
+	print(" = sub");
+	print(" i64 %"); printInt(right); print(", %"); printInt(left);
+	println(0);
+    } else if (instr == 2) {
+	print("	%"); printInt(dest);
+	print(" = mul");
+	print(" i64 %"); printInt(right); print(", %"); printInt(left);
+	println(0);
+    } else if (instr == 3) {
+	print("	%"); printInt(dest);
+	print(" = sdiv");
+	print(" i64 %"); printInt(right); print(", %"); printInt(left);
+	println(0);
+    } else if (instr == 4) {
+	print("	%"); printInt(dest);
+	print(" = srem");
+	print(" i64 %"); printInt(right); print(", %"); printInt(left);
+	println(0);
+    } else if (instr == 5) {
+	print("	%"); printInt(dest);
+	print(" = icmp eq");
+	print(" i64 %"); printInt(right); print(", %"); printInt(left);
+	println(0);
+	left = dest; dest = genGetReg();
+	print("	%"); printInt(dest);
+	print(" = zext i1 %"); printInt(left); println(" to i64");
+    } else if (instr == 6) {
+	print("	%"); printInt(dest);
+	print(" = icmp ne");
+	print(" i64 %"); printInt(right); print(", %"); printInt(left);
+	println(0);
+	left = dest; dest = genGetReg();
+	print("	%"); printInt(dest);
+	print(" = zext i1 %"); printInt(left); println(" to i64");
+    } else if (instr == 7) {
+	print("	%"); printInt(dest);
+	print(" = icmp sle");
+	print(" i64 %"); printInt(right); print(", %"); printInt(left);
+	println(0);
+	left = dest; dest = genGetReg();
+	print("	%"); printInt(dest);
+	print(" = zext i1 %"); printInt(left); println(" to i64");
+    } else if (instr == 8) {
+	print("	%"); printInt(dest);
+	print(" = icmp slt");
+	print(" i64 %"); printInt(right); print(", %"); printInt(left);
+	println(0);
+	left = dest; dest = genGetReg();
+	print("	%"); printInt(dest);
+	print(" = zext i1 %"); printInt(left); println(" to i64");
+    } else if (instr == 9) {
+	print("	%"); printInt(dest);
+	print(" = icmp sge");
+	print(" i64 %"); printInt(right); print(", %"); printInt(left);
+	println(0);
+	left = dest; dest = genGetReg();
+	print("	%"); printInt(dest);
+	print(" = zext i1 %"); printInt(left); println(" to i64");
+    } else if (instr == 10) {
+	print("	%"); printInt(dest);
+	print(" = icmp sgt");
+	print(" i64 %"); printInt(right); print(", %"); printInt(left);
+	println(0);
+	left = dest; dest = genGetReg();
+	print("	%"); printInt(dest);
+	print(" = zext i1 %"); printInt(left); println(" to i64");
+    } else {
+	println("genInstr: unknown instr");
+    }
+    dest;
+}
+
+fn genAddLocal(ident)
+{
+    print("	%"); print(ident); println(" = alloca i64, align 8");
+    symtabAddLocal(ident, 0);
+}
+
+fn genAddGlobal(ident)
+{
+    symtabAddGlobal(ident);
+}
+
+fn genDefGlobal(ident)
+{
+    if (#ident != '.') {
+	print("@"); print(ident); println(" = global i64 0");
+    }
+}
+
+fn i64ToPtr(val)
+{
+    local ptr; ptr = genGetReg();
+    print("	%"); printInt(ptr); print(" = inttoptr i64 %");
+    printInt(val); println(" to ptr");
+    ptr;
+}
+
+fn ptrToI64(ptr)
+{
+    local val; val = genGetReg();
+    print("	%"); printInt(val); print(" = ptrtoint ptr %");
+    printInt(ptr); println(" to i64");
+    val;
+}
+
+fn i8ToI64(val)
+{
+    local dest; dest = genGetReg(); 
+    print("	%"); printInt(dest); print(" = zext i8 %");
+    printInt(val); println(" to i64");
+    dest;
+}
+
+fn i64ToI8(val)
+{
+    local dest; dest = genGetReg(); 
+    print("	%"); printInt(dest); print(" = trunc i64 %");
+    printInt(val); println(" to i8");
+    dest;
+}
+
+fn i32ToI64(val)
+{
+    local dest; dest = genGetReg(); 
+    print("	%"); printInt(dest); print(" = sext i32 %");
+    printInt(val); println(" to i64");
+    dest;
+}
+
+fn genFetchByte(addr)
+{
+    addr = i64ToPtr(addr);
+    local dest; dest = genGetReg();
+    print("	%"); printInt(dest); print(" = load i8, ptr %");
+    printInt(addr); println(", align 8");
+    dest = i8ToI64(dest);
+}
+
+fn genFetch(addr)
+{
+    addr = i64ToPtr(addr);
+    local dest; dest = genGetReg();
+    print("	%"); printInt(dest); print(" = load i64, ptr %");
+    printInt(addr); println(", align 8");
+    dest;
+}
+
+fn genStoreByte(val, addr)
+{
+    addr = i64ToPtr(addr);
+    local valI8; valI8 = i64ToI8(val);
+    print("	store i8 %"); printInt(valI8); print(", ptr %");
+    printInt(addr); println(", align 8");
+
+    local hack; hack = genGetReg();
+    // because we have no return statement. Make sure stored value is in
+    // last used register.
+    print("	%"); printInt(hack); print("  = add i64 %");
+    printInt(val); println(", 0; bloody hack");
+}
+
+
+fn genStore(val, addr)
+{
+    addr = i64ToPtr(addr);
+    local hack; hack = genGetReg();
+    print("	store i64 %"); printInt(val); print(", ptr %");
+    printInt(addr); println(", align 8");
+    // because we have no return statement. Make sure stored value is in
+    // last used register.
+    print("	%"); printInt(hack); print("  = add i64 %");
+    printInt(val); println(", 0; bloody hack");
+}
+
+fn genLoadAddr(ident)
+{
+    local addr; addr = genGetReg();
+    local infoPtr; infoPtr = "16 bytes ......"; // 0-byte included
+
+    if (!symtabGetInfo(ident, infoPtr)) {
+	print("unknown identifier "); println(ident);
+    }
+    if (*infoPtr) {
+	print("	%"); printInt(addr); print(" = getelementptr i64, ptr @");
+	print(ident); println(", i64 0");
+    } else {
+	print("	%"); printInt(addr); print(" = getelementptr i64, ptr %");
+	print(ident); println(", i64 0");
+    }
+    addr = ptrToI64(addr);
+    addr;
+}
+
+fn genLoadVar(ident)
+{
+    local infoPtr; infoPtr = "16 bytes ......"; // 0-byte included
+
+    if (!symtabGetInfo(ident, infoPtr)) {
+	print("unknown identifier "); println(ident);
+    }
+    local dest; dest = genGetReg();
+    if (*infoPtr) {
+	print("	%"); printInt(dest); print(" = load i64, ptr @");
+	print(ident); println(", align 8");
+    } else {
+	print("	%"); printInt(dest); print(" = load i64, ptr %");
+	print(ident); println(", align 8");
+    }
+    dest;
+}
+
+// offset in argList
+// 	0	next
+// 	8	argReg
+
+// offset in genFnArgStack
+//   	 0	next
+//    	 8	fnName
+//    	16	argList
+
+global genFnArgStack;
+
+fn genCallBegin(fnName, numArgs)
+{
+    local n; n = malloc(24);
+    *(n +  0) = genFnArgStack;
+    *(n +  8) = fnName;
+    *(n + 16) = 0;
+    genFnArgStack = n;
+}
+
+fn genCallAddArg(argReg, argPos)
+{
+    local n; n = malloc(16);
+    *(n + 0) = *(genFnArgStack + 16);
+    *(n + 8) = argReg;
+    *(genFnArgStack + 16) = n;
+}
+
+fn genCallEnd()
+{
+    local extend; extend = 0;
+    local retVal; retVal = genGetReg();
+    if (*(genFnArgStack + 8) == UStrCreate("getchar")) {
+	print("	%"); printInt(retVal);
+	print(" = call i32 @"); print(*(genFnArgStack + 8)); print("(");
+	extend = 1;
+    } else {
+	print("	%"); printInt(retVal);
+	print(" = call i64 @"); print(*(genFnArgStack + 8)); print("(");
+    }
+    local n; n = *(genFnArgStack + 16);
+    local f;
+    while (n) {
+	print("i64 %"); printInt(*(n + 8));
+	if (*n) {
+	    print(", ");
+	}
+	f = n;
+	n = *n;
+	free(f);
+    }
+    println(")");
+
+    f = genFnArgStack;
+    genFnArgStack = *genFnArgStack;
+    free(f);
+    if (extend) {
+	retVal = i32ToI64(retVal);
+    }
+    retVal;
+}
+
+global genTmpCount;
+
+fn genGetTmp()
+{
+    local name; name = ".TMPxxxxxxxxxx";
+    sprintInt(genTmpCount, name + 4);
+    genTmpCount = genTmpCount + 1;
+    local ident; ident = UStrCreate(name);
+    genAddLocal(ident);
+    ident;
+}
+
+fn genSaveBoolInTmp(val, tmp)
+{
+    local addr; addr = genLoadAddr(tmp);
+    local valReg;
+
+    if (val) {
+	valReg = genConstant(UStrCreate("1"));
+    } else {
+	valReg = genConstant(UStrCreate("0"));
+    }
+    genStore(valReg, addr);
+}
+
+fn genLoadFromTmp(tmp)
+{
+    local addr; addr = genLoadAddr(tmp);
+    genFetch(addr);
+}
+
+fn genStoreReturnVal(retVal)
+{
+    print("	store i64 %"); printInt(retVal);
+    print(", ptr %"); printInt(*(genFunctionBuildingInfo + 16));
+    println(", align 8");
+}
+
+
+fn testGen()
+{
+    local foo; foo = "xfoox";
+    #(foo + 0) = 34;
+    #(foo + 4) = 34;
+
+    foo = UStrCreate(foo);
+
+    genInitCode();
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+    genDefString(foo);
+
+    genAddGlobal(UStrCreate("a"));
+    genAddGlobal(UStrCreate("b"));
+
+    // genConstant(UStrCreate("'\\'")); TODO: lexer -> string literals ...
+
+    genFuncDefParam(UStrCreate("a"));
+    genFuncDefParam(UStrCreate("b"));
+    genFuncDefParam(UStrCreate("c"));
+    genFuncDefBegin(UStrCreate("main"));
+    genDefLabel(genGetLabel());
+
+    local x, y, c1, c2, c3;
+
+    x = genAddLocal(UStrCreate("x"));
+    c1 = genConstant(UStrCreate("123"));
+    c2 = genConstant(UStrCreate("'\n'"));
+    c3 = genConstant(UStrCreate("'\t'"));
+
+    x = genLoadVar(UStrCreate("x"));
+    y = genLoadAddr(UStrCreate("x"));
+    x = genInstr(0, x, y);
+    x = genInstr(1, x, y);
+    x = genInstr(2, x, y);
+    x = genInstr(3, x, y);
+    x = genInstr(4, x, y);
+    x = genInstr(5, x, y);
+    x = genInstr(6, x, y);
+    x = genInstr(7, x, y);
+    x = genInstr(8, x, y);
+    x = genInstr(9, x, y);
+    x = genInstr(10, x, y);
+    x = genFetch(x);
+    x = genFetchByte(x);
+    genStore(x, y);
+    genCallBegin(UStrCreate("putchar"));
+	genCallBegin(UStrCreate("putchar"));
+	genCallAddArg(x, 0);
+	genCallAddArg(genCallEnd());
+    genCallEnd();
+
+    x = genGetTmp();
+    genSaveBoolInTmp(1, x);
+    genSaveBoolInTmp(0, x);
+    y = genLoadFromTmp(x);
+    
+
+
+    genFuncDefEnd();
+    symtabPrintGlobals();
+}
+
+//
+// Expr - Expression Tree 
+//
+// Offsets in node: 0  kind
+//                  8  child, left, integer, identifier, fnName, argNext
+//                  16 right, arglistLen, argExpr
+//                  24 argList, argPos
+// Expression kinds:
+//  	Unary 
+//    	0	address
+//    	1	deref
+//    	2	deref_byte
+//  	Binary
+//    	3	add
+//    	4	sub
+//    	5	mul
+//    	6	div
+//    	7	assign
+//    	8	mod
+//    	9	equal
+//    	10	not equal
+//    	11	less
+//    	12	less equal
+//    	13	greater	
+//    	14	greater equal
+//    	15	logical and
+//    	16	logical or
+//  	Primary
+//    	17	integer	
+//    	18	identifier
+//    	19	call
+//  	Other
+//    	20	argument node
+
+fn createUnaryExpr(kind, child)
+{
+    local n; n = malloc(32);
+    *(n + 0) = kind;
+    *(n + 8) = child;
+    n;
+}
+
+fn createBinaryExpr(kind, left, right)
+{
+    local n; n = malloc(32);
+    *(n +  0) = kind;
+    *(n +  8) = left;
+    *(n + 16) = right;
+    n;
+}
+
+fn createIntegerExpr(val)
+{
+    local n; n = malloc(32);
+    *(n + 0) = 17; // integer
+    *(n + 8) = val;
+    n;
+}
+
+fn createIdentifierExpr(val)
+{
+    local n; n = malloc(32);
+    *(n + 0) = 18; // identifier
+    *(n + 8) = val;
+    n;
+}
+
+fn createCallExpr(fnName)
+{
+    local n; n = malloc(32);
+    *(n +  0) = 19; // call
+    *(n +  8) = fnName;
+    *(n + 16) = 0;
+    *(n + 24) = 0;
+    n;
+}
+
+fn addArgExpr(callExpr, argExpr)
+{
+    local n; n = malloc(32);
+    *(n +  0) = 20; // argument node
+    *(n +  8) = *(callExpr + 24);
+    *(n + 16) = argExpr;
+    *(n + 24) = *(callExpr + 16);
+    *(callExpr + 16) = *(callExpr + 16) + 1;
+    *(callExpr + 24) = n;
+}
+
+fn releaseExpr(expr)
+{
+    if (!expr) {
+    } else if (*expr >= 0 && *expr < 3) {
+	releaseExpr(*(expr + 8));
+    } else if (*expr >= 3 && *expr < 17) {
+	releaseExpr(*(expr + 8));
+	releaseExpr(*(expr + 16));
+    } else if (*expr == 19) {
+	releaseExpr(*(expr + 24));
+    } else if (*expr == 20) {
+	releaseExpr(*(expr + 16));
+	releaseExpr(*(expr + 8));
+    }
+    free(expr);
+}
+
+fn printExprTree(expr)
+{
+    if (!expr) {
+    } else if (*expr >= 0 && *expr < 3) {
+	print("[ ");
+	if (*expr == 0) {
+	    print("addr ");
+	} else if (*expr == 1) {
+	    print("deref ");
+	} else if (*expr == 2) {
+	    print("deref byte ");
+	} else {
+	    println("printExprTree_err0");
+	}
+	printExprTree(*(expr + 8));
+	print("] ");
+    } else if (*expr >= 17 && *expr < 20) {
+	if (*expr == 17 || *expr == 18) {
+	    print("["); print(*(expr + 8)); print("]");
+	} else if (*expr == 19) {
+	    print("[call "); print(*(expr + 8));
+	    printExprTree(*(expr + 24));
+	    print("]");
+	} else {
+	    println("printExprTree_err1");
+	}
+    } else if (*expr >= 3 && *expr < 17) {               
+	print("[ ");
+	if (*expr == 3) {
+	    print("+ ");
+	} else if (*expr == 4) {
+	    print("- ");
+	} else if (*expr == 5) {
+	    print("* ");
+	} else if (*expr == 6) {
+	    print("/ ");
+	} else if (*expr == 7) {
+	    print("{=} ");
+	} else if (*expr == 8) {
+	    print("mod ");
+	} else if (*expr == 9) {
+	    print("{=}{=} ");
+	} else if (*expr == 10) {
+	    print("{!}{=} ");
+	} else if (*expr == 11) {
+	    print("< ");
+	} else if (*expr == 12) {
+	    print("<{=} ");
+	} else if (*expr == 13) {
+	    print("> ");
+	} else if (*expr == 14) {
+	    print(">{=} ");
+	} else if (*expr == 15) {
+	    print("and ");
+	} else if (*expr == 16) {
+	    print("or ");
+	} else {
+	    println("printExprTree_err2");
+	}
+	printExprTree(*(expr + 8));                                               
+	print(" ");
+	printExprTree(*(expr + 16));                                              
+	print("] ");                                                            
+    } else if (*expr == 20) { 
+	printExprTree(*(expr + 8));
+	printExprTree(*(expr + 16));
+    }
+}
+
+fn genInstrFromExprKind(exprKind)
+{
+    local genInstr;
+    genInstr = -1;
+    if (exprKind == 3) { // add
+	genInstr = 0;
+    } else if (exprKind == 4) { // sub
+	genInstr = 1;
+    } else if (exprKind == 5) { // mul
+	genInstr = 2;
+    } else if (exprKind == 6) { // div
+	genInstr = 3;
+    } else if (exprKind == 7) { // assign
+	println("genInstrFromExprKind: assign should not be done here");
+    } else if (exprKind == 8) { // mod
+	genInstr = 4;
+    } else if (exprKind == 9) { // equal
+	genInstr = 5;
+    } else if (exprKind == 10) { // not equal
+	genInstr = 6;
+    } else if (exprKind == 11) { // less
+	genInstr = 8;
+    } else if (exprKind == 12) { // less equal
+	genInstr = 7;
+    } else if (exprKind == 13) { // greater
+	genInstr = 10;
+    } else if (exprKind == 14) { // greater equal
+	genInstr = 9;
+    } else if (exprKind == 15) { // logical and
+	println("genInstrFromExprKind: && should not be done here");
+    } else if (exprKind == 16) { // logical or
+	println("genInstrFromExprKind: || should not be done here");
+    } else {
+	println("genInstrFromExprKind: case not handled");
+    }
+    genInstr;
+}
+
+fn loadExprAddress(expr)
+{                                                                                
+    local dest; dest = -1;
+    if (*expr == 18) { // identifier
+	dest = genLoadAddr(*(expr + 8));
+    } else if (*expr == 1 || *expr == 2) { // deref or deref_byte
+	dest = loadExpr(*(expr + 8));
+    } else {
+	println("What?");
+	print("expr kind is: "); printInt(*expr); println(0);
+	printExprTree(expr);
+    }
+    dest;
+}
+
+fn loadExpr(expr)
+{
+    local dest; dest = -1;
+    local n;
+    local endLabel, rhsLabel, trueLabel, tmp;
+    local val, addr;
+    local left, right;
+
+    if (*expr == 17) { // integer
+	dest = genConstant(*(expr + 8));
+    } else if (*expr == 18) { // identifier
+	dest = genLoadVar(*(expr + 8));
+    } else if (*expr == 0) { // address
+	dest = loadExprAddress(*(expr + 8));
+    } else if (*expr == 1) { // deref
+        dest = genFetch(loadExpr(*(expr + 8)));
+    } else if (*expr == 2) { // deref byte
+        dest = genFetchByte(loadExpr(*(expr + 8)));
+    } else if (*expr == 19) { // call
+	genCallBegin(*(expr + 8), *(expr + 16));
+	n = *(expr + 24);
+	while (n) {
+	    genCallAddArg(loadExpr(*(n+16)), 0);
+	    n = *(n + 8);
+	}
+	dest = genCallEnd();
+    } else if (*expr >= 3 && *expr < 17) { // binary
+	if (*expr == 15) { // logical and
+	    endLabel = genGetLabel();
+	    rhsLabel = genGetLabel();
+	    trueLabel = genGetLabel();
+
+	    tmp = genGetTmp();
+
+	    // handle: left
+	    left = loadExpr(*(expr + 8));
+	    genJumpIfTrue(left, rhsLabel);
+	    genSaveBoolInTmp(0, tmp);
+	    println("	; jump to end");
+	    genJump(endLabel);
+
+	    genDefLabel(rhsLabel);
+	    right = loadExpr(*(expr + 16));
+	    genJumpIfTrue(right, trueLabel);
+	    genSaveBoolInTmp(0, tmp);
+	    println("	; jump to end");
+	    genJump(endLabel);
+
+	    genDefLabel(trueLabel);
+	    genSaveBoolInTmp(1, tmp);
+	    genDefLabel(endLabel);
+
+	    dest = genLoadFromTmp(tmp);
+	} else if (*expr == 16) { // logical or
+	    // loical: left || right
+	    endLabel = genGetLabel();
+	    rhsLabel = genGetLabel();
+	    trueLabel = genGetLabel();
+
+	    tmp = genGetTmp();
+
+	    // handle: left
+	    left = loadExpr(*(expr + 8));
+	    genJumpIfFalse(left, rhsLabel);
+	    genSaveBoolInTmp(1, tmp);
+	    genJump(endLabel);
+
+	    genDefLabel(rhsLabel);
+	    right = loadExpr(*(expr + 16));
+	    genJumpIfTrue(right, trueLabel);
+	    genSaveBoolInTmp(0, tmp);
+	    genJump(endLabel);
+
+	    genDefLabel(trueLabel);
+	    genSaveBoolInTmp(1, tmp);
+	    genDefLabel(endLabel);
+
+	    dest = genLoadFromTmp(tmp);
+	} else if (*expr == 7) { // assign
+            val = loadExpr(*(expr + 16));                           
+            addr = loadExprAddress(*(expr + 8));
+	    if (**(expr + 8) == 2) { // left is dref_byte node
+		genStoreByte(val, addr);                                                 
+	    } else {
+		genStore(val, addr);                                                 
+	    }
+            dest = val;                                                          
+	} else {
+	    left = loadExpr(*(expr + 8));
+	    right = loadExpr(*(expr + 16));
+	    dest = genInstr(genInstrFromExprKind(*expr), right, left);
+	}
+    } else {
+	println("loadExpr: not all cases handled");
+    }
+    dest;
+}
+
+fn testExpr()
+{
+    local expr;
+    local c2, c3, c4, cX;
+
+    c2 = UStrCreate("2");
+    c3 = UStrCreate("3");
+    c4 = UStrCreate("4");
+    cX = UStrCreate("x");
+
+    genInitCode();
+    genFuncDefBegin(UStrCreate("main"));
+    // function body of main
+
+    genAddLocal(cX);
+
+    expr = createIntegerExpr(UStrCreate("123"));
+    print("; "); printExprTree(expr); println(0);
+                                                                                 
+    expr = createBinaryExpr(4,
+                            createBinaryExpr(5,
+                                             createIntegerExpr(c2),
+                                             createIntegerExpr(c3)),
+                            createIntegerExpr(c4));
+    print("; "); printExprTree(expr);
+    println(0);
+    expr = createBinaryExpr(6,
+			    createIdentifierExpr(cX),
+			    expr);
+    print("; "); printExprTree(expr);
+    println(0);
+                                                                                 
+    loadExpr(expr);
+    releaseExpr(expr);
+
+    expr = createCallExpr(UStrCreate("putchar"));
+    addArgExpr(expr, createIntegerExpr(UStrCreate("4")));
+    addArgExpr(expr, createIntegerExpr(UStrCreate("2")));
+
+    expr = createBinaryExpr(15, expr, createIntegerExpr(c2));
+
+    print("; "); printExprTree(expr);
+    println(0);
+    loadExpr(expr);
+    releaseExpr(expr);
+
+    // end of function body main
+    genFuncDefEnd();
+}
+
+//
+// parse expressions
+//
+
+fn expected(kind)
+{
+    if (*token != kind) {
+	printInt(*(token + 16)); print("."); printInt(*(token + 24));
+	print(" expected token kind: "); printInt(kind); println(0);
+    }
+}
+
+fn error(msg)
+{
+    printInt(*(token + 16)); print("."); printInt(*(token + 24));
+    print(" error: "); println(msg);
+}
+
+fn exprKindFromTokenKind(kind)
+{
+    local exprKind; exprKind = -1;
+
+    if (kind == 4) { 			// token kind: '='
+	exprKind = 7; 			// assign
+    } else if (kind == 7) { 		// token kind: '+'
+	exprKind = 3; 			// add
+    } else if (kind == 8) { 		// token kind: '-'
+	exprKind = 4; 			// sub
+    } else if (kind == 9) { 		// token kind: '*'
+	exprKind = 5; 			// mul
+    } else if (kind == 10) { 		// token kind: '/'
+	exprKind = 6; 			// div
+    } else if (kind == 31) { 		// token kind: '%'
+	exprKind = 8; 			// mod
+    } else if (kind == 28) { 		// token kind: '=='
+	exprKind = 9; 			// equal
+    } else if (kind == 30) { 		// token kind: '!='
+	exprKind = 10; 			// not equal
+    } else if (kind == 25) { 		// token kind: '<'
+	exprKind = 11; 			// less
+    } else if (kind == 24) { 		// token kind: '<='
+	exprKind = 12; 			// less equal
+    } else if (kind == 26) { 		// token kind: '>'
+	exprKind = 13; 			// greater
+    } else if (kind == 27) { 		// token kind: '>='
+	exprKind = 14; 			// greater equal
+    } else if (kind == 34) { 		// token kind: '&&'
+	exprKind = 15; 			// logical and
+    } else if (kind == 36) { 		// token kind: '||'
+	exprKind = 16; 			// logical or
+    } else {
+	print("kind = "); printInt(kind); println(0);
+	println("exprKindFromToken: case not handled");
+    }
+    exprKind;
+}
+
+fn tokenKindPrec(kind)
+{
+    local p; p = 0;
+    if (kind == 9) {			// token kind: '*'
+	p = 13;
+    } else if (kind == 10) {		// token kind: '/'
+	p = 13;
+    } else if (kind == 31) {		// token kind: '%'
+	p = 13;
+    } else if (kind == 7) {		// token kind: '+'
+	p = 12;
+    } else if (kind == 8) {		// token kind: '-'
+	p = 12;
+    } else if (kind == 26) {		// token kind: '>'
+	p = 10;
+    } else if (kind == 27) {		// token kind: '>='
+	p = 10;
+    } else if (kind == 25) {		// token kind: '<'
+	p = 10;
+    } else if (kind == 24) {		// token kind: '<='
+	p = 10;
+    } else if (kind == 28) {		// token kind: '=='
+	p = 9;
+    } else if (kind == 30) {		// token kind: '!='
+	p = 9;
+    } else if (kind == 34) {		// token kind: '&&'
+	p = 5;
+    } else if (kind == 36) {		// token kind: '||'
+	p = 4;
+    }
+}
+
+fn parseExpr()
+{
+    local left; left =  parseBinary(1);
+    if (!left) {
+        left = 0;
+    } else {
+	while (*token == 4) { // kind: '='
+	    local kind; kind = *token;
+	    getToken();
+	    local right; right = parseExpr();
+	    if (!right) {
+		error("expected expression");
+	    }
+	    left = createBinaryExpr(exprKindFromTokenKind(kind), left, right);
+	}
+    }
+    left;
+}
+
+fn parseBinary(prec)
+{
+    local left; left = parsePrefix();
+    if (!left) {
+	left = 0;
+    } else {
+	local p; p = tokenKindPrec(*token);
+	while (p >= prec) {
+	    while (tokenKindPrec(*token) == p) {
+		local kind; kind = *token;
+		getToken();
+		local right; right = parseBinary(p + 1);
+		if (!right) {
+		    error("expression expected\n");
+		}
+		left = createBinaryExpr(exprKindFromTokenKind(kind),
+				        left, right);
+	    }
+	    p = p - 1;
+	}
+    }
+    left;
+}
+
+fn parsePrefix()
+{
+    local expr;
+
+    if (*token == 29) { 			// kind: '!'
+	getToken();
+	expr = createBinaryExpr(9,		// equal
+				parsePrefix(),
+				createIntegerExpr(UStrCreate("0")));
+    } else if (*token == 8) {			// kind: '-'
+	getToken();
+	expr = createBinaryExpr(4,		// sub
+				createIntegerExpr(UStrCreate("0")),
+				parsePrefix());
+    } else if (*token == 33) {			// kind: '&'
+	getToken();
+	expr = createUnaryExpr(0,		// address
+			       parsePrefix());
+    } else if (*token == 9) {			// kind: '*'
+	getToken();
+	expr = createUnaryExpr(1,		// deref
+			       parsePrefix());
+    } else if (*token == 32) {			// kind: '#'
+	getToken();
+	expr = createUnaryExpr(2,		// deref_byte
+			       parsePrefix());
+    } else {
+	expr = parseFactor();
+    }
+    expr;
+}
+
+
+fn parseFactor()
+{
+    local expr;
+    local ident;
+    local callExpr, argExpr;
+
+    if (*token == 2 || *token == 16) { // decimal or character literal
+        expr = createIntegerExpr(*(token + 8));
+        getToken();
+    } else if (*token == 15) { // string literal
+	ident = genDefString(*(token + 8));
+	getToken();
+	symtabAddGlobal(ident);
+	expr = createUnaryExpr(0, // address
+			       createIdentifierExpr(ident));
+    } else if (*token == 3) { // identifier
+	ident = *(token + 8);
+        getToken();
+	// hack: for now no support for function pointers
+	if (*token == 12) { // kind '('
+	    getToken();
+	    callExpr = createCallExpr(ident);
+	    argExpr = parseExpr();
+	    if (argExpr) {
+		addArgExpr(callExpr, argExpr);
+		while (*token == 6) { // kind: ','
+		    getToken();
+		    argExpr = parseExpr();
+		    if (!argExpr) {
+			error("expression exprected");
+		    }
+		    addArgExpr(callExpr, argExpr);
+		}
+	    }
+	    if (*token != 11) { // kind ')'
+		expected("expected )");
+	    }
+	    getToken();
+	    expr = callExpr;
+	} else {
+	    expr = createIdentifierExpr(ident);
+	}
+    } else if (*token == 12) { // kind: '('
+        getToken();
+        expr = parseExpr();
+        if (!expr) {
+	    error("expected expression");
+        }
+        if (*token != 11) { // kind ')'
+	    expected("expected )");
+        }
+        getToken();
+    } else {
+        expr = 0;
+    }
+    expr;
+}
+
+fn testParseExpr()
+{
+    initLexer();
+
+    genInitCode();
+    genAddGlobal(UStrCreate("a"));
+    genAddGlobal(UStrCreate("b"));
+    genFuncDefBegin(UStrCreate("main"));
+    genAddLocal(UStrCreate("x"));
+    genAddLocal(UStrCreate("y"));
+
+    getToken();
+    local expr; expr = parseExpr();
+    print("; "); printExprTree(expr); println(0);
+    genStoreReturnVal(loadExpr(expr));
+    releaseExpr(expr);
+
+    
+    genFuncDefEnd();
+    symtabPrintGlobals();
+}
+
+//
+// top level parser
+//
+
+// top-level = { global | fn }
+fn parseTopLevel()
+{
+    getToken();
+    while (parseGlobal() || parseFn()) {
+    }
+    expected(1); // EOI
+    1;
+}
+
+// global = "global" identifier { "," identifier } ";"
+fn parseGlobal()
+{
+    local succ;
+    if (*token != 19) { // kind: global
+	succ = 0;
+    } else {
+	getToken();
+	local done; done = 0;
+	while (*token == 3 && !done) { // identifier
+	    genAddGlobal(*(token + 8));
+	    getToken();
+	    if (*token != 6) { // kind: ','
+		done = 1;
+	    } else {
+		getToken();
+	    }
+	}
+	expected(5); // kind ';'
+	getToken();
+	succ = 1;
+    }
+    succ;
+}
+
+// local = "local" identifier { "," identifier } ";"
+fn parseLocal()
+{
+    local succ;
+    if (*token != 20) {	// kind: local
+	succ = 0;
+    } else {
+	getToken();
+	local done; done = 0;
+	while (*token == 3 && !done) { // identifier
+	    genAddLocal(*(token + 8));
+	    getToken();
+	    if (*token != 6) { // kind: ','
+		done = 1;
+	    } else {
+		getToken();
+	    }
+	}
+	expected(5); // kind ';'
+	getToken();
+	succ = 1;
+    }
+    succ;
+}
+
+// fn = "fn" "(" [identifier { "," identifier } ]")" compound-stmt
+fn parseFn()
+{
+    local succ;
+    if (*token != 23) { 			// kind: fn
+	succ = 0;
+    } else {
+	getToken();
+	expected(3); 				// identifier
+	local fnName; fnName = *(token + 8);
+	getToken();
+
+	expected(12); 				// kind: '('
+	getToken();
+
+	if (*token == 3) {			// identifier
+	    genFuncDefParam(*(token + 8));
+	    getToken();
+	    while (*token == 6) {		// kind: ','
+		getToken();
+		expected(3);			// kind: identifier
+		genFuncDefParam(*(token + 8));
+		getToken();
+	    }
+	}
+	genFuncDefBegin(fnName);
+
+	expected(11);				// kind: ')'
+	getToken();
+
+	expected(13);				// kind: '{'
+	parseCompoundStmt();
+
+	genFuncDefEnd();
+	succ = 1;
+    }
+    succ;
+}
+
+// compound-stmt = "{" { expr-stmt | local | while-stmt | if-stmt} "}"
+fn parseCompoundStmt()
+{
+    local succ;
+    if (*token != 13) {			// kind: '{'
+	succ = 0;
+    } else {
+	getToken();
+	while (parseExprStmt()
+	    || parseLocal()
+	    || parseWhileStmt()
+	    || parseIfStmt())
+	{
+	}
+	expected(14);				// kind: '}'
+	getToken();
+	succ = 1;
+    }
+    succ;
+}
+
+// expr-stmt = expr ";"
+fn parseExprStmt()
+{
+    local succ;
+    local expr; expr = parseExpr();
+    if (!expr) {
+	succ = 0;
+    } else {
+	expected(5);				// kind: ';'
+	getToken();
+	local retVal; retVal = loadExpr(expr);
+	genStoreReturnVal(retVal);
+	releaseExpr(expr);
+	succ = 1;
+    }
+    succ;
+}
+
+// while-stmt = "while" "(" expr ")" compound
+fn parseWhileStmt()
+{
+    local succ;
+    if (*token != 18) {					// kind: while
+	succ = 0;
+    } else {
+	getToken();
+
+	local condLabel; condLabel = genGetLabel();
+	local doneLabel; doneLabel = genGetLabel();
+
+	expected(12);					// kind: '('
+	getToken();
+
+	local expr; expr = parseExpr();
+	if (!expr) {
+	    error("expression expected");
+	}
+
+	expected(11);					// kind: ')'
+	getToken();
+
+	genDefLabel(condLabel);
+	local condVal; condVal = loadExpr(expr);
+	genJumpIfFalse(condVal, doneLabel);
+	releaseExpr(expr);
+
+	if (!parseCompoundStmt()) {
+	    error("compound for then branch expected");
+	}
+     
+	genJump(condLabel);
+	genDefLabel(doneLabel);
+	succ = 1;
+    }
+    succ;
+}
+
+// if-stmt = "if" "(" expr ")" compound [ "else" (if-stmt | compound) ]
+fn parseIfStmt()
+{
+    local succ;
+    if (*token != 17) { 				// kind: if
+	succ = 0;
+    } else {
+	getToken();
+
+	local doneLabel; doneLabel = genGetLabel();
+	local elseLabel; elseLabel = genGetLabel();
+
+	expected(12);					// kind: '('
+	getToken();
+
+	local expr; expr = parseExpr();
+	if (!expr) {
+	    error("expression expected");
+	}
+
+	expected(11);					// kind: )
+	getToken();
+
+	local condVal; condVal = loadExpr(expr);
+	genJumpIfFalse(condVal, elseLabel);
+	releaseExpr(expr);
+
+	if (!parseCompoundStmt()) {
+	    error("compound for then branch expected");
+	}
+	genJump(doneLabel);
+
+	genDefLabel(elseLabel);
+	if (*token == 21) {				// kind: else
+	    getToken();
+	    if (*token == 17) {				// kind: if
+		parseIfStmt();
+	    } else if (!parseCompoundStmt()) {
+		error("compound for else branch expected");
+	    }
+	}
+	genDefLabel(doneLabel);
+	succ = 1;
+    }
+    succ;
+}
+
+fn testCompiler()
+{
+    initLexer();
+    genInitCode();
+
+    parseTopLevel();
+    symtabPrintGlobals();
+}
+
+fn main()
+{
+    //testUStr();
+    //testLexer();
+    //testSymtab();
+    //testGen();
+    //testExpr();
+    //testParseExpr();
+    testCompiler();
+}
+
+
+
+

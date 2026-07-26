@@ -1,0 +1,22 @@
+@ "gen.hdr"
+
+fn main()
+{
+    local x: ->UStr = UStrCreate("x");
+    local y: ->UStr = UStrCreate("y");
+
+    genAddGlobal(x);
+    genLoadVar(x);
+
+    genFuncDefBegin(UStrCreate("foo"));
+    genAddLocal(x);
+    genAddLocal(y);
+    genLoadVar(x);
+    genLoadAddr(x);
+    genLoadVar(y);
+    genLoadAddr(y);
+
+    genFuncDefBegin(UStrCreate("bar"));
+    genAddLocal(y);
+    genLoadAddr(y);
+}

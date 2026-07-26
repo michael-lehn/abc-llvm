@@ -1,0 +1,65 @@
+fn print(s)
+{
+    while (s && #s) {
+	putchar(#s);
+	s = s + 1;
+    }
+}
+
+fn println(s)
+{
+    print(s);
+    putchar('\n');
+}
+
+fn printInt(n)
+{
+    if (n < 0) {
+	putchar('-');
+	n = -n;
+    }
+    if (n == 0) {
+	putchar('0');
+    } else {
+	if (n / 10 > 0) {
+	    printInt(n / 10);
+	}
+	putchar(n % 10 + '0');
+    }
+}
+
+fn foo(n)
+{
+    *n = 42;
+}
+
+fn main()
+{
+
+    print("type a character: ");
+    local ch; ch = getchar();
+
+    print("ch = "); printInt(ch); println(0);
+
+    print("ch >= 'A'"); printInt(ch >= 'A'); println(0);
+    print("ch <= 'Z'"); printInt(ch <= 'Z'); println(0);
+    print("ch >= 'A' && ch <= 'Z'"); printInt(ch >= 'A'  && ch <= 'Z'); println(0);
+    if (ch >= 'A' && ch <= 'Z') {
+	println("upper case letter");
+    } else if (ch >= 'a' && ch <= 'z') {
+	println("lower case letter");
+    } else if (ch >= '0' && ch <= '9') {
+	println("decimal digit");
+    }
+
+    local n; n = 13;
+    foo(&n);
+    print("n = "); printInt(n); println(0);
+    n = 0;
+    print("n = "); printInt(n); println(0);
+    print("!n = "); printInt(!n); println(0);
+    while (!n) {
+	printInt(n); println(0);
+	n = n + 1;
+    }
+}

@@ -1,0 +1,509 @@
+@ <stdlib.hdr>
+@ <stdio.hdr>
+
+@ "gen.hdr"
+@ "symtab.hdr"
+
+global usedReg: array[16] of int;
+global numUsedReg: int;
+
+fn getReg(): GenReg
+{
+    for (local r: GenReg = 4; r < sizeof(usedReg)/sizeof(usedReg[0]); ++r) {
+        if (!usedReg[r]) {
+            usedReg[r] = 1;
+	    ++numUsedReg;
+            return r;
+        }
+    }
+    assert(0 && "getReg: out of registers!\n");
+    return 0;
+}
+
+fn getRegPair(): GenReg
+{
+    for (local r: GenReg = 4; r < sizeof(usedReg)/sizeof(usedReg[0]); r += 2) {
+        if (!usedReg[r] && !usedReg[r + 1]) {
+            usedReg[r] = 2;
+            usedReg[r + 1] = 2;
+	    numUsedReg += 2;
+            return r;
+        }
+    }
+    assert(0 && "getReg: out of registers!\n");
+    return 0;
+}
+
+fn genReleaseReg(reg: GenReg)
+{
+    assert(usedReg[reg]);
+    if (usedReg[reg] == 1) {
+	usedReg[reg] = 0;
+	--numUsedReg;
+    } else if (usedReg[reg] == 2) {
+	reg = reg / 2 * 2;
+	assert(usedReg[reg] == 2);
+	assert(usedReg[reg + 1] == 2);
+	usedReg[reg] = 0;
+	usedReg[reg + 1] = 0;
+	numUsedReg -= 2;
+    }
+}
+
+//------------------------------------------------------------------------------
+
+enum Segment
+{
+    UNDEFINED,
+    TEXT,
+    DATA,
+    BSS,
+};
+
+global curSegment: Segment  = UNDEFINED;
+
+fn setSegment(seg: Segment)
+{
+    if (seg == curSegment) {
+	return;
+    } else {
+	switch (seg) {
+	    default: assert(0 && "not all cases handled");
+	    case TEXT: printf("\t.text\n"); break;
+	    case DATA: printf("\t.data\n"); break;
+	    case BSS: printf("\t.bss\n"); break;
+	}
+	curSegment = seg;
+    }
+}
+
+//------------------------------------------------------------------------------
+
+fn saveRegs()
+{
+    if (!numUsedReg) {
+	return;
+    }
+    local numSavedRegs: int = 0;
+    setSegment(TEXT);
+    printf("\t# start: save used registers on stack\n");
+    for (local r: GenReg = 0; r < sizeof(usedReg)/sizeof(usedReg[0]); ++r) {
+	if (usedReg[r]) {
+	    ++numSavedRegs;
+	    printf("\tstore \t%%%d, \t-8 * %d(%%SP, 3)\n", r, numSavedRegs);
+	}
+    }
+    printf("\tsub \t8 * %d, \t%%SP, \t%%SP\n", numUsedReg);
+    printf("\t# end: save used registers on stack\n");
+}
+
+fn restoreRegs()
+{
+    if (!numUsedReg) {
+	return;
+    }
+    local numRestoredRegs: int = 0;
+    setSegment(TEXT);
+    printf("\t# start: restore used registers on stack\n");
+    printf("\tadd \t8 * %d, \t%%SP, \t%%SP\n", numUsedReg);
+    for (local r: GenReg = 0; r < sizeof(usedReg)/sizeof(usedReg[0]); ++r) {
+	if (usedReg[r]) {
+	    ++numRestoredRegs;
+	    printf("\tfetch \t-8 * %d(%%SP, 3), \t%%%d\n", numRestoredRegs, r);
+	}
+    }
+    printf("\t# end: restore used registers on stack\n");
+}
+
+
+fn genConstant(val: ->UStr): GenReg
+{
+    local reg: GenReg = getReg();
+    setSegment(TEXT);
+    printf("\tload \t%s, \t%%%d\n", val, reg);
+    return reg;
+}
+
+fn condInstr(instr: GenInstr): ->readonly char
+{
+    switch (instr) {
+	default: assert(0 && "not handled");
+	case GEN_NE: return "jnz";
+	case GEN_EQ: return "jz";
+	case GEN_LE: return "jle";
+	case GEN_LT: return "jlt";
+	case GEN_GE: return "jge";
+	case GEN_GT: return "jgt";
+    }
+}
+
+fn genInstr(instr: GenInstr, left: GenReg, right: GenReg): GenReg
+{
+    local dest: GenReg = instr == GEN_DIV || instr == GEN_MOD
+	? getRegPair()
+	: getReg();
+
+    setSegment(TEXT);
+    switch (instr) {
+	case GEN_NE:
+	case GEN_EQ:
+	case GEN_LT:
+	case GEN_LE:
+	case GEN_GT:
+	case GEN_GE:
+	{
+	    local doneLabel: GenLabel = genGetLabel();
+	    local trueLabel: GenLabel = genGetLabel();
+	    printf("\tsub \t%%%d, \t%%%d, \t%%%d\n", left, right, dest);
+	    printf("\t%s .L%d\n", condInstr(instr), trueLabel);
+	    printf("\tload \t0, \t%%%d\n", dest);
+	    genJump(doneLabel);
+	    genDefLabel(trueLabel);
+	    printf("\tload \t1, \t%%%d\n", dest);
+	    genDefLabel(doneLabel);
+	    return dest;
+	}
+	case GEN_ADD:
+	    printf("\tadd \t%%%d, \t%%%d, \t%%%d\n", left, right, dest);
+	    return dest;
+	case GEN_SUB:
+	    printf("\tsub \t%%%d, \t%%%d, \t%%%d\n", left, right, dest);
+	    return dest;
+	case GEN_MUL:
+	    printf("\tmul \t%%%d, \t%%%d, \t%%%d\n", left, right, dest);
+	    return dest;
+	case GEN_DIV:
+	    printf("\tdiv \t%%%d, \t%%%d, \t%%%d\n", left, right, dest);
+	    return dest;
+	case GEN_MOD:
+	    printf("\tdiv \t%%%d, \t%%%d, \t%%%d\n", left, right, dest);
+	    return dest + 1;
+	default: assert(0 && "not all cases handled");
+    }
+    assert(0 && "ups: internal error (forgotten return in a case??)");
+    return 0; // never reached
+}
+
+fn genHalt(exitCode: GenReg);
+
+fn genInitCode()
+{
+    setSegment(TEXT);
+    printf("\t.equ \tSP, \t1\n");
+    printf("\t.equ \tFP, \t2\n");
+    printf("\tload \t0, \t%%SP\n");
+
+    local heapIdent: ->UStr = UStrCreate("heap.");
+
+    assert(genAddGlobal(heapIdent) && "can not create globale var heap.");
+    local addr: GenReg = genLoadAddr(heapIdent);
+    genReleaseReg(addr);
+    genStore(3, addr);
+
+    genCallBegin(UStrCreate("main"), 0);
+    local reg: GenReg = genCallEnd();
+    genHalt(reg);
+    genReleaseReg(reg);
+
+    printf("\t# getchar()\n");
+    printf("getchar:\n");
+    printf("\tgetc \t%%4\n");
+    printf("\tstore \t%%4, \t16(%%SP, 3)\n");
+    printf("\tret \t%%3\n\n");
+    printf("\t# putchar(ch)\n");
+    printf("putchar:\n");
+    printf("\tfetch \t24(%%SP, 3), \t%%4\n");
+    printf("\tputc \t%%4\n");
+    printf("\tstore \t%%4, \t16(%%SP, 3)\n");
+    printf("\tret \t%%3\n\n");
+
+    printf("\t# free(ptr)\n");
+    printf("free:\n");
+    printf("\tret \t%%3\n\n");
+
+    genFuncDefParam(UStrCreate("size"));
+    genFuncDefBegin(UStrCreate("malloc"));
+    local heapAddr: GenReg = genLoadAddr(heapIdent);
+    local heapVal: GenReg = genFetch(heapAddr);
+    local sizeVal: GenReg = genLoadVar(UStrCreate("size"));
+    genReleaseReg(sizeVal);
+    sizeVal = genInstr(GEN_ADD, heapVal, sizeVal);
+    printf("\tstore \t%%%d, \t16(%%SP, 3)\n", heapVal);
+    genStore(sizeVal, heapAddr);
+    genReleaseReg(sizeVal);
+    genReleaseReg(heapVal);
+    genReleaseReg(heapAddr);
+    genFuncDefEnd();
+    
+}
+
+global localVarOffset: int;
+
+fn genAddLocal(ident: ->UStr): bool
+{
+    localVarOffset -= 8;
+    return symtabAddLocal(ident, localVarOffset);
+}
+
+fn genAddGlobal(ident: ->UStr): bool
+{
+    return symtabAddGlobal(ident);
+}
+
+fn genDefGlobal(ident: ->UStr)
+{
+    if (((->readonly char)ident)[0] == '.') {
+	return;
+    }
+    setSegment(BSS);
+    printf("\t.align 8\n");
+    printf("%s:\n", ident);
+    printf("\t.quad\n");
+
+}
+
+global fnDefCount: int;
+global paramOffset: int = 24;
+global inFnDef: bool;
+
+fn genFuncDefParam(ident: ->UStr): bool
+{
+    assert(!inFnDef && "call genFuncDefParam before genFunDefBegin");
+    local added: bool = symtabAddLocal(ident, paramOffset);
+    paramOffset += 8;
+    return added;
+}
+
+fn genFuncDefBegin(name: ->UStr)
+{
+    localVarOffset = 0;
+    inFnDef = true;
+    setSegment(TEXT);
+    printf("// function %s\n", name);
+    printf("%s:\n", name);
+    printf("\tstore \t%%3, \t(%%SP, 3) \t# save return address\n");
+    printf("\tstore \t%%FP, \t8(%%SP, 3)  \t# save old frame pointer\n");
+    printf("\tadd \t0, \t%%SP, \t%%FP \t# i.e. %%SP -> %%FP\n");
+    printf("\tsub \t.loc%d, \t%%SP, \t%%SP \t# for local vars\n", fnDefCount);
+    printf("\t// begin of function body\n");
+}
+
+fn genFuncDefEnd()
+{
+    setSegment(TEXT);
+    printf("\t// end of function body\n");
+    printf("\tadd \t0, \t%%FP, \t%%SP \t# i.e. %%FP -> %%SP\n");
+    printf("\tfetch \t8(%%SP, 3), \t%%FP \t# restore old frame pointer\n");
+    printf("\tfetch \t(%%SP, 3), \t%%3 \t# restore return address\n");
+    printf("\tret \t%%3\n");
+    printf("\t.equ \t.loc%d, \t%d\n", fnDefCount++, -localVarOffset);
+    inFnDef = false;
+    symtabFreeLocals();
+    paramOffset = 24;
+}
+
+fn genHalt(exitCode: GenReg)
+{
+    setSegment(TEXT);
+    printf("\thalt \t%%%d\n", exitCode);
+}
+
+fn genReturn(retVal: GenReg)
+{
+    setSegment(TEXT);
+    printf("\tstore \t%%%d, \t16(%%FP, 3)\n", retVal);
+}
+
+fn genFetch(addr: GenReg): GenReg
+{
+    local dest: GenReg = getReg();
+    setSegment(TEXT);
+    printf("\tfetch \t(%%%d, 3), \t%%%d\n", addr, dest);
+    return dest;
+}
+
+fn genStore(val: GenReg, addr: GenReg)
+{
+    setSegment(TEXT);
+    printf("\tstore \t%%%d, \t(%%%d, 3)\n", val, addr);
+}
+
+fn genFetchByte(addr: GenReg): GenReg
+{
+    local dest: GenReg = getReg();
+    setSegment(TEXT);
+    printf("\tfetch \t(%%%d, 0), \t%%%d\n", addr, dest);
+    return dest;
+}
+
+fn genStoreByte(val: GenReg, addr: GenReg)
+{
+    setSegment(TEXT);
+    printf("\tstore \t%%%d, \t(%%%d, 0)\n", val, addr);
+}
+
+fn genLoadAddr(ident: ->UStr): GenReg
+{
+    local dest: GenReg = getReg();
+    local info: SymtabInfo;
+    if (!symtabGetInfo(ident, &info)) {
+	fprintf(stderr, "unknown identifier: %s\n", ident);
+	assert(0 && "symtabGetInfo(ident, &info) failed");
+    }
+    setSegment(TEXT);
+    if (info.isGlobal) {
+	printf("\t// load address of global variable %s\n", ident);
+	printf("\tload \t%s, \t%%%d\n", ident, dest);
+    } else {
+	printf("\t// load address of local variable %s\n", ident);
+	if (info.offset > 0) {
+	    printf("\tadd \t%d, \t%%FP, \t%%%d\n", info.offset, dest);
+	} else {
+	    printf("\tsub \t%d, \t%%FP, \t%%%d\n", -info.offset, dest);
+	}
+    }
+    return dest;
+}
+
+fn genLoadVar(ident: ->UStr): GenReg
+{
+    local info: SymtabInfo;
+    if (!symtabGetInfo(ident, &info)) {
+	fprintf(stderr, "Unknown identifier '%s'\n", ident);
+	assert(0 && "Unknown identifier");
+    }
+    setSegment(TEXT);
+    if (!info.isGlobal) {
+	printf("\t// load value of local variable %s in two steps:\n", ident);
+	printf("\t// TODO: can be optimized\n");
+    } else {
+	printf("\t// load value of global variable %s in two steps:\n", ident);
+    }
+    local dest: GenReg = genLoadAddr(ident);
+    genReleaseReg(dest);
+    printf("\t// now fetch value from this address and reuse register\n");
+    return genFetch(dest);
+}
+
+global labelCount: GenLabel;
+
+fn genGetLabel(): GenLabel
+{
+    return labelCount++;
+}
+
+fn genDefLabel(labelIdent: GenLabel)
+{
+    printf(".L%d:\n", labelIdent);
+}
+
+fn genJump(labelIdent: GenLabel)
+{
+    setSegment(TEXT);
+    printf("\tjmp .L%d\n", labelIdent);
+}
+
+fn genJumpIfTrue(condVal: GenReg, labelIdent: GenLabel)
+{
+    setSegment(TEXT);
+    printf("\tsub \t0, \t%%%d, \t%%0\n", condVal);
+    printf("\tjnz .L%d\n", labelIdent);
+}
+
+fn genJumpIfFalse(condVal: GenReg, labelIdent: GenLabel)
+{
+    setSegment(TEXT);
+    printf("\tsub \t0, \t%%%d, \t%%0\n", condVal);
+    printf("\tjz .L%d\n", labelIdent);
+}
+
+struct CallInfo
+{
+    fnName:  ->UStr;
+    numArgs: unsigned;
+    next:    ->CallInfo;
+};
+
+global callInfo: ->CallInfo;
+
+fn genCallBegin(fnName: ->UStr, numArgs: unsigned)
+{
+    // push call info to stack
+    local n: ->CallInfo = malloc(sizeof(*n));
+    n->fnName = fnName;
+    n->numArgs = numArgs;
+    n->next = callInfo;
+    callInfo = n;
+
+    saveRegs();
+    setSegment(TEXT);
+    printf("\tsub \t8*(3 + %u), \t%%SP, \t%%SP\n", callInfo->numArgs);
+}
+
+fn genCallAddArg(argReg: GenReg, argPos: unsigned)
+{
+    assert(callInfo);
+    local reg: GenReg = getReg();
+    setSegment(TEXT);
+    printf("\tstore \t%%%d, 8 * (3 +%u)(%%SP, 3)\n", argReg, argPos);
+    genReleaseReg(reg);
+}
+
+fn genCallEnd(): GenReg
+{
+    assert(callInfo);
+    setSegment(TEXT);
+    printf("\tcall \t%s, %%3\n", callInfo->fnName);
+    printf("\tfetch \t16(%%SP, 3), \t%%3\n");
+    printf("\tadd \t8*(3 + %d), \t%%SP, \t%%SP\n", callInfo->numArgs);
+    restoreRegs();
+
+    local retVal: GenReg = getReg();
+    printf("\tadd \t0, \t%%3, \t%%%d\n", retVal);
+
+    // pop call info from stack
+    local n: ->CallInfo = callInfo;
+    callInfo = callInfo->next;
+    free(n);
+    return retVal;
+}
+
+fn genDefString(val: ->UStr): ->UStr
+{
+    static count: size_t;
+    local name: array[42] of char;
+    snprintf(name, sizeof(name), ".STR%zu", count++);
+    local ident: ->UStr = UStrCreate(name);
+    setSegment(DATA);
+    printf("\t.align 8\n", ident);
+    printf("%s:\n", ident);
+    printf("\t.string %s\n", val);
+    return ident;
+}
+
+fn genGetTmp(): ->UStr
+{
+    static count: size_t;
+    local name: array[42] of char;
+    snprintf(name, sizeof(name), ".TMP%zu", count++);
+    local ident: ->UStr = UStrCreate(name);
+    genAddLocal(ident);
+    return ident;
+}
+
+fn genSaveBoolInTmp(val: bool, tmp: ->UStr)
+{
+    local addr: GenReg = genLoadAddr(tmp);
+    local valReg: GenReg = genConstant(val ? UStrCreate("1"): UStrCreate("0"));
+    genReleaseReg(addr);
+    genReleaseReg(valReg);
+    genStore(valReg, addr);
+}
+
+fn genLoadFromTmp(tmp: ->UStr): GenReg
+{
+    local addr: GenReg = genLoadAddr(tmp);
+    genReleaseReg(addr);
+    return genFetch(addr);
+}
+

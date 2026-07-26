@@ -1,0 +1,127 @@
+S20_R       (OP u 8) (dest u 4) (imm s 20)
+R_R_R       (OP u 8) (z u 4) (y u 4) (x u 4)
+REL_JMP	    (OP u 8) (offset j 24)
+
+0x10 R_R_R
+:   halt %x
+    ulm_halt(ulm_regVal(x));
+
+0x11 S20_R
+#   Load sign extended immediate value into destination register.
+:   load imm, %dest
+    ulm_setReg(imm, dest);
+
+0x12 R_R_R
+#   Adds register \\texttt{%x} to register and stores the result in
+#   register \\texttt{%z}.
+:   add %x, %y, %z
+    ulm_add64(ulm_regVal(x), ulm_regVal(y), z);
+
+0x13 R_R_R
+:   mul %x, %y, %z
+    ulm_mul64(ulm_regVal(x), ulm_regVal(y), z);
+
+0x14 R_R_R
+:   mul_s %x, %y, %z
+    ulm_mul64(ulm_regVal(x), ulm_regVal(y), z);
+
+
+##
+## new in session 17
+##
+
+U20_R       (OP u 8) (dest u 4) (imm s 20)
+R	    (OP u 8) (x u 4)
+MR_R	    (OP u 8) (data u 4) (addr u 4) (size u 2) (offset s 14)
+R_MR	    (OP u 8) (data u 4) (addr u 4) (size u 2) (offset s 14)
+U16_R_R	    (OP u 8) (z u 4) (y u 4) (imm u 16)
+
+0x20 R_R_R                                                                       
+:   sub %x, %y, %z                                                               
+    ulm_sub64(ulm_regVal(x), ulm_regVal(y), z);                                  
+
+0x21 R_R_R                                                                       
+:   div %x, %y, %z                                                               
+    ulm_idiv64(ulm_regVal(x), ulm_regVal(y), z);       
+
+0x22 U16_R_R
+:   add imm, %y, %z
+    ulm_add64(imm, ulm_regVal(y), z);
+
+0x23 U16_R_R
+:   sub imm, %y, %z
+    ulm_sub64(imm, ulm_regVal(y), z);
+
+0x24    U20_R
+:   call    imm, %dest
+    ulm_absJump(imm, dest);
+
+0x25 R
+:   ret    %x
+    ulm_absJump(ulm_regVal(x), x);
+
+0x26 MR_R
+:   fetch  offset(%addr, size), %data
+:   fetch  (%addr, size), %data
+    ulm_fetch64(offset, addr, 0, 1, ULM_ZERO_EXT, 1 << size, data);
+
+0x27 R_MR
+:   store  %data, offset(%addr, size)
+:   store  %data, (%addr, size)
+    ulm_store64(offset, addr, 0, 0, 1 << size, data);
+
+
+
+0x30 REL_JMP
+:   jz	offset
+    ulm_conditionalRelJump(ulm_statusReg[ULM_ZF] == 1, offset);
+
+0x31 REL_JMP
+:   jmp	offset
+    ulm_unconditionalRelJump(offset); 
+
+##
+## new in session 22
+##
+
+0x40 R_R_R
+:   putc    %x
+    ulm_printChar(ulm_regVal(x));
+
+0x41 R_R_R
+:   getc    %x
+    ulm_setReg(ulm_readChar(), x);
+
+
+0x50 REL_JMP
+:   jnz	offset
+    ulm_conditionalRelJump(ulm_statusReg[ULM_ZF] == 0, offset);
+
+
+0x51 REL_JMP
+:   jnge offset
+:   jlt offset
+    ulm_conditionalRelJump(ulm_statusReg[ULM_ZF] == 0 &&
+                           ulm_statusReg[ULM_SF] != ulm_statusReg[ULM_OF],
+			   offset);
+
+0x52 REL_JMP
+:   jng offset
+:   jle offset
+    ulm_conditionalRelJump(ulm_statusReg[ULM_ZF] == 1 ||
+			   ulm_statusReg[ULM_SF] != ulm_statusReg[ULM_OF],
+			   offset);
+
+0x53 REL_JMP
+:   jge offset
+:   jnl offset
+    ulm_conditionalRelJump(ulm_statusReg[ULM_ZF] == 1 ||
+			   ulm_statusReg[ULM_SF] == ulm_statusReg[ULM_OF],
+			   offset);
+
+0x54 REL_JMP
+:   jgt offset
+:   jnle offset
+    ulm_conditionalRelJump(ulm_statusReg[ULM_ZF] == 0 &&
+			   ulm_statusReg[ULM_SF] == ulm_statusReg[ULM_OF],
+			   offset);

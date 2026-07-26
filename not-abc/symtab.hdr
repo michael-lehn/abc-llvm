@@ -1,0 +1,17 @@
+@ "ustr.hdr"
+
+struct SymtabInfo
+{
+    isGlobal: bool;
+    offset: int;
+};
+
+extern fn symtabGetInfo(ident: ->UStr, info: -> SymtabInfo): bool; 
+extern fn symtabIsDefined(ident: ->UStr): bool;
+
+extern fn symtabAddGlobal(ident: ->UStr): bool;
+extern fn symtabAddLocal(ident: ->UStr, offset: int): bool;
+extern fn symtabFreeLocals();
+
+extern fn symtabPrintGlobals();
+extern fn symtabPrintLocals();

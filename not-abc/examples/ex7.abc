@@ -1,0 +1,24 @@
+fn readInt()
+{
+    local n, k;
+    n = 0;
+    while ((k = getchar()) - 10) {
+	n = n * 10 + k - 48;
+    }
+}
+
+fn factorial(n)
+{
+    local res;
+    res = 1;
+    while (n) {
+	res = res *n;
+	n = n - 1;
+    }
+    res;
+}
+
+fn main()
+{
+    factorial(readInt());
+}

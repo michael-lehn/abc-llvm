@@ -1,0 +1,495 @@
+fn print(s)
+{
+    while (s && #s) {
+	putchar(#s);
+	s = s + 1;
+    }
+}
+
+// Test
+fn println(s)
+{
+    print(s);
+    putchar('\n');
+}
+
+fn printInt(n)
+{
+    if (n < 0) {
+	putchar('-');
+	n = -n;
+    }
+    if (n == 0) {
+	putchar('0');
+    } else {
+	if (n / 10 > 0) {
+	    printInt(n / 10);
+	}
+	putchar(n % 10 + '0');
+    }
+}
+
+fn strToInt(s)
+{
+    local val, sign;
+    sign = 1;
+    val = 0;
+    if (#s == '-') {
+	sign = -1;
+	s = s + 1;
+    }
+    while (isDigit(#s)) {
+	val = val * 10 + #s - '0';
+	s = s + 1;
+    }
+    val = val * sign;
+}
+
+fn isWhitespace(ch)
+{
+    ch == ' ' || ch == '\t';
+}
+
+fn isDigit(ch)
+{
+    ch >= '0' && ch <= '9';
+}
+
+fn isLetter(ch)
+{
+    ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch == '_';
+}
+
+global lexerLine, lexerCol, lexerCh;
+global tokenLine, tokenCol, tokenKind;
+global tokenUpdate, tokenVal, tokenLen, tokenSkip;
+
+fn nextTokenChar()
+{
+    if (!tokenVal) {
+	tokenVal = "Using this as an array for 42 characters.";
+    }
+    if (lexerCh == 0 || lexerCh == '\n') {
+	lexerLine = lexerLine + 1;
+	lexerCol = 1;
+    } else {
+	lexerCol = lexerCol + 1;
+    }
+    if (tokenUpdate) {
+	if (tokenLen == 42) {
+	    if (!tokenSkip) {
+		tokenSkip = 1;
+		println("Token too long. Skipping the rest");
+		print("This is what you get: ");
+		printToken();
+	    }
+	} else {
+	    tokenSkip = 0;
+	    #(tokenVal + tokenLen) = lexerCh;
+	    #(tokenVal + tokenLen + 1) = 0;
+	    tokenLen = tokenLen + 1;
+	}
+    }
+    lexerCh = getchar();
+}
+
+fn printToken()
+{
+    if (tokenKind == 0) {
+	if (tokenLine == 0) {
+	    println("lexer not started");
+	} else {
+	    print(tokenVal); print(" ");
+	    println("BAD_TOKEN");
+	}
+    } else {
+	printInt(tokenLine); print("."); printInt(tokenCol);
+	print(" '"); print(tokenVal); print("' ");
+	if (tokenKind == 1) {
+	    println("EOI");
+	} else {
+	    if (tokenKind == 2) {
+		println("INTEGER");
+	    } else if (tokenKind == 3) {
+		println("IDENTIFIER");
+	    } else if (tokenKind == 4) {
+		println("PLUS");
+	    } else if (tokenKind == 5) {
+		println("MINUS");
+	    } else if (tokenKind == 6) {
+		println("ASTERISK");
+	    } else if (tokenKind == 7) {
+		println("SLASH");
+	    } else if (tokenKind == 8) {
+		println("PERCENT");
+	    } else if (tokenKind == 9) {
+		println("LPAREN");
+	    } else if (tokenKind == 10) {
+		println("RPAREN");
+	    } else if (tokenKind == 11) {
+		println("SEMICOLON");
+	    } else if (tokenKind == 12) {
+		println("CR");
+	    } else if (tokenKind == 13) {
+		println("EQUAL");
+	    } else {
+		println("???");
+	    }
+	}
+    }
+}
+
+fn getToken()
+{
+    tokenUpdate = tokenLen = 0;
+    while (!lexerCh || isWhitespace(lexerCh)) {
+	nextTokenChar();
+    }
+    tokenUpdate = 1; tokenLine = lexerLine; tokenCol = lexerCol;
+    if (lexerCh == -1) {
+	tokenKind = 1;
+    } else if (isDigit(lexerCh)) {
+	tokenKind = 2;
+	while (isDigit(lexerCh)) {
+	    nextTokenChar();
+	}
+    } else if (isLetter(lexerCh)) {
+	tokenKind = 3;
+	while (isDigit(lexerCh) || isLetter(lexerCh)) {
+	    nextTokenChar();
+	}
+    } else if (lexerCh == '+') {
+	tokenKind = 4;
+	nextTokenChar();
+    } else if (lexerCh == '-') {
+	tokenKind = 5;
+	nextTokenChar();
+    } else if (lexerCh == '*') {
+	tokenKind = 6;
+	nextTokenChar();
+    } else if (lexerCh == '/') {
+	tokenKind = 7;
+	nextTokenChar();
+    } else if (lexerCh == '%') {
+	tokenKind = 8;
+	nextTokenChar();
+    } else if (lexerCh == '(') {
+	tokenKind = 9;
+	nextTokenChar();
+    } else if (lexerCh == ')') {
+	tokenKind = 10;
+	nextTokenChar();
+    } else if (lexerCh == ';') {
+	tokenKind = 11;
+	nextTokenChar();
+    } else if (lexerCh == '\n') {
+	tokenKind = 12;
+	nextTokenChar();
+    } else if (lexerCh == '=') {
+	tokenKind = 13;
+	nextTokenChar();
+    } else {
+	tokenKind = 0;
+    }
+    tokenKind;
+}
+
+fn error(msg)
+{
+    print("error: ");
+    printInt(tokenLine); print("."); printInt(tokenCol); print(": ");
+    println(msg);
+    printToken();
+}
+
+fn parseExpr(valPtr)
+{
+    local exprPtr, parseSucc;
+    exprPtr = "[value ][ident ]";
+    parseSucc = 1;
+    if (!parseAssignment(exprPtr)) {
+	parseSucc = 0;
+    } else {
+	*valPtr = *exprPtr;
+    }
+    parseSucc;
+}
+
+fn parseAssignment(exprPtr)
+{
+    local leftIdent, right, tok, parseSucc;
+    right = "[value ][ident ]";
+    parseSucc = 1;
+    if (!parseAdditive(exprPtr)) {
+	parseSucc = 0;
+    } else {
+	while (tokenKind == 13) {
+	    if (*(exprPtr + 8) == 0) {
+		error("error: assignment to non-lvalue\n");
+		while (tokenKind != 11 && tokenKind != 12) {
+		    getToken();
+		    parseSucc = 0;
+		}
+	    } else {
+		leftIdent = *(exprPtr + 8);
+		getToken();
+		parseAssignment(right);
+		setVar(&leftIdent, *right);
+		print(&leftIdent); print(" now has value "); printInt(*right); putchar('\n');
+		*(exprPtr + 0) = *right;
+	    }
+	}
+    }
+    parseSucc;
+}
+
+fn parseAdditive(exprPtr)
+{
+    local right, tok, parseSucc;
+    right = "[value ][ident ]";
+    parseSucc = 1;
+    if (!parseTerm(exprPtr)) {
+	parseSucc = 0;
+    } else {
+	while (tokenKind >= 4 && tokenKind <= 5 && parseSucc) {
+	    tok = tokenKind;
+	    getToken();
+	    parseSucc = parseTerm(right);
+	    if (!parseSucc) {
+		error("term expected");
+	    } else if (tok == 4){
+		*exprPtr = *exprPtr + *right;
+	    } else if (tok == 5){
+		*exprPtr = *exprPtr - *right;
+	    }
+	    *(exprPtr + 8) = 0;
+	}
+    }
+    parseSucc;
+}
+
+fn parseTerm(exprPtr)
+{
+    local left, right, tok, parseSucc;
+    right = "[value ][ident ]";
+    parseSucc = 1;
+    if (!parseFactor(exprPtr)) {
+	parseSucc = 0;
+    } else {
+	while (tokenKind >= 6 && tokenKind <= 8 && parseSucc) {
+	    tok = tokenKind;
+	    getToken();
+	    parseSucc = parseFactor(right);
+	    if (!parseSucc) {
+		error("factor expected");
+	    } else if (tok == 6){
+		*exprPtr = *exprPtr * *right;
+	    } else if (tok == 7){
+		*exprPtr = *exprPtr / *right;
+	    } else if (tok == 8){
+		*exprPtr = *exprPtr % *right;
+	    }
+	    *(exprPtr + 8) = 0;
+	}
+    }
+    parseSucc;
+}
+
+fn parseFactor(exprPtr)
+{
+    local parseSucc;
+    parseSucc = 1;
+    if (tokenKind == 2) {
+	*(exprPtr + 0) = strToInt(tokenVal);
+	*(exprPtr + 8) = 0;
+	getToken();
+    } else if (tokenKind == 3) {
+	getVar(tokenVal, exprPtr);
+	*(exprPtr + 8) = *tokenVal;
+	getToken();
+    } else if (tokenKind == 9) {
+	getToken();
+	if (!parseAssignment(exprPtr)) {
+	    parseSucc = 0;
+	    error("expression expected");
+	}
+	if (tokenKind != 10) {
+	    parseSucc = 0;
+	    error("expected ')'");
+	}
+	getToken();
+    } else {
+	parseSucc = 0;
+    }
+    parseSucc;
+}
+
+fn testLexer()
+{
+    getToken();
+    while (tokenKind != 1) {
+	printToken();
+	getToken();
+    }
+    printToken();
+}
+
+fn testParser()
+{
+    local val, parseSucc;
+    print("enter> ");
+    getToken();
+    while (tokenKind != 1) {
+	if (parseSucc = parseExpr(&val)) {
+	    print("result: "); printInt(val); putchar('\n');
+	} else {
+	    println("Skipping the following token:");
+	    printToken();
+	    getToken();
+	}
+	print("enter> ");
+	while (tokenKind == 11 || tokenKind == 12) {
+	    getToken();
+	}
+    }
+}
+
+fn strncpy(n, dest, src)
+{
+    while (n) {
+	#dest = #src;
+	n = n - 1;
+	if (!#src) {
+	    n = 0;
+	}
+	dest = dest + 1;
+	src = src + 1;
+    }
+}
+
+fn strcmp(s1, s2)
+{
+    while (#s1 && #s1 == #s2) {
+	s1 = s1 + 1;
+	s2 = s2 + 1;
+    }
+    #s1 - #s2;
+}
+
+fn strlen(s)
+{
+    local n;
+    n = 0;
+    while (#s) {
+	n = n + 1;
+	s = s + 1;
+    }
+    n;
+}
+
+global symtabData, symtabDataSize;
+
+fn symtabInit()
+{
+    symtabData
+	= "[8 byte ident][8 byte val][8 byte ident][8 byte val]............";
+    symtabDataSize = strlen(symtabData) + 1;
+    *symtabData = 0;
+}
+
+fn symtabGetOrAddVar(ident)
+{
+    local pos, found;
+    pos = symtabData;
+    found = 0;
+    if (strlen(ident) >= 8) {
+	print("identifier '"); print(ident); println("' too long");
+	pos = 0;
+    } else {
+	while (#pos && !found) {
+	    if (!strcmp(ident, pos)) {
+		found = 1;
+	    } else {
+		pos = pos + 16;
+	    }
+	}
+	if (!found) {
+	    if (pos - symtabData + 16 + 1> symtabDataSize) {
+		print("symtab: can not add '"); print(ident); println("'");
+		println("symtab: out of memory");
+		pos = 0;
+	    } else {
+		strncpy(strlen(ident) + 1, pos, ident);
+		*(pos + 8) = 0;
+		*(pos + 16) = 0;
+	    }
+	}
+    }
+    pos;
+}
+
+fn addVar(ident)
+{
+    local pos;
+    pos = symtabGetOrAddVar(ident);
+    if (pos) {
+	printInt(pos); print(": "); println(pos);
+    }
+}
+
+fn setVar(ident, val)
+{
+    local pos;
+    pos = symtabGetOrAddVar(ident);
+    if (pos) {
+	*(pos + 8) = val;
+    }
+}
+
+fn getVar(ident, valPtr)
+{
+    local pos;
+    pos = symtabGetOrAddVar(ident);
+    if (pos) {
+	*valPtr = *(pos + 8);
+    } else {
+	*valPtr = 0;
+    }
+    pos != 0;
+}
+
+fn testSymtab()
+{
+    println("init done");
+    setVar("x", 40);
+    setVar("y", 2);
+
+    local valX, valY;
+    getVar("x", &valX);
+    getVar("y", &valY);
+    setVar("x", valX + valY);
+    getVar("x", &valX);
+    printInt(valX); println(" is value of x");
+}
+
+fn main()
+{
+    println(0);
+    println("Calculator with variables");
+    println("=========================");
+    println(0);
+    println("Supported grammar:");
+    println("expr = assignment ';'");
+    println("assignment = additive ['=' assignment]");
+    println("additive = term { ('+' | '-') term}");
+    println("term = factor { ('*' | '/' | '%') factor}");
+    println("factor = integer | identifier | assignment");
+    println(0);
+    println("limitations:");
+    println(" - identifieres can have at most 7 characters");
+    println(" - symbol table can handle at most 4 identifiers");
+
+    symtabInit();
+    setVar("x", 42);
+    testParser();
+}

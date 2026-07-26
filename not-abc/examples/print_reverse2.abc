@@ -1,0 +1,16 @@
+fn printReverse(s)
+{
+    local oonce;
+    once = 1;
+    while (#s * once) {
+	printReverse(s + 1);
+	putchar(#s);
+	once = 0;
+    }
+}
+
+fn main()
+{
+    printReverse("hello!");
+    putchar('\n');
+}

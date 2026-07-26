@@ -1,0 +1,13 @@
+fn printReverse(s)
+{
+    if (#s) {
+	printReverse(s + 1);
+	putchar(#s);
+    }
+}
+
+fn main()
+{
+    printReverse("hello!");
+    putchar('\n');
+}

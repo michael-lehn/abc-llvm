@@ -1,0 +1,320 @@
+fn print(s)
+{
+    while (#s) {
+	putchar(#s);
+	s = s + 1;
+    }
+}
+
+fn println(s)
+{
+    print(s);
+    putchar('\n');
+}
+
+fn printInt(n)
+{
+    if (n < 0) {
+	putchar('-');
+	n = -n;
+    }
+    if (n == 0) {
+	putchar('0');
+    } else {
+	if (n / 10 > 0) {
+	    printInt(n / 10);
+	}
+	putchar(n % 10 + '0');
+    }
+}
+
+fn strToInt(s)
+{
+    local val, sign;
+    sign = 1;
+    val = 0;
+    if (#s == '-') {
+	sign = -1;
+	s = s + 1;
+    }
+    while (isDigit(#s)) {
+	val = val * 10 + #s - '0';
+	s = s + 1;
+    }
+    val = val * sign;
+}
+
+fn isWhitespace(ch)
+{
+    ch == ' ' || ch == '\t';
+}
+
+fn isDigit(ch)
+{
+    ch >= '0' && ch <= '9';
+}
+
+fn isLetter(ch)
+{
+    ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch == '_';
+}
+
+global lexerLine, lexerCol, lexerCh;
+global tokenLine, tokenCol, tokenKind;
+global tokenUpdate, tokenVal, tokenLen, tokenSkip;
+
+fn nextTokenChar()
+{
+    if (!tokenVal) {
+	tokenVal = "Using this as an array for 42 characters.";
+    }
+    if (lexerCh == 0 || lexerCh == '\n') {
+	lexerLine = lexerLine + 1;
+	lexerCol = 1;
+    } else {
+	lexerCol = lexerCol + 1;
+    }
+    if (tokenUpdate) {
+	if (tokenLen == 42) {
+	    if (!tokenSkip) {
+		tokenSkip = 1;
+		println("Token too long. Skipping the rest");
+		print("This is what you get: ");
+		printToken();
+	    }
+	} else {
+	    tokenSkip = 0;
+	    #(tokenVal + tokenLen) = lexerCh;
+	    #(tokenVal + tokenLen + 1) = 0;
+	    tokenLen = tokenLen + 1;
+	}
+    }
+    lexerCh = getchar();
+}
+
+fn printToken()
+{
+    if (tokenKind == 0) {
+	if (tokenLine == 0) {
+	    println("lexer not started");
+	} else {
+	    print(tokenVal); print(" ");
+	    println("BAD_TOKEN");
+	}
+    } else {
+	printInt(tokenLine); print("."); printInt(tokenCol);
+	print(" '"); print(tokenVal); print("' ");
+	if (tokenKind == 1) {
+	    println("EOI");
+	} else {
+	    if (tokenKind == 2) {
+		println("INTEGER");
+	    } else if (tokenKind == 3) {
+		println("IDENTIFIER");
+	    } else if (tokenKind == 4) {
+		println("PLUS");
+	    } else if (tokenKind == 5) {
+		println("MINUS");
+	    } else if (tokenKind == 6) {
+		println("ASTERISK");
+	    } else if (tokenKind == 7) {
+		println("SLASH");
+	    } else if (tokenKind == 8) {
+		println("PERCENT");
+	    } else if (tokenKind == 9) {
+		println("LPAREN");
+	    } else if (tokenKind == 10) {
+		println("RPAREN");
+	    } else if (tokenKind == 11) {
+		println("CR");
+	    } else if (tokenKind == 12) {
+		println("SEMICOLON");
+	    } else {
+		println("???");
+	    }
+	}
+    }
+}
+
+fn getToken()
+{
+    tokenUpdate = tokenLen = 0;
+    while (!lexerCh || isWhitespace(lexerCh)) {
+	nextTokenChar();
+    }
+    tokenUpdate = 1; tokenLine = lexerLine; tokenCol = lexerCol;
+    if (lexerCh == -1) {
+	tokenKind = 1;
+    } else if (isDigit(lexerCh)) {
+	tokenKind = 2;
+	while (isDigit(lexerCh)) {
+	    nextTokenChar();
+	}
+    } else if (isLetter(lexerCh)) {
+	tokenKind = 3;
+	while (isDigit(lexerCh) || isLetter(lexerCh)) {
+	    nextTokenChar();
+	}
+    } else if (lexerCh == '+') {
+	tokenKind = 4;
+	nextTokenChar();
+    } else if (lexerCh == '-') {
+	tokenKind = 5;
+	nextTokenChar();
+    } else if (lexerCh == '*') {
+	tokenKind = 6;
+	nextTokenChar();
+    } else if (lexerCh == '/') {
+	tokenKind = 7;
+	nextTokenChar();
+    } else if (lexerCh == '%') {
+	tokenKind = 8;
+	nextTokenChar();
+    } else if (lexerCh == '(') {
+	tokenKind = 9;
+	nextTokenChar();
+    } else if (lexerCh == ')') {
+	tokenKind = 10;
+	nextTokenChar();
+    } else if (lexerCh == '\n') {
+	if (tokenKind == 11) {
+	    nextTokenChar();
+	}
+	tokenKind = 11;
+    } else if (lexerCh == ';') {
+	tokenKind = 12;
+	nextTokenChar();
+    } else {
+	tokenKind = 0;
+    }
+    tokenKind;
+}
+
+fn error(msg)
+{
+    print("error: ");
+    printInt(tokenLine); print("."); printInt(tokenCol); print(": ");
+    println(msg);
+    printToken();
+}
+
+fn parseExpr(valPtr)
+{
+    parseAdditive(valPtr);
+}
+
+fn parseAdditive(valPtr)
+{
+    local left, right, tok, parseSucc;
+    parseSucc = 1;
+    if (!parseTerm(&left)) {
+	parseSucc = 0;
+    } else {
+	*valPtr = left;
+	while (tokenKind >= 4 && tokenKind <= 5 && parseSucc) {
+	    tok = tokenKind;
+	    getToken();
+	    parseSucc = parseTerm(&right);
+	    if (!parseSucc) {
+		error("term expected");
+	    } else if (tok == 4){
+		left = left + right;
+	    } else if (tok == 5){
+		left = left - right;
+	    }
+	    *valPtr = left;
+	}
+    }
+    parseSucc;
+}
+
+fn parseTerm(valPtr)
+{
+    local left, right, tok, parseSucc;
+    parseSucc = 1;
+    if (!parseFactor(&left)) {
+	parseSucc = 0;
+    } else {
+	*valPtr = left;
+	while (tokenKind >= 6 && tokenKind <= 8 && parseSucc) {
+	    tok = tokenKind;
+	    getToken();
+	    parseSucc = parseFactor(&right);
+	    if (!parseSucc) {
+		error("factor expected");
+	    } else if (tok == 6){
+		left = left * right;
+	    } else if (tok == 7){
+		left = left / right;
+	    } else if (tok == 8){
+		left = left % right;
+	    }
+	    *valPtr = left;
+	}
+    }
+    parseSucc;
+}
+
+fn parseFactor(valPtr)
+{
+    local parseSucc;
+    parseSucc = 1;
+    if (tokenKind == 2) {
+	*valPtr = strToInt(tokenVal);
+	getToken();
+    } else if (tokenKind == 9) {
+	getToken();
+	if (!parseExpr(valPtr)) {
+	    parseSucc = 0;
+	    error("expression expected");
+	}
+	if (tokenKind != 10) {
+	    parseSucc = 0;
+	    error("expected ')'");
+	}
+	getToken();
+    } else {
+	print("here: ");
+	printToken();
+	parseSucc = 0;
+    }
+    parseSucc;
+}
+
+fn testLexer()
+{
+    getToken();
+    while (tokenKind != 1) {
+	printToken();
+	getToken();
+    }
+    printToken();
+}
+
+fn testParser()
+{
+    local val;
+    println("enter expression");
+    print("enter> ");
+    getToken();
+    while (tokenKind != 1) {
+	if (parseExpr(&val)) {
+	    print("result> "); printInt(val); putchar('\n');
+	} else {
+	    printToken();
+	    println("not a valid expression");
+	}
+	print("enter> ");
+	while (tokenKind != 11) {
+	    getToken();
+	}
+	while (tokenKind == 11) {
+	    getToken();
+	}
+    }
+}
+
+fn main()
+{
+    testParser();
+}

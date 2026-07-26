@@ -1,0 +1,33 @@
+fn println(s) {
+    while (#s) { putchar(#s); s = s + 1; }
+    putchar('\n');
+}
+
+fn isDigit(ch)
+{
+    println("isDigit was called");
+    ch >= '0' && ch <= '9';
+}
+
+fn main()
+{
+    println("type up to two characters.");
+    println("I will check if at least one is a digit");
+
+    local tmp;
+    if (isDigit(getchar())) {
+	tmp = 1;
+    } else {
+	if (isDigit(getchar())) {
+	    tmp = 1;
+	} else {
+	    tmp = 0;
+	}
+    }
+
+    if (tmp) {
+	println("got a digit");
+    } else {
+	println("both characters where not a digit");
+    }
+}

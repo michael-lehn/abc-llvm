@@ -1,0 +1,16 @@
+@ "gen.hdr"
+@ "expr.hdr"
+@ "ustr.hdr"
+
+fn main()
+{
+    local x: GenLabel = genGetLabel();
+    local y: GenLabel = genGetLabel();
+
+    genDefLabel(y);
+    genDefLabel(x);
+    genJumpIfFalse(genConstant(UStrCreate("1")), x);
+    genJumpIfTrue(genConstant(UStrCreate("1")), x);
+    //genJump(GEN_NOT_ZERO, x);
+    genJump(x);
+}

@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+
+set -e
+
+find_clang()
+{
+    if command -v clang >/dev/null 2>&1; then
+        command -v clang
+        return
+    fi
+
+    for v in 22 21 20 19 18 17 16 15 14; do
+        if command -v clang-$v >/dev/null 2>&1; then
+            command -v clang-$v
+            return
+        fi
+    done
+
+    echo "myabc: could not find clang" >&2
+    echo "Please install LLVM or add clang to your PATH." >&2
+    exit 1
+}
+
+clang=$(find_clang)
+compiler=xtest_abc_llvm
+assembler=$clang
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+usage()
+{
+    cat >&2 <<EOF
+Usage:
+    myabc_llvm [-S] [-o output] file.abc
+    myabc_llvm file.abc [-S] [-o output]
+
+Options:
+    -S          Generate assembly only
+    -o output   Name of the executable
+EOF
+    exit 1
+}
+
+assemble_only=false
+output=
+input=
+
+while (($# > 0)); do
+    case $1 in
+        -S)
+            assemble_only=true
+            shift
+            ;;
+
+        -o)
+            (($# >= 2)) || usage
+            output=$2
+            shift 2
+            ;;
+
+        -h|--help)
+            usage
+            ;;
+
+        -*)
+            echo "myabc_llvm: unknown option '$1'" >&2
+            usage
+            ;;
+
+        *)
+            if [[ -n $input ]]; then
+                echo "myabc_llvm: more than one input file specified" >&2
+                usage
+            fi
+            input=$1
+            shift
+            ;;
+    esac
+done
+
+[[ -n $input ]] || usage
+
+[[ -f $input ]] || {
+    echo "myabc_llvm: input file '$input' not found" >&2
+    exit 1
+}
+
+case $input in
+    *.abc)
+        ;;
+    *)
+        echo "myabc_llvm: input file must have the extension '.abc'" >&2
+        exit 1
+        ;;
+esac
+
+source_dir=$(dirname -- "$input")
+source_name=$(basename -- "$input")
+base_name=${source_name%.abc}
+asm_file="$base_name.ll"
+
+if $assemble_only; then
+    if [[ -n $output ]]; then
+        echo "myabc_llvm: options '-S' and '-o' cannot be used together" >&2
+	echo "" >&2
+	usage
+        exit 1
+    fi
+
+    "$compiler" < "$input" > "$asm_file"
+    exit
+fi
+
+tmp_asm=$(mktemp "${TMPDIR:-/tmp}/myabc.XXXXXXXX").ll
+trap 'rm -f "$tmp_asm"' EXIT
+
+"$compiler" < "$input" > "$tmp_asm"
+
+if [[ -n $output ]]; then
+    "$assembler"  -O3 -Wno-override-module -o "$output" "$tmp_asm"
+else
+    "$assembler"  -O3 -Wno-override-module "$tmp_asm"
+fi

@@ -1,0 +1,229 @@
+@ <stdlib.hdr>
+@ <stdio.hdr>
+
+@ "expr.hdr"
+@ "gen.hdr"
+@ "lexer.hdr"
+@ "parser.hdr"
+@ "symtab.hdr"
+
+fn parseTopLevel(): bool;
+fn parseGlobal(): bool;
+fn parseLocal(): bool;
+fn parseFn(): bool;
+fn parseCompoundStmt(): bool;
+fn parseExprStmt(): bool;
+fn parseWhileStmt(): bool;
+fn parseIfStmt(): bool;
+
+// top-level = { global | fn }
+fn parseTopLevel(): bool
+{
+    getToken();
+    while (parseGlobal() || parseFn()) {
+    }
+    expected(EOI);
+    return true;
+}
+
+// global = "global" identifier { "," identifier } ";"
+fn parseGlobal(): bool
+{
+    if (token.kind != GLOBAL) {
+	return false;
+    }
+    getToken();
+    while (token.kind == IDENTIFIER) {
+	genAddGlobal(token.val);
+	getToken();
+	if (token.kind != COMMA) {
+	    break;
+	}
+	getToken();
+    }
+    expected(SEMICOLON);
+    getToken();
+    return true;
+}
+
+// local = "local" identifier { "," identifier } ";"
+fn parseLocal(): bool
+{
+    if (token.kind != LOCAL) {
+	return false;
+    }
+    getToken();
+    while (token.kind == IDENTIFIER) {
+	genAddLocal(token.val);
+	getToken();
+	if (token.kind != COMMA) {
+	    break;
+	}
+	getToken();
+    }
+    expected(SEMICOLON);
+    getToken();
+    return true;
+}
+
+// fn = "fn" "(" [identifier { "," identifier } ]")" compound-stmt
+fn parseFn(): bool
+{
+    if (token.kind != FN) {
+	return false;
+    }
+    getToken();
+    expected(IDENTIFIER);
+    local fnName: ->UStr = token.val;
+    getToken();
+
+    expected(LPAREN);
+    getToken();
+
+    if (token.kind == IDENTIFIER) {
+	genFuncDefParam(token.val);
+	getToken();
+	while (token.kind == COMMA) {
+	    getToken();
+	    expected(IDENTIFIER);
+	    genFuncDefParam(token.val);
+	    getToken();
+	}
+    }
+    genFuncDefBegin(fnName);
+
+    expected(RPAREN);
+    getToken();
+
+    expected(LBRACE);
+    parseCompoundStmt();
+
+    genFuncDefEnd();
+    return true;
+}
+
+// compound-stmt = "{" { expr-stmt | local | while-stmt | if-stmt} "}"
+fn parseCompoundStmt(): bool
+{
+    if (token.kind != LBRACE) {
+	return false;
+    }
+    getToken();
+    while (parseExprStmt()
+	|| parseLocal()
+	|| parseWhileStmt()
+	|| parseIfStmt())
+    {
+    }
+    expected(RBRACE);
+    getToken();
+    return true;
+}
+
+// expr-stmt = expr ";"
+fn parseExprStmt(): bool
+{
+    local expr: -> Expr = parseExpr();
+    if (!expr) {
+	return false;
+    }
+    expected(SEMICOLON);
+    getToken();
+    local retVal: GenReg = loadExpr(expr);
+    genReleaseReg(retVal);
+    genReturn(retVal);
+    releaseExpr(expr);
+    return true;
+}
+
+// while-stmt = "while" "(" expr ")" compound
+fn parseWhileStmt(): bool
+{
+    if (token.kind != WHILE) {
+	return false;
+    }
+    getToken();
+
+    local condLabel: GenLabel = genGetLabel();
+    local doneLabel: GenLabel = genGetLabel();
+
+    expected(LPAREN);
+    getToken();
+
+    local expr: -> Expr = parseExpr();
+    if (!expr) {
+	error("expression expected");
+    }
+
+    expected(RPAREN);
+    getToken();
+
+    genDefLabel(condLabel);
+    local condVal: GenReg = loadExpr(expr);
+    genReleaseReg(condVal);
+    genJumpIfFalse(condVal, doneLabel);
+    releaseExpr(expr);
+
+    if (!parseCompoundStmt()) {
+	error("compound for then branch expected");
+    }
+ 
+    genJump(condLabel);
+    genDefLabel(doneLabel);
+    return true;
+}
+
+// if-stmt = "if" "(" expr ")" compound [ "else" (if-stmt | compound) ]
+fn parseIfStmt(): bool
+{
+    if (token.kind != IF) {
+	return false;
+    }
+    getToken();
+
+    local doneLabel: GenLabel = genGetLabel();
+    local elseLabel: GenLabel = genGetLabel();
+
+    expected(LPAREN);
+    getToken();
+
+    local expr: -> Expr = parseExpr();
+    if (!expr) {
+	error("expression expected");
+    }
+
+    expected(RPAREN);
+    getToken();
+
+    local condVal: GenReg = loadExpr(expr);
+    genReleaseReg(condVal);
+    genJumpIfFalse(condVal, elseLabel);
+    releaseExpr(expr);
+
+    if (!parseCompoundStmt()) {
+	error("compound for then branch expected");
+    }
+    genJump(doneLabel);
+
+    genDefLabel(elseLabel);
+    if (token.kind == ELSE) {
+	getToken();
+	if (token.kind == IF) {
+	    parseIfStmt();
+	} else if (!parseCompoundStmt()) {
+	    error("compound for else branch expected");
+	}
+    }
+    genDefLabel(doneLabel);
+ 
+    return true;
+}
+
+
+fn main()
+{
+    genInitCode();
+
+    parseTopLevel();
+    symtabPrintGlobals();
+}

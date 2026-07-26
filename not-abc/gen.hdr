@@ -1,0 +1,68 @@
+@ "ustr.hdr"
+
+type GenReg: unsigned;
+
+extern fn genReleaseReg(reg: GenReg);
+
+extern fn genConstant(val: ->UStr): GenReg;
+
+enum GenInstr
+{
+    GEN_ADD,
+    GEN_SUB,
+    GEN_MUL,
+    GEN_DIV,
+    GEN_MOD,
+    GEN_EQ,
+    GEN_NE,
+    GEN_LE,
+    GEN_LT,
+    GEN_GE,
+    GEN_GT,
+};
+
+/*
+    Note:
+	genInstr(GEN_ADD, left, right) means add left from right
+	genInstr(GEN_SUB, left, right) means subtract left from right
+	...
+*/
+extern fn genInstr(instr: GenInstr, left: GenReg, right: GenReg): GenReg;
+
+extern fn genInitCode();
+extern fn genAddLocal(ident: ->UStr): bool;
+extern fn genAddGlobal(ident: ->UStr): bool;
+extern fn genDefGlobal(ident: ->UStr);
+
+extern fn genFuncDefParam(ident: ->UStr): bool;
+extern fn genFuncDefBegin(name: ->UStr);
+extern fn genFuncDefEnd();
+
+extern fn genReturn(retVal: GenReg);
+
+extern fn genFetch(addr: GenReg): GenReg;
+extern fn genStore(val: GenReg, addr: GenReg);
+extern fn genFetchByte(addr: GenReg): GenReg;
+extern fn genStoreByte(val: GenReg, addr: GenReg);
+extern fn genLoadAddr(ident: ->UStr): GenReg;
+extern fn genLoadVar(ident: ->UStr): GenReg;
+
+type GenLabel: unsigned;
+extern fn genGetLabel(): GenLabel;
+extern fn genDefLabel(labelIdent: GenLabel);
+
+extern fn genJump(labelIdent: GenLabel);
+extern fn genJumpIfTrue(condVal: GenReg, labelIdent: GenLabel);
+extern fn genJumpIfFalse(condVal: GenReg, labelIdent: GenLabel);
+
+extern fn genCallBegin(fnName: ->UStr, numArgs: unsigned);
+extern fn genCallAddArg(argReg: GenReg, argPos: unsigned);
+extern fn genCallEnd(): GenReg;
+
+// generates a string and returns an identifier for it
+extern fn genDefString(val: ->UStr): ->UStr;
+
+extern fn genGetTmp(): ->UStr;
+extern fn genSaveBoolInTmp(val: bool, tmp: ->UStr);
+extern fn genLoadFromTmp(tmp: ->UStr): GenReg;
+

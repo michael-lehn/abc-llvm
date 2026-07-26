@@ -1,0 +1,286 @@
+@ <stdio.hdr>
+@ "lexer.hdr"
+
+// -- internal: only available within this translation unit
+
+global ch: int;
+global currentPos: Pos = {1, 0};
+global updateVal: bool;
+global lengthVal: size_t;
+global internalVal: ->char;
+global internalValCapacity: u64;
+
+// hack: should be declared in stdlib.hdr!
+extern fn realloc(ptr: ->void, size: size_t): ->void;
+
+fn nextCh()
+{
+    if (updateVal) {
+	if (lengthVal + 1 > internalValCapacity) {
+	    internalValCapacity = 2 * internalValCapacity + 1;
+	    internalVal = realloc(internalVal, internalValCapacity);
+	}
+        internalVal[lengthVal++] = ch;
+        internalVal[lengthVal] = 0;
+    } else {
+        lengthVal = 0;
+    }
+    ch = getchar();
+    if (ch == '\n') {
+        ++currentPos.row;
+        currentPos.col = 0;
+    } else {
+        ++currentPos.col;
+    }
+}
+
+fn isDigit(ch: int): bool
+{
+    return ch >= '0' && ch <= '9';
+}
+
+fn isLetter(ch: int): bool
+{
+    return ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch == '_';
+}
+
+// -- exported: available for other translation units
+
+global token: Token;
+
+fn getToken_(): TokenKind
+{
+    lengthVal = 0;
+    updateVal = false;
+    while (ch == 0 || ch == ' ' || ch == '\n' || ch == '\t') {
+        nextCh();
+    }
+    updateVal = true;
+    token.pos = currentPos;
+    if (isDigit(ch)) {
+        while (isDigit(ch)) {
+            nextCh();
+        }
+        return token.kind = DECIMAL_LITERAL;
+    } else if (isLetter(ch)) {
+        while (isLetter(ch) || isDigit(ch)) {
+            nextCh();
+        }
+        return token.kind = IDENTIFIER;
+    // ...
+    } else if (ch == '=') {
+        nextCh();
+	if (ch == '=') {
+	    nextCh();
+	    return token.kind = EQUAL2;
+	}
+        return token.kind = EQUAL;
+    } else if (ch == '<') {
+        nextCh();
+	if (ch == '=') {
+	    nextCh();
+	    return token.kind = LESS_EQUAL;
+	}
+        return token.kind = LESS;
+    } else if (ch == '>') {
+        nextCh();
+	if (ch == '=') {
+	    nextCh();
+	    return token.kind = GREATER_EQUAL;
+	}
+        return token.kind = GREATER;
+    } else if (ch == '>') {
+        nextCh();
+	if (ch == '=') {
+	    nextCh();
+	    return token.kind = GREATER_EQUAL;
+	}
+        return token.kind = GREATER;
+    } else if (ch == '=') {
+        nextCh();
+	if (ch == '=') {
+	    nextCh();
+	    return token.kind = EQUAL2;
+	}
+        return token.kind = EQUAL;
+    } else if (ch == '!') {
+        nextCh();
+	if (ch == '=') {
+	    nextCh();
+	    return token.kind = NOT_EQUAL;
+	}
+        return token.kind = NOT;
+    } else if (ch == '%') {
+        nextCh();
+        return token.kind = PERCENT;
+    } else if (ch == '#') {
+        nextCh();
+        return token.kind = GATTER;
+    } else if (ch == '&') {
+        nextCh();
+	if (ch == '&') {
+	    nextCh();
+	    return token.kind = AMPERSAND2;
+	}
+        return token.kind = AMPERSAND;
+    } else if (ch == '|') {
+        nextCh();
+	if (ch == '|') {
+	    nextCh();
+	    return token.kind = VBAR2;
+	}
+        return token.kind = VBAR;
+    // ...
+
+
+    } else if (ch == ';') {
+        nextCh();
+        return token.kind = SEMICOLON;
+    } else if (ch == ',') {
+        nextCh();
+        return token.kind = COMMA;
+    } else if (ch == '+') {
+        nextCh();
+        return token.kind = PLUS;
+    } else if (ch == '-') {
+        nextCh();
+        return token.kind = MINUS;
+    } else if (ch == '*') {
+        nextCh();
+        return token.kind = ASTERISK;
+    } else if (ch == '/') {
+        nextCh();
+	if (ch == '/') {
+	    while (ch != '\n') {
+		nextCh();
+	    }
+	    return getToken();
+	}
+        return token.kind = SLASH;
+    } else if (ch == '(') {
+        nextCh();
+        return token.kind = LPAREN;
+    } else if (ch == ')') {
+        nextCh();
+        return token.kind = RPAREN;
+    } else if (ch == '{') {
+        nextCh();
+        return token.kind = LBRACE;
+    } else if (ch == '}') {
+        nextCh();
+        return token.kind = RBRACE;
+    } else if (ch == '"') {
+        nextCh();
+	while (ch != '"') {
+	    nextCh();
+	    if (ch == '\n' || ch == EOF) {
+		return BAD_TOKEN;
+	    }
+	}
+        nextCh();
+        return token.kind = STRING_LITERAL;
+    } else if (ch == '\'') {
+	local escape: bool = false;
+        nextCh();
+	while (escape || ch != '\'') {
+	    if (escape) {
+		escape = false;
+	    } else if (!escape && ch == '\\') {
+		escape = true;
+	    }
+	    nextCh();
+	    if (ch == '\n' || ch == EOF) {
+		return BAD_TOKEN;
+	    }
+	}
+        nextCh();
+        return token.kind = CHARACTER_LITERAL;
+    // ...
+    } else if (ch == EOF) {
+        return token.kind = EOI;
+    } else {
+        nextCh();
+        return token.kind = BAD_TOKEN;
+    }
+}
+
+global kw_if, kw_while, kw_global, kw_local, kw_else, kw_do, kw_fn: ->UStr;
+
+fn getToken(): TokenKind
+{
+    static first: bool = true;
+    if (first) {
+	first = false;
+	kw_if = UStrCreate("if");
+	kw_while = UStrCreate("while");
+	kw_global = UStrCreate("global");
+	kw_local = UStrCreate("local");
+	kw_else = UStrCreate("else");
+	kw_do = UStrCreate("do");
+	kw_fn = UStrCreate("fn");
+    }
+
+    getToken_();
+    token.val = UStrCreate(internalVal);
+    if (token.kind == IDENTIFIER) {
+	if (token.val == kw_if) {
+	    token.kind = IF;
+	} else if (token.val == kw_while) {
+	    token.kind = WHILE;
+	} else if (token.val == kw_global) {
+	    token.kind = GLOBAL;
+	} else if (token.val == kw_local) {
+	    token.kind = LOCAL;
+	} else if (token.val == kw_else) {
+	    token.kind = ELSE;
+	} else if (token.val == kw_do) {
+	    token.kind = DO;
+	} else if (token.val == kw_fn) {
+	    token.kind = FN;
+	}
+    }
+    return token.kind;
+}
+
+fn tokenKindStr(token: TokenKind): -> char
+{
+    switch (token) {
+        case BAD_TOKEN: return "BAD_TOKEN";
+        case EOI: return "EOI";
+        case DECIMAL_LITERAL: return "DECIMAL_LITERAL";
+        case IDENTIFIER: return "IDENTIFIER";
+        case EQUAL: return "EQUAL";
+        case SEMICOLON: return "SEMICOLON";
+        case COMMA: return "COMMA";
+        case PLUS: return "PLUS";
+        case ASTERISK: return "ASTERISK";
+        case LPAREN: return "LPAREN";
+        case RPAREN: return "RPAREN";
+        case LBRACE: return "LBRACE";
+        case RBRACE: return "RBRACE";
+        case STRING_LITERAL: return "STRING_LITERAL";
+        case CHARACTER_LITERAL: return "CHARACTER_LITERAL";
+        case IF: return "IF";
+        case WHILE: return "WHILE";
+        case GLOBAL: return "GLOBAL";
+        case LOCAL: return "LOCAL";
+        case ELSE: return "ELSE";
+        case DO: return "DO";
+        case FN: return "FN";
+	// ...
+	case LESS_EQUAL: return "LESS_EQUAL";
+	case LESS: return "LESS";
+	case GREATER: return "GREATER";
+	case GREATER_EQUAL: return "GREATER_EQUAL";
+	case EQUAL2: return "EQUAL2";
+	case NOT: return "NOT";
+	case NOT_EQUAL: return "NOT_EQUAL";
+	case PERCENT: return "PERCENT";
+	case GATTER: return "GATTER";
+	case AMPERSAND: return "AMPERSAND";
+	case AMPERSAND2: return "AMPERSAND2";
+	case VBAR: return "VBAR";
+	case VBAR2: return "VBAR2";
+        default: return "??";
+    }
+}

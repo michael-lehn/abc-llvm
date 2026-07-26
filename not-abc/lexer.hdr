@@ -1,0 +1,58 @@
+@ "ustr.hdr"
+
+enum TokenKind
+{
+    BAD_TOKEN,
+    EOI,
+    DECIMAL_LITERAL,
+    IDENTIFIER,
+    EQUAL,
+    SEMICOLON,
+    COMMA,
+    PLUS,
+    MINUS,
+    ASTERISK,
+    SLASH,
+    LPAREN,
+    RPAREN,
+    LBRACE,
+    RBRACE,
+    STRING_LITERAL,
+    CHARACTER_LITERAL,
+    IF,
+    WHILE,
+    GLOBAL,
+    LOCAL,
+    ELSE,
+    DO,
+    FN,
+
+    LESS_EQUAL,
+    LESS,
+    GREATER,
+    GREATER_EQUAL,
+    EQUAL2,
+    NOT,
+    NOT_EQUAL,
+    PERCENT,
+    GATTER,
+    AMPERSAND,
+    AMPERSAND2,
+    VBAR,
+    VBAR2,
+};
+
+struct Token
+{
+    kind:   TokenKind;
+    pos:    struct Pos {
+                row, col: unsigned;
+            };
+    val:    ->UStr;
+};
+
+extern token: Token;
+
+extern fn getToken(): TokenKind;
+
+extern fn tokenKindStr(token: TokenKind): -> char;

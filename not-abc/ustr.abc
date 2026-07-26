@@ -1,0 +1,33 @@
+@ <string.hdr>
+@ <stdlib.hdr>
+
+@ "ustr.hdr"
+
+struct UStr
+{
+    s: array[1] of char;
+};
+
+struct UStrNode
+{
+    next: -> UStrNode;
+    data: UStr;
+};
+
+global list: -> UStrNode;
+
+fn UStrCreate(s: -> readonly char): -> UStr
+{
+    local n: -> UStrNode = list;
+    for (; n; n = n->next) {
+	if (!strcmp(s, n->data.s)) {
+	    return &n->data;
+	}
+    }
+    local len: size_t = strlen(s);
+    n = malloc(sizeof(*n) + len);
+    n->next = list;
+    strcpy(n->data.s, s);
+    list = n;
+    return &list->data;
+}

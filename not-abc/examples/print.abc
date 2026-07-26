@@ -1,0 +1,23 @@
+fn print(s)
+{
+    while (#s) {
+	putchar(#s);
+	s = s + 1;
+    }
+}
+
+fn println(s)
+{
+    print(s);
+    putchar('\n');
+}
+
+fn main()
+{
+    println("hallo");
+    local a, b, c;
+    a = 123;
+    b = &a;
+    c = &b;
+    **c = 42;
+}

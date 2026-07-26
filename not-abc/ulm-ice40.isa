@@ -1,0 +1,192 @@
+U8	    (OP u 8) (imm u  8)
+R	    (OP u 8) (x u 4)
+RR	    (OP u 8) (y u 4) (x u 4)
+REL_JMP	    (OP u 8) (offset j 24)
+U20_R	    (OP u 8) (dest u 4) (imm u 20)
+S20_R	    (OP u 8) (dest u 4) (imm s 20)
+R_R_R	    (OP u 8) (z u 4) (y u 4) (x u 4)
+U16_R_R	    (OP u 8) (z u 4) (y u 4) (imm u 16)
+S16_R_R	    (OP u 8) (z u 4) (y u 4) (imm s 16)
+MR_R	    (OP u 8) (data u 4) (addr u 4) (offset s 16)
+R_MR	    (OP u 8) (data u 4) (addr u 4) (offset s 16)
+
+#
+# CU (control unit) instructions
+#
+
+0x01 U8
+:   halt imm
+    ulm_halt(imm);
+
+0x02 R
+:   halt %x
+    ulm_halt(ulm_regVal(x));
+
+0x03 REL_JMP
+:   jnz	offset
+:   jne	offset
+    ulm_conditionalRelJump(ulm_statusReg[ULM_ZF] == 0, offset); 
+
+0x04 REL_JMP
+:   jz	offset
+:   je	offset
+    ulm_conditionalRelJump(ulm_statusReg[ULM_ZF] == 1, offset);
+
+0x05 REL_JMP
+:   jmp	offset
+    ulm_unconditionalRelJump(offset); 
+
+0x06 REL_JMP
+:   jb	offset
+    ulm_conditionalRelJump(ulm_statusReg[ULM_CF] == 1, offset);
+
+0x07    RR
+:   jmp     %y,     %x
+:   call    %y,     %x
+:   ret     %y
+    ulm_absJump(ulm_regVal(y), x);
+
+0x08 REL_JMP
+:   jbe	offset
+    ulm_conditionalRelJump(ulm_statusReg[ULM_ZF] == 1
+			|| ulm_statusReg[ULM_CF] == 1, offset);
+
+0x09 REL_JMP
+:   ja	offset
+    ulm_conditionalRelJump(ulm_statusReg[ULM_ZF] == 0
+			&& ulm_statusReg[ULM_CF] == 0, offset);
+
+0x0A REL_JMP
+:   jae	offset
+    ulm_conditionalRelJump(ulm_statusReg[ULM_CF] == 0, offset);
+
+0x0B REL_JMP
+:   jge offset
+:   jnl offset
+    ulm_conditionalRelJump(ulm_statusReg[ULM_SF] == ulm_statusReg[ULM_OF],
+			   offset);
+
+0x0C REL_JMP
+:   jnge offset
+:   jl offset
+    ulm_conditionalRelJump(ulm_statusReg[ULM_SF] != ulm_statusReg[ULM_OF],
+			   offset);
+
+0x0D REL_JMP
+:   jng offset
+:   jle offset
+    ulm_conditionalRelJump(ulm_statusReg[ULM_ZF] == 1 ||
+			   ulm_statusReg[ULM_SF] != ulm_statusReg[ULM_OF],
+			   offset);
+
+
+#
+# ALU (arithmetic logic unit)
+#
+
+0x10 U20_R
+#   Load zero extended immediate value into destination register.
+:   loadz imm, %dest
+    ulm_setReg(imm, dest);
+
+0x11 S20_R
+#   Load sign extended immediate value into destination register.
+:   loads imm, %dest
+    ulm_setReg(imm, dest);
+
+0x12 U16_R_R
+#   Adds the zero extended immediate value \\texttt{imm} to register
+#   \\texttt{%y} and stores the result in register \\texttt{%z}.
+:   addq imm, %y, %z
+    ulm_add64(imm, ulm_regVal(y), z);
+
+0x13 R_R_R
+#   Adds register \\texttt{%x} to register and stores the result in
+#   register \\texttt{%z}.
+:   addq %x, %y, %z
+:   movq %x, %z
+    ulm_add64(ulm_regVal(x), ulm_regVal(y), z);
+
+0x14 U16_R_R
+:   subq imm, %y, %z
+    ulm_sub64(imm, ulm_regVal(y), z);
+
+0x15 R_R_R
+:   subq %x, %y, %z
+    ulm_sub64(ulm_regVal(x), ulm_regVal(y), z);
+
+0x16 U16_R_R
+:   mulw imm, %y, %z
+    ulm_mul64(imm, ulm_regVal(y) & 0xFFFF, z);
+
+0x17 R_R_R
+:   mulw %x, %y, %z
+    ulm_mul64(ulm_regVal(x) & 0xFFFF, ulm_regVal(y) & 0xFFFF, z);
+
+0x18 U16_R_R
+:   andq imm, %y, %z
+    ulm_and64(imm, ulm_regVal(y), z);
+
+0x19 R_R_R
+:   andq %x, %y, %z
+    ulm_and64(ulm_regVal(x), ulm_regVal(y), z);
+
+0x1A U16_R_R
+:   shrq imm, %y, %z
+    ulm_shiftRightUnsigned64(imm, ulm_regVal(y), z);
+
+0x1B R_R_R
+:   shrq %x, %y, %z
+    ulm_shiftRightUnsigned64(ulm_regVal(x), ulm_regVal(y), z);
+
+0x1C U16_R_R
+:   shlq imm, %y, %z
+    ulm_shiftLeft64(imm, ulm_regVal(y), z);
+
+0x1D R_R_R
+:   shlq %x, %y, %z
+    ulm_shiftLeft64(ulm_regVal(x), ulm_regVal(y), z);
+
+#
+# bus instructions
+#
+
+0x20 MR_R
+:   movzbq  offset(%addr), %data
+:   movzbq  (%addr), %data
+    ulm_fetch64(offset, addr, 0, 1, ULM_ZERO_EXT, 1, data);
+
+0x21 MR_R
+:   movsbq  offset(%addr), %data
+:   movsbq  (%addr), %data
+    ulm_fetch64(offset, addr, 0, 1, ULM_SIGN_EXT, 1, data);
+
+0x22 R_MR
+:   movb  %data, offset(%addr)
+:   movb  %data, (%addr)
+    ulm_store64(offset, addr, 0, 0, 1, data);
+
+0x23 MR_R
+:   movq  offset(%addr), %data
+:   movq  (%addr), %data
+    ulm_fetch64(offset, addr, 0, 1, ULM_ZERO_EXT, 8, data);
+
+0x24 R_MR
+:   movq  %data, offset(%addr)
+:   movq  %data, (%addr)
+    ulm_store64(offset, addr, 0, 0, 8, data);
+
+#
+# i/o instructions
+#
+0x30 R
+:   putc    %x
+    ulm_printChar(ulm_regVal(x));
+
+0x31 U8
+:   putc    imm
+    ulm_printChar(imm);
+
+0x32 R
+:   getc    %x
+    ulm_setReg(ulm_readChar() & 0xFF, x);

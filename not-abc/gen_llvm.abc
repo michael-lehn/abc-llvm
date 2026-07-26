@@ -1,0 +1,525 @@
+@ <string.hdr>
+@ <stdlib.hdr>
+@ <stdio.hdr>
+
+@ "gen.hdr"
+@ "symtab.hdr"
+
+global usedReg: unsigned;
+global lastUsedReg: unsigned;
+
+fn getReg(): GenReg
+{
+    return lastUsedReg = usedReg++;
+}
+
+fn genReleaseReg(reg: GenReg)
+{
+}
+
+fn parseEscape(c: char): int
+{
+    switch (c) {
+    case 'n':  return '\n';
+    case 't':  return '\t';
+    case 'r':  return '\r';
+    case '0':  return '\0';
+    case '\\': return '\\';
+    case '\'': return '\'';
+    case '"':  return '"';
+    default:   return c;
+    }
+}
+
+fn i64ToPtr(val: GenReg): GenReg
+{
+    local ptr: GenReg = getReg();
+    printf("\t; convert %%%d to ptr\n", val);
+    printf("\t%%%d = inttoptr i64 %%%d to ptr\n", ptr, val);
+    return ptr;
+}
+
+fn ptrToI64(ptr: GenReg): GenReg
+{
+    local val: GenReg = getReg();
+    printf("\t; convert %%%d to i64 value\n", ptr);
+    printf("\t%%%d = ptrtoint ptr %%%d to i64\n", val, ptr); 
+    return val;
+}
+
+
+fn genConstant(val: ->UStr): GenReg
+{
+    local reg: GenReg = getReg();
+    printf("\t; load constant %s into %%%d\n", val, reg);
+    local cstr: ->readonly char = (->readonly char)val; 
+    if (cstr[0] == '\'') {
+	local ascii: int;
+	if (cstr[1] == '\\') {
+	    ascii = parseEscape(cstr[2]);
+	} else {
+	    ascii = cstr[1];
+	}
+	printf("\t; CONVERTED by LEHN: %s -> %d\n", val, ascii);
+	printf("\t%%%d = \tadd i64 \t%d, \t0\n", reg, ascii);
+    } else {
+	printf("\t%%%d = \tadd i64 \t%s, \t0\n", reg, val);
+    }
+    return reg;
+}
+
+fn genInstr(instr: GenInstr, left: GenReg, right: GenReg): GenReg
+{
+    local dest: GenReg = getReg();
+    switch (instr) {
+	case GEN_ADD:
+	    printf("\t%%%d = \tadd i64 \t%%%d, \t%%%d\n", dest, right, left);
+	    break;
+	case GEN_SUB:
+	    printf("\t%%%d = \tsub i64 \t%%%d, \t%%%d\n", dest, right, left);
+	    break;
+	case GEN_MUL:
+	    printf("\t%%%d = \tmul i64 \t%%%d, \t%%%d\n", dest, right, left);
+	    break;
+	case GEN_DIV:
+	    printf("\t%%%d = \tsdiv i64 \t%%%d, \t%%%d\n", dest, right, left);
+	    break;
+	case GEN_MOD:
+	    printf("\t%%%d = \tsrem i64 \t%%%d, \t%%%d\n", dest, right, left);
+	    break;
+	case GEN_EQ:
+	    printf("\t%%%d = icmp eq  i64 %%%d, %%%d\n", dest, right, left);
+	    left = dest; dest = getReg();
+	    printf("\t%%%d = zext i1 %%%d to i64\n", dest, left);
+	    break;
+	case GEN_NE:
+	    printf("\t%%%d = icmp ne  i64 %%%d, %%%d\n", dest, right, left);
+	    left = dest; dest = getReg();
+	    printf("\t%%%d = zext i1 %%%d to i64\n", dest, left);
+	    break;
+	case GEN_LT:
+	    printf("\t%%%d = icmp slt  i64 %%%d, %%%d\n", dest, right, left);
+	    left = dest; dest = getReg();
+	    printf("\t%%%d = zext i1 %%%d to i64\n", dest, left);
+	    break;
+	case GEN_LE:
+	    printf("\t%%%d = icmp sle  i64% %%d, %%%d\n", dest, right, left);
+	    left = dest; dest = getReg();
+	    printf("\t%%%d = zext i1 %%%d to i64\n", dest, left);
+	    break;
+	case GEN_GT:
+	    printf("\t%%%d = icmp sgt  i64 %%%d, %%%d\n", dest, right, left);
+	    left = dest; dest = getReg();
+	    printf("\t%%%d = zext i1 %%%d to i64\n", dest, left);
+	    break;
+	case GEN_GE:
+	    printf("\t%%%d = icmp sge  i64 %%%d, %%%d\n", dest, right, left);
+	    left = dest; dest = getReg();
+	    printf("\t%%%d = zext i1 %%%d to i64\n", dest, left);
+	    break;
+	default: assert(0);
+    }
+    return dest;
+}
+
+fn genInitCode()
+{
+    printf("declare i32 @getchar()\n");
+    printf("declare void @putchar(i64)\n");
+    printf("declare i64 @malloc(i64)\n");
+    printf("declare void @free(i64)\n");
+}
+
+global localVarOffset: int;
+
+fn genAddLocal(ident: ->UStr): bool
+{
+    localVarOffset -= 8;
+    printf("\t%%%s = \talloca i64, align 8\n", ident);
+    return symtabAddLocal(ident, localVarOffset);
+}
+
+fn genAddGlobal(ident: ->UStr): bool
+{
+    return symtabAddGlobal(ident);
+}
+
+fn genDefGlobal(ident: ->UStr)
+{
+    if (((->readonly char)ident)[0] == '.') {
+	return;
+    }
+    printf("@%s = global i64 0\n", ident);
+}
+
+struct FunctionBuildingInfo
+{
+    fnName: ->UStr;
+    bbClosed: bool;
+    retReg: GenReg;
+};
+
+global functionBuildingInfo: FunctionBuildingInfo;
+
+struct FnParamNode
+{
+    ident: ->UStr;
+    reg:   GenReg;
+    next:  ->FnParamNode;
+};
+
+global fnParamList, fnParamListLast: ->FnParamNode;
+
+fn genFuncDefParam(ident: ->UStr): bool
+{
+    local n: ->FnParamNode = malloc(sizeof(*n));
+    n->ident = ident;
+    n->next = nullptr;
+    if (!fnParamList) {
+	fnParamList = fnParamListLast = n;
+    } else {
+	fnParamListLast = fnParamListLast->next = n;
+    }
+    return symtabAddLocal(ident, 0);
+}
+
+fn genFuncDefBegin(name: ->UStr)
+{
+    usedReg = 0;
+
+
+    printf("; function %s\n", name);
+    printf("define i64 @%s(", name);
+    for (local n: ->FnParamNode = fnParamList; n; n = n->next) {
+	//printf("i64 %s", n->ident);
+	n->reg = getReg();
+	printf("i64 %%%d", n->reg);
+	if (n->next) {
+	    printf(", ");
+	}
+    }
+    printf(") {\n");
+    local entryLabel: GenLabel = genGetLabel();
+    genDefLabel(entryLabel);
+    for (local n: ->FnParamNode = fnParamList; n; ) {
+	// %.sum.a.0 = alloca i64, align 8
+	// store i64 %0, ptr %.sum.a.0, align 8
+	symtabAddLocal(n->ident, 0);
+	printf("\t%%%s = alloca i64, align 8\n", n->ident);
+	printf("\tstore i64 %%%d, ptr %%%s, align 8\n", n->reg, n->ident);
+	local f: ->FnParamNode = n;
+	n = n->next;
+	free(f);
+    }
+    fnParamList = nullptr;
+    functionBuildingInfo.retReg = getReg();
+    printf("\t%%%d = \talloca i64, align 8 ; ptr to ret val \n",
+	   functionBuildingInfo.retReg);
+
+    // hack: set *after* genDefLabel(entryLabel)
+    functionBuildingInfo.fnName = name;
+}
+
+fn printStringList();
+
+fn genFuncDefEnd()
+{
+    local dest: GenReg = getReg();
+
+    local leaveLabel: GenLabel = genGetLabel();
+    genDefLabel(leaveLabel);
+    printf("\t%%%d = \tload i64, ptr %%%d, align 8\n",
+           dest, functionBuildingInfo.retReg);
+    printf("\tret \ti64 \t%%%d\n", dest);
+    printf("}\n\n");
+    functionBuildingInfo.fnName = nullptr;
+    printStringList();
+}
+
+fn genHalt(exitCode: GenReg)
+{
+}
+
+fn genReturn(retVal: GenReg)
+{
+    if (lastUsedReg != 0) {
+	printf("\tstore i64 %%%d, ptr %%%d, align 8\n",
+	       retVal, functionBuildingInfo.retReg);
+    }
+}
+
+fn genFetch(addr: GenReg): GenReg
+{
+    addr = i64ToPtr(addr);
+    local dest: GenReg = getReg();
+    printf("\t%%%d = load i64, ptr %%%d, align 8\n", dest, addr);
+    return dest;
+}
+
+fn genStore(val: GenReg, addr: GenReg)
+{
+    addr = i64ToPtr(addr);
+    local hack: GenReg = getReg();
+    printf("\tstore i64 %%%d, ptr %%%d, align 8\n", val, addr);
+    printf("\t%%%d = add i64 %%%d, 0; bloody hack\n", hack, val);
+}
+
+fn genLoadAddr(ident: ->UStr): GenReg
+{
+    local addr: GenReg = getReg();
+    local info: SymtabInfo;
+    if (!symtabGetInfo(ident, &info)) {
+	fprintf(stderr, "unknown identifier %s\n", ident);
+	assert(0 && "unknown identifier");
+    }
+    if (info.isGlobal) {
+	printf("\t; load address of global variable %s into %%%d\n",
+	       ident, addr);
+	printf("\t%%%d = getelementptr i64, ptr @%s, i64 0\n", addr, ident);
+    } else {
+	printf("\t; load address of local variable %s into %%%d\n",
+	       ident, addr);
+	printf("\t%%%d = getelementptr i64, ptr %%%s, i64 0\n", addr, ident);
+    }
+    addr = ptrToI64(addr);
+    return addr;
+}
+
+fn genLoadVar(ident: ->UStr): GenReg
+{
+    local info: SymtabInfo;
+    if (!symtabGetInfo(ident, &info)) {
+	fprintf(stderr, "unknown identifier %s\n", ident);
+	assert(0 && "unknown identifier");
+    }
+    local dest: GenReg = getReg();
+    if (info.isGlobal) {
+	printf("\t; load value of global variable %s:\n", ident);
+	printf("\t%%%d = \tload i64, ptr @%s, align 8\n", dest, ident);
+    } else {
+	printf("\t; load value of local variable %s into %%%d\n", ident, dest);
+	printf("\t%%%d = \tload i64, ptr %%%s, align 8\n", dest, ident);
+    }
+    return dest;
+}
+
+global labelCount: GenLabel;
+
+fn genGetLabel(): GenLabel
+{
+    return labelCount++;
+}
+
+fn genDefLabel(labelIdent: GenLabel)
+{
+    if (functionBuildingInfo.fnName && !functionBuildingInfo.bbClosed) {
+	genJump(labelIdent);
+    }
+    printf(".L%d:\n", labelIdent);
+    functionBuildingInfo.bbClosed = false;
+}
+
+fn genJump(labelIdent: GenLabel)
+{
+    printf("\tbr label %%.L%d\n", labelIdent);
+    functionBuildingInfo.bbClosed = true;
+}
+
+fn genJumpIfTrue(condVal: GenReg, labelIdent: GenLabel)
+{
+    local condReg: GenReg = getReg();
+    local cmpReg: GenReg = getReg();
+
+    printf("\t%%%d = \tsub i64 \t%%%d, \t0\n", condReg, condVal); 
+    printf("\t%%%d = \ticmp ne i64 %%%d, 0\n", cmpReg, condReg);
+
+    local contLabel: GenLabel = genGetLabel();
+    printf("\tbr i1 %%%d, label %%.L%d, label %%.L%d\n",
+	   cmpReg, labelIdent, contLabel);
+    functionBuildingInfo.bbClosed = true;
+    genDefLabel(contLabel);
+}
+
+fn genJumpIfFalse(condVal: GenReg, labelIdent: GenLabel)
+{
+    local condReg: GenReg = getReg();
+    local cmpReg: GenReg = getReg();
+
+    printf("\t%%%d = \tsub i64 \t%%%d, \t0\n", condReg, condVal); 
+    printf("\t%%%d = \ticmp eq i64 %%%d, 0\n", cmpReg, condReg);
+
+    local contLabel: GenLabel = genGetLabel();
+    printf("\tbr i1 %%%d, label %%.L%d, label %%.L%d\n",
+	   cmpReg, labelIdent, contLabel);
+    functionBuildingInfo.bbClosed = true;
+    genDefLabel(contLabel);
+}
+
+struct FnArgNode
+{
+    next: ->FnArgNode;
+    argReg: GenReg;
+};
+
+struct FnArgStack
+{
+    next: -> FnArgStack;
+    fnName: ->UStr;
+    argList: ->FnArgNode;
+};
+
+global fnArgStack: -> FnArgStack;
+
+fn genCallBegin(fnName: ->UStr, numArgs: unsigned)
+{
+    local n: -> FnArgStack = malloc(sizeof(*n));
+    n->fnName = fnName;
+    n->argList = nullptr;
+    n->next = fnArgStack;
+    fnArgStack = n;
+}
+
+fn genCallAddArg(argReg: GenReg, argPos: unsigned)
+{
+    assert(fnArgStack);
+    local n: ->FnArgNode = malloc(sizeof(*n));
+    n->argReg = argReg;
+    n->next = fnArgStack->argList;
+    fnArgStack->argList = n;
+}
+
+fn i32ToI64(val: GenReg): GenReg
+{
+    local dest: GenReg = getReg(); 
+    printf("\t%%%d  = sext i32 %%%d to i64\n", dest, val);
+    return dest;
+}
+
+
+fn genCallEnd(): GenReg
+{
+    local extend: bool = false;
+    assert(fnArgStack);
+    local retVal: GenReg = getReg();
+    if (fnArgStack->fnName == UStrCreate("getchar")) {
+	printf("\t%%%d = call i32 @%s(", retVal, fnArgStack->fnName);
+	extend = true;
+    } else {
+	printf("\t%%%d = call i64 @%s(", retVal, fnArgStack->fnName);
+    }
+    for (local n: ->FnArgNode = fnArgStack->argList; n; ) {
+	printf("i64 %%%d", n->argReg);
+	if (n->next) {
+	    printf(", ");
+	}
+	local f: ->FnArgNode = n;
+	n = n->next;
+	free(f);
+    }
+    printf(")\n");
+    local f: ->FnArgStack = fnArgStack;
+    fnArgStack = fnArgStack->next;
+    free(f);
+    if (extend) {
+	retVal = i32ToI64(retVal);
+    }
+    return retVal;
+}
+
+struct StringNode
+{
+    next: ->StringNode;
+    ident: ->UStr;
+    cStr: ->char;
+};
+
+global stringList: ->StringNode;
+
+fn genDefString(val: ->UStr): ->UStr
+{
+    static count: size_t;
+    local name: array[42] of char;
+    snprintf(name, sizeof(name), ".STR%zu", count++);
+    local ident: ->UStr = UStrCreate(name);
+
+    local n: ->StringNode = malloc(sizeof(*n));
+    n->next = stringList;
+    n->ident = ident;
+    n->cStr = malloc(strlen((->readonly char)val) + 1);
+    strcpy(n->cStr, (->readonly char)val);
+    *(n->cStr + (strlen(n->cStr) - 1)) = 0;
+
+    stringList = n;
+    return ident;
+}
+
+fn printStringList()
+{
+    while (stringList) {
+	printf("@%s = global [%zu x i8] c%s\\00\", align 8\n",
+	       stringList->ident, strlen(stringList->cStr), stringList->cStr);
+	local n:= stringList;
+	stringList = stringList->next;
+	free(n->cStr);
+	free(n);
+    }
+}
+
+fn i8ToI64(val: GenReg): GenReg
+{
+    local dest: GenReg = getReg(); 
+    printf("\t%%%d  = zext i8 %%%d to i64\n", dest, val);
+    return dest;
+}
+
+fn i64ToI8(val: GenReg): GenReg
+{
+    local dest: GenReg = getReg(); 
+    printf("\t%%%d  = trunc i64 %%%d to i8\n", dest, val);
+    return dest;
+}
+
+fn genFetchByte(addr: GenReg): GenReg
+{
+    addr = i64ToPtr(addr);
+    local dest: GenReg = getReg();
+    printf("\t%%%d = load i8, ptr %%%d, align 8\n", dest, addr);
+    return i8ToI64(dest);
+}
+
+fn genStoreByte(val: GenReg, addr: GenReg)
+{
+    addr = i64ToPtr(addr);
+    local valI8 := i64ToI8(val);
+    printf("\tstore i8 %%%d, ptr %%%d, align 8\n", valI8, addr);
+    local hack: GenReg = getReg();
+    printf("\t%%%d = add i64 %%%d, 0; bloody hack\n", hack, val);
+}
+
+fn genGetTmp(): ->UStr
+{
+    static count: size_t;
+    local name: array[42] of char;
+    snprintf(name, sizeof(name), ".TMP%zu", count++);
+    local ident: ->UStr = UStrCreate(name);
+    genAddLocal(ident);
+    return ident;
+}
+
+fn genSaveBoolInTmp(val: bool, tmp: ->UStr)
+{
+    local addr: GenReg = genLoadAddr(tmp);
+    local valReg: GenReg = genConstant(val ? UStrCreate("1"): UStrCreate("0"));
+    genReleaseReg(addr);
+    genReleaseReg(valReg);
+    genStore(valReg, addr);
+}
+
+fn genLoadFromTmp(tmp: ->UStr): GenReg
+{
+    local addr: GenReg = genLoadAddr(tmp);
+    genReleaseReg(addr);
+    return genFetch(addr);
+}
+
+

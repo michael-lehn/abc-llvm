@@ -1,0 +1,75 @@
+global foo;
+
+fn print(s)
+{
+    while (#s) {
+	putchar(#s);
+	s = s + 1;
+    }
+}
+
+fn println(s)
+{
+    print(s);
+    putchar('\n');
+}
+
+fn printInt(n)
+{
+    if (n < 0) {
+	putchar('-');
+	n = -n;
+    }
+    if (n == 0) {
+	putchar('0');
+    } else {
+	if (n / 10 > 0) {
+	    printInt(n / 10);
+	}
+	putchar(n % 10 + '0');
+    }
+}
+
+fn printList(list)
+{
+    local val;
+    if (list) {
+	printList(*list);
+	printInt(*(list + 8)); putchar('\n');
+    }
+}
+
+fn addToList(list, val)
+{
+    local n;
+    n = malloc(16);
+    printInt(n); println(" is address of new node");
+    if (!n) {
+	println("out of memory");
+	0;
+    } else {
+	*n = *list;
+	*(n + 8) = val;
+	*list = n;
+    }
+}
+
+fn freeList(list)
+{
+    if (list) {
+	freeList(*list);
+	free(list);
+    }
+}
+
+fn main()
+{
+    local list;
+    list = 0;
+    addToList(&list, 1);
+    addToList(&list, 2);
+    addToList(&list, 3);
+    printList(list);
+    freeList(list);
+    println("have a nice life after HPC0");
+}

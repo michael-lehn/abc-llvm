@@ -1,0 +1,76 @@
+fn print(s)
+{
+    while (#s) {
+	putchar(#s);
+	s = s + 1;
+    }
+}
+
+fn println(s)
+{
+    print(s);
+    putchar('\n');
+}
+
+fn printInt(n)
+{
+    if (n < 0) {
+	putchar('-');
+	n = -n;
+    }
+    if (n == 0) {
+	putchar('0');
+    } else {
+	if (n / 10 > 0) {
+	    printInt(n / 10);
+	}
+	putchar(n % 10 + '0');
+    }
+}
+
+fn readInt(n)
+{
+    local ok, done, sign, ch;
+    *n = ok = done = 0;
+    sign = 1;
+    ch = getchar();
+    if (ch == '-') {
+	sign = -1;
+	ch = getchar();
+    }
+    while (!done) {
+	if (ch >= '0' && ch <= '9') {
+	    ok = 1;
+	    *n = *n * 10 + ch - '0';
+	    ch = getchar();
+	} else {
+	    done = 1;
+	}
+    }
+    *n = *n * sign;
+    ok;
+}
+
+fn factorial(n)
+{
+    local res;
+    if (n > 1) {
+	res = n * factorial(n - 1);
+    } else {
+	res = 1;
+    }
+}
+
+fn main()
+{
+    local n;
+    println("Type a non-negative integer n");
+    print("n = ");
+    if (!readInt(&n)) {
+        println("that's not an integer");
+    }
+    if (n < 0) {
+	println("that's a negative integer");
+    }
+    printInt(n); print("! = "); printInt(factorial(n)); putchar('\n');
+}
