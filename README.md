@@ -71,23 +71,27 @@ execute programs*. It is suitable for use in:
 ### `examples/`
 
 Contains a collection of small example programs illustrating different language
-features, including recursion, pointers, dynamic memory allocation, and linked
-lists.
+features, including
 
-A good starting point is the classic "Hello, World!" example.
+- recursion,
+- pointers,
+- dynamic memory allocation,
+- and linked lists.
 
 ### `not-abc/`
 
-Contains the compiler for the `not-abc` language written in **ABC**.
+Contains the compiler project developed as part of the undergraduate course
+*Introduction to High Performance Computing*. In the course, students implement
+a simple compiler for the `not-abc` language in **ABC**.
 
-This version is considerably easier to understand than the self-hosting
-compiler because ABC provides language features such as structures,
-enumerations, and member access. It is essentially the compiler developed
-throughout the course before being translated into the much smaller `not-abc`
-language.
+The directory has its own `README.md` describing how to build and use the
+compiler.
 
-The directory has its own `README.md` explaining how to build the compiler and
-how to use its LLVM and ULM backends.
+The initial LLVM IR for the self-hosting compiler in the companion repository
+
+https://github.com/michael-lehn/not-abc
+
+was generated using this compiler.
 
 
 ## Installation
