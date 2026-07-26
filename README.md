@@ -66,6 +66,30 @@ execute programs*. It is suitable for use in:
 - compiler construction courses
 - and as a foundation for understanding modern language features.
 
+## Repository Layout
+
+### `examples/`
+
+Contains a collection of small example programs illustrating different language
+features, including recursion, pointers, dynamic memory allocation, linked
+lists, and a self-hosting compiler.
+
+A good starting point is the classic "Hello, World!" example.
+
+### `not-abc/`
+
+Contains the compiler for the `not-abc` language written in **ABC**.
+
+This version is considerably easier to understand than the self-hosting
+compiler because ABC provides language features such as structures,
+enumerations, and member access. It is essentially the compiler developed
+throughout the course before being translated into the much smaller `not-abc`
+language.
+
+The directory has its own `README.md` explaining how to build the compiler and
+how to use its LLVM and ULM backends.
+
+
 ## Installation
 
 Verify that the correct LLVM version is used:
