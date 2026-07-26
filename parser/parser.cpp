@@ -222,6 +222,7 @@ parseFunctionType(Token &fnName, std::vector<Token> &fnParamName)
     auto fnRetType = VoidType::create();
     if (token.kind == TokenKind::COLON) {
 	getToken();
+	auto tyLoc = token.loc;
 	fnRetType = parseType();
 	if (!fnRetType) {
 	    error::location(token.loc);
@@ -229,6 +230,16 @@ parseFunctionType(Token &fnName, std::vector<Token> &fnParamName)
 	                 << error::setColor(error::BOLD_RED)
 	                 << "error: " << error::setColor(error::BOLD)
 	                 << "expected return type\n"
+	                 << error::setColor(error::NORMAL);
+	    error::fatal();
+	    return nullptr;
+	}
+	if (!fnRetType->hasSize()) {
+	    error::location(tyLoc);
+	    error::out() << error::setColor(error::BOLD) << tyLoc << ": "
+	                 << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD) << "type "
+	                 << fnRetType << " is incomplete\n"
 	                 << error::setColor(error::NORMAL);
 	    error::fatal();
 	    return nullptr;
@@ -265,6 +276,7 @@ parseFunctionParameterList(std::vector<Token> &paramName,
 	    return false;
 	}
 	getToken();
+	auto tyLoc = token.loc;
 	auto ty = parseType();
 	if (!ty) {
 	    error::location(token.loc);
@@ -272,6 +284,16 @@ parseFunctionParameterList(std::vector<Token> &paramName,
 	                 << error::setColor(error::BOLD_RED)
 	                 << "error: " << error::setColor(error::BOLD)
 	                 << "expected parameter type\n"
+	                 << error::setColor(error::NORMAL);
+	    error::fatal();
+	    return false;
+	}
+	if (!ty->hasSize()) {
+	    error::location(tyLoc);
+	    error::out() << error::setColor(error::BOLD) << tyLoc << ": "
+	                 << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD) << "type "
+	                 << ty << " is incomplete\n"
 	                 << error::setColor(error::NORMAL);
 	    error::fatal();
 	    return false;
