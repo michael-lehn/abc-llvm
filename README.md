@@ -84,8 +84,8 @@ Contains the compiler project developed as part of the undergraduate course
 *Introduction to High Performance Computing*. In the course, students implement
 a simple compiler for the `not-abc` language in **ABC**.
 
-The directory has its own `README.md` describing how to build and use the
-compiler.
+The directory has its own [not-abc/README](not-abc/README.md) describing how to
+build and use the compiler.
 
 The initial LLVM IR for the self-hosting compiler in the companion repository
 
