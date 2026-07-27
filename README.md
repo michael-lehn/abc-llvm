@@ -68,6 +68,10 @@ execute programs*. It is suitable for use in:
 
 ## Repository Layout
 
+**Note:** This project uses hard tabs with a tab width of 8. If the code looks
+misaligned on GitHub, append `?ts=8` to the URL or configure your GitHub tab
+width accordingly.
+
 ### `examples/`
 
 Contains a collection of small example programs illustrating different language

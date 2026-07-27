@@ -20,6 +20,10 @@ frontend:
 - and one generating LLVM IR, allowing the same compiler frontend to produce
   native executables on virtually any modern platform.
 
+**Note:** This project uses hard tabs with a tab width of 8. If the code looks
+misaligned on GitHub, append `?ts=8` to the URL or configure your GitHub tab
+width accordingly.
+
 ## Relationship to the Self-Hosting Compiler
 
 This repository contains the **ABC** implementation of the `not-abc` compiler.
