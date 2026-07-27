@@ -7,7 +7,7 @@ fn createUnaryExpr(kind: ExprKind, child: ->Expr): ->Expr
 {
     local n: -> Expr = malloc(sizeof(*n));
     n->kind = kind;
-    n->child = child;
+    n->unary.child = child;
     return n;
 }
 
@@ -15,8 +15,8 @@ fn createBinaryExpr(kind: ExprKind, left: ->Expr, right: ->Expr): ->Expr
 {
     local n: -> Expr = malloc(sizeof(*n));
     n->kind = kind;
-    n->left = left;
-    n->right = right;
+    n->binary.left = left;
+    n->binary.right = right;
     return n;
 }
 
@@ -24,7 +24,7 @@ fn createIntegerExpr(val: ->UStr): ->Expr
 {
     local n: -> Expr = malloc(sizeof(*n));
     n->kind = EXPR_INTEGER;
-    n->decimal = val;
+    n->primary.decimal = val;
     return n;
 }
 
@@ -32,7 +32,7 @@ fn createIdentifierExpr(val: ->UStr): ->Expr
 {
     local n: -> Expr = malloc(sizeof(*n));
     n->kind = EXPR_IDENTIFIER;
-    n->identifier = val;
+    n->.primary.identifier = val;
     return n;
 }
 
@@ -40,9 +40,9 @@ fn createCallExpr(fnName: ->UStr): ->Expr
 {
     local n: -> Expr = malloc(sizeof(*n));
     n->kind = EXPR_CALL;
-    n->fnName = fnName;
-    n->argListLen = 0;
-    n->argList = nullptr;
+    n->primary.call.fnName = fnName;
+    n->primary.call.argListLen = 0;
+    n->primary.call.argList = nullptr;
     return n;
 }
 
@@ -50,11 +50,11 @@ fn addArgExpr(callExpr: ->Expr, argExpr: ->Expr)
 {
     local n: -> Expr = malloc(sizeof(*n));
     n->kind = EXPR_ARGNODE;
-    n->argExpr = argExpr;
-    n->argPos = callExpr->argListLen;
-    n->argNext = callExpr->argList;
-    ++callExpr->argListLen;
-    callExpr->argList = n;
+    n->arg.expr = argExpr;
+    n->arg.pos = callExpr->primary.call.argListLen;
+    n->arg.next = callExpr->primary.call.argList;
+    ++callExpr->primary.call.argListLen;
+    callExpr->primary.call.argList = n;
 }
 
 // destructor
@@ -63,15 +63,15 @@ fn releaseExpr(expr: ->Expr)
     if (!expr) {
 	return;
     } else if (expr->kind >= EXPR_UNARY && expr->kind < EXPR_UNARY_END) {
-	releaseExpr(expr->child); // new
+	releaseExpr(expr->unary.child);
     } else if (expr->kind >= EXPR_BINARY && expr->kind < EXPR_BINARY_END) {
-	releaseExpr(expr->left);
-	releaseExpr(expr->right);
+	releaseExpr(expr->binary.left);
+	releaseExpr(expr->binary.right);
     } else if (expr->kind == EXPR_CALL) {
-	releaseExpr(expr->argList);
+	releaseExpr(expr->primary.call.argList);
     } else if (expr->kind == EXPR_ARGNODE) {
-	releaseExpr(expr->argExpr);
-	releaseExpr(expr->argNext);
+	releaseExpr(expr->arg.expr);
+	releaseExpr(expr->arg.next);
     }
     free(expr);
 }
@@ -90,15 +90,19 @@ fn printExprTree(expr: ->Expr)
             case EXPR_DEREF_BYTE: printf("deref byte "); break;          
             default: assert(0);                                                  
         }                                                                        
-	printExprTree(expr->child);
+	printExprTree(expr->unary.child);
 	printf("] ");
     } else if (expr->kind >= EXPR_PRIMARY && expr->kind < EXPR_PRIMARY_END) {               
         switch (expr->kind) {                                                    
-            case EXPR_INTEGER: printf("[%s]", expr->decimal); break;          
-            case EXPR_IDENTIFIER: printf("[%s]", expr->identifier); break;    
+            case EXPR_INTEGER:
+		printf("[%s]", expr->primary.decimal);
+		break;          
+            case EXPR_IDENTIFIER:
+		printf("[%s]", expr->primary.identifier);
+		break;    
 	    case EXPR_CALL:
-		printf("[call %s ", expr->fnName);
-		printExprTree(expr->argList);
+		printf("[call %s ", expr->primary.call.fnName);
+		printExprTree(expr->primary.call.argList);
 		printf("]");
 		break;
             default: assert(0);                                                  
@@ -122,13 +126,13 @@ fn printExprTree(expr: ->Expr)
 	    case EXPR_LOGICAL_OR: printf("or"); break;
 	    default: assert(0);                                                  
 	}                                                                        
-	printExprTree(expr->left);                                               
+	printExprTree(expr->binary.left);                                               
 	printf(" ");
-	printExprTree(expr->right);                                              
+	printExprTree(expr->binary.right);                                              
 	printf("] ");                                                            
     } else if (expr->kind == EXPR_ARGNODE) { 
-	printExprTree(expr->argNext);
-	printExprTree(expr->argExpr);
+	printExprTree(expr->arg.next);
+	printExprTree(expr->arg.expr);
     }
 }
 
@@ -157,9 +161,9 @@ fn loadExprAddress(expr: ->Expr): GenReg
 {                                                                                
     assert(expr && "expr is nullptr");
     if (expr->kind == EXPR_IDENTIFIER) {
-	return genLoadAddr(expr->identifier);
+	return genLoadAddr(expr->primary.identifier);
     } else if (expr->kind == EXPR_DEREF || expr->kind == EXPR_DEREF_BYTE) {
-	return loadExpr(expr->child);
+	return loadExpr(expr->unary.child);
     } else {
 	printf("What?\n");
 	printExprTree(expr);
@@ -171,25 +175,25 @@ fn loadExprAddress(expr: ->Expr): GenReg
 fn loadExpr(expr: ->Expr): GenReg
 {
     if (expr->kind == EXPR_INTEGER) {                                            
-	return genConstant(expr->decimal);
+	return genConstant(expr->primary.decimal);
     } else if (expr->kind == EXPR_IDENTIFIER) {                                            
-	return genLoadVar(expr->identifier);
+	return genLoadVar(expr->primary.identifier);
     } else if (expr->kind == EXPR_ADDRESS) {
-	return loadExprAddress(expr->child);
+	return loadExprAddress(expr->unary.child);
     } else if (expr->kind == EXPR_DEREF) {
-	local addr: GenReg = loadExpr(expr->child);
+	local addr: GenReg = loadExpr(expr->unary.child);
 	genReleaseReg(addr);
 	return genFetch(addr);
     } else if (expr->kind == EXPR_DEREF_BYTE) {
-	local addr: GenReg = loadExpr(expr->child);
+	local addr: GenReg = loadExpr(expr->unary.child);
 	genReleaseReg(addr);
 	return genFetchByte(addr);
     } else if (expr->kind == EXPR_CALL) {
-	genCallBegin(expr->fnName, expr->argListLen);
-	for (local n: ->Expr = expr->argList; n; n = n->argNext) {
-	    local argReg: GenReg = loadExpr(n->argExpr);
+	genCallBegin(expr->primary.call.fnName, expr->primary.call.argListLen);
+	for (local n: ->Expr = expr->primary.call.argList; n; n = n->arg.next) {
+	    local argReg: GenReg = loadExpr(n->arg.expr);
 	    genReleaseReg(argReg);
-	    genCallAddArg(argReg, n->argPos);
+	    genCallAddArg(argReg, n->arg.pos);
 	}
 	return genCallEnd();
     } else if (expr->kind >= EXPR_BINARY && expr->kind < EXPR_BINARY_END) {
@@ -202,14 +206,14 @@ fn loadExpr(expr: ->Expr): GenReg
 	    local tmp: ->UStr = genGetTmp();
 
 	    // handle: left
-	    local left: GenReg = loadExpr(expr->left);
+	    local left: GenReg = loadExpr(expr->binary.left);
 	    genReleaseReg(left);
 	    genJumpIfTrue(left, rhsLabel);
 	    genSaveBoolInTmp(false, tmp);
 	    genJump(endLabel);
 
 	    genDefLabel(rhsLabel);
-	    local right: GenReg = loadExpr(expr->right);
+	    local right: GenReg = loadExpr(expr->binary.right);
 	    genReleaseReg(right);
 	    genJumpIfTrue(right, trueLabel);
 	    genSaveBoolInTmp(false, tmp);
@@ -229,14 +233,14 @@ fn loadExpr(expr: ->Expr): GenReg
 	    local tmp: ->UStr = genGetTmp();
 
 	    // handle: left
-	    local left: GenReg = loadExpr(expr->left);
+	    local left: GenReg = loadExpr(expr->binary.left);
 	    genReleaseReg(left);
 	    genJumpIfFalse(left, rhsLabel);
 	    genSaveBoolInTmp(true, tmp);
 	    genJump(endLabel);
 
 	    genDefLabel(rhsLabel);
-	    local right: GenReg = loadExpr(expr->right);
+	    local right: GenReg = loadExpr(expr->binary.right);
 	    genReleaseReg(right);
 	    genJumpIfTrue(right, trueLabel);
 	    genSaveBoolInTmp(false, tmp);
@@ -248,18 +252,18 @@ fn loadExpr(expr: ->Expr): GenReg
 
 	    return genLoadFromTmp(tmp);
 	} else if (expr->kind == EXPR_ASSIGN) {
-            local val: GenReg = loadExpr(expr->right);                           
-            local addr: GenReg = loadExprAddress(expr->left);
+            local val: GenReg = loadExpr(expr->binary.right);                           
+            local addr: GenReg = loadExprAddress(expr->binary.left);
             genReleaseReg(addr);                                                 
-	    if (expr->left->kind == EXPR_DEREF_BYTE) {
+	    if (expr->binary.left->kind == EXPR_DEREF_BYTE) {
 		genStoreByte(val, addr);                                                 
 	    } else {
 		genStore(val, addr);                                                 
 	    }
             return val;                                                          
 	} else {
-	    local left: GenReg = loadExpr(expr->left);
-	    local right: GenReg = loadExpr(expr->right);
+	    local left: GenReg = loadExpr(expr->binary.left);
+	    local right: GenReg = loadExpr(expr->binary.right);
 	    genReleaseReg(left);
 	    genReleaseReg(right);
 

@@ -15,7 +15,7 @@ enum ExprKind
     EXPR_MUL,
     EXPR_DIV,
     EXPR_ASSIGN,
-    EXPR_MOD,				// new:begin
+    EXPR_MOD,
     EXPR_EQUAL,
     EXPR_NOT_EQUAL,
     EXPR_LESS,
@@ -23,7 +23,7 @@ enum ExprKind
     EXPR_GREATER,
     EXPR_GREATER_EQUAL,
     EXPR_LOGICAL_AND,
-    EXPR_LOGICAL_OR,			// new:end
+    EXPR_LOGICAL_OR,
     EXPR_BINARY_END,
 
     EXPR_PRIMARY = EXPR_BINARY_END,
@@ -37,23 +37,29 @@ enum ExprKind
 
 struct Expr
 {
-    kind:           ExprKind;
-    // for UNARY:
-    child:	    ->Expr;		// new
-    // for BINARY
-    left, right:    ->Expr;
-    // for INTEGER
-    decimal:        ->UStr;
-    // for IDDENTIFIER
-    identifier:     ->UStr;
-    // for EXPR_CALL
-    fnName:         ->UStr;
-    argListLen:	    unsigned;
-    argList:	    ->Expr;
-    // for EXPR_ARGNODE
-    argExpr:	    ->Expr;
-    argPos:         unsigned;
-    argNext:	    ->Expr;
+    kind: ExprKind;
+    union {
+	unary: struct Unary {
+	    child: ->Expr;
+	};
+	binary:	struct Binary {
+	    left, right: ->Expr;
+	};
+	primary: struct Primary {
+	    decimal: ->UStr;
+	    identifier: ->UStr;
+	    call: struct Call {
+		fnName: ->UStr;
+		argListLen: unsigned;
+		argList: ->Expr;
+	    };
+	};
+	arg: struct ArgList {
+	    next: ->Expr;
+	    expr: ->Expr;
+	    pos: unsigned;
+	};
+    };
 };
 
 // constructors (caller becomes owner)

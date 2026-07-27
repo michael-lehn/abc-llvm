@@ -5,7 +5,7 @@ DEPFLAGS += -MD -MF $(dep.dir)/$(<F).d \
 
 ulm.isa := simple
 ulm.tools := $(ulm.isa)/ulm $(ulm.isa)/ulmas $(ulm.isa)/udb-tui
-ulm.gen := ulm-generator2
+ulm.gen := ulm-generator
 
 LDFLAGS += 
 
