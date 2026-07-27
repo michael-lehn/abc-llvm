@@ -88,7 +88,7 @@ install_program \
     "$script_dir/simple/udb-tui" \
     "$install_dir/udb-tui_simple"
 
-for xtest_abc in $script_dir/not-abc-witten-in-abc_*; do
+for xtest_abc in $script_dir/not-abc-written-in-abc_*; do
     install_program \
 	${xtest_abc} \
 	"$install_dir/"

@@ -228,6 +228,17 @@ fn genInitCode()
     local sizeVal: GenReg = genLoadVar(UStrCreate("size"));
     genReleaseReg(sizeVal);
     sizeVal = genInstr(GEN_ADD, heapVal, sizeVal);
+    local seven: GenReg = genConstant(UStrCreate("7"));
+    genReleaseReg(sizeVal);
+    sizeVal = genInstr(GEN_ADD, seven, sizeVal);
+    genReleaseReg(seven);
+    local eight: GenReg = genConstant(UStrCreate("8"));
+    sizeVal = genInstr(GEN_DIV, eight, sizeVal);
+    genReleaseReg(sizeVal);
+    sizeVal = genInstr(GEN_MUL, eight, sizeVal);
+    genReleaseReg(eight);
+
+
     printf("\tstore \t%%%d, \t16(%%SP, 3)\n", heapVal);
     genStore(sizeVal, heapAddr);
     genReleaseReg(sizeVal);

@@ -22,7 +22,7 @@ find_clang()
 }
 
 clang=$(find_clang)
-compiler=xtest_abc_llvm
+compiler=not-abc-written-in-abc_llvm
 assembler=$clang
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 

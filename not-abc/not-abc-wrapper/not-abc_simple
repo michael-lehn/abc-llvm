@@ -2,7 +2,7 @@
 
 set -e
 
-compiler=xtest_abc_simple
+compiler=not-abc-written-in-abc_simple
 assembler=ulmas_simple
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 

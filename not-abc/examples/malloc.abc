@@ -1,0 +1,47 @@
+fn print(s)
+{
+    while (#s) {
+	putchar(#s);
+	s = s + 1;
+    }
+}
+
+fn println(s)
+{
+    print(s);
+    putchar('\n');
+}
+
+fn printInt(n)
+{
+    if (n < 0) {
+	putchar('-');
+	n = -n;
+    }
+    if (n == 0) {
+	putchar('0');
+    } else {
+	if (n / 10 > 0) {
+	    printInt(n / 10);
+	}
+	putchar(n % 10 + '0');
+    }
+}
+
+fn main()
+{
+    local p;
+    p = malloc(9);
+    printInt(p); println(" after malloc");
+    *p = 42;
+    p = malloc(9);
+    printInt(p); println(" after malloc");
+    *p = 13;
+    p = malloc(9);
+    printInt(p); println(" after malloc");
+    *p = 13;
+    p = malloc(9);
+    printInt(p); println(" after malloc");
+    *p = 13;
+    p;
+}
