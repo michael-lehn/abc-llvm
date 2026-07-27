@@ -104,10 +104,7 @@ fn UStrCreate(s)
 	}
     }
     if (!ustr) {
-	local hack;
-	hack = 8 + strlen(s) + 1;
-	hack = (hack + 7) / 8 * 8;
-	n = malloc(hack);
+	n = malloc(8 + strlen(s) + 1);
 	*n = ustrList;
 	strcpy(n+8, s);
 	ustrList = n;

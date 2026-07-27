@@ -61,9 +61,9 @@ fn genConstant(val: ->UStr): GenReg
 	    ascii = cstr[1];
 	}
 	printf("\t; CONVERTED by LEHN: %s -> %d\n", val, ascii);
-	printf("\t%%%d = \tadd i64 \t%d, \t0\n", reg, ascii);
+	printf("\t%%%d = add i64 %d, 0\n", reg, ascii);
     } else {
-	printf("\t%%%d = \tadd i64 \t%s, \t0\n", reg, val);
+	printf("\t%%%d = add i64 %s, 0\n", reg, val);
     }
     return reg;
 }
@@ -73,19 +73,19 @@ fn genInstr(instr: GenInstr, left: GenReg, right: GenReg): GenReg
     local dest: GenReg = getReg();
     switch (instr) {
 	case GEN_ADD:
-	    printf("\t%%%d = \tadd i64 \t%%%d, \t%%%d\n", dest, right, left);
+	    printf("\t%%%d = add i64 %%%d, %%%d\n", dest, right, left);
 	    break;
 	case GEN_SUB:
-	    printf("\t%%%d = \tsub i64 \t%%%d, \t%%%d\n", dest, right, left);
+	    printf("\t%%%d = sub i64 %%%d, %%%d\n", dest, right, left);
 	    break;
 	case GEN_MUL:
-	    printf("\t%%%d = \tmul i64 \t%%%d, \t%%%d\n", dest, right, left);
+	    printf("\t%%%d = mul i64 %%%d, %%%d\n", dest, right, left);
 	    break;
 	case GEN_DIV:
-	    printf("\t%%%d = \tsdiv i64 \t%%%d, \t%%%d\n", dest, right, left);
+	    printf("\t%%%d = sdiv i64 %%%d, %%%d\n", dest, right, left);
 	    break;
 	case GEN_MOD:
-	    printf("\t%%%d = \tsrem i64 \t%%%d, \t%%%d\n", dest, right, left);
+	    printf("\t%%%d = srem i64 %%%d, %%%d\n", dest, right, left);
 	    break;
 	case GEN_EQ:
 	    printf("\t%%%d = icmp eq  i64 %%%d, %%%d\n", dest, right, left);
@@ -135,7 +135,7 @@ global localVarOffset: int;
 fn genAddLocal(ident: ->UStr): bool
 {
     localVarOffset -= 8;
-    printf("\t%%%s = \talloca i64, align 8\n", ident);
+    printf("\t%%%s = alloca i64, align 8\n", ident);
     return symtabAddLocal(ident, localVarOffset);
 }
 
@@ -213,7 +213,7 @@ fn genFuncDefBegin(name: ->UStr)
     }
     fnParamList = nullptr;
     functionBuildingInfo.retReg = getReg();
-    printf("\t%%%d = \talloca i64, align 8 ; ptr to ret val \n",
+    printf("\t%%%d = alloca i64, align 8 ; ptr to ret val \n",
 	   functionBuildingInfo.retReg);
 
     // hack: set *after* genDefLabel(entryLabel)
@@ -228,9 +228,9 @@ fn genFuncDefEnd()
 
     local leaveLabel: GenLabel = genGetLabel();
     genDefLabel(leaveLabel);
-    printf("\t%%%d = \tload i64, ptr %%%d, align 8\n",
+    printf("\t%%%d = load i64, ptr %%%d, align 8\n",
            dest, functionBuildingInfo.retReg);
-    printf("\tret \ti64 \t%%%d\n", dest);
+    printf("\tret i64 %%%d\n", dest);
     printf("}\n\n");
     functionBuildingInfo.fnName = nullptr;
     printStringList();
