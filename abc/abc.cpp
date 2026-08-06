@@ -358,9 +358,14 @@ main(int argc, char *argv[])
 	    continue;
 	}
 	if (infile[i].extension() != ".abc") {
-	    ldFlags += " ";
-	    ldFlags += infile[i];
-	    continue;
+	    if (!createExecutable) {
+		std::cerr << argv[0] << ": warning: " << infile[i]
+		          << ": 'linker' input unused\n";
+	    } else {
+		ldFlags += " ";
+		ldFlags += infile[i];
+		continue;
+	    }
 	}
 
 	abc::initTypeSystem();
