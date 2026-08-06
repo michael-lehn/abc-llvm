@@ -1544,31 +1544,17 @@ parseStructMemberDeclaration(AstStructDecl *structDecl)
     }
     getToken();
 
-    struct Section
-    {
-	    enum Kind
-	    {
-		Root,
-		Union,
-		Struct,
-	    };
-	    Kind kind;
-	    std::size_t startIndex, nextIndex;
-    };
-
+    bool unionSection = false;
     std::size_t index = 0;
-    std::stack<Section> section;
-    section.push(Section{Section::Root, index, index});
     while (true) {
 	if (token.kind == TokenKind::UNION) {
-	    // union block allowed in root or struct block
-	    if (section.top().kind != Section::Union) {
+	    if (!unionSection) {
 		getToken();
 		if (!error::expected(TokenKind::LBRACE)) {
 		    return false;
 		}
 		getToken();
-		section.push(Section{Section::Union, index, index});
+		unionSection = true;
 	    } else {
 		error::location(token.loc);
 		error::out() << error::setColor(error::BOLD) << token.loc
@@ -1579,67 +1565,37 @@ parseStructMemberDeclaration(AstStructDecl *structDecl)
 		error::fatal();
 	    }
 	}
-	if (token.kind == TokenKind::STRUCT) {
-	    // struct block oonly allowed in union
-	    if (section.top().kind == Section::Union) {
-		getToken();
-		if (!error::expected(TokenKind::LBRACE)) {
-		    return false;
-		}
-		getToken();
-		section.push(Section{Section::Struct, index, index});
-	    } else {
+	if (!parseStructMemberList(structDecl, index, unionSection)) {
+	    if (unionSection) {
 		error::location(token.loc);
-		error::out()
-		    << error::setColor(error::BOLD) << token.loc << ": "
-		    << error::setColor(error::BOLD_RED)
-		    << "error: " << error::setColor(error::BOLD)
-		    << "struct blocks only allowed within a union block\n"
-		    << error::setColor(error::NORMAL);
+		error::out() << error::setColor(error::BOLD) << token.loc
+		             << ": " << error::setColor(error::BOLD_RED)
+		             << "error: " << error::setColor(error::BOLD)
+		             << "struct member expected\n"
+		             << error::setColor(error::NORMAL);
 		error::fatal();
-	    }
-	}
-	bool unionSection = section.top().kind == Section::Union;
-	std::size_t nextIndex = index;
-	if (parseStructMemberList(structDecl, nextIndex, unionSection)) {
-	    if (unionSection &&
-	        section.top().startIndex == section.top().nextIndex) {
-		section.top().nextIndex = section.top().startIndex + 1;
-	    }
-	} else if (!error::expected(TokenKind::RBRACE)) {
-	    return false;
-	}
-	if (section.top().kind == Section::Union) {
-	    if (section.top().nextIndex < nextIndex) {
-		section.top().nextIndex = nextIndex;
-	    }
-	} else {
-	    index = section.top().nextIndex = nextIndex;
-	}
-	if (token.kind == TokenKind::RBRACE) {
-	    getToken();
-	    if (section.top().kind == Section::Root &&
-	        !error::expected(TokenKind::SEMICOLON)) {
-		return false;
-	    }
-	    if (token.kind == TokenKind::SEMICOLON) {
-		getToken();
-	    }
-	    /*
-	    std::cerr << "closing scope of " << section.top().kind
-	              << ", startIndex = " << section.top().startIndex
-	              << ", nextIndex = " << section.top().nextIndex << "\n";
-	    */
-	    index = section.top().nextIndex;
-	    section.pop();
-	    if (section.empty()) {
+	    } else {
 		break;
 	    }
-	    if (section.top().kind == Section::Union) {
-		index = section.top().startIndex;
+	}
+	if (unionSection && token.kind == TokenKind::RBRACE) {
+	    getToken();
+	    if (!error::expected(TokenKind::SEMICOLON)) {
+		return false;
 	    }
+	    getToken();
+	    unionSection = false;
+	    ++index;
 	}
     }
+    if (!error::expected(TokenKind::RBRACE)) {
+	return false;
+    }
+    getToken();
+    if (!error::expected(TokenKind::SEMICOLON)) {
+	return false;
+    }
+    getToken();
     return true;
 }
 

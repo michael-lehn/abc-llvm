@@ -81,14 +81,6 @@ StructType::complete(std::vector<UStr> &&memberName,
     }
     constStructType.isComplete_ = true;
 
-    /*
-    std::cerr << "New struct type " << name << "\n";
-    for (std::size_t i = 0; i < memberName.size(); ++i) {
-        std::cerr << memberName[i] << ", index " << memberIndex[i]
-                  << ", type = " << memberType[i] << "\n";
-    }
-    */
-
     memberName_ = std::move(memberName);
     memberIndex_ = std::move(memberIndex);
     memberType_ = std::move(memberType);
