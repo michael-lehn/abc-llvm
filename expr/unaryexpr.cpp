@@ -124,7 +124,7 @@ UnaryExpr::loadValue() const
 
     switch (kind) {
     case LOGICAL_NOT:
-	return gen::instruction(gen::NE, gen::getConstantZero(child->type),
+	return gen::instruction(gen::EQ, gen::getConstantZero(child->type),
 	                        child->loadValue());
     case ARROW_DEREF:
     case ASTERISK_DEREF:

@@ -33,6 +33,13 @@ initDefaultType()
     Symtab::addType(lexer::Loc{}, UStr::create("ptrdiff_t"),
                     IntegerType::createSizeType()->getAlias("ptrdiff_t"));
 
+    Symtab::addType(lexer::Loc{}, UStr::create("ushort"),
+                    IntegerType::createUnsigned()->getAlias("unsigned short"));
+    Symtab::addType(lexer::Loc{}, UStr::create("sshort"),
+                    IntegerType::createUnsigned()->getAlias("signed short"));
+    Symtab::addType(lexer::Loc{}, UStr::create("short"),
+                    IntegerType::createUnsigned()->getAlias("short"));
+
     Symtab::addType(lexer::Loc{}, UStr::create("i8"),
                     IntegerType::createSigned(8));
     Symtab::addType(lexer::Loc{}, UStr::create("i16"),
