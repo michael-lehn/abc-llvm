@@ -147,7 +147,7 @@ UnaryExpr::loadValue() const
 	        ? gen::pointerIncrement(child->type->refType(),
 	                                child->loadValue(), inc)
 	        : gen::instruction(gen::ADD, child->loadValue(), inc);
-	gen::store(val, child->loadAddress());
+	gen::store(val, child->loadAddress(), child->type);
 	return val;
     }
     case POSTFIX_INC:
@@ -161,7 +161,7 @@ UnaryExpr::loadValue() const
 	                     ? gen::pointerIncrement(child->type->refType(),
 	                                             prevLeftVal, inc)
 	                     : gen::instruction(gen::ADD, prevLeftVal, inc);
-	gen::store(val, child->loadAddress());
+	gen::store(val, child->loadAddress(), child->type);
 	return prevLeftVal;
     }
     case MINUS:

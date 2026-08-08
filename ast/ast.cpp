@@ -787,7 +787,8 @@ AstLocalVar::codegen()
 	                                 var->getType(0));
 	    if (initializer) {
 		gen::store(initializer->loadValue(),
-		           gen::loadAddress(var->getId(0).c_str()));
+		           gen::loadAddress(var->getId(0).c_str()),
+		           var->getType(0));
 	    }
 	} else {
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
@@ -799,7 +800,8 @@ AstLocalVar::codegen()
 	    for (std::size_t i = 0; i < var->count(); ++i) {
 		if (initializer) {
 		    gen::store(compExpr->loadValue(i),
-		               gen::loadAddress(var->getId(i).c_str()));
+		               gen::loadAddress(var->getId(i).c_str()),
+		               var->getType(i));
 		}
 	    }
 	}
@@ -844,7 +846,7 @@ AstReturn::codegen()
 	    error::fatal();
 	    return;
 	}
-	gen::returnInstruction(nullptr);
+	gen::returnInstruction(nullptr, retType);
     } else {
 	if (!expr) {
 	    error::location(loc);
@@ -857,7 +859,7 @@ AstReturn::codegen()
 	    return;
 	}
 	expr = ImplicitCast::create(std::move(expr), retType);
-	gen::returnInstruction(expr->loadValue());
+	gen::returnInstruction(expr->loadValue(), expr->type);
     }
 }
 

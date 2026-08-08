@@ -1,6 +1,7 @@
 #include <iomanip>
 #include <iostream>
 
+#include "gen/abi.hpp"
 #include "gen/function.hpp"
 #include "gen/variable.hpp"
 
@@ -23,7 +24,7 @@ void
 CallExpr::initTmp() const
 {
     auto tmpAddr = gen::localVariableDefinition(tmpId.c_str(), type);
-    gen::store(loadValue(), tmpAddr);
+    gen::store(loadValue(), tmpAddr, type);
 }
 
 ExprPtr
@@ -68,7 +69,10 @@ CallExpr::loadValue() const
 {
     std::vector<gen::Value> argValue;
     for (const auto &a : arg) {
-	argValue.push_back(a->loadValue());
+	bool loadAddr = gen::abi::needsAddress(a->type);
+	assert(!loadAddr || a->hasAddress());
+	auto aValue = loadAddr ? a->loadAddress() : a->loadValue();
+	argValue.push_back(aValue);
     }
     auto fnAddr = fn->loadAddress();
     auto call = gen::functionCall(fnAddr, fn->type, argValue);

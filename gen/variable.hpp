@@ -34,7 +34,7 @@ Value pointerDifference(const abc::Type *type, Value pointer1, Value pointer2);
 Value pointerToIndex(const abc::Type *type, Value pointer, std::size_t index);
 
 Value fetch(Value addr, const abc::Type *type);
-Value store(Value val, Value addr);
+Value store(Value val, Value addr, const abc::Type *type);
 
 // for debugging and educational purposes
 void printGlobalVariableList();

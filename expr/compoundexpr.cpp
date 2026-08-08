@@ -36,18 +36,18 @@ CompoundExpr::initTmp() const
     }
 
     if (type->isScalar()) {
-	gen::store(val[0], tmpAddr);
+	gen::store(val[0], tmpAddr, type);
     } else if (type->isArray()) {
 	for (std::size_t i = 0; i < type->dim(); ++i) {
 	    auto index = gen::getConstantInt(i, IntegerType::createSizeType());
 	    auto elementAddr =
 	        gen::pointerIncrement(type->refType(), tmpAddr, index);
-	    gen::store(val[i], elementAddr);
+	    gen::store(val[i], elementAddr, type->refType());
 	}
     } else if (type->isStruct()) {
 	for (std::size_t i = 0; i < type->aggregateSize(); ++i) {
 	    auto memberAddr = gen::pointerToIndex(type, tmpAddr, i);
-	    gen::store(val[i], memberAddr);
+	    gen::store(val[i], memberAddr, type->aggregateType(i));
 	}
     } else {
 	assert(0);

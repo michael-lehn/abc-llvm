@@ -15,6 +15,7 @@ extern fn realloc(ptr: ->void, size: size_t): ->void;
 
 fn nextCh()
 {
+    local foo: i64 = 5;
     if (updateVal) {
 	if (lengthVal + 1 > internalValCapacity) {
 	    internalValCapacity = 2 * internalValCapacity + 1;
@@ -36,6 +37,7 @@ fn nextCh()
 
 fn isDigit(ch: int): bool
 {
+    local bar: i64 = 5;
     return ch >= '0' && ch <= '9';
 }
 

@@ -15,6 +15,7 @@ namespace gen {
 void initTypeMap();
 llvm::Type *convert(const abc::Type *type);
 std::size_t getSizeof(const abc::Type *type);
+llvm::Align getAlignof(const abc::Type *type);
 
 } // namespace gen
 

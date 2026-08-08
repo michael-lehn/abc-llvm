@@ -149,7 +149,7 @@ ImplicitCast::loadAddress() const
     ss << ".compound" << idCount++;
     auto tmpId = UStr::create(ss.str()).c_str();
     auto tmpAddr = gen::localVariableDefinition(tmpId, type);
-    gen::store(loadValue(), tmpAddr);
+    gen::store(loadValue(), tmpAddr, type);
     return tmpAddr;
 }
 

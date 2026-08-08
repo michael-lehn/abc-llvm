@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "abi.hpp"
 #include "gen.hpp"
 #include "gentype.hpp"
 
@@ -16,9 +17,6 @@
 namespace gen {
 
 static std::unordered_map<const abc::Type *, llvm::Type *> typeMap;
-
-static std::vector<llvm::Type *>
-convert(const std::vector<const abc::Type *> &type);
 
 void
 initTypeMap()
@@ -63,9 +61,14 @@ convert(const abc::Type *abcType)
 	    break;
 	}
     } else if (abcType->isFunction()) {
+	auto abcParamType = abcType->paramType();
+	std::vector<llvm::Type *> paramType;
+	for (std::size_t i = 0; i < abcParamType.size(); ++i) {
+	    abi::ArgInfo argInfo = abi::classifyArgType(abcParamType[i]);
+	    paramType.push_back(convert(argInfo.type));
+	}
 	llvmType = llvm::FunctionType::get(convert(abcType->retType()),
-	                                   convert(abcType->paramType()),
-	                                   abcType->hasVarg());
+	                                   paramType, abcType->hasVarg());
     } else if (abcType->isPointer()) {
 	llvmType = llvm::PointerType::get(*llvmContext, 0);
     } else if (abcType->isArray()) {
@@ -96,22 +99,20 @@ convert(const abc::Type *abcType)
     return llvmType;
 }
 
-static std::vector<llvm::Type *>
-convert(const std::vector<const abc::Type *> &abcType)
-{
-    std::vector<llvm::Type *> llvmType{abcType.size()};
-    for (std::size_t i = 0; i < abcType.size(); ++i) {
-	llvmType[i] = convert(abcType[i]);
-    }
-    return llvmType;
-}
-
 std::size_t
 getSizeof(const abc::Type *type)
 {
     assert(llvmContext && "gen::init called?");
     auto llvmType = convert(type);
     return llvmModule->getDataLayout().getTypeAllocSize(llvmType);
+}
+
+llvm::Align
+getAlignof(const abc::Type *type)
+{
+    assert(llvmContext && "gen::init called?");
+    auto llvmType = convert(type);
+    return llvmModule->getDataLayout().getPrefTypeAlign(llvmType);
 }
 
 } // namespace gen
