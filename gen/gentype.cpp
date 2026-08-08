@@ -61,14 +61,7 @@ convert(const abc::Type *abcType)
 	    break;
 	}
     } else if (abcType->isFunction()) {
-	auto abcParamType = abcType->paramType();
-	std::vector<llvm::Type *> paramType;
-	for (std::size_t i = 0; i < abcParamType.size(); ++i) {
-	    abi::ArgInfo argInfo = abi::classifyArgType(abcParamType[i]);
-	    paramType.push_back(convert(argInfo.type));
-	}
-	llvmType = llvm::FunctionType::get(convert(abcType->retType()),
-	                                   paramType, abcType->hasVarg());
+	llvmType = abi::lowerFunctionType(abcType);
     } else if (abcType->isPointer()) {
 	llvmType = llvm::PointerType::get(*llvmContext, 0);
     } else if (abcType->isArray()) {

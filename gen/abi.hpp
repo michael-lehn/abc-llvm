@@ -24,9 +24,13 @@ struct ArgInfo
 
 ArgInfo classifyArgType(const abc::Type *abcType);
 
-void lowerArg(Value val, const abc::Type *abcType, Value &abiVal);
+llvm::FunctionType *lowerFunctionType(const abc::Type *abcFnType);
+Value lowerFunctionCall(Value fnAddr, const abc::Type *fnType,
+                        const std::vector<Value> &arg);
 
-Value reconstructArg(const Value &abiVal, const abc::Type *abcType);
+void reconstructParameters(const llvm::Function *fnDecl,
+                           const abc::Type *abcFnType,
+                           const std::vector<const char *> &param);
 
 } // namespace abi
 } // namespace gen

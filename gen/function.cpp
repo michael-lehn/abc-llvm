@@ -100,18 +100,7 @@ functionDefinitionBegin(const char *ident, const abc::Type *fnType,
     functionBuildingInfo.retVal = nullptr;
     functionBuildingInfo.bbClosed = false;
 
-    // reconstruct arguments
-    for (std::size_t i = 0; i < param.size(); ++i) {
-	// std::cerr << ">> i = " << i << "\n";
-	auto addr = localVariableDefinition(param[i], fnType->paramType()[i]);
-	auto argInfo = abi::classifyArgType(fnType->paramType()[i]);
-	if (argInfo.byVal) {
-	    auto tmp = fetch(fn->getArg(i), argInfo.byValType);
-	    store(tmp, addr, fnType->paramType()[i]);
-	} else {
-	    store(fn->getArg(i), addr, argInfo.type);
-	}
-    }
+    abi::reconstructParameters(fn, fnType, param);
 
     if (!retType->isVoid()) {
 	functionBuildingInfo.retVal =
@@ -193,24 +182,7 @@ Value
 functionCall(Value fnAddr, const abc::Type *fnType,
              const std::vector<Value> &arg)
 {
-    assert(fnType);
-    auto llvmFnType = llvm::dyn_cast<llvm::FunctionType>(convert(fnType));
-    assert(llvmFnType);
-    auto fnCall = llvmBuilder->CreateCall(llvmFnType, fnAddr, arg);
-
-    auto abcParamType = fnType->paramType();
-    // lower arguments
-    for (std::size_t i = 0; i < abcParamType.size(); ++i) {
-	abi::ArgInfo argInfo = abi::classifyArgType(abcParamType[i]);
-	if (argInfo.byVal) {
-	    fnCall->addParamAttr(i,
-	                         llvm::Attribute::getWithByValType(
-	                             *llvmContext, convert(argInfo.byValType)));
-	    fnCall->addParamAttr(i, llvm::Attribute::getWithAlignment(
-	                                *llvmContext, argInfo.align));
-	}
-    }
-    return fnCall;
+    return abi::lowerFunctionCall(fnAddr, fnType, arg);
 }
 
 } // namespace gen
