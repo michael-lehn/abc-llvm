@@ -15,16 +15,22 @@ bool needsAddress(const abc::Type *argType);
 
 struct ArgInfo
 {
-	const abc::Type *type;
+	const abc::Type *abcType;
 
 	bool byVal;
-	const abc::Type *byValType;
+	bool lowered;
+	llvm::Type *abiType;
 	llvm::Align align;
 };
 
 ArgInfo classifyArgType(const abc::Type *abcType);
 
 llvm::FunctionType *lowerFunctionType(const abc::Type *abcFnType);
+
+llvm::Function *lowerFunctionDeclaration(const char *ident,
+                                         const abc::Type *abcFnType,
+                                         bool externalLinkage);
+
 Value lowerFunctionCall(Value fnAddr, const abc::Type *fnType,
                         const std::vector<Value> &arg);
 

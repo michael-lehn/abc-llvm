@@ -34,43 +34,7 @@ llvm::Function *
 functionDeclaration(const char *ident, const abc::Type *fnType,
                     bool externalLinkage)
 {
-    assert(llvmContext);
-    if (auto fn = llvmModule->getFunction(ident)) {
-	// already declared
-	/*
-	 * Whether a function is external or not is specified by its
-	 * first declaration. Like in C:
-	 * - An extern declaration can be followed by a static declaration
-	 * - A static static declaration *can not* be followed by an extern
-	 *   declaration.
-	 */
-	assert(!externalLinkage ||
-	       fn->getLinkage() == llvm::Function::ExternalLinkage);
-	return fn;
-    }
-
-    auto linkage = externalLinkage || !strcmp(ident, "main")
-                       ? llvm::Function::ExternalLinkage
-                       : llvm::Function::InternalLinkage;
-
-    auto llvmFnType = llvm::dyn_cast<llvm::FunctionType>(convert(fnType));
-
-    auto fn =
-        llvm::Function::Create(llvmFnType, linkage, ident, llvmModule.get());
-
-    // lower declaration
-    auto abcParamType = fnType->paramType();
-    for (std::size_t i = 0; i < abcParamType.size(); ++i) {
-	abi::ArgInfo argInfo = abi::classifyArgType(abcParamType[i]);
-	if (argInfo.byVal) {
-	    fn->addParamAttr(i, llvm::Attribute::getWithByValType(
-	                            *llvmContext, convert(argInfo.byValType)));
-	    fn->addParamAttr(i, llvm::Attribute::getWithAlignment(
-	                            *llvmContext, argInfo.align));
-	}
-    }
-
-    return fn;
+    return abi::lowerFunctionDeclaration(ident, fnType, externalLinkage);
 }
 
 void
