@@ -15,11 +15,17 @@ bool needsAddress(const abc::Type *argType);
 
 struct ArgInfo
 {
+	enum class Kind
+	{
+	    Direct,
+	    Coerce,
+	    ByVal
+	};
+
 	const abc::Type *abcType;
 
-	bool byVal;
-	bool lowered;
-	llvm::Type *abiType;
+	Kind kind;
+	std::vector<llvm::Type *> abiType;
 	llvm::Align align;
 };
 
