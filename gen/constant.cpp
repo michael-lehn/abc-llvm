@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "constant.hpp"
 #include "gen.hpp"
 #include "gentype.hpp"
@@ -91,6 +93,28 @@ getConstantZero(const abc::Type *type)
     auto llvmType = convert(type);
     assert(llvmType);
     return llvm::Constant::getNullValue(llvmType);
+}
+
+Constant
+getConstantOne(const abc::Type *type)
+{
+    assert(type->isInteger() || type->isFloat());
+    if (type->isInteger()) {
+	return getConstantInt(1, type);
+    } else {
+	return getConstantFloat("1", type);
+    }
+}
+
+Constant
+getConstantMinusOne(const abc::Type *type)
+{
+    assert(type->isInteger() || type->isFloat());
+    if (type->isInteger()) {
+	return getConstantInt(-1, type);
+    } else {
+	return getConstantFloat("-1", type);
+    }
 }
 
 Constant

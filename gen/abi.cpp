@@ -66,6 +66,12 @@ lowerType(const abc::Type *abcType)
     if (isHomogeneousAggregate(abcType, abcFloatTy, 2)) {
 	return VecTy{llvm::FixedVectorType::get(llvmFloatTy, 2)};
     }
+    if (isHomogeneousAggregate(abcType, abcFloatTy, 3)) {
+	return VecTy{
+	    llvm::FixedVectorType::get(llvmFloatTy, 2),
+	    llvmFloatTy,
+	};
+    }
     if (isHomogeneousAggregate(abcType, abcFloatTy, 4)) {
 	return VecTy{
 	    llvm::FixedVectorType::get(llvmFloatTy, 2),
@@ -171,6 +177,7 @@ lowerArgument(Value arg, const ArgInfo &argInfo, std::vector<Value> &abiArg)
 	    auto *p = llvmBuilder->CreateConstGEP1_64(
 	        llvm::Type::getInt8Ty(*llvmContext), arg, offset);
 	    abiArg.push_back(llvmBuilder->CreateLoad(ty, p));
+	    // x86-64 ABI classification operates on eightbytes
 	    offset += 8;
 	}
     } else {
@@ -233,6 +240,7 @@ reconstructArgument(const llvm::Function *fnDecl, std::size_t abiIndex,
 
 	    llvmBuilder->CreateStore(fnDecl->getArg(abiIndex + j), p);
 
+	    // x86-64 ABI classification operates on eightbytes
 	    offset += 8;
 	}
     } else {
@@ -252,21 +260,8 @@ reconstructParameters(const llvm::Function *fnDecl, const abc::Type *abcFnType,
 	    localVariableDefinition(param[i], abcFnType->paramType()[i]);
 	reconstructArgument(fnDecl, abiIndex, addr, argInfo);
 	abiIndex += argInfo.abiType.size();
-
-	/*
-	if (argInfo.byVal) {
-	    auto tmp = fetch(fnDecl->getArg(i), argInfo.abiType, argInfo.align);
-	    store(tmp, addr, argInfo.abcType);
-	} else {
-	    store(fnDecl->getArg(i), addr, argInfo.abcType);
-	}
-	*/
     }
 }
-
-// lower arguments in function call
-
-// reconstruct arguments in function
 
 } // namespace abi
 } // namespace gen

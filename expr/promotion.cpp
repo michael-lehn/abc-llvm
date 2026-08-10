@@ -578,7 +578,8 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 	    break;
 	}
 	if (child->isLValue()) {
-	    if (child->type->isInteger() || child->type->isPointer()) {
+	    if (child->type->isInteger() || child->type->isPointer() ||
+	        child->type->isFloat()) {
 		type = newChildType = child->type;
 	    }
 	}
