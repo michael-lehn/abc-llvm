@@ -80,11 +80,9 @@ fn main()
 
         // Camera rotation controls
         if (IsKeyDown(KEY_A)) {
-	    // TODO: camera.rotation--;
-	    camera.rotation -= 1;
+	    --camera.rotation;
         } else if (IsKeyDown(KEY_S)) {
-	    // TODO: camera.rotation++;
-	    camera.rotation += 1;
+	    ++camera.rotation;
 	}
 
         // Limit camera rotation to 80 degrees (-40 to 40)
