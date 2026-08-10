@@ -1,6 +1,6 @@
 CC := abc
 CFLAGS += -O3
-LDFLAGS  += $(shell pkg-config --libs raylib)
+LDFLAGS  += -lraylib -lm
 
 src    := $(wildcard *.abc)
 target := $(patsubst %.abc,%,$(src))

@@ -30,17 +30,12 @@ fn main()
 {
     // Initialization
     //---------------------------------------------------------
-    local screenWidth: int = 2 * 800;
-    local screenHeight: int = 2 * 450;
+    local screenWidth: int = 800;
+    local screenHeight: int = 450;
 
-    SetConfigFlags(FLAG_MSAA_4X_HINT
-	| FLAG_FULLSCREEN_MODE
-	| FLAG_WINDOW_HIGHDPI);
+    SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight,
 	       "raylib [shapes] example - bouncing ball");
-
-    screenWidth = GetScreenWidth() - 150;
-    screenHeight = GetScreenHeight();
 
     local ballPosition: Vector2 = { screenWidth/2.0,
 				    screenHeight/2.0 };
