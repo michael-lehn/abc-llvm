@@ -1,3 +1,9 @@
+@define PI 3.14159265358979323846float
+@define DEG2RAD (PI/180.0float)
+
+
+
+
 struct Vector2 {
     x: float;
     y: float;

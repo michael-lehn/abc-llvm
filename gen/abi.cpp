@@ -11,24 +11,14 @@
 namespace gen {
 namespace abi {
 
-/*
 static bool
 isX86_64Target()
 {
-assert(llvmModule);
-return llvm::Triple{llvmModule->getTargetTriple()}.isX86_64();
+    assert(llvmModule);
+    return llvm::Triple{llvmModule->getTargetTriple()}.isX86_64();
 }
-*/
 
-bool
-needsAddress(const abc::Type *argType)
-{
-    if (argType->isStruct() || argType->isArray()) {
-	return true;
-    } else {
-	return false;
-    }
-}
+//------------------------------------------------------------------------------
 
 static bool
 isHomogeneousAggregate(const abc::Type *abcType, const abc::Type *elementType,
@@ -53,8 +43,20 @@ isHomogeneousAggregate(const abc::Type *abcType, const abc::Type *elementType,
     return true;
 }
 
-std::optional<std::vector<llvm::Type *>>
-lowerType(const abc::Type *abcType)
+//------------------------------------------------------------------------------
+
+bool
+needsAddress(const abc::Type *argType)
+{
+    if (argType->isStruct() || argType->isArray()) {
+	return true;
+    } else {
+	return false;
+    }
+}
+
+static std::optional<std::vector<llvm::Type *>>
+lowerType_x86_64(const abc::Type *abcType)
 {
     static const abc::Type *abcFloatTy = abc::FloatType::createFloat();
     static llvm::Type *llvmFloatTy = llvm::Type::getFloatTy(*llvmContext);
@@ -82,6 +84,16 @@ lowerType(const abc::Type *abcType)
 	return VecTy{llvm::Type::getInt32Ty(*llvmContext)};
     }
     return std::nullopt;
+}
+
+std::optional<std::vector<llvm::Type *>>
+lowerType(const abc::Type *abcType)
+{
+    if (isX86_64Target()) {
+	return lowerType_x86_64(abcType);
+    } else {
+	return std::nullopt;
+    }
 }
 
 ArgInfo
