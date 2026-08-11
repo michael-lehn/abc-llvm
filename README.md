@@ -1,3 +1,20 @@
+## TL;DR
+
+ABC is a small teaching language designed to make programming and computers easier to understand — not to hide how they work.
+
+- **Understand the machine.**
+  ABC exposes the basic ideas of memory, addresses, data representation, and
+  how programs interact with the computer.
+- **Learn the problem before the solution.**
+  Many features of modern programming languages solve problems inherited from
+  C. With ABC, you first encounter and understand these problems — making it
+  much easier to see *why* languages such as C++, Rust, or others provide
+  certain features.
+- **Simpler than C, without being more magical.**
+  ABC keeps the low-level programming model, but uses a smaller and more
+  consistent grammar and semantics. This makes it significantly easier to learn
+  than C while preserving the concepts that matter.
+
 # ABC: A Better C
 
 **ABC** was designed as a modern educational programming language, continuing
