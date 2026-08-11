@@ -8,7 +8,7 @@ ABC is a small teaching language designed to make programming and computers easi
 - **Learn the problem before the solution.**
   Many features of modern programming languages solve problems inherited from
   C. With ABC, you first encounter and understand these problems — making it
-  much easier to see *why* languages such as C++, Rust, or others provide
+  much easier to see *why* languages such as C++, Odin, Rust, or others provide
   certain features.
 - **Simpler than C, without being more magical.**
   ABC keeps the low-level programming model, but uses a smaller and more
