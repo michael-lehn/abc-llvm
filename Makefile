@@ -1,9 +1,11 @@
 #CPPFLAGS += -Werror -Wextra -Wall -pedantic -fsanitize=undefined,address
-CPPFLAGS += -Werror -Wextra -Wall -pedantic
+CPPFLAGS += -Wextra -Wall -pedantic
 RANLIB := ranlib
 
 build.dir := build/
 abc-std-lib := $(build.dir)libabc.a
+
+llvm-config ?= llvm-config
 
 include config/ar
 include config/cxx_and_llvm

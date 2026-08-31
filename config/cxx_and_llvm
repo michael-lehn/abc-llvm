@@ -1,57 +1,41 @@
 include config/os
 
-ifeq (Darwin,$(ostype))
-    ifneq ($(origin CXX), command line)
-	CXX = g++
-    endif
-    llvm-config ?= llvm-config
-else ifeq (Linux,$(ostype))
-    ifneq ($(origin CXX), command line)
-	CXX ?= $(shell which clang++ >/dev/null 2>&1 && \
-		    echo clang++ || echo clang++-21)
-    endif
-    llvm-config ?= $(shell which llvm-config-21 >/dev/null 2>&1 && \
-		echo llvm-config-21 || echo llvm-config)
-else ifeq (SunOS,$(ostype))
-    ifneq ($(origin CXX), command line)
-	CXX ?= clang++
-    endif
-    llvm-config ?= llvm-config
-    CPPFLAGS += -DSUPPORT_SOLARIS
-    CPPFLAGS += -D_GLIBCXX_BITS_SPECFUN_H
+LLVM_SUPPORTED_VERSIONS := 22 21 19 18 14
+
+ifeq ($(origin llvm-config),undefined)
+    llvm-config := $(shell \
+	for cmd in llvm-config llvm-config-22 llvm-config-21 \
+		   llvm-config-19 llvm-config-18 llvm-config-14; do \
+	    if command -v $$cmd >/dev/null 2>&1; then \
+		echo $$cmd; \
+		break; \
+	    fi; \
+	done)
 endif
 
-$(info using CXX=$(CXX))
+ifeq ($(strip $(llvm-config)),)
+    $(info Specify llvm-config with: make llvm-config=<your llvm-config>)
+    $(error LLVM tool llvm-config not found)
+endif
+
+llvm-config.version := $(shell $(llvm-config) --version)
+llvm-config.version.major := $(firstword $(subst ., ,$(llvm-config.version)))
+
+ifeq ($(filter $(llvm-config.version.major),$(LLVM_SUPPORTED_VERSIONS)),)
+    $(error LLVM version $(llvm-config.version) is not supported. \
+	    Supported major versions are: $(LLVM_SUPPORTED_VERSIONS). \
+	    Please open an issue if support for this version is needed)
+endif
+
 $(info using llvm-config=$(llvm-config))
+$(info using LLVM version $(llvm-config.version))
+
+CPPFLAGS += -DLLVM_MAJOR_VERSION=$(llvm-config.version.major)
 
 check_cxx := $(shell which $(CXX) > /dev/null; echo $$?)
-check_llvm := $(shell which $(llvm-config) > /dev/null; echo $$?)
-
-# $(info check_cxx=$(check_cxx))
-# $(info check_llvm=$(check_llvm))
 
 ifneq ($(check_cxx),0)
     $(info C++ compiler CXX=$(CXX) was not found)
     $(info You can specify the compiler with: make CXX=<c++ compiler>)
     $(error )
 endif
-
-ifneq ($(check_llvm),0)
-    $(info Command llvm-config=$(llvm-config) was not found)
-    $(info Specify llvm-config with: make llvm-config=<your llvm-config>)
-    $(error )
-endif
-
-llvm-config.version := $(shell $(llvm-config) --version)
-llvm-config.version.major = $(firstword $(subst ., ,$(llvm-config.version)))
-
-$(info llvm-config.version = $(firstword $(subst ., ,$(llvm-config.version))))
-
-CPPFLAGS += -DLLVM_MAJOR_VERSION=$(llvm-config.version.major)
-
-ifeq ($(shell [ $(llvm-config.version.major) -ge 21 ] && echo ok),)
-    $(error LLVM version 21 or higher required \
-	    (found $(llvm-config.version.major)))
-endif
-
-

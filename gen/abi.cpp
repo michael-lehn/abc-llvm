@@ -15,7 +15,12 @@ static bool
 isX86_64Target()
 {
     assert(llvmModule);
-    return llvm::Triple{llvmModule->getTargetTriple()}.isX86_64();
+    auto triple = llvm::Triple{llvmModule->getTargetTriple()};
+#if LLVM_MAJOR_VERSION >= 22
+    return triple.isX86_64();
+#else
+    return triple.getArch() == llvm::Triple::x86_64;
+#endif
 }
 
 //------------------------------------------------------------------------------
