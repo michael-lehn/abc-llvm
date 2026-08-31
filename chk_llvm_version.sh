@@ -7,7 +7,7 @@ rm -f chk_llvm.log
 for version in $versions; do
     make clean
 
-    if make -j 8 \
+    if make -j 4 \
         llvm-config=/usr/local/opt/llvm@${version}/bin/llvm-config \
         install && \
 	(cd raylib-example && make clean && make) && \
