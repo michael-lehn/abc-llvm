@@ -1,6 +1,6 @@
 include config/os
 
-LLVM_SUPPORTED_VERSIONS := 22 21 19 18 14
+LLVM_SUPPORTED_VERSIONS := 22 21 20 19 18 14
 
 ifeq ($(origin llvm-config),undefined)
     llvm-config := $(shell \

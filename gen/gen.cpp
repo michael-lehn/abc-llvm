@@ -141,10 +141,20 @@ init(const char *name, llvm::OptimizationLevel optLevel)
 
     auto tripleStr = getEffectiveTargetTriple();
     llvm::Triple TT(tripleStr);
+#if LLVM_MAJOR_VERSION >= 21
     llvmModule->setTargetTriple(TT);
+#else
+    llvmModule->setTargetTriple(tripleStr);
+#endif
 
     std::string error;
+#if LLVM_MAJOR_VERSION >= 21
     const llvm::Target *target = llvm::TargetRegistry::lookupTarget(TT, error);
+#else
+    const llvm::Target *target =
+        llvm::TargetRegistry::lookupTarget(tripleStr, error);
+#endif
+
     if (!target) {
 	llvm::errs() << error;
 	std::exit(1);
@@ -156,8 +166,13 @@ init(const char *name, llvm::OptimizationLevel optLevel)
     llvm::CodeGenOptLevel cgOpt = mapOpt(optLevel);
 
     auto cpu = getCpu();
+#if LLVM_MAJOR_VERSION >= 21
     targetMachine = target->createTargetMachine(TT, cpu, getFeatures(), topts,
                                                 relocModel, codeModel, cgOpt);
+#else
+    targetMachine = target->createTargetMachine(
+        tripleStr, cpu, getFeatures(), topts, relocModel, codeModel, cgOpt);
+#endif
 
     llvmModule->setDataLayout(targetMachine->createDataLayout());
 }
