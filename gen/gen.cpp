@@ -1,3 +1,4 @@
+#include "gen/print.hpp"
 #ifdef SUPPORT_SOLARIS
 // has to be included as first llvm header
 #include "llvm/Support/Solaris/sys/regset.h"
@@ -32,20 +33,27 @@ std::string mcu;
 const char *moduleName;
 static llvm::OptimizationLevel optimizationLevel;
 
-static inline llvm::CodeGenOptLevel
+#if LLVM_MAJOR_VERSION >= 18
+using CodeGenOptLevel = llvm::CodeGenOptLevel;
+#else
+using CodeGenOptLevel = llvm::CodeGenOpt::Level;
+#endif
+
+static inline CodeGenOptLevel
 mapOpt(llvm::OptimizationLevel L)
 {
     using OL = llvm::OptimizationLevel;
+
     if (L == OL::O0)
-	return llvm::CodeGenOptLevel::None;
+	return CodeGenOptLevel::None;
     if (L == OL::O1)
-	return llvm::CodeGenOptLevel::Less;
+	return CodeGenOptLevel::Less;
     if (L == OL::O2)
-	return llvm::CodeGenOptLevel::Default;
+	return CodeGenOptLevel::Default;
     if (L == OL::O3)
-	return llvm::CodeGenOptLevel::Aggressive;
-    // Fallback
-    return llvm::CodeGenOptLevel::Default;
+	return CodeGenOptLevel::Aggressive;
+
+    return CodeGenOptLevel::Default;
 }
 
 static std::string
@@ -163,7 +171,7 @@ init(const char *name, llvm::OptimizationLevel optLevel)
     llvm::TargetOptions topts{};
     auto relocModel = getRelocModel(tripleStr);
     auto codeModel = std::optional<llvm::CodeModel::Model>();
-    llvm::CodeGenOptLevel cgOpt = mapOpt(optLevel);
+    CodeGenOptLevel cgOpt = mapOpt(optLevel);
 
     auto cpu = getCpu();
 #if LLVM_MAJOR_VERSION >= 21
