@@ -160,7 +160,7 @@ compile_cmd: $(src.o.compile_cmd)
 	@echo ']' >> compile_commands.json
 
 .PHONY: install
-install: $(ABC) $(abc-std-lib) | $(PREFIX)/bin/ $(LIBDIR) $(INCLUDEDIR)
+install:  all | $(PREFIX)/bin/ $(LIBDIR) $(INCLUDEDIR)
 	cp abc-include/* $(INCLUDEDIR)
 	cp $(build.dir)/*.hdr $(INCLUDEDIR)
 	cp $(abc-std-lib) $(LIBDIR)
