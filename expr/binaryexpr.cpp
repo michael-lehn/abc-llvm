@@ -250,32 +250,37 @@ BinaryExpr::loadValue() const
     assert(type);
     switch (kind) {
     case ASSIGN:
-	return gen::store(right->loadValue(), left->loadAddress());
+	return gen::store(right->loadValue(), left->loadAddress(), right->type);
     case ADD_ASSIGN:
-	return gen::store(handleArithmetricOperation(ADD), left->loadAddress());
+	return gen::store(handleArithmetricOperation(ADD), left->loadAddress(),
+	                  right->type);
     case SUB_ASSIGN:
-	return gen::store(handleArithmetricOperation(SUB), left->loadAddress());
+	return gen::store(handleArithmetricOperation(SUB), left->loadAddress(),
+	                  right->type);
     case MUL_ASSIGN:
-	return gen::store(handleArithmetricOperation(MUL), left->loadAddress());
+	return gen::store(handleArithmetricOperation(MUL), left->loadAddress(),
+	                  right->type);
     case DIV_ASSIGN:
-	return gen::store(handleArithmetricOperation(DIV), left->loadAddress());
+	return gen::store(handleArithmetricOperation(DIV), left->loadAddress(),
+	                  right->type);
     case MOD_ASSIGN:
-	return gen::store(handleArithmetricOperation(MOD), left->loadAddress());
+	return gen::store(handleArithmetricOperation(MOD), left->loadAddress(),
+	                  right->type);
     case BITWISE_AND_ASSIGN:
 	return gen::store(handleArithmetricOperation(BITWISE_AND),
-	                  left->loadAddress());
+	                  left->loadAddress(), right->type);
     case BITWISE_OR_ASSIGN:
 	return gen::store(handleArithmetricOperation(BITWISE_OR),
-	                  left->loadAddress());
+	                  left->loadAddress(), right->type);
     case BITWISE_XOR_ASSIGN:
 	return gen::store(handleArithmetricOperation(BITWISE_XOR),
-	                  left->loadAddress());
+	                  left->loadAddress(), right->type);
     case BITWISE_LEFT_SHIFT_ASSIGN:
 	return gen::store(handleArithmetricOperation(BITWISE_LEFT_SHIFT),
-	                  left->loadAddress());
+	                  left->loadAddress(), right->type);
     case BITWISE_RIGHT_SHIFT_ASSIGN:
 	return gen::store(handleArithmetricOperation(BITWISE_RIGHT_SHIFT),
-	                  left->loadAddress());
+	                  left->loadAddress(), right->type);
     case ADD:
     case SUB:
     case MUL:

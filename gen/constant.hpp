@@ -19,6 +19,8 @@ Constant getConstantStruct(const std::vector<Constant> &val,
                            const abc::Type *structType);
 
 Constant getConstantZero(const abc::Type *type);
+Constant getConstantOne(const abc::Type *type);
+Constant getConstantMinusOne(const abc::Type *type);
 Constant getFalse();
 Constant getTrue();
 

@@ -40,6 +40,7 @@ fn exprKindFromToken(token: Token): ExprKind
 	case AMPERSAND2: return EXPR_LOGICAL_AND;
 	case VBAR2: return EXPR_LOGICAL_OR;
         default:
+	    printf("token: %d (%s)\n", token.kind, tokenKindStr(token.kind));
             assert(0 && "internal error: exprKindFromToken");
             return 0;
     }

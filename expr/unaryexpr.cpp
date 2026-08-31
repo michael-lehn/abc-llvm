@@ -140,14 +140,15 @@ UnaryExpr::loadValue() const
     case PREFIX_DEC: {
 	auto incType =
 	    type->isPointer() ? IntegerType::createSigned(8) : child->type;
-	auto inc = kind == PREFIX_INC ? gen::getConstantInt(1, incType)
-	                              : gen::getConstantInt(-1, incType);
+	auto inc = kind == PREFIX_INC ? gen::getConstantOne(incType)
+	                              : gen::getConstantMinusOne(incType);
 	gen::Value val =
-	    type->isPointer()
-	        ? gen::pointerIncrement(child->type->refType(),
-	                                child->loadValue(), inc)
-	        : gen::instruction(gen::ADD, child->loadValue(), inc);
-	gen::store(val, child->loadAddress());
+	    type->isPointer() ? gen::pointerIncrement(child->type->refType(),
+	                                              child->loadValue(), inc)
+	    : type->isInteger()
+	        ? gen::instruction(gen::ADD, child->loadValue(), inc)
+	        : gen::instruction(gen::FADD, child->loadValue(), inc);
+	gen::store(val, child->loadAddress(), child->type);
 	return val;
     }
     case POSTFIX_INC:
@@ -155,13 +156,14 @@ UnaryExpr::loadValue() const
 	auto prevLeftVal = child->loadValue();
 	auto incType =
 	    type->isPointer() ? IntegerType::createSigned(8) : child->type;
-	auto inc = kind == POSTFIX_INC ? gen::getConstantInt(1, incType)
-	                               : gen::getConstantInt(-1, incType);
-	gen::Value val = type->isPointer()
-	                     ? gen::pointerIncrement(child->type->refType(),
-	                                             prevLeftVal, inc)
-	                     : gen::instruction(gen::ADD, prevLeftVal, inc);
-	gen::store(val, child->loadAddress());
+	auto inc = kind == POSTFIX_INC ? gen::getConstantOne(incType)
+	                               : gen::getConstantMinusOne(incType);
+	gen::Value val =
+	    type->isPointer()   ? gen::pointerIncrement(child->type->refType(),
+	                                                prevLeftVal, inc)
+	    : type->isInteger() ? gen::instruction(gen::ADD, prevLeftVal, inc)
+	                        : gen::instruction(gen::FADD, prevLeftVal, inc);
+	gen::store(val, child->loadAddress(), child->type);
 	return prevLeftVal;
     }
     case MINUS:

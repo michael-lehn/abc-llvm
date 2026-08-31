@@ -42,7 +42,8 @@ someInstructions()
     auto addExpr = BinaryExpr::create(BinaryExpr::ADD, std::move(fltExpr),
                                       std::move(idExpr));
 
-    gen::returnInstruction(addExpr->loadValue());
+    auto intType = IntegerType::createSigned(32)->getAlias("int");
+    gen::returnInstruction(addExpr->loadValue(), intType);
 }
 
 void

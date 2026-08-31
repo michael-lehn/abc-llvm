@@ -41,7 +41,7 @@ someInstructions()
     auto addExpr = BinaryExpr::create(BinaryExpr::ADD, std::move(intExpr),
                                       std::move(idExpr));
 
-    gen::returnInstruction(addExpr->loadValue());
+    gen::returnInstruction(addExpr->loadValue(), intType);
 }
 
 void

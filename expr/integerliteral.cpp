@@ -69,7 +69,12 @@ IntegerLiteral::isConst() const
 gen::Constant
 IntegerLiteral::loadConstant() const
 {
-    return gen::getConstantInt(val.c_str(), type, radix);
+    assert(type->isInteger() || type->isFloat());
+    if (type->isInteger()) {
+	return gen::getConstantInt(val.c_str(), type, radix);
+    } else {
+	return gen::getConstantFloat(val.c_str(), type);
+    }
 }
 
 gen::Value

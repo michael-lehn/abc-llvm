@@ -64,7 +64,9 @@ cast(Constant val, const abc::Type *fromType, const abc::Type *toType)
     assert(llvmContext);
     auto val_ = llvm::dyn_cast<llvm::Value>(val);
     assert(val_);
-    return llvm::dyn_cast<llvm::Constant>(cast(val_, fromType, toType));
+    auto *c = llvm::dyn_cast<llvm::Constant>(cast(val_, fromType, toType));
+    assert(c);
+    return c;
 }
 
 } // namespace gen

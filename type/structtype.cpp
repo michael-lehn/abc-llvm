@@ -35,12 +35,6 @@ StructType::createIncomplete(UStr name)
     return &structSet.at(id);
 }
 
-std::size_t
-StructType::id() const
-{
-    return id_;
-}
-
 const Type *
 StructType::getConst() const
 {
@@ -51,6 +45,31 @@ const Type *
 StructType::getConstRemoved() const
 {
     return &structSet.at(id());
+}
+
+std::size_t
+StructType::id() const
+{
+    return id_;
+}
+
+std::size_t
+StructType::aggregateSize() const
+{
+    assert(!memberIndex_.empty());
+    return memberIndex_.back() + 1;
+}
+
+const Type *
+StructType::aggregateType(std::size_t index) const
+{
+    for (std::size_t i = 0; i < memberIndex_.size(); ++i) {
+	if (memberIndex_[i] == index) {
+	    return memberType_[i];
+	}
+    }
+    assert(0);
+    return nullptr;
 }
 
 bool
@@ -100,6 +119,17 @@ StructType::memberIndex() const
     return memberIndex_;
 }
 
+std::optional<std::size_t>
+StructType::memberIndex(UStr name) const
+{
+    for (std::size_t i = 0; i < memberName_.size(); ++i) {
+	if (name == memberName_[i]) {
+	    return memberIndex_[i];
+	}
+    }
+    return std::nullopt;
+}
+
 const std::vector<const Type *> &
 StructType::memberType() const
 {
@@ -114,36 +144,6 @@ StructType::memberType(UStr name) const
 	    return memberType_[i];
 	}
     }
-    return nullptr;
-}
-
-std::optional<std::size_t>
-StructType::memberIndex(UStr name) const
-{
-    for (std::size_t i = 0; i < memberName_.size(); ++i) {
-	if (name == memberName_[i]) {
-	    return memberIndex_[i];
-	}
-    }
-    return std::nullopt;
-}
-
-std::size_t
-StructType::aggregateSize() const
-{
-    assert(!memberIndex_.empty());
-    return memberIndex_.back() + 1;
-}
-
-const Type *
-StructType::aggregateType(std::size_t index) const
-{
-    for (std::size_t i = 0; i < memberIndex_.size(); ++i) {
-	if (memberIndex_[i] == index) {
-	    return memberType_[i];
-	}
-    }
-    assert(0);
     return nullptr;
 }
 

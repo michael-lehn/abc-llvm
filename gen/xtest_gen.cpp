@@ -41,7 +41,7 @@ someInstructions()
 
     auto left = getConstantInt("1", intType, 10);
     auto right = getConstantInt("2", intType, 10);
-    returnInstruction(instruction(gen::ADD, left, right));
+    returnInstruction(instruction(gen::ADD, left, right), intType);
 }
 
 const abc::Type *

@@ -1,3 +1,4 @@
+#include <iostream>
 #include <set>
 #include <sstream>
 
@@ -50,6 +51,9 @@ FunctionType::create(const Type *ret, std::vector<const Type *> &&param,
 	if (i + 1 < param.size()) {
 	    ss << ", ";
 	}
+    }
+    if (varg) {
+	ss << ", ...";
     }
     ss << "): " << ret;
     return create(ret, std::move(param), varg, false, UStr::create(ss.str()));

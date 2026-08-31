@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "arraytype.hpp"
+#include "floattype.hpp"
 #include "integertype.hpp"
 #include "pointertype.hpp"
 #include "type.hpp"
@@ -78,6 +79,10 @@ Type::common(const Type *ty1, const Type *ty2)
 	if (equals(ty1->refType(), ty2->refType())) {
 	    common = PointerType::create(ty1->refType());
 	}
+    } else if (ty1->isFloat() && ty2->isDouble()) {
+	common = FloatType::createDouble();
+    } else if (ty1->isDouble() && ty2->isFloat()) {
+	common = FloatType::createDouble();
     } else if (ty1->isFloatType() && ty2->isInteger()) {
 	common = ty1;
     } else if (ty1->isInteger() && ty2->isInteger()) {
@@ -235,28 +240,38 @@ Type::isScalar() const
 std::size_t
 Type::aggregateSize() const
 {
-    if (isScalar()) {
-	return 1;
-    } else if (isArray()) {
-	return dim();
+    if (isAlias()) {
+	return getUnalias()->aggregateSize();
     } else {
-	assert(0);
-	return 0;
+
+	if (isScalar()) {
+	    return 1;
+	} else if (isArray()) {
+	    return dim();
+	} else {
+	    std::cerr << "type = " << this << "\n";
+	    assert(0);
+	    return 0;
+	}
     }
 }
 
 const Type *
 Type::aggregateType(std::size_t index) const
 {
-    assert(isUnboundArray() || index < aggregateSize());
-
-    if (isScalar()) {
-	return this;
-    } else if (isArray()) {
-	return refType();
+    if (isAlias()) {
+	return getUnalias()->aggregateType(index);
     } else {
-	assert(0);
-	return nullptr;
+	assert(isUnboundArray() || index < aggregateSize());
+
+	if (isScalar()) {
+	    return this;
+	} else if (isArray()) {
+	    return refType();
+	} else {
+	    assert(0);
+	    return nullptr;
+	}
     }
 }
 

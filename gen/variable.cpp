@@ -114,6 +114,7 @@ localVariableDefinition(const char *ident, const abc::Type *varType)
     assert(functionBuildingInfo.fn);
 
     auto llvmVarType = convert(varType);
+
     if (localVariable.contains(ident)) {
 	auto val = localVariable.at(ident);
 	assert(val->getAllocatedType() == llvmVarType);
@@ -257,21 +258,33 @@ pointerToIndex(const abc::Type *type, Value pointer, std::size_t index)
 Value
 fetch(Value addr, const abc::Type *type)
 {
-    assert(llvmBuilder);
-    assert(type);
-    assert(functionBuildingInfo.fn);
-    reachableCheck();
-    auto llvmType = convert(type);
-    return llvmBuilder->CreateLoad(llvmType, addr);
+    return fetch(addr, convert(type), getAlignof(type));
 }
 
 Value
-store(Value val, Value addr)
+fetch(Value addr, llvm::Type *llvmType, llvm::Align align)
 {
     assert(llvmBuilder);
     assert(functionBuildingInfo.fn);
     reachableCheck();
-    llvmBuilder->CreateStore(val, addr);
+    // return llvmBuilder->CreateLoad(llvmType, addr);
+    return llvmBuilder->CreateAlignedLoad(llvmType, addr, align);
+}
+
+Value
+store(Value val, Value addr, const abc::Type *type)
+{
+    return store(val, addr, getAlignof(type));
+}
+
+Value
+store(Value val, Value addr, llvm::Align align)
+{
+    assert(llvmBuilder);
+    assert(functionBuildingInfo.fn);
+    reachableCheck();
+    // llvmBuilder->CreateStore(val, addr);
+    llvmBuilder->CreateAlignedStore(val, addr, align);
     return val;
 }
 

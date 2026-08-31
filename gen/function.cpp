@@ -1,4 +1,5 @@
 #include <cstring>
+#include <iostream>
 
 #ifdef SUPPORT_SOLARIS
 // has to be included as first llvm header
@@ -8,6 +9,7 @@
 #include "llvm/IR/Verifier.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
+#include "abi.hpp"
 #include "constant.hpp"
 #include "function.hpp"
 #include "gen.hpp"
@@ -32,30 +34,7 @@ llvm::Function *
 functionDeclaration(const char *ident, const abc::Type *fnType,
                     bool externalLinkage)
 {
-    assert(llvmContext);
-    if (auto fn = llvmModule->getFunction(ident)) {
-	// already declared
-	/*
-	 * Whether a function is external or not is specified by its
-	 * first declaration. Like in C:
-	 * - An extern declaration can be followed by a static declaration
-	 * - A static static declaration *can not* be followed by an extern
-	 *   declaration.
-	 */
-	assert(!externalLinkage ||
-	       fn->getLinkage() == llvm::Function::ExternalLinkage);
-	return fn;
-    }
-
-    auto linkage = externalLinkage || !strcmp(ident, "main")
-                       ? llvm::Function::ExternalLinkage
-                       : llvm::Function::InternalLinkage;
-
-    auto llvmFnType = llvm::dyn_cast<llvm::FunctionType>(convert(fnType));
-
-    auto fn =
-        llvm::Function::Create(llvmFnType, linkage, ident, llvmModule.get());
-    return fn;
+    return abi::lowerFunctionDeclaration(ident, fnType, externalLinkage);
 }
 
 void
@@ -85,21 +64,18 @@ functionDefinitionBegin(const char *ident, const abc::Type *fnType,
     functionBuildingInfo.retVal = nullptr;
     functionBuildingInfo.bbClosed = false;
 
-    for (std::size_t i = 0; i < param.size(); ++i) {
-	// std::cerr << ">> i = " << i << "\n";
-	auto addr = localVariableDefinition(param[i], fnType->paramType()[i]);
-	store(fn->getArg(i), addr);
-    }
+    abi::reconstructParameters(fn, fnType, param);
 
     if (!retType->isVoid()) {
 	functionBuildingInfo.retVal =
 	    localVariableDefinition(".retVal", retType);
 	if (functionBuildingInfo.isMain) {
-	    store(getConstantInt("0", retType), functionBuildingInfo.retVal);
+	    store(getConstantInt("0", retType), functionBuildingInfo.retVal,
+	          retType);
 	} else {
 	    auto llvmRetType = convert(retType);
 	    store(llvm::UndefValue::get(llvmRetType),
-	          functionBuildingInfo.retVal);
+	          functionBuildingInfo.retVal, retType);
 	}
     }
 }
@@ -170,10 +146,7 @@ Value
 functionCall(Value fnAddr, const abc::Type *fnType,
              const std::vector<Value> &arg)
 {
-    assert(fnType);
-    auto llvmFnType = llvm::dyn_cast<llvm::FunctionType>(convert(fnType));
-    assert(llvmFnType);
-    return llvmBuilder->CreateCall(llvmFnType, fnAddr, arg);
+    return abi::lowerFunctionCall(fnAddr, fnType, arg);
 }
 
 } // namespace gen
