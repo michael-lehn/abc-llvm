@@ -15,6 +15,19 @@ ABC is a small teaching language designed to make programming and computers easi
   consistent grammar and semantics. This makes it significantly easier to learn
   than C while preserving the concepts that matter.
 
+**Requirements:** LLVM 17–22 are supported and tested.
+
+## Contents
+
+- [ABC: A Better C](#abc-a-better-c)
+- [Examples](#examples)
+- [Installation](#installation)
+- [Raylib Examples](#raylib-examples)
+- [A Compiler Written in ABC](#a-compiler-written-in-abc)
+- [Language Description](#language-description)
+- [Usage](#usage)
+
+
 # ABC: A Better C
 
 **ABC** was designed as a modern educational programming language, continuing
@@ -346,6 +359,56 @@ preprocessor. But using the preprocessor should not be attractive. If you want
 to use symbols for literals use languages features, e.g. enum constants or
 constant expressions. Intead of macro functions use inline functions. Don't use
 a preprocessor.
+
+## Raylib Examples
+
+The [`raylib-examples`](raylib-examples/) directory contains a small collection
+of ABC programs using [raylib](https://www.raylib.com/).
+
+If ABC is installed, the examples can simply be built with:
+
+```sh
+cd raylib-examples
+make
+```
+
+The current examples are ports of selected C examples from the raylib example
+collection. Translating these examples from C to ABC is mostly mechanical work
+and can easily be done by hand or with a small script. Contributions adding
+more examples are very welcome.
+
+### ABI Support
+
+Originally, ABC was developed for teaching purposes and did not need to
+interoperate with external C libraries. Using raylib is a practical test case
+for adding such interoperability and, in particular, for implementing
+target-specific C ABI support in the compiler.
+
+Currently, the raylib examples are supported only on x86-64. This is not
+intended to be a fundamental limitation of ABC: the ABI layer is designed so
+that support for additional target architectures can be added independently.
+
+ARM support is planned next and should follow soon. Contributions implementing
+or testing additional ABIs are very welcome.
+
+## A Compiler Written in ABC
+
+ABC was originally developed for my course
+*Introduction to High Performance Computing*. As part of the course, students
+write their own small compiler, **not-abc**, in ABC itself.
+
+The [`not-abc`](not-abc/) directory contains the compiler developed by the
+students during the semester and used for bootstrapping. If ABC is installed,
+it can simply be built with:
+
+```sh
+cd not-abc
+make
+```
+
+The separate [not-abc repository](https://github.com/michael-lehn/not-abc)
+contains more information about the project, including the complete course
+material, the compiler implementation, and the bootstrapping process.
 
 # Language Description
 
