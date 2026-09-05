@@ -341,6 +341,10 @@ of ABC programs using [raylib](https://www.raylib.com/).
 <img width="822" height="492" alt="Screenshot 2026-09-05 at 05 33 54" src="https://github.com/user-attachments/assets/6b6bf7c1-57f8-4b48-9e3e-492e877e8a70" />
 
 
+
+<img width="1105" height="583" alt="Screenshot 2026-09-05 at 08 00 29" src="https://github.com/user-attachments/assets/06e1aa10-1957-48a8-a53e-a0c5d9fc68e3" />
+
+
 If ABC is installed, the examples can simply be built with:
 
 ```sh
