@@ -201,10 +201,8 @@ For comparison, these declarations in C:
 ```
 are equivalent to these declarations in ABC:
 
-```abc
-    a: array[10] of -> int;
-    b: -> array[10] of int;
-```
+<img width="261" height="46" alt="Screenshot 2026-09-05 at 05 14 11" src="https://github.com/user-attachments/assets/7d62422e-0d2b-4744-a34c-52b95ec97ad6" />
+
 
 In both cases, one declares
 
@@ -229,11 +227,9 @@ signifies that while technically it's still possible to modify the value (if
 one really insists), the declaration clearly states the intent to access it in
 a read-only manner:
 
-```abc
-    c: array[10] of -> readonly int;
-    d: array[10] of readonly -> int;
-    e: array[10] of readonly -> readonly int;
-```
+<img width="428" height="68" alt="Screenshot 2026-09-05 at 05 13 03" src="https://github.com/user-attachments/assets/b9372347-363e-47bd-b5c2-23ae229100eb" />
+
+
 Here, we have declared
 
 - `c` as an array of 10 elements, where each element is a pointer to a readonly integer
@@ -265,13 +261,14 @@ function `someFunction` has a parameter `f` which is a function pointer with
 the same type declared above.
 
 In ABC, you just have one way to declare such a function pointer:
-```abc
-f: -> fn();
-```
+
+<img width="151" height="32" alt="Screenshot 2026-09-05 at 05 16 08" src="https://github.com/user-attachments/assets/a62e5b73-bb52-4563-b4da-5ecb1614a5a0" />
+
+
 Hence the declaration of `someFunction` becomes
-```abc
-fn someFunction(f: -> fn());
-```
+
+<img width="299" height="25" alt="Screenshot 2026-09-05 at 05 17 50" src="https://github.com/user-attachments/assets/cefdfa73-6f75-4b4f-a2d3-3c35f040e467" />
+
 
 Let us consider some more exciting examples:
 
@@ -283,23 +280,17 @@ Let us consider some more exciting examples:
   pointer to a function with one integer parameter and an integer return type.
 
 Got the idea? Then you might already guess that
-```abc
-foo: -> fn(sel: int, value: int): -> fn(value: int): -> int;
-```
+
+<img width="579" height="27" alt="Screenshot 2026-09-05 at 05 19 23" src="https://github.com/user-attachments/assets/21d7e29c-cbd6-4179-896e-98e58c04c7dd" />
+
+
 declares a function pointer `foo` to a function with two integer parameters
 which returns a pointer to a function that has one integer parameter and
 returns a pointer to an integer. Now declare this in C without typedefs ;-)
 
 # Examples
 
-```c
-@ <stdio.hdr>
-
-fn main()
-{
-    printf("hello, world!\n");
-}
-```
+<img width="319" height="119" alt="Screenshot 2026-09-05 at 05 21 13" src="https://github.com/user-attachments/assets/1be9e28f-880a-4739-be34-bbcad7f62ca1" />
 
 The worst part of C is the  C preprocessor (CPP). Hence it is greate that new C
 like languages are avoiding the preprocessor. But because ABC is just "A Better
@@ -312,14 +303,9 @@ Of course, the header file `stdio.hdr` does not contain the implementation of
 `printf` but just a declaration for it. From the preprocessor the compiler gets
 the following code:
 
-```c
-extern fn printf(fmt: -> char, ...);
+<img width="369" height="121" alt="Screenshot 2026-09-05 at 05 22 41" src="https://github.com/user-attachments/assets/f56b4ab3-4c93-4e04-bf11-7ad8d335d156" />
 
-fn main()
-{
-    printf("hello, world!\n");
-}
-```
+
 Compared to using CPP no include guards are required when the ABC preprocessor
 is used. Every file gets included only once (like using `@pragma once` with
 CPPs that support this pragma). 
@@ -327,32 +313,17 @@ CPPs that support this pragma).
 For teaching purposes (i.e. for showing the ugly side of C), consider this
 example: 
 
-```c
-@define X 42
-
-fn main()
-{
-    local X: int = 42;
-}
-```
+<img width="246" height="115" alt="Screenshot 2026-09-05 at 05 24 27" src="https://github.com/user-attachments/assets/0cd86f67-0ace-41a7-b652-a791a9622dcb" />
 
 Here the ABC compiler receives the following code from the preprocessor:
 
-```c
-fn main()
-{
-    local 42: int = 42;
-}
-```
+<img width="254" height="79" alt="Screenshot 2026-09-05 at 05 26 22" src="https://github.com/user-attachments/assets/c6e53797-5929-4c41-af20-36ed7f19ad36" />
 
 Of course this triggers an error from the compiler. But it is hard to see from
 the error message the actual problem:
 
-```
-    local X: int = 42;
-          ^^
-macro.abc:5.11-5.12: error: expected local variable declaration list
-```
+<img width="628" height="53" alt="Screenshot 2026-09-05 at 05 29 24" src="https://github.com/user-attachments/assets/9f9073d5-bcc4-40e6-b3ea-054aafc7d4c7" />
+
 
 Sure, the error message actually could show the code the compiler got from the
 preprocessor. But using the preprocessor should not be attractive. If you want
@@ -364,6 +335,11 @@ a preprocessor.
 
 The [`raylib-examples`](raylib-examples/) directory contains a small collection
 of ABC programs using [raylib](https://www.raylib.com/).
+
+<img width="673" height="291" alt="Screenshot 2026-09-05 at 05 31 50" src="https://github.com/user-attachments/assets/80897c08-b127-475e-a369-ec3725577b04" />
+
+<img width="822" height="492" alt="Screenshot 2026-09-05 at 05 33 54" src="https://github.com/user-attachments/assets/6b6bf7c1-57f8-4b48-9e3e-492e877e8a70" />
+
 
 If ABC is installed, the examples can simply be built with:
 
