@@ -1,4 +1,5 @@
 @ <stdio.hdr>
+@ <stdlib.hdr>
 @ "lexer.hdr"
 
 // -- internal: only available within this translation unit
@@ -9,9 +10,6 @@ global updateVal: bool;
 global lengthVal: size_t;
 global internalVal: ->char;
 global internalValCapacity: u64;
-
-// hack: should be declared in stdlib.hdr!
-extern fn realloc(ptr: ->void, size: size_t): ->void;
 
 fn nextCh()
 {
