@@ -787,6 +787,10 @@ AstLocalVar::print(int indent) const
 void
 AstLocalVar::codegen()
 {
+    if (!gen::bbOpen()) {
+	// TODO: generate wanring/error?
+	return;
+    }
     for (const auto &item : declList->node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
