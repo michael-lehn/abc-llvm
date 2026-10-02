@@ -238,6 +238,15 @@ AstFuncDef::AstFuncDef(lexer::Token fnName, const Type *fnType)
     assert(addDecl.first);
     if (fnName.val == UStr::create("main")) {
 	addDecl.first->setExternalLinkage();
+	if (!fnType->retType()->isVoid() && !fnType->retType()->isInteger()) {
+	    error::location(fnName.loc);
+	    error::out() << error::setColor(error::BOLD) << fnName.loc << ": "
+	                 << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD)
+	                 << "return type of 'main' has to be 'int'\n"
+	                 << error::setColor(error::NORMAL);
+	    error::fatal();
+	}
     } else {
 	addDecl.first->setLinkage();
     }

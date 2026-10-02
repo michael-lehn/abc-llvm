@@ -13,7 +13,6 @@ global internalValCapacity: u64;
 
 fn nextCh()
 {
-    local foo: i64 = 5;
     if (updateVal) {
 	if (lengthVal + 1 > internalValCapacity) {
 	    internalValCapacity = 2 * internalValCapacity + 1;
