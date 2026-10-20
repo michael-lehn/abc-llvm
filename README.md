@@ -17,6 +17,12 @@ ABC is a small teaching language designed to make programming and computers easi
 
 **Requirements:** LLVM 17–22 are supported and tested.
 
+**A note on the name:** My ABC is unrelated to the ABC language developed at CWI,
+which was originally called B—also unrelated to Bell Labs’ B, the predecessor of C.
+My ABC shares a taste for small, close-to-the-machine languages with Bell Labs’ B,
+and continues CWI’s tradition of naming a language after an unrelated one. Any
+historical continuity is purely alphabetical.
+
 ## Contents
 
 - [ABC: A Better C](#abc-a-better-c)
