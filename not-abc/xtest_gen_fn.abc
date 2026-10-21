@@ -5,9 +5,9 @@ fn main()
     genInitCode();
 
     // fn sum(a, b) {
+    genFuncDefBegin(UStrCreate("sum"));
     genFuncDefParam(UStrCreate("a"));
     genFuncDefParam(UStrCreate("b"));
-    genFuncDefBegin(UStrCreate("sum"));
 
     //     a + b;
     local a: GenReg = genFetch(genLoadAddr(UStrCreate("a")));

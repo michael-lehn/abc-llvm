@@ -5,11 +5,12 @@ RANLIB := ranlib
 build.dir := build/
 abc-std-lib := $(build.dir)libabc.a
 
-llvm-config ?= llvm-config
 
 include config/ar
 include config/cxx_and_llvm
 include config/prefix
+
+llvm-config ?= llvm-config
 
 ABC := $(build.dir)abc/abc
 ABCFLAGS := -I abc-include

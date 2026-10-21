@@ -116,12 +116,12 @@ fn printExprTree(expr: ->Expr)
 	    case EXPR_DIV: printf("/ "); break;                                   
 	    case EXPR_ASSIGN: printf("{=} "); break;
 	    case EXPR_MOD: printf("mod"); break;
-	    case EXPR_EQUAL: printf("=="); break;
-	    case EXPR_NOT_EQUAL: printf("!="); break;
-	    case EXPR_LESS: printf("<"); break;
-	    case EXPR_LESS_EQUAL: printf("<="); break;
-	    case EXPR_GREATER: printf(">"); break;
-	    case EXPR_GREATER_EQUAL: printf(">="); break;
+	    case EXPR_EQUAL: printf("{==}"); break;
+	    case EXPR_NOT_EQUAL: printf("{!=}"); break;
+	    case EXPR_LESS: printf("{<}"); break;
+	    case EXPR_LESS_EQUAL: printf("{<=}"); break;
+	    case EXPR_GREATER: printf("{>}"); break;
+	    case EXPR_GREATER_EQUAL: printf("{>=}"); break;
 	    case EXPR_LOGICAL_AND: printf("and"); break;
 	    case EXPR_LOGICAL_OR: printf("or"); break;
 	    default: assert(0);                                                  
