@@ -1,0 +1,10 @@
+// TEST: T0002
+// EXIT: 134
+// A failing assert aborts the program (SIGABRT).
+
+fn main(): int
+{
+    local x: int = 1;
+    assert(x == 2);
+    return 0;
+}

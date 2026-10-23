@@ -1,0 +1,13 @@
+// TEST: T0090
+// The type of an enum has to be an integer type.
+// ERROR: integer|type
+
+enum E : double
+{
+    A,
+};
+
+fn main(): int
+{
+    return 0;
+}

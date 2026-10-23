@@ -1,0 +1,31 @@
+// TEST: T0039
+// Integer literals: decimal, octal, hexadecimal, character literals and
+// literals with type suffix.
+
+fn main(): int
+{
+    assert(10 == 012);
+    assert(10 == 0xa);
+    assert(255 == 0xFF);
+    assert(0 == 00);
+    assert('A' == 65);
+    assert('\n' == 10);
+    assert('\0' == 0);
+    assert('\x41' == 'A');
+
+    // the type of unsuffixed literals is an open question (design/literal_types)
+    local big: i64 = 4294967296;
+    assert(big / 2 == 2147483648);
+
+    // type suffix
+    assert(sizeof(1u8) == 1);
+    assert(sizeof(1u64) == 8);
+    assert(sizeof(1i16) == 2);
+    local t: u8 = 255u8;
+    assert(t == 255);
+
+    // boolean literals
+    assert(true == 1);
+    assert(false == 0);
+    return 0;
+}

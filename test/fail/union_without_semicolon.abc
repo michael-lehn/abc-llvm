@@ -1,0 +1,17 @@
+// TEST: T0137
+// A union section inside a struct is terminated by '};'.
+// ERROR: expected ';'
+
+struct V
+{
+    k: int;
+    union {
+	i: int;
+	f: float;
+    }
+};
+
+fn main(): int
+{
+    return 0;
+}

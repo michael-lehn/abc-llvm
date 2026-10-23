@@ -1,0 +1,29 @@
+// TEST: T0069
+// Unsigned integers wrap around modulo 2^n.
+
+fn main(): int
+{
+    local a: u8 = 255;
+    a = a + 1;
+    assert(a == 0);
+    a = a - 1;
+    assert(a == 255);
+
+    local b: u16 = 65535;
+    b++;
+    assert(b == 0);
+
+    local c: u32 = 0;
+    c--;
+    assert(c == 4294967295);
+
+    local d: u64 = 0;
+    d = d - 1;
+    assert(d == 18446744073709551615u64);
+
+    // unsigned division and remainder
+    local e: u32 = 4294967295;
+    assert(e / 2 == 2147483647);
+    assert(e % 10 == 5);
+    return 0;
+}

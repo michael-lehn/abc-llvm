@@ -1,0 +1,17 @@
+// TEST: T0021
+// XFAIL: #0006 &global is rejected as non-constant in global initializers
+// Regression of commit 352a407: global variables get no linkage while parsing,
+// so Identifier::hasConstantAddress() is false (cf. misc/global_ptr.abc).
+// Global pointer initialized with the address of a global variable.
+
+global value: int = 42;
+global arr: array[3] of int = {1, 2, 3};
+global p: -> int = &value;
+global q: -> int = &arr[1];
+
+fn main(): int
+{
+    assert(*p == 42);
+    assert(*q == 2);
+    return 0;
+}

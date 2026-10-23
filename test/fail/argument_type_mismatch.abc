@@ -1,0 +1,19 @@
+// TEST: T0073
+// Argument that can not be converted to the parameter type.
+// ERROR: convert
+
+struct S
+{
+    x: int;
+};
+
+fn f(a: int): int
+{
+    return a;
+}
+
+fn main(): int
+{
+    local s: S;
+    return f(s);
+}

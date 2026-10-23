@@ -1,0 +1,9 @@
+// TEST: T0072
+// The address of a value that is not an lvalue.
+// ERROR: can not be applied
+
+fn main(): int
+{
+    local p: -> int = &(1 + 2);
+    return 0;
+}

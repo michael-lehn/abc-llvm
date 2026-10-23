@@ -1,0 +1,11 @@
+// TEST: T0049
+// XFAIL: #0004 pointer -= integer is rejected (pointer += integer is accepted)
+
+fn main(): int
+{
+    local a: array[5] of int = {10, 20, 30, 40, 50};
+    local p: -> int = &a[4];
+    p -= 2;
+    assert(*p == 30);
+    return 0;
+}

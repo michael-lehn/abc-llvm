@@ -1,0 +1,10 @@
+// TEST: T0103
+// Increment of a readonly variable.
+// ERROR: read-only
+
+fn main(): int
+{
+    local x: readonly int = 1;
+    x++;
+    return 0;
+}

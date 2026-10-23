@@ -1,0 +1,9 @@
+// TEST: T0108
+// Reserved keywords can not be used as identifiers.
+// ERROR: expected
+
+fn main(): int
+{
+    local while: int = 1;
+    return 0;
+}

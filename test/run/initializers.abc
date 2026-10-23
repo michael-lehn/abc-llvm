@@ -1,0 +1,57 @@
+// TEST: T0035
+// Initializers: scalars, arrays (partial initialization fills with zero),
+// designators, nested structs, multiple variables, string literals.
+
+struct Point
+{
+    x: int;
+    y: int;
+};
+
+struct Line
+{
+    from: Point;
+    to: Point;
+    name: array[8] of char;
+};
+
+fn main(): int
+{
+    local partial: array[5] of int = {1, 2};
+    assert(partial[0] == 1 && partial[1] == 2);
+    assert(partial[2] == 0 && partial[4] == 0);
+
+    local designated: array[5] of int = {[3] = 9, 1, [0] = 4};
+    assert(designated[0] == 4 && designated[1] == 0);
+    assert(designated[3] == 9 && designated[4] == 1);
+
+    local p: Point = {.y = 2};
+    assert(p.x == 0 && p.y == 2);
+    local q: Point = {.y = 5, .x = 6};
+    assert(q.x == 6 && q.y == 5);
+
+    local l: Line = {{1, 2}, {3, 4}, "line"};
+    assert(l.from.y == 2 && l.to.x == 3);
+    assert(l.name[0] == 'l' && l.name[3] == 'e' && l.name[4] == 0);
+
+    // several variables with one type
+    local a, b: int = {10, 20};
+    assert(a == 10 && b == 20);
+
+    local m: array[2][2] of int = {{1}, {3, 4}};
+    assert(m[0][0] == 1 && m[0][1] == 0 && m[1][1] == 4);
+
+    // initializer may use other variables
+    local sum: int = a + b;
+    assert(sum == 30);
+
+    // trailing comma
+    local t: array[2] of int = {5, 6,};
+    assert(t[1] == 6);
+
+    // compound literals as values
+    local r: Point;
+    r = Point{7, 8};
+    assert(r.x == 7 && r.y == 8);
+    return 0;
+}

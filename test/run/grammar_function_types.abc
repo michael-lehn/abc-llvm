@@ -1,0 +1,39 @@
+// TEST: T0029
+// Function pointer declarations from the README: parameter names are
+// optional and ignored.
+
+fn add(a: int, b: int): int
+{
+    return a + b;
+}
+
+fn nop(x: int)
+{
+}
+
+global result: int = 42;
+
+fn retPtr(x: int): -> int
+{
+    return &result;
+}
+
+fn pick(a: int, b: int): -> fn(:int): -> int
+{
+    return &retPtr;
+}
+
+fn main(): int
+{
+    local g: -> fn(:int) = &nop;
+    local g2: -> fn(value: int) = &nop;
+    g = g2;
+    g->(1);
+
+    local h: -> fn(value: int, :int): int = &add;
+    assert(h->(2, 3) == 5);
+
+    local foo: -> fn(:int, :int): -> fn(:int): -> int = &pick;
+    assert(*foo->(1, 2)->(3) == 42);
+    return 0;
+}

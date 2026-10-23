@@ -1,0 +1,30 @@
+// TEST: T0059
+// sizeof for types and expressions; the operand of sizeof is not evaluated.
+
+struct S
+{
+    a: i32;
+    b: i32;
+    c: i64;
+};
+
+fn main(): int
+{
+    assert(sizeof(i8) == 1 && sizeof(u8) == 1 && sizeof(char) == 1);
+    assert(sizeof(i16) == 2 && sizeof(u16) == 2);
+    assert(sizeof(i32) == 4 && sizeof(u32) == 4 && sizeof(int) == 4);
+    assert(sizeof(i64) == 8 && sizeof(u64) == 8);
+    assert(sizeof(float) == 4 && sizeof(double) == 8);
+    assert(sizeof(size_t) == sizeof(-> void));
+    assert(sizeof(-> fn()) == sizeof(-> int));
+    assert(sizeof(S) == 16);
+    assert(sizeof(array[3] of S) == 48);
+    assert(sizeof(array[2][5] of u16) == 20);
+
+    local x: int = 1;
+    local n: size_t = sizeof(x++);
+    assert(n == 4);
+    assert(x == 1);
+    assert(sizeof(x + 1i64) == 8);
+    return 0;
+}

@@ -1,0 +1,10 @@
+// TEST: T0095
+// An extern function declaration requires a name.
+// ERROR: identifier
+
+extern fn (x: int): int;
+
+fn main(): int
+{
+    return 0;
+}

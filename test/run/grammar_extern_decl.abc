@@ -1,0 +1,15 @@
+// TEST: T0027
+// Extern declarations of functions and variables, including an extern
+// variable of unbound array type (see grammar_extern_decl.c).
+
+extern fn ext_sum(a: -> readonly int, n: int): int;
+extern ext_table: array[] of int;
+extern ext_count: int, ext_scale: double;
+
+fn main(): int
+{
+    assert(ext_count == 4);
+    assert(ext_sum(ext_table, ext_count) == 10);
+    assert(ext_scale == 0.5);
+    return 0;
+}

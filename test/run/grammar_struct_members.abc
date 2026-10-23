@@ -1,0 +1,33 @@
+// TEST: T0032
+// Struct member declarations: several names with one type, nested struct
+// declarations, union sections terminated by '};'.
+
+struct Outer
+{
+    x, y: int;
+    first, second: struct Inner {
+	a: int;
+	b: int;
+    };
+    union {
+	i: u32;
+	f: float;
+    };
+    last: int;
+};
+
+fn main(): int
+{
+    local o: Outer;
+    o.x = 1;
+    o.y = 2;
+    o.second.b = 3;
+    o.last = 4;
+    // the nested struct type can be used on its own
+    local in: Inner = o.second;
+    assert(in.b == 3);
+    assert(o.x + o.y + o.last == 7);
+    o.i = 0;
+    assert(o.f == 0.0);
+    return 0;
+}

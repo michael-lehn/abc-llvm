@@ -1,0 +1,16 @@
+// TEST: T0026
+// Expression lists: operands are evaluated from left to right, the value is
+// the value of the last expression.
+
+fn main(): int
+{
+    local x: int = 0;
+    local y: int = (x = 3, x + 4);
+    assert(x == 3 && y == 7);
+
+    local a: int, b: int;
+    for (a = 0, b = 10; a < b; a++, b--) {
+    }
+    assert(a == 5 && b == 5);
+    return 0;
+}

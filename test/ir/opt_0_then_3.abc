@@ -1,0 +1,15 @@
+// TEST: T0182
+// ARGS: -O0 -O3
+// FUNCTION: keep
+// SIZE-ATTRIBUTES: none
+// OPTIMIZED: yes
+// -O3 after -O0 optimizes.
+// The last optimization option takes precedence (regression test for #0034).
+
+extern fn keep(x: int): int;
+
+fn keep(x: int): int
+{
+    local y: int = x * 2;
+    return y + 1;
+}

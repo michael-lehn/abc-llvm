@@ -1,0 +1,26 @@
+// TEST: T0060
+// Static local variables keep their value between calls and are initialized
+// only once.
+
+fn next(): int
+{
+    static n: int = 10;
+    return n++;
+}
+
+fn other(): int
+{
+    // same name, different variable
+    static n: int = 100;
+    return n++;
+}
+
+fn main(): int
+{
+    assert(next() == 10);
+    assert(next() == 11);
+    assert(other() == 100);
+    assert(next() == 12);
+    assert(other() == 101);
+    return 0;
+}

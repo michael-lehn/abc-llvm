@@ -1,0 +1,13 @@
+// TEST: T0132
+// Function call with too many arguments.
+// ERROR: too many arguments
+
+fn f(a: int): int
+{
+    return a;
+}
+
+fn main(): int
+{
+    return f(1, 2);
+}

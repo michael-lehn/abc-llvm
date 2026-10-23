@@ -1,0 +1,16 @@
+// TEST: T0149
+// DESIGN: #0030 undocumented type names short, ushort, sshort
+// OBSERVED: ACCEPTED
+// Records current behavior: all three are unsigned 32-bit types.
+
+fn main(): int
+{
+    local a: short = 0;
+    local b: sshort = 0;
+    local c: ushort = 0;
+    assert(sizeof(a) == 4 && sizeof(b) == 4 && sizeof(c) == 4);
+    a = a - 1;
+    b = b - 1;
+    assert(a > 0 && b > 0);
+    return 0;
+}

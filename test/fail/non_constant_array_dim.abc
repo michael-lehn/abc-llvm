@@ -1,0 +1,10 @@
+// TEST: T0116
+// Array dimension that is not a constant expression.
+// ERROR: constant
+
+fn main(): int
+{
+    local n: int = 3;
+    local a: array[n] of int;
+    return 0;
+}

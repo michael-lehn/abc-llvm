@@ -1,0 +1,9 @@
+// TEST: T0109
+// Logical not is not defined for floating point values.
+// ERROR: can not be applied
+
+fn main(): int
+{
+    local f: double = 1.0;
+    return !f;
+}

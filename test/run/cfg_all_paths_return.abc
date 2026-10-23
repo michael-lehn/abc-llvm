@@ -1,0 +1,71 @@
+// TEST: T0163
+// Non-void functions in which every path ends with a return (or never ends)
+// are accepted; the code after the last statement is unreachable.  (Loops
+// with the constant condition true: see design/constant_condition_return.abc)
+
+fn ifElse(x: int): int
+{
+    if (x < 0) {
+	return -1;
+    } else if (x == 0) {
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
+fn switchWithDefault(x: int): int
+{
+    switch (x) {
+    case 1:
+	return 10;
+    case 2:
+	return 20;
+    default:
+	return 0;
+    }
+}
+
+fn infiniteFor(x: int): int
+{
+    for (local i: int = 0;; ++i) {
+	if (i == x) {
+	    return i * 2;
+	}
+    }
+}
+
+fn doWhileReturn(x: int): int
+{
+    do {
+	return x;
+    } while (true);
+}
+
+fn gotoLoop(x: int): int
+{
+    local i: int = 0;
+label loop:
+    if (i == x) {
+	return i;
+    }
+    i++;
+    goto loop;
+}
+
+// never called: a function without return that never terminates
+fn forever(): int
+{
+    for (;;) {
+    }
+}
+
+fn main(): int
+{
+    assert(ifElse(-5) == -1 && ifElse(0) == 0 && ifElse(5) == 1);
+    assert(switchWithDefault(2) == 20 && switchWithDefault(7) == 0);
+    assert(infiniteFor(4) == 8);
+    assert(doWhileReturn(9) == 9);
+    assert(gotoLoop(6) == 6);
+    return 0;
+}

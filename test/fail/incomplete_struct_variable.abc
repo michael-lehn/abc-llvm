@@ -1,0 +1,11 @@
+// TEST: T0102
+// A variable of an incomplete struct type.
+// ERROR: incomplete|size
+
+struct Incomplete;
+
+fn main(): int
+{
+    local x: Incomplete;
+    return 0;
+}

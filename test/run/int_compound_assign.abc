@@ -1,0 +1,25 @@
+// TEST: T0038
+// Compound assignment operators and their result values.
+
+fn main(): int
+{
+    local x: int = 10;
+
+    x += 5;
+    assert(x == 15);
+    x -= 20;
+    assert(x == -5);
+    x *= -3;
+    assert(x == 15);
+    x /= 4;
+    assert(x == 3);
+    x %= 2;
+    assert(x == 1);
+
+    // assignments are expressions and right associative
+    local y: int, z: int;
+    y = z = 7;
+    assert(y == 7 && z == 7);
+    assert((x += 2) == 3);
+    return 0;
+}

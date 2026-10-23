@@ -1,0 +1,8 @@
+// TEST: T0101
+// Binary operator without right operand.
+// ERROR: expected
+
+fn main(): int
+{
+    return 1 +;
+}

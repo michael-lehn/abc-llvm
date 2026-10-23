@@ -93,6 +93,16 @@ lib.abc.o := \
 	$(patsubst %,$(build.dir)%,\
 		$(lib.abc:.abc=.o))
 
+test.unit.cpp := \
+	$(wildcard test/unit/*.cpp)
+
+test.unit.exe := \
+	$(patsubst %,$(build.dir)%,\
+		$(test.unit.cpp:.cpp=))
+
+test.unit.d := \
+	$(test.unit.exe:=.d)
+
 $(build.dir)abc/abc.o : abc/abc.cpp \
 		$(build.dir)prefix \
 		$(build.dir)libdir \
@@ -141,7 +151,7 @@ all: $(ABC) $(abc-std-lib) $(prg.cpp.exe) $(lib.cpp.o) $(prg.cpp.o) $(gen) \
 .PHONY: compile_cmd
 compile_cmd:
 	@sh config/compile_commands.sh compile_commands.json $(build.dir) \
-		$(sort $(src.cpp)) -- $(COMPILE.cpp)
+		$(sort $(src.cpp) $(test.unit.cpp)) -- $(COMPILE.cpp)
 
 .PHONY: install
 install:  all | $(PREFIX)/bin/ $(LIBDIR) $(INCLUDEDIR)
@@ -151,6 +161,25 @@ install:  all | $(PREFIX)/bin/ $(LIBDIR) $(INCLUDEDIR)
 	cp $(ABC) $(PREFIX)/bin/
 
 
+#-- tests: unit tests (test/unit), compiler tests (test/run, test/fail,
+#   test/design, test/ir) and tool checks (test/tool), see test/run-tests.sh
+
+$(test.unit.exe:=.o) : | $(build.dir)test/unit/
+
+.PHONY: check
+check: $(ABC) $(abc-std-lib) $(gen) $(test.unit.exe) compile_cmd
+	@ABC=$(ABC) \
+	 ABC_INCLUDE=abc-include \
+	 ABC_BUILD=$(build.dir) \
+	 LLVM_BINDIR=`$(llvm-config) --bindir` \
+	 UNIT_TESTS="$(test.unit.exe)" \
+	 CDB_SOURCES="$(sort $(src.cpp) $(test.unit.cpp))" \
+	 CDB_COMPILER="$(CXX)" \
+	 CDB_BUILD_DIR=$(build.dir) \
+	 LLVM_MAJOR=$(llvm-config.version.major) \
+	 LLVM_INCLUDEDIR=`$(llvm-config) --includedir` \
+	 sh test/run-tests.sh
+
 .PHONY: clang-version
 clang-version:
 	clang++ --version
@@ -159,4 +188,4 @@ clang-version:
 clean:
 	$(RM) -rf $(build.dir)
 
--include $(src.d)
+-include $(src.d) $(test.unit.d)

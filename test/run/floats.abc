@@ -1,0 +1,42 @@
+// TEST: T0016
+// Floating point arithmetic and comparison with float and double, and
+// mixing with integers.
+
+fn main(): int
+{
+    local a: double = 1.5, b: double = 0.25;
+    assert(a + b == 1.75);
+    assert(a - b == 1.25);
+    assert(a * b == 0.375);
+    assert(a / b == 6.0);
+    assert(-a == -1.5);
+    assert(a > b && b < a && a != b);
+
+    local f: float = 0.5;
+    local g: float = f * 4;
+    assert(g == 2.0);
+    assert(sizeof(f) == 4 && sizeof(a) == 8);
+    assert(sizeof(f * a) == 8);
+
+    // integer operand is converted to floating point
+    assert(a * 2 == 3.0);
+    assert(7 / 2.0 == 3.5);
+
+    // literal forms
+    assert(1e3 == 1000.0);
+    assert(2.5e-1 == 0.25);
+    assert(3. == 3.0);
+
+    // compound assignment
+    local c: double = 1;
+    c += 0.5;
+    c *= 4;
+    c -= 1;
+    c /= 5;
+    assert(c == 1.0);
+
+    // increment of float
+    f++;
+    assert(f == 1.5);
+    return 0;
+}

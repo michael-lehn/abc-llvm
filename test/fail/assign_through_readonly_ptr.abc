@@ -1,0 +1,11 @@
+// TEST: T0078
+// Assignment through a pointer to readonly data.
+// ERROR: read-only
+
+fn main(): int
+{
+    local x: int = 1;
+    local p: -> readonly int = &x;
+    *p = 2;
+    return 0;
+}

@@ -1,0 +1,42 @@
+// TEST: T0165
+// Constant conditions make branches unreachable, also inside expressions
+// whose value is merged by a phi node (&&, ||, ?:).
+
+global calls: int;
+
+fn side(v: bool): bool
+{
+    calls++;
+    return v;
+}
+
+fn main(): int
+{
+    calls = 0;
+    local x: int = 1;
+    if (false) {
+	x = 2;
+    }
+    while (false) {
+	x = 3;
+    }
+    for (; false;) {
+	x = 4;
+    }
+    assert(x == 1);
+
+    local f: bool = false && side(true);
+    local t: bool = true || side(false);
+    assert(!f && t && calls == 0);
+
+    local a: int = 5, b: int = 6;
+    local c: int = true ? a : b;
+    local d: int = false then a else b;
+    assert(c == 5 && d == 6);
+
+    // non-constant left operand, constant right operand
+    local y: bool = side(true) && false;
+    local z: bool = side(false) || true;
+    assert(!y && z && calls == 2);
+    return 0;
+}

@@ -1,0 +1,12 @@
+// TEST: T0083
+// continue inside a switch that is not inside a loop.
+// ERROR: continue statement not within
+
+fn main(): int
+{
+    switch (1) {
+    case 1:
+	continue;
+    }
+    return 0;
+}

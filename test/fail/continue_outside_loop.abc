@@ -1,0 +1,9 @@
+// TEST: T0084
+// continue outside of a loop.
+// ERROR: continue statement not within
+
+fn main(): int
+{
+    continue;
+    return 0;
+}

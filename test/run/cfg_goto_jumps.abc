@@ -1,0 +1,51 @@
+// TEST: T0164
+// Forward and backward goto, including a label that is reached only by a
+// backward jump from a block that is generated later, and leaving nested
+// loops with goto.
+
+fn backwardOnly(): int
+{
+    local r: int = 0;
+    goto second;
+label first:
+    r += 10;
+    return r;
+label second:
+    r += 1;
+    goto first;
+}
+
+fn leaveNestedLoops(): int
+{
+    local found: int = -1;
+    for (local i: int = 0; i < 10; ++i) {
+	for (local j: int = 0; j < 10; ++j) {
+	    if (i * j == 12) {
+		found = i * 100 + j;
+		goto out;
+	    }
+	}
+    }
+label out:
+    return found;
+}
+
+fn countDown(n: int): int
+{
+    local steps: int = 0;
+label top:
+    if (n > 0) {
+	n--;
+	steps++;
+	goto top;
+    }
+    return steps;
+}
+
+fn main(): int
+{
+    assert(backwardOnly() == 11);
+    assert(leaveNestedLoops() == 206);
+    assert(countDown(5) == 5);
+    return 0;
+}

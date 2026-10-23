@@ -1,0 +1,10 @@
+// TEST: T0104
+// An integer does not convert implicitly to a pointer.
+// ERROR: can not be applied
+
+fn main(): int
+{
+    local p: -> int;
+    p = 5;
+    return 0;
+}

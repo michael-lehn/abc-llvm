@@ -1,0 +1,44 @@
+// TEST: T0055
+// Direct and mutual recursion.
+
+fn factorial(n: u64): u64
+{
+    return n <= 1 ? 1 : n * factorial(n - 1);
+}
+
+fn fib(n: int): int
+{
+    if (n < 2) {
+	return n;
+    }
+    return fib(n - 1) + fib(n - 2);
+}
+
+fn isOdd(n: int): bool;
+
+fn isEven(n: int): bool
+{
+    return n == 0 ? true : isOdd(n - 1);
+}
+
+fn isOdd(n: int): bool
+{
+    return n == 0 ? false : isEven(n - 1);
+}
+
+fn gcd(a: int, b: int): int
+{
+    return b == 0 then a else gcd(b, a % b);
+}
+
+fn main(): int
+{
+    assert(factorial(0) == 1);
+    assert(factorial(5) == 120);
+    assert(factorial(20) == 2432902008176640000);
+    assert(fib(20) == 6765);
+    assert(isEven(10) && !isOdd(10));
+    assert(isOdd(7));
+    assert(gcd(84, 36) == 12);
+    return 0;
+}

@@ -1,0 +1,10 @@
+// TEST: T0092
+// Enum constants are enclosed in braces.
+// ERROR: expected
+
+enum E : int A, B;
+
+fn main(): int
+{
+    return 0;
+}

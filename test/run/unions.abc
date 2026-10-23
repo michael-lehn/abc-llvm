@@ -1,0 +1,26 @@
+// TEST: T0068
+// Anonymous unions inside structs: members share storage.
+
+struct Value
+{
+    kind: int;
+    union {
+	i: u32;
+	f: float;
+	bytes: array[4] of u8;
+    };
+};
+
+fn main(): int
+{
+    local v: Value;
+    assert(sizeof(Value) == 8);
+    v.kind = 1;
+    v.i = 0x01020304;
+    assert(v.kind == 1);
+    // the byte order is target dependent, but all bytes are shared
+    assert(v.bytes[0] + v.bytes[1] + v.bytes[2] + v.bytes[3] == 10);
+    v.f = 1.0;
+    assert(v.i == 1065353216);
+    return 0;
+}

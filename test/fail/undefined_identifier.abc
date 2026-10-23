@@ -1,0 +1,8 @@
+// TEST: T0135
+// Use of an undeclared variable.
+// ERROR: undefined identifier
+
+fn main(): int
+{
+    return y;
+}

@@ -1,0 +1,63 @@
+// TEST: T0045
+// Parameters are passed by value: scalars, structs and (unlike C) arrays are
+// copied (see also param_aggregate_by_value.abc).  Modifications through
+// pointer parameters are visible to the caller.
+
+struct Pair
+{
+    a: int;
+    b: int;
+};
+
+fn modifyScalar(x: int): int
+{
+    x = 99;
+    return x;
+}
+
+fn modifyStruct(p: Pair): int
+{
+    p.a = 99;
+    return p.a + p.b;
+}
+
+fn modifyArray(arr: array[2] of int): int
+{
+    arr[0] = 99;
+    return arr[0] + arr[1];
+}
+
+fn modifyThroughPointer(p: -> int)
+{
+    *p = 77;
+}
+
+fn modifyStructThroughPointer(p: -> Pair)
+{
+    p->b = 55;
+}
+
+fn main(): int
+{
+    local x: int = 1;
+    assert(modifyScalar(x) == 99);
+    assert(x == 1);
+
+    local s: Pair = {1, 2};
+    assert(modifyStruct(s) == 101);
+    assert(s.a == 1 && s.b == 2);
+
+    local arr: array[2] of int = {1, 2};
+    assert(modifyArray(arr) == 101);
+    assert(arr[0] == 1);
+
+    modifyThroughPointer(&x);
+    assert(x == 77);
+    // an array converts to a pointer to its first element
+    modifyThroughPointer(arr);
+    assert(arr[0] == 77);
+
+    modifyStructThroughPointer(&s);
+    assert(s.b == 55);
+    return 0;
+}

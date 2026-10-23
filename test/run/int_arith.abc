@@ -1,0 +1,22 @@
+// TEST: T0036
+// Integer arithmetic: + - * / % and unary minus on signed integers.
+// Division truncates toward zero, the remainder has the sign of the dividend.
+
+fn main(): int
+{
+    local a: int = 17, b: int = 5;
+
+    assert(a + b == 22);
+    assert(a - b == 12);
+    assert(b - a == -12);
+    assert(a * b == 85);
+    assert(a / b == 3);
+    assert(a % b == 2);
+    assert(-a / b == -3);
+    assert(-a % b == -2);
+    assert(a / -b == -3);
+    assert(a % -b == 2);
+    assert(-a == 0 - 17);
+    assert(-(-a) == a);
+    return 0;
+}

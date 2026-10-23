@@ -1,0 +1,20 @@
+// TEST: T0130
+// Structs with identical members are still different types.
+// ERROR: convert
+
+struct A
+{
+    x: int;
+};
+
+struct B
+{
+    x: int;
+};
+
+fn main(): int
+{
+    local a: A;
+    local b: B = a;
+    return 0;
+}

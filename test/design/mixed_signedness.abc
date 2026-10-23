@@ -1,0 +1,33 @@
+// TEST: T0148
+// DESIGN: #0028 arithmetic with mixed signedness and without integer promotion
+// OBSERVED: ACCEPTED
+// Records current behavior: when signed and unsigned integers are mixed in a
+// binary operation, the common type is unsigned and has the size of the larger
+// operand ("unsigned wins", see Type::common).  There are no integer
+// promotions as in C.
+
+fn main(): int
+{
+    local s: i64 = -1;
+    local u: u8 = 1;
+
+    // -1 is converted to u64, i.e. the largest u64 value
+    assert(!(s < u));
+    assert(s > u);
+    assert(sizeof(s + u) == 8);
+
+    local i: int = -1;
+    local w: unsigned = 1;
+    assert(i > w);
+
+    // same signedness: no surprises
+    local a: i8 = -1;
+    local b: i64 = 1;
+    assert(a < b);
+    assert(sizeof(a + b) == 8);
+
+    // no integer promotion: bool + bool is computed in bool
+    local t: bool = true;
+    assert(t + t == 0);
+    return 0;
+}

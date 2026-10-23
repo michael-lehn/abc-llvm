@@ -1,0 +1,39 @@
+// TEST: T0063
+// Struct size and alignment follow the C layout rules of the target.
+
+struct A
+{
+    c: u8;
+    x: u64;
+};
+
+struct B
+{
+    a: u8;
+    b: u8;
+    c: u16;
+};
+
+struct C
+{
+    x: u32;
+    c: u8;
+};
+
+struct Empty1
+{
+    c: u8;
+};
+
+fn main(): int
+{
+    assert(sizeof(A) == 16);
+    assert(sizeof(B) == 4);
+    assert(sizeof(C) == 8);
+    assert(sizeof(Empty1) == 1);
+
+    // members are laid out in declaration order
+    local a: A;
+    assert((-> u8)&a.x - (-> u8)&a.c == 8);
+    return 0;
+}

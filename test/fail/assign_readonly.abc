@@ -1,0 +1,10 @@
+// TEST: T0077
+// Assignment to a readonly variable.
+// ERROR: read-only
+
+fn main(): int
+{
+    local x: readonly int = 1;
+    x = 2;
+    return x;
+}

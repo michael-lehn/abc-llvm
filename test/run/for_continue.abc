@@ -1,0 +1,18 @@
+// TEST: T0017
+// XFAIL: #0002 'continue' in a for loop skips the update expression (AstFor)
+// In a for loop, continue jumps to the update expression, not directly to
+// the condition.
+// TIMEOUT: 5
+
+fn main(): int
+{
+    local count: int = 0;
+    for (local i: int = 0; i < 10; ++i) {
+	if (i % 3 != 0) {
+	    continue;
+	}
+	count++;
+    }
+    assert(count == 4);
+    return 0;
+}

@@ -1,0 +1,70 @@
+// TEST: T0162
+// Statements after return, break, continue and goto are unreachable; they are
+// removed without affecting the reachable code (gen/function.cpp,
+// eliminateUnreachableBlocks).
+
+global count: int;
+
+fn afterReturn(x: int): int
+{
+    return x + 1;
+    count = 100;
+    return 0;
+}
+
+fn afterBreakAndContinue(): int
+{
+    local n: int = 0;
+    local i: int = 0;
+    while (i < 10) {
+	i++;
+	if (i % 2 == 0) {
+	    continue;
+	    n = 1000;
+	}
+	local k: int = 0;
+	while (true) {
+	    k++;
+	    if (k == 3) {
+		break;
+		n = 2000;
+	    }
+	}
+	n += k;
+    }
+    return n;
+}
+
+fn afterGoto(): int
+{
+    local r: int = 1;
+    goto done;
+    r = 2;
+    count = 200;
+label done:
+    return r;
+}
+
+fn deadCodeJumpingBack(): int
+{
+    local r: int = 0;
+label again:
+    r++;
+    if (r < 3) {
+	goto again;
+    }
+    return r;
+    // unreachable code that jumps to a reachable label
+    goto again;
+}
+
+fn main(): int
+{
+    count = 0;
+    assert(afterReturn(1) == 2);
+    assert(afterBreakAndContinue() == 15);
+    assert(afterGoto() == 1);
+    assert(deadCodeJumpingBack() == 3);
+    assert(count == 0);
+    return 0;
+}

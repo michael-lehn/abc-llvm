@@ -1,0 +1,14 @@
+// TEST: T0150
+// DESIGN: #0029 size_t and ptrdiff_t are signed
+// OBSERVED: ACCEPTED
+// Records current behavior: size_t is a signed 64-bit type (in C it is
+// unsigned).
+
+fn main(): int
+{
+    local s: size_t = 0;
+    s = s - 1;
+    assert(s < 0);
+    assert(sizeof(size_t) == 8);
+    return 0;
+}

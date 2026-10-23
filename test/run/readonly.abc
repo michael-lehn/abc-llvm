@@ -1,0 +1,35 @@
+// TEST: T0054
+// readonly variables and pointers to readonly data can be read; a pointer to
+// non-readonly data converts to a pointer to readonly data.
+
+fn sum(p: -> readonly int, n: int): int
+{
+    local s: int = 0;
+    for (local i: int = 0; i < n; ++i) {
+	s += p[i];
+    }
+    return s;
+}
+
+global limit: readonly int = 100;
+
+fn main(): int
+{
+    local r: readonly int = 7;
+    assert(r == 7);
+    assert(limit == 100);
+
+    local a: array[3] of int = {1, 2, 3};
+    assert(sum(a, 3) == 6);
+
+    local p: -> readonly int = &a[1];
+    assert(*p == 2);
+    // the pointer itself is not readonly
+    p = &a[2];
+    assert(*p == 3);
+
+    local c: readonly -> int = &a[0];
+    *c = 10;
+    assert(a[0] == 10);
+    return 0;
+}

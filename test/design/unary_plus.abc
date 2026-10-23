@@ -1,0 +1,12 @@
+// TEST: T0151
+// DESIGN: #0025 unary plus listed in the README precedence table
+// OBSERVED: REJECTED
+// The precedence table lists unary '+', the expression EBNF does not.
+
+fn main(): int
+{
+    local x: int = 3;
+    assert(+x == 3);
+    assert(-+x == -3);
+    return 0;
+}

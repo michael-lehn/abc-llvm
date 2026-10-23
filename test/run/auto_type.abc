@@ -1,0 +1,30 @@
+// TEST: T0003
+// Local variables declared with ':=' get the type of their initializer.
+
+fn answer(): u64
+{
+    return 42;
+}
+
+struct Point
+{
+    x: int;
+    y: int;
+};
+
+fn main(): int
+{
+    local i := 1;
+    assert(sizeof(i) == sizeof(int));
+    local d := 2.5;
+    assert(sizeof(d) == 8 && d == 2.5);
+    local u := answer();
+    assert(sizeof(u) == 8 && u == 42);
+    local p := Point{1, 2};
+    assert(p.y == 2);
+    local a := (array[3] of int){1, 2, 3};
+    assert(sizeof(a) == 3 * sizeof(int) && a[2] == 3);
+    local x, y := {1, 2.5};
+    assert(sizeof(x) == 4 && sizeof(y) == 8);
+    return 0;
+}

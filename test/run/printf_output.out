@@ -1,0 +1,5 @@
+int -42 unsigned 4000000000 i64 -9000000000
+float 0.50 double 3.250
+string abc char Z hex ff size 123
+percent %
+buf 7-x

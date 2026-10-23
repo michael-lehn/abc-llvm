@@ -1,0 +1,12 @@
+// TEST: T0033
+// XFAIL: #0005 hexadecimal literals always have type i32 and are truncated
+// (from_chars in integerliteral.cpp stops at the x of the 0x prefix)
+// Hexadecimal literals that do not fit into 32 bits.
+
+fn main(): int
+{
+    local x: u64 = 0x100000000;
+    assert(x == 4294967296);
+    assert(sizeof(0x100000000) == 8);
+    return 0;
+}

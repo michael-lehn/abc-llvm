@@ -1,0 +1,35 @@
+// TEST: T0058
+// && and || evaluate their right operand only if necessary.
+
+global calls: int;
+
+fn record(result: bool): bool
+{
+    calls++;
+    return result;
+}
+
+fn main(): int
+{
+    calls = 0;
+    assert(!(record(false) && record(true)));
+    assert(calls == 1);
+
+    calls = 0;
+    assert(record(true) && record(true));
+    assert(calls == 2);
+
+    calls = 0;
+    assert(record(true) || record(false));
+    assert(calls == 1);
+
+    calls = 0;
+    assert(!(record(false) || record(false)));
+    assert(calls == 2);
+
+    // typical use: guard against null pointer dereference
+    local p: -> int = nullptr;
+    assert(!(p && *p == 1));
+    assert(!p || *p == 1);
+    return 0;
+}

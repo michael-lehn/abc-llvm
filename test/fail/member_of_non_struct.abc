@@ -1,0 +1,9 @@
+// TEST: T0111
+// Member access on a non-struct value.
+// ERROR: not a struct
+
+fn main(): int
+{
+    local x: int = 3;
+    return x.y;
+}

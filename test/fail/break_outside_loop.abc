@@ -1,0 +1,9 @@
+// TEST: T0080
+// break outside of a loop or switch.
+// ERROR: break statement not within
+
+fn main(): int
+{
+    break;
+    return 0;
+}

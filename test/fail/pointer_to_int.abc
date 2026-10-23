@@ -1,0 +1,9 @@
+// TEST: T0120
+// A pointer does not convert implicitly to an integer.
+// ERROR: convert
+
+fn main(): int
+{
+    local x: int = 1;
+    return &x;
+}

@@ -1,0 +1,17 @@
+// TEST: T0046
+// XFAIL: #0014 '(T{...} ...)' is parsed as C cast '(T)' and rejected
+// A parenthesized expression may start with a compound literal.
+
+struct Point
+{
+    x: int;
+    y: int;
+};
+
+fn main(): int
+{
+    assert((u8{300} == 44));
+    local x: int = (Point{1, 2}).y;
+    assert(x == 2);
+    return 0;
+}

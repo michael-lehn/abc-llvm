@@ -1,0 +1,15 @@
+// TEST: T0117
+// Global initializer that is not a constant expression.
+// ERROR: compile-time constant
+
+fn f(): int
+{
+    return 1;
+}
+
+global x: int = f();
+
+fn main(): int
+{
+    return x;
+}

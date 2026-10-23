@@ -1,0 +1,14 @@
+// TEST: T0099
+// Function pointers have to be dereferenced to be called.
+// ERROR: not a function
+
+fn f(a: int): int
+{
+    return a;
+}
+
+fn main(): int
+{
+    local p: -> fn(:int): int = &f;
+    return p(1);
+}

@@ -1,0 +1,57 @@
+// TEST: T0007
+// Calling C functions from ABC and ABC functions from C with scalar, pointer
+// and function pointer arguments; sharing global variables (see c_interop.c).
+
+extern fn c_add(a: int, b: int): int;
+extern fn c_mul64(a: i64, b: i64): i64;
+extern fn c_scale(x: double, f: float): double;
+extern fn c_next_u8(x: u8): u8;
+extern fn c_negate_i16(x: i16): i16;
+extern fn c_fill(p: -> int, n: int);
+extern fn c_greeting(): -> readonly char;
+extern fn c_apply(f: -> fn(:int): int, x: int): int;
+extern fn c_call_abc(x: int): int;
+extern c_counter: int;
+
+// functions called from C need external linkage
+extern fn abc_triple(x: int): int;
+extern abc_value: int;
+
+fn abc_triple(x: int): int
+{
+    return 3 * x;
+}
+
+global abc_value: int = 99;
+
+fn square(x: int): int
+{
+    return x * x;
+}
+
+fn main(): int
+{
+    assert(c_add(2, 3) == 5);
+    assert(c_add(-7, 2) == -5);
+    assert(c_mul64(4294967296, 3) == 12884901888);
+    assert(c_scale(1.5, 2.0) == 3.0);
+    assert(c_next_u8(255) == 0);
+    assert(c_negate_i16(-300) == 300);
+
+    local a: array[4] of int;
+    c_fill(a, 4);
+    assert(a[0] == 0 && a[3] == 9);
+
+    local s: -> readonly char = c_greeting();
+    assert(s[0] == 'C' && s[1] == 0);
+
+    // C calls ABC through a function pointer and by name
+    assert(c_apply(&square, 7) == 49);
+    assert(c_call_abc(5) == 15 + 99);
+
+    // global variable defined in C
+    assert(c_counter == 7);
+    c_counter = 8;
+    assert(c_add(c_counter, 0) == 8);
+    return 0;
+}

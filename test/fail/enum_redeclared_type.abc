@@ -1,0 +1,17 @@
+// TEST: T0091
+// XFAIL: #0032 underlying type of an enum definition ignored after a forward declaration
+// An enum definition with a type that differs from its forward declaration is
+// an incompatible redefinition.
+// ERROR: incompatible|redefinition
+
+enum F : u8;
+
+enum F : u16
+{
+    A,
+};
+
+fn main(): int
+{
+    return 0;
+}

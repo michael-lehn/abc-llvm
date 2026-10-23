@@ -1,0 +1,39 @@
+// TEST: T0024
+// Compound literals: 'T{...}', '(T){...}' and a string literal as a char
+// array value.
+
+struct P
+{
+    x: int;
+    y: int;
+};
+
+type Pair: array[2] of int;
+type Str: array[4] of char;
+
+fn main(): int
+{
+    local p := P{1, 2};
+    assert(p.x == 1 && p.y == 2);
+
+    local q: P = (P){.y = 4};
+    assert(q.x == 0 && q.y == 4);
+
+    local a := (array[3] of int){5, 6, 7};
+    assert(sizeof(a) == 3 * sizeof(int) && a[2] == 7);
+
+    local b := Pair{8, 9};
+    assert(b[1] == 9);
+
+    local s := (array[4] of char)"abc";
+    assert(s[2] == 'c' && s[3] == 0);
+
+    local t := Str"ab";
+    assert(t[1] == 'b' && t[2] == 0);
+
+    // a compound literal of a scalar type converts its element
+    local y: double = 3.7;
+    local x: int = int{y};
+    assert(x == 3);
+    return 0;
+}

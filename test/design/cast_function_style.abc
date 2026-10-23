@@ -1,0 +1,13 @@
+// TEST: T0144
+// DESIGN: #0024 function-style cast 'int(y)' documented in README
+// OBSERVED: REJECTED
+// README documents casts as 'int(y)'; the compiler implements '(T)expr' and
+// 'T{expr}' instead.
+
+fn main(): int
+{
+    local y: double = 3.7;
+    local x: int = int(y);
+    assert(x == 3);
+    return 0;
+}

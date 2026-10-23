@@ -1,0 +1,32 @@
+// TEST: T0040
+// Conversions between integer types: sign extension, zero extension and
+// truncation.
+
+fn main(): int
+{
+    local s8: i8 = -2;
+    local s64: i64 = s8;
+    assert(s64 == -2);
+
+    local u8v: u8 = 254;
+    local u64v: u64 = u8v;
+    assert(u64v == 254);
+
+    // signed to unsigned of the same size keeps the bit pattern
+    local n: int = -1;
+    local un: unsigned = n;
+    assert(un == 4294967295);
+
+    // truncation keeps the low order bits
+    local big: i64 = 4294967296 + 513;
+    local small: u8 = big;
+    assert(small == 1);
+    local mid: u16 = big;
+    assert(mid == 513);
+
+    // signed overflow by truncation
+    local m: i8 = 127;
+    m = m + 1;
+    assert(m == -128);
+    return 0;
+}

@@ -1,0 +1,10 @@
+// TEST: T0122
+// The result of x++ is not an lvalue.
+// ERROR: lvalue
+
+fn main(): int
+{
+    local x: int;
+    x++ = 3;
+    return 0;
+}

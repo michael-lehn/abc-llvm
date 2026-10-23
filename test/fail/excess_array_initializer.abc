@@ -1,0 +1,9 @@
+// TEST: T0093
+// More initializers than array elements.
+// ERROR: excess elements
+
+fn main(): int
+{
+    local a: array[2] of int = {1, 2, 3};
+    return 0;
+}

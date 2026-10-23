@@ -1,0 +1,61 @@
+// TEST: T0019
+// Function pointers: declaration, '&f', calls through '->(...)' and
+// '(*p)(...)', pointers to function pointers, arrays of function pointers,
+// functions returning function pointers.
+
+fn inc(x: int): int
+{
+    return x + 1;
+}
+
+fn dbl(x: int): int
+{
+    return 2 * x;
+}
+
+fn twice(f: -> fn(:int): int, x: int): int
+{
+    return f->(f->(x));
+}
+
+fn select(which: int): -> fn(:int): int
+{
+    return which == 0 ? &inc : &dbl;
+}
+
+global log: int;
+
+fn record(v: int)
+{
+    log = v;
+}
+
+fn main(): int
+{
+    local p: -> fn(:int): int = &inc;
+    assert(p->(1) == 2);
+    assert((*p)(1) == 2);
+
+    p = &dbl;
+    assert(p->(5) == 10);
+
+    local pp: -> -> fn(:int): int = &p;
+    assert(pp->->(3) == 6);
+    assert((**pp)(3) == 6);
+
+    assert(twice(&inc, 0) == 2);
+    assert(twice(&dbl, 3) == 12);
+    assert(select(0)->(10) == 11);
+    assert(select(1)->(10) == 20);
+
+    local table: array[2] of -> fn(:int): int = {&inc, &dbl};
+    assert(table[0]->(7) == 8 && table[1]->(7) == 14);
+
+    local q: -> fn(:int) = &record;
+    q->(17);
+    assert(log == 17);
+
+    local n: -> fn(:int): int = nullptr;
+    assert(!n);
+    return 0;
+}

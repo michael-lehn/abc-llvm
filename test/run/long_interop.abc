@@ -1,0 +1,12 @@
+// TEST: T0041
+// XFAIL: #0009 long has 32 bits (C long has 64 bits on LP64), strtol truncates
+// parser/defaulttype.cpp defines long with createInt() instead of createLong().
+
+@ <stdio.hdr>
+
+fn main(): int
+{
+    local v: i64 = strtol("4294967296", nullptr, 10);
+    assert(v == 4294967296);
+    return 0;
+}

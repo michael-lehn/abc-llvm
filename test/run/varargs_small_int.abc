@@ -1,0 +1,16 @@
+// TEST: T0070
+// XFAIL: #0008 i8/i16 variadic arguments are not promoted (sign extended) to int
+// C passes integer arguments narrower than int as int to variadic functions.
+
+@ <stdio.hdr>
+@ <string.hdr>
+
+fn main(): int
+{
+    local a: i8 = -1;
+    local b: i16 = -2;
+    local buf: array[32] of char;
+    snprintf(buf, sizeof(buf), "%d %d", a, b);
+    assert(strcmp(buf, "-1 -2") == 0);
+    return 0;
+}

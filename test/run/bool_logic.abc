@@ -1,0 +1,23 @@
+// TEST: T0006
+// Logical operators and conversion of integers and pointers to bool.
+
+fn main(): int
+{
+    local b: bool = 5;
+    assert(b == 1);
+    b = 0;
+    assert(b == 0);
+
+    local x: int = 42;
+    local p: -> int = &x;
+    local q: -> int = nullptr;
+    local pb: bool = p;
+    assert(pb);
+    assert(!q);
+    assert(!!x == 1);
+    assert(!0 == 1);
+    assert((true && false) == false);
+    assert((true || false) == true);
+    assert(sizeof(bool) == 1);
+    return 0;
+}

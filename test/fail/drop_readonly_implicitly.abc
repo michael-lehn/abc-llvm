@@ -1,0 +1,11 @@
+// TEST: T0087
+// A pointer to readonly data does not convert implicitly to a pointer to
+// non-readonly data.
+// ERROR: convert
+
+fn main(): int
+{
+    local x: readonly int = 1;
+    local p: -> int = &x;
+    return 0;
+}

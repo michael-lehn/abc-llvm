@@ -1,0 +1,11 @@
+// TEST: T0119
+// A variable is not visible after its block.
+// ERROR: undefined identifier
+
+fn main(): int
+{
+    {
+	local x: int = 1;
+    }
+    return x;
+}

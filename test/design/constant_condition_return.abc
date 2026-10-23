@@ -1,0 +1,23 @@
+// TEST: T0168
+// DESIGN: #0033 return-path analysis ignores constant loop conditions
+// OBSERVED: REJECTED
+// 'for (;;)' without a reachable end is accepted in a non-void function, but
+// 'while (true)' is reported as "does not return a value in all control
+// paths": the condition true is not folded.
+
+fn find(x: int): int
+{
+    local i: int = 0;
+    while (true) {
+	if (i == x) {
+	    return i;
+	}
+	i++;
+    }
+}
+
+fn main(): int
+{
+    assert(find(3) == 3);
+    return 0;
+}

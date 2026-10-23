@@ -1,0 +1,41 @@
+// TEST: T0022
+// Global variables: initialization, zero initialization and modification
+// from different functions.
+
+global g: int = 5;
+global zero: int;
+global arr: array[4] of int = {1, 2, 3};
+global zeroArr: array[3] of i64;
+global d: double = 2.5;
+global a, b: int = {10, 20};
+
+struct Point
+{
+    x: int;
+    y: int;
+};
+
+global origin: Point;
+global unit: Point = {1, 1};
+
+fn increment()
+{
+    g++;
+}
+
+fn main(): int
+{
+    assert(g == 5);
+    increment();
+    increment();
+    assert(g == 7);
+
+    assert(zero == 0);
+    assert(arr[0] == 1 && arr[2] == 3 && arr[3] == 0);
+    assert(zeroArr[0] == 0 && zeroArr[2] == 0);
+    assert(d == 2.5);
+    assert(a == 10 && b == 20);
+    assert(origin.x == 0 && origin.y == 0);
+    assert(unit.x == 1 && unit.y == 1);
+    return 0;
+}

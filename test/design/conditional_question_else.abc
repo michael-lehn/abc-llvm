@@ -1,0 +1,11 @@
+// TEST: T0145
+// DESIGN: #0026 mixing '?' with 'else' in conditional expressions
+// OBSERVED: REJECTED
+// README: '?' and 'then', ':' and 'else' are interchangeable.
+
+fn main(): int
+{
+    local a: int = 1;
+    assert((a ? 2 else 3) == 2);
+    return 0;
+}

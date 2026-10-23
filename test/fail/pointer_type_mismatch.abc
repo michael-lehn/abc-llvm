@@ -1,0 +1,11 @@
+// TEST: T0121
+// Pointers to different types are not compatible.
+// ERROR: can not be applied
+
+fn main(): int
+{
+    local p: -> int;
+    local q: -> double;
+    p = q;
+    return 0;
+}

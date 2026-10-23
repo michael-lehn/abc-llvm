@@ -1,0 +1,26 @@
+// TEST: T0037
+// Relational and equality operators yield 0 or 1.
+
+fn main(): int
+{
+    local a: int = 3, b: int = 7, c: int = 3;
+
+    assert(a < b);
+    assert(!(b < a));
+    assert(a <= c && a <= b);
+    assert(b > a && !(a > c));
+    assert(b >= a && a >= c);
+    assert(a == c && a != b);
+
+    local t: int = a < b;
+    local f: int = a > b;
+    assert(t == 1);
+    assert(f == 0);
+    // no integer promotion: bool + bool would be computed in bool
+    assert((int)(a == c) + (int)(a == c) == 2);
+
+    // negative numbers
+    assert(-1 < 0);
+    assert(-5 < -4);
+    return 0;
+}

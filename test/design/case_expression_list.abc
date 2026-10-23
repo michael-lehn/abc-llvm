@@ -1,0 +1,21 @@
+// TEST: T0143
+// DESIGN: #0031 'case a, b:' is an expression list (comma operator)
+// OBSERVED: ACCEPTED
+// Records current behavior: 'case 3, 4:' only matches 4.
+
+fn sw(n: int): int
+{
+    switch (n) {
+    case 3, 4:
+	return 1;
+    default:
+	return 0;
+    }
+}
+
+fn main(): int
+{
+    assert(sw(4) == 1);
+    assert(sw(3) == 0);
+    return 0;
+}

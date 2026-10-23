@@ -1,0 +1,19 @@
+// TEST: T0128
+// Returning a value that can not be converted to the return type.
+// ERROR: convert
+
+struct S
+{
+    x: int;
+};
+
+fn f(): int
+{
+    local s: S;
+    return s;
+}
+
+fn main(): int
+{
+    return f();
+}

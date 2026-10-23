@@ -1,0 +1,25 @@
+// TEST: T0031
+// Type, struct and enum declarations inside a function body; readonly
+// variables with inferred type.
+
+fn main(): int
+{
+    type T: int;
+    struct L
+    {
+	a: T;
+    };
+    enum M
+    {
+	Q = 7,
+    };
+
+    local l: L;
+    l.a = Q;
+    assert(l.a == 7);
+
+    local r: readonly = 5;
+    local c: const int = 6;
+    assert(r + c == 11);
+    return 0;
+}

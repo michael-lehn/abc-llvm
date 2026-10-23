@@ -1,0 +1,7 @@
+// Header used by test/run/preprocessor.abc.  Including it twice would
+// redefine the function.
+
+fn onceValue(): int
+{
+    return 42;
+}

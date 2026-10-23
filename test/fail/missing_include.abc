@@ -1,0 +1,10 @@
+// TEST: T0112
+// Including a header that does not exist.
+// ERROR: can not find file
+
+@ <does_not_exist.hdr>
+
+fn main(): int
+{
+    return 0;
+}

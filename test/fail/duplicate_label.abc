@@ -1,0 +1,10 @@
+// TEST: T0089
+// The same label defined twice.
+// ERROR: label already defined
+
+fn main(): int
+{
+label L:
+label L:
+    return 0;
+}

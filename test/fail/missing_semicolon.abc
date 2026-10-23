@@ -1,0 +1,9 @@
+// TEST: T0114
+// Statement without terminating semicolon.
+// ERROR: expected ';'
+
+fn main(): int
+{
+    local x: int = 1
+    return x;
+}

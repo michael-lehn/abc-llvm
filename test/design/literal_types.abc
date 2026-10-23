@@ -1,0 +1,16 @@
+// TEST: T0147
+// DESIGN: #0027 type and range of unsuffixed integer literals
+// OBSERVED: ACCEPTED
+// Records current behavior: an unsuffixed literal has type int (i32) if it
+// fits, otherwise i64. README: decimal literals are unsigned and of arbitrary
+// size.
+
+fn main(): int
+{
+    assert(sizeof(1) == 4);
+    assert(sizeof(2147483647) == 4);
+    assert(sizeof(2147483648) == 8);
+    // a literal is signed: its negation is negative
+    assert(-1 < 0);
+    return 0;
+}

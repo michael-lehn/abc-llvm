@@ -1,0 +1,12 @@
+// TEST: T0014
+// XFAIL: #0013 ++/-- are rejected for double (only float is accepted)
+
+fn main(): int
+{
+    local d: double = 1.5;
+    d++;
+    --d;
+    ++d;
+    assert(d == 2.5);
+    return 0;
+}

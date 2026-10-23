@@ -1,0 +1,11 @@
+// TEST: T0074
+// Arrays of different dimension can not be assigned.
+// ERROR: convert
+
+fn main(): int
+{
+    local a: array[3] of int;
+    local b: array[4] of int;
+    a = b;
+    return 0;
+}

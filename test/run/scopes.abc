@@ -1,0 +1,39 @@
+// TEST: T0057
+// Block scopes and shadowing of local and global variables.
+
+global x: int = 1;
+
+fn readGlobal(): int
+{
+    return x;
+}
+
+fn main(): int
+{
+    assert(x == 1);
+    local x: int = 2;
+    assert(x == 2);
+    {
+	local x: int = 3;
+	assert(x == 3);
+	x = 30;
+	assert(x == 30);
+    }
+    assert(x == 2);
+    assert(readGlobal() == 1);
+
+    // a for loop variable is local to the loop
+    local i: int = 100;
+    for (local i: int = 0; i < 3; ++i) {
+    }
+    assert(i == 100);
+
+    // variables declared in different blocks are distinct
+    local sum: int = 0;
+    for (local k: int = 0; k < 3; ++k) {
+	local tmp: int = k * 2;
+	sum += tmp;
+    }
+    assert(sum == 6);
+    return 0;
+}

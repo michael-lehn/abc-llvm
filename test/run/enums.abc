@@ -1,0 +1,52 @@
+// TEST: T0015
+// Enumeration constants: implicit and explicit values, underlying integer
+// type, use in switch and in constant expressions.
+
+enum Color : int
+{
+    RED,
+    GREEN = 5,
+    BLUE,
+};
+
+enum Small : u8
+{
+    S_A = 250,
+    S_B,
+};
+
+enum Kind
+{
+    K_FIRST,
+    K_ALIAS = K_FIRST,
+    K_SECOND,
+};
+
+fn name(c: Color): int
+{
+    switch (c) {
+    case RED:
+	return 1;
+    case GREEN:
+	return 2;
+    default:
+	return 3;
+    }
+}
+
+fn main(): int
+{
+    assert(RED == 0 && GREEN == 5 && BLUE == 6);
+    assert(S_B == 251);
+    assert(sizeof(Small) == 1);
+    assert(sizeof(Color) == sizeof(int));
+    assert(K_ALIAS == K_FIRST && K_SECOND == 1);
+
+    local c: Color = BLUE;
+    assert(name(RED) == 1 && name(GREEN) == 2 && name(c) == 3);
+
+    // enum constants are constant expressions
+    local arr: array[BLUE] of int;
+    assert(sizeof(arr) == 6 * sizeof(int));
+    return 0;
+}

@@ -1,0 +1,32 @@
+// TEST: T0004
+// Bitwise operators and shifts.  Right shift is arithmetic for signed and
+// logical for unsigned operands.
+
+fn main(): int
+{
+    local a: int = 12, b: int = 10;
+
+    assert((a & b) == 8);
+    assert((a | b) == 14);
+    assert((a ^ b) == 6);
+    assert((1 << 4) == 16);
+    assert((256 >> 4) == 16);
+
+    local s: int = -16;
+    assert((s >> 2) == -4);
+    local u: unsigned = 4294967280;
+    assert((u >> 28) == 15);
+
+    local c: int = 5;
+    c &= 4;
+    assert(c == 4);
+    c |= 3;
+    assert(c == 7);
+    c ^= 1;
+    assert(c == 6);
+    c <<= 2;
+    assert(c == 24);
+    c >>= 3;
+    assert(c == 3);
+    return 0;
+}

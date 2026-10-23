@@ -1,0 +1,9 @@
+// TEST: T0140
+// String literal without closing quote.
+// ERROR: string literal
+
+fn main(): int
+{
+    local s: -> readonly char = "abc;
+    return 0;
+}

@@ -1,0 +1,14 @@
+// TEST: T0138
+// Designator naming a member that does not exist.
+// ERROR: not a member
+
+struct S
+{
+    a: int;
+};
+
+fn main(): int
+{
+    local s: S = {.b = 1};
+    return 0;
+}

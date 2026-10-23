@@ -1,0 +1,8 @@
+// TEST: T0107
+// Octal literal with digit 8.
+// ERROR: octal
+
+fn main(): int
+{
+    return 08;
+}

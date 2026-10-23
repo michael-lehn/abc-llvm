@@ -1,0 +1,9 @@
+// TEST: T0097
+// The remainder operator requires integer operands.
+// ERROR: can not be applied
+
+fn main(): int
+{
+    local f: double = 1.0;
+    return f % 2;
+}

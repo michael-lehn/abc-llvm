@@ -1,0 +1,15 @@
+// TEST: T0186
+// ARGS: -Oz -Oz -O0 -Os
+// FUNCTION: keep
+// SIZE-ATTRIBUTES: optsize
+// OPTIMIZED: yes
+// Repeated options: the last one (-Os) wins.
+// The last optimization option takes precedence (regression test for #0034).
+
+extern fn keep(x: int): int;
+
+fn keep(x: int): int
+{
+    local y: int = x * 2;
+    return y + 1;
+}

@@ -1,0 +1,30 @@
+// TEST: T0051
+// Operator precedence and associativity with non-constant operands, so that
+// the result is computed by generated code (not by constant folding).
+
+fn main(): int
+{
+    local two: int = 2, three: int = 3, four: int = 4, ten: int = 10;
+
+    assert(two + three * four == 14);
+    assert((two + three) * four == 20);
+    assert(ten - four - three == 3);
+    assert(ten / two / two == 2);
+    assert(two * three % four == 2);
+    assert(-two * three == -6);
+    assert(1 << two + 1 == 8);
+    assert((6 & three == 3) == 0);
+    assert((1 | two ^ three & 1) == 3);
+    assert((three > two > 1) == 0);
+    assert((1 || 0 && 0) == 1);
+    assert(!two + 1 == 1);
+
+    // assignment is right associative
+    local x: int, y: int;
+    x = y = four;
+    assert(x == 4 && y == 4);
+
+    // conditional is right associative
+    assert((two > three ? 1 : two > 1 ? 2 : 3) == 2);
+    return 0;
+}

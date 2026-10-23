@@ -1,0 +1,14 @@
+// TEST: T0142
+// A void function returning a value.
+// ERROR: void function should not return
+
+fn f()
+{
+    return 1;
+}
+
+fn main(): int
+{
+    f();
+    return 0;
+}

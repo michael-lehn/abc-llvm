@@ -1,0 +1,33 @@
+// TEST: T0012
+// do-while loops execute the body at least once; continue jumps to the
+// condition.
+
+fn main(): int
+{
+    local n: int = 0;
+    do {
+	n++;
+    } while (false);
+    assert(n == 1);
+
+    local i: int = 0, odd: int = 0;
+    do {
+	i++;
+	if (i % 2 == 0) {
+	    continue;
+	}
+	odd++;
+    } while (i < 10);
+    assert(i == 10);
+    assert(odd == 5);
+
+    local k: int = 0;
+    do {
+	k++;
+	if (k == 4) {
+	    break;
+	}
+    } while (k < 100);
+    assert(k == 4);
+    return 0;
+}

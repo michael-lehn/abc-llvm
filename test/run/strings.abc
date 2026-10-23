@@ -1,0 +1,33 @@
+// TEST: T0062
+// String literals, escape sequences, adjacent literal concatenation, char
+// arrays and functions from string.hdr.
+
+@ <string.hdr>
+
+fn main(): int
+{
+    local s: -> readonly char = "hello";
+    assert(strlen(s) == 5);
+    assert(s[0] == 'h' && s[4] == 'o' && s[5] == 0);
+
+    local esc: -> readonly char = "a\tb\nc\\d\"e\x41";
+    assert(strlen(esc) == 10);
+    assert(esc[1] == '\t' && esc[3] == '\n' && esc[5] == '\\');
+    assert(esc[7] == '"' && esc[9] == 'A');
+
+    // adjacent string literals are concatenated
+    local joined: -> readonly char = "abc" "def";
+    assert(strcmp(joined, "abcdef") == 0);
+
+    // char array initialized from a string literal is a copy
+    local buf: array[16] of char = "abc";
+    buf[0] = 'x';
+    assert(strcmp(buf, "xbc") == 0);
+    assert(sizeof(buf) == 16);
+
+    local copy: array[16] of char;
+    strcpy(copy, buf);
+    assert(strcmp(copy, buf) == 0);
+    assert(strcmp("a", "b") < 0);
+    return 0;
+}

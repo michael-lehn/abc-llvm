@@ -1,0 +1,26 @@
+// TEST: T0028
+// for-init is a local variable definition, or an optional expression list
+// followed by ';'.
+
+fn main(): int
+{
+    local n: int = 0;
+    for (;;) {
+	if (++n == 3) {
+	    break;
+	}
+    }
+    assert(n == 3);
+
+    local i: int;
+    for (i = 10; i > 7; --i) {
+    }
+    assert(i == 7);
+
+    local sum: int = 0;
+    for (local k: int = 0, m: int = 5; k < m; k++) {
+	sum += k;
+    }
+    assert(sum == 10);
+    return 0;
+}

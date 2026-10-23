@@ -1,0 +1,9 @@
+// TEST: T0079
+// Assignment to a value that is not an lvalue.
+// ERROR: lvalue
+
+fn main(): int
+{
+    1 = 2;
+    return 0;
+}

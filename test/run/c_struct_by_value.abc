@@ -1,0 +1,37 @@
+// TEST: T0008
+// REQUIRES: x86_64
+// Passing and returning small structs by value to/from C functions (C ABI
+// lowering in gen/abi.cpp is currently implemented for x86-64 only).
+
+struct Vec2
+{
+    x: float;
+    y: float;
+};
+
+struct Pair
+{
+    a: i64;
+    b: i64;
+};
+
+struct Rect
+{
+    x: float;
+    y: float;
+    w: float;
+    h: float;
+};
+
+extern fn c_vec_add(a: Vec2, b: Vec2): Vec2;
+extern fn c_pair_sum(p: Pair): i64;
+extern fn c_rect_area(r: Rect): float;
+
+fn main(): int
+{
+    local v: Vec2 = c_vec_add(Vec2{1, 2}, Vec2{3, 4});
+    assert(v.x == 4.0 && v.y == 6.0);
+    assert(c_pair_sum(Pair{40, 2}) == 42);
+    assert(c_rect_area(Rect{0, 0, 2, 3}) == 6.0);
+    return 0;
+}

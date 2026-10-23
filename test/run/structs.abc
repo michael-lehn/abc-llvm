@@ -1,0 +1,52 @@
+// TEST: T0064
+// Structs: member access, nested structs, assignment copies, pointers to
+// structs, self-referential structs, arrays as members.
+
+struct Inner
+{
+    a: int;
+    b: int;
+};
+
+struct Outer
+{
+    tag: char;
+    inner: Inner;
+    values: array[3] of int;
+};
+
+struct Node
+{
+    value: int;
+    next: -> Node;
+};
+
+fn main(): int
+{
+    local o: Outer;
+    o.tag = 'x';
+    o.inner.a = 1;
+    o.inner.b = 2;
+    o.values[2] = 3;
+    assert(o.tag == 'x' && o.inner.a == 1 && o.inner.b == 2);
+    assert(o.values[2] == 3);
+
+    // assignment copies the struct including nested arrays
+    local c: Outer;
+    c = o;
+    c.inner.a = 10;
+    c.values[2] = 30;
+    assert(o.inner.a == 1 && o.values[2] == 3);
+    assert(c.inner.b == 2);
+
+    local p: -> Outer = &o;
+    p->inner.b = 20;
+    assert(o.inner.b == 20);
+    assert((*p).tag == 'x');
+
+    local n2: Node = {2, nullptr};
+    local n1: Node = {1, &n2};
+    assert(n1.next->value == 2);
+    assert(n1.next->next == nullptr);
+    return 0;
+}

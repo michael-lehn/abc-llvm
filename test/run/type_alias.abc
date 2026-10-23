@@ -1,0 +1,43 @@
+// TEST: T0066
+// Type aliases are interchangeable with the aliased type.
+
+type Int: int;
+type IntPtr: -> int;
+type Vec3: array[3] of double;
+type BinOp: fn(:int, :int): int;
+
+struct Point
+{
+    x: int;
+    y: int;
+};
+
+type P: Point;
+
+fn add(a: int, b: int): int
+{
+    return a + b;
+}
+
+fn apply(op: -> BinOp, a: Int, b: Int): Int
+{
+    return op->(a, b);
+}
+
+fn main(): int
+{
+    local i: Int = 3;
+    local j: int = i;
+    local p: IntPtr = &j;
+    assert(*p == 3);
+
+    local v: Vec3 = {1, 2, 3};
+    assert(sizeof(v) == 3 * sizeof(double) && v[2] == 3.0);
+
+    local pt: P = {1, 2};
+    local q: Point = pt;
+    assert(q.y == 2);
+
+    assert(apply(&add, 2, 3) == 5);
+    return 0;
+}

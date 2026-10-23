@@ -1,0 +1,45 @@
+// TEST: T0020
+// Function definitions, declarations before use, void functions, several
+// parameters and parameter types that require conversion.
+
+fn add3(a: int, b: int, c: int): int;
+
+global counter: int;
+
+fn bump()
+{
+    counter++;
+}
+
+fn mean(a: double, b: double): double
+{
+    return (a + b) / 2;
+}
+
+fn narrow(x: u8): u8
+{
+    return x;
+}
+
+fn main(): int
+{
+    assert(add3(1, 2, 3) == 6);
+
+    counter = 0;
+    bump();
+    bump();
+    assert(counter == 2);
+
+    // integer arguments are converted to the parameter type
+    assert(mean(1, 2) == 1.5);
+    assert(narrow(258) == 2);
+
+    // return value can be ignored
+    add3(0, 0, 0);
+    return 0;
+}
+
+fn add3(a: int, b: int, c: int): int
+{
+    return a + b + c;
+}

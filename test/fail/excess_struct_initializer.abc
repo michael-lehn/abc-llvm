@@ -1,0 +1,14 @@
+// TEST: T0094
+// More initializers than struct members.
+// ERROR: excess elements
+
+struct S
+{
+    a: int;
+};
+
+fn main(): int
+{
+    local s: S = {1, 2};
+    return 0;
+}

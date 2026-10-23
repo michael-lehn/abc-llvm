@@ -1,0 +1,13 @@
+// TEST: T0131
+// Function call with too few arguments.
+// ERROR: too few arguments
+
+fn f(a: int, b: int): int
+{
+    return a;
+}
+
+fn main(): int
+{
+    return f(1);
+}

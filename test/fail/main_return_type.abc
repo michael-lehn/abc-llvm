@@ -1,0 +1,8 @@
+// TEST: T0110
+// main has to return int.
+// ERROR: return type of .main.
+
+fn main(): double
+{
+    return 0;
+}

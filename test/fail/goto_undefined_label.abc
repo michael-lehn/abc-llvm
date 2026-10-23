@@ -1,0 +1,9 @@
+// TEST: T0100
+// goto to a label that does not exist.
+// ERROR: label not defined
+
+fn main(): int
+{
+    goto nowhere;
+    return 0;
+}

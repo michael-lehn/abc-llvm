@@ -1,0 +1,55 @@
+// TEST: T0043
+// Dynamic memory: malloc, realloc, free; a linked list on the heap.
+
+@ <stdlib.hdr>
+
+struct Node
+{
+    value: int;
+    next: -> Node;
+};
+
+fn push(head: -> Node, value: int): -> Node
+{
+    local n: -> Node = malloc(sizeof(Node));
+    assert(n != nullptr);
+    n->value = value;
+    n->next = head;
+    return n;
+}
+
+fn main(): int
+{
+    // dynamic array
+    local n: size_t = 10;
+    local a: -> int = malloc(n * sizeof(int));
+    assert(a != nullptr);
+    for (local i: int = 0; i < n; ++i) {
+	a[i] = i;
+    }
+    // realloc keeps the contents
+    a = realloc(a, 2 * n * sizeof(int));
+    assert(a != nullptr);
+    for (local i: int = 0; i < n; ++i) {
+	assert(a[i] == i);
+    }
+    a[2 * n - 1] = 99;
+    assert(a[19] == 99);
+    free(a);
+
+    // linked list
+    local head: -> Node = nullptr;
+    for (local i: int = 1; i <= 4; ++i) {
+	head = push(head, i);
+    }
+    local sum: int = 0, count: int = 0;
+    while (head) {
+	sum = sum * 10 + head->value;
+	count++;
+	local next := head->next;
+	free(head);
+	head = next;
+    }
+    assert(sum == 4321 && count == 4);
+    return 0;
+}

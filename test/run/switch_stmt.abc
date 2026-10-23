@@ -1,0 +1,55 @@
+// TEST: T0065
+// switch: matching case, fallthrough without break, default, no match.
+
+fn sw(n: int): int
+{
+    local r: int = 0;
+    switch (n) {
+    case 1:
+	r += 1;
+	// fallthrough
+    case 2:
+	r += 10;
+	break;
+    case 3:
+	r = 100;
+	break;
+    default:
+	r = -1;
+    }
+    return r;
+}
+
+fn noDefault(n: int): int
+{
+    local r: int = 7;
+    switch (n) {
+    case 0:
+	r = 0;
+	break;
+    }
+    return r;
+}
+
+fn main(): int
+{
+    assert(sw(1) == 11);
+    assert(sw(2) == 10);
+    assert(sw(3) == 100);
+    assert(sw(42) == -1);
+    assert(noDefault(0) == 0);
+    assert(noDefault(1) == 7);
+
+    // break in switch inside a loop leaves the switch only
+    local count: int = 0;
+    for (local i: int = 0; i < 5; ++i) {
+	switch (i) {
+	case 2:
+	    break;
+	default:
+	    count++;
+	}
+    }
+    assert(count == 4);
+    return 0;
+}

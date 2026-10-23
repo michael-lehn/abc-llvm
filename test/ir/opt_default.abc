@@ -1,0 +1,14 @@
+// TEST: T0187
+// ARGS:
+// FUNCTION: keep
+// SIZE-ATTRIBUTES: none
+// OPTIMIZED: no
+// Without optimization option the default is -O0 without size attributes.
+
+extern fn keep(x: int): int;
+
+fn keep(x: int): int
+{
+    local y: int = x * 2;
+    return y + 1;
+}

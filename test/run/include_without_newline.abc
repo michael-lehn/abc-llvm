@@ -1,0 +1,12 @@
+// TEST: T0161
+// XFAIL: #0019 end of an included file without newline continues with tokens of the including file
+// A directive in the last line of an included file ends at the end of that
+// file, even without a trailing newline.
+
+@ <define_no_newline.hdr>
+
+fn main(): int
+{
+    assert(INCLUDED_LIMIT == 7);
+    return 0;
+}

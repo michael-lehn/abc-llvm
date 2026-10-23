@@ -1,0 +1,51 @@
+// TEST: T0011
+// Explicit casts '(T)expr', compound literals 'T{expr}' and implicit
+// conversions between integer, floating point and pointer types.
+
+fn takesDouble(x: double): double
+{
+    return x;
+}
+
+fn main(): int
+{
+    // floating point to integer truncates toward zero
+    assert((int)3.9 == 3);
+    assert((int)-3.9 == -3);
+    local d: double = 7.75;
+    local i: int = d;
+    assert(i == 7);
+
+    // integer to floating point
+    local f: float = 3;
+    assert(f == 3.0);
+    assert(takesDouble(2) == 2.0);
+    assert(1 / 2 == 0);
+    assert((double)1 / 2 == 0.5);
+
+    // compound literal syntax for conversions
+    local c: u8 = u8{300};
+    assert(c == 44);
+    local m: i64 = i64{-1};
+    assert(m == -1);
+
+    // explicit integer casts
+    assert((u8)256 == 0);
+    assert((i8)200 == -56);
+    assert((u16)-1 == 65535);
+    assert((bool)7 == 1);
+
+    // pointer casts
+    local x: u32 = 0x01020304;
+    local bytes: -> u8 = (-> u8)&x;
+    assert(bytes[0] + bytes[1] + bytes[2] + bytes[3] == 10);
+    local v: -> void = &x;
+    local back: -> u32 = (-> u32)v;
+    assert(*back == 0x01020304);
+
+    // readonly can be cast away explicitly
+    local ro: readonly int = 5;
+    local rw: -> int = (-> int)&ro;
+    assert(*rw == 5);
+    return 0;
+}

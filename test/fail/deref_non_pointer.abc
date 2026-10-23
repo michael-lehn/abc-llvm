@@ -1,0 +1,9 @@
+// TEST: T0085
+// Dereferencing a value that is not a pointer.
+// ERROR: can not be applied
+
+fn main(): int
+{
+    local x: int = 1;
+    return *x;
+}

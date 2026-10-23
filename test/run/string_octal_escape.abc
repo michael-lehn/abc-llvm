@@ -1,0 +1,12 @@
+// TEST: T0061
+// XFAIL: #0012 octal escapes in string literals overwrite the following character
+// (lexer.cpp parseStringLiteral assigns the value to reader->ch)
+
+@ <string.hdr>
+
+fn main(): int
+{
+    local s: -> readonly char = "\101B";
+    assert(strcmp(s, "AB") == 0);
+    return 0;
+}

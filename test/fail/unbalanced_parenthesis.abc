@@ -1,0 +1,8 @@
+// TEST: T0133
+// Missing closing parenthesis.
+// ERROR: expected
+
+fn main(): int
+{
+    return (1 + 2;
+}

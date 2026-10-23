@@ -1,0 +1,3 @@
+// Header used by test/run/include_without_newline.abc.  The file must not end
+// with a newline.
+@define INCLUDED_LIMIT 7

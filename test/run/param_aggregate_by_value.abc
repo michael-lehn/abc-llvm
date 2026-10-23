@@ -1,0 +1,31 @@
+// TEST: T0044
+// XFAIL: #0001 callee copies only 8 bytes of struct/array parameters passed byval
+// (gen/abi.cpp reconstructArgument loads the argument with pointer type)
+// Larger structs and arrays passed by value arrive complete in the callee.
+
+struct Big
+{
+    a: i64;
+    b: i64;
+    c: i64;
+    d: i64;
+};
+
+fn sumStruct(s: Big): i64
+{
+    return s.a + s.b + s.c + s.d;
+}
+
+fn sumArray(a: array[4] of i64): i64
+{
+    return a[0] + a[1] + a[2] + a[3];
+}
+
+fn main(): int
+{
+    local s: Big = {1, 2, 3, 4};
+    local a: array[4] of i64 = {1, 2, 3, 4};
+    assert(sumStruct(s) == 10);
+    assert(sumArray(a) == 10);
+    return 0;
+}

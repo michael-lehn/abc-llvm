@@ -1,0 +1,19 @@
+// TEST: T0166
+// A loop left with break reaches the end of a non-void function without a
+// return.
+// ERROR: does not return a value
+
+fn f(x: int): int
+{
+    while (true) {
+	if (x > 0) {
+	    return 1;
+	}
+	break;
+    }
+}
+
+fn main(): int
+{
+    return f(1);
+}

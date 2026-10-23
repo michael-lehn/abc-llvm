@@ -1,0 +1,10 @@
+// TEST: T0126
+// Two local variables with the same name in the same block.
+// ERROR: already defined
+
+fn main(): int
+{
+    local x: int;
+    local x: int;
+    return 0;
+}

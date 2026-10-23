@@ -1,0 +1,27 @@
+// TEST: T0025
+// Enum declarations: optional integer type (default int), forward
+// declaration, trailing comma.
+
+enum Forward : u8;
+
+enum Forward : u8
+{
+    F_A,
+    F_B,
+};
+
+enum Plain
+{
+    P_A = 3,
+    P_B
+};
+
+fn main(): int
+{
+    local f: Forward = F_B;
+    assert(f == 1);
+    assert(sizeof(Forward) == 1);
+    assert(sizeof(Plain) == sizeof(int));
+    assert(P_B == 4);
+    return 0;
+}

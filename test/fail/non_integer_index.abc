@@ -1,0 +1,9 @@
+// TEST: T0118
+// Array index of floating point type.
+// ERROR: integer expression expected
+
+fn main(): int
+{
+    local a: array[2] of int;
+    return a[1.5];
+}

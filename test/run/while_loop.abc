@@ -1,0 +1,28 @@
+// TEST: T0071
+// while loops with break and continue.
+
+fn main(): int
+{
+    local i: int = 0, sum: int = 0;
+    while (i < 10) {
+	i++;
+	if (i % 2 == 0) {
+	    continue;
+	}
+	if (i > 7) {
+	    break;
+	}
+	sum += i;
+    }
+    // 1 + 3 + 5 + 7
+    assert(sum == 16);
+    assert(i == 9);
+
+    // body is not executed if the condition is false initially
+    local n: int = 0;
+    while (n > 0) {
+	n = 100;
+    }
+    assert(n == 0);
+    return 0;
+}

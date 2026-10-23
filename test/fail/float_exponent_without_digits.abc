@@ -1,0 +1,9 @@
+// TEST: T0096
+// Floating point literal with empty exponent.
+// ERROR: exponent
+
+fn main(): int
+{
+    local d: double = 1e;
+    return 0;
+}

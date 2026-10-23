@@ -1,0 +1,9 @@
+// TEST: T0081
+// A type name must be followed by a compound literal, not a call.
+// ERROR: expected compound expression
+
+fn main(): int
+{
+    local x: int = int 3;
+    return x;
+}

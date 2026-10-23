@@ -1,0 +1,18 @@
+// TEST: T0127
+// A struct defined twice with different members.
+// ERROR: redefinition
+
+struct S
+{
+    a: int;
+};
+
+struct S
+{
+    b: int;
+};
+
+fn main(): int
+{
+    return 0;
+}

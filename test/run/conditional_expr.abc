@@ -1,0 +1,33 @@
+// TEST: T0010
+// Conditional expressions: 'c ? a : b' and 'c then a else b'.  Only the
+// selected operand is evaluated.
+
+global evaluated: int;
+
+fn value(v: int): int
+{
+    evaluated = evaluated + v;
+    return v;
+}
+
+fn main(): int
+{
+    local a: int = 3, b: int = 5;
+
+    assert((a < b ? a : b) == 3);
+    assert((a > b then a else b) == 5);
+
+    evaluated = 0;
+    local r: int = a < b ? value(1) : value(10);
+    assert(r == 1 && evaluated == 1);
+
+    evaluated = 0;
+    r = a > b then value(1) else value(10);
+    assert(r == 10 && evaluated == 10);
+
+    // nested (right associative)
+    local n: int = 7;
+    local sign: int = n < 0 ? -1 : n > 0 ? 1 : 0;
+    assert(sign == 1);
+    return 0;
+}

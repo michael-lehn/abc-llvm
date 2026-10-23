@@ -1,0 +1,8 @@
+// TEST: T0106
+// Hexadecimal prefix without digits.
+// ERROR: hexadecimal
+
+fn main(): int
+{
+    return 0x;
+}

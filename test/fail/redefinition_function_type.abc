@@ -1,0 +1,18 @@
+// TEST: T0124
+// A function redeclared with a different type.
+// ERROR: redefinition
+
+fn f(x: int): int
+{
+    return x;
+}
+
+fn f(x: double): int
+{
+    return 0;
+}
+
+fn main(): int
+{
+    return 0;
+}

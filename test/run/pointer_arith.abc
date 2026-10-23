@@ -1,0 +1,40 @@
+// TEST: T0047
+// Pointer arithmetic: pointer +/- integer scales by the element size,
+// pointer - pointer counts elements, indexing is *(p + i).
+
+struct S
+{
+    a: i64;
+    b: i64;
+};
+
+fn main(): int
+{
+    local a: array[5] of int = {10, 20, 30, 40, 50};
+    local p: -> int = &a[1];
+    local q: -> int = &a[4];
+
+    assert(*(p + 1) == 30);
+    assert(*(2 + p) == 40);
+    assert(p[2] == 40);
+    assert(q - p == 3);
+    assert(p - q == -3);
+
+    p++;
+    assert(*p == 30);
+    p--;
+    assert(*p == 20);
+    p += 2;
+    assert(*p == 40);
+
+    // stride is the size of the referenced type
+    local s: array[3] of S;
+    local ps: -> S = s;
+    assert((-> u8)(ps + 1) - (-> u8)ps == sizeof(S));
+    assert(&s[2] - ps == 2);
+
+    // pointer comparisons
+    assert(&a[0] < &a[1]);
+    assert(&a[4] > &a[3]);
+    return 0;
+}

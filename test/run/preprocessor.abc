@@ -1,0 +1,26 @@
+// TEST: T0052
+// Preprocessor: @define, @ifdef/@endif and header files that are included
+// only once (no include guards needed).
+
+@ <once.hdr>
+@ <once.hdr>
+
+@define SIZE 4
+@define FEATURE
+
+fn main(): int
+{
+    local a: array[SIZE] of int;
+    assert(sizeof(a) == 4 * sizeof(int));
+    assert(onceValue() == 42);
+
+    local x: int = 0;
+@ifdef FEATURE
+    x = 1;
+@endif
+@ifdef MISSING
+    x = 2;
+@endif
+    assert(x == 1);
+    return 0;
+}

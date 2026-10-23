@@ -1,0 +1,43 @@
+// TEST: T0001
+// Arrays: indexing, multidimensional arrays, sizeof, assignment (copies the
+// array), arrays of structs.
+
+struct Item
+{
+    id: int;
+    weight: double;
+};
+
+fn main(): int
+{
+    local a: array[5] of int;
+    for (local i: int = 0; i < 5; ++i) {
+	a[i] = i * i;
+    }
+    assert(a[0] == 0 && a[4] == 16);
+    assert(sizeof(a) == 5 * sizeof(int));
+    assert(sizeof(a) / sizeof(a[0]) == 5);
+
+    // array assignment copies all elements
+    local b: array[5] of int;
+    b = a;
+    b[1] = -1;
+    assert(a[1] == 1 && b[1] == -1 && b[4] == 16);
+
+    local m: array[2][3] of int = {{1, 2, 3}, {4, 5, 6}};
+    assert(m[0][2] == 3 && m[1][0] == 4);
+    assert(sizeof(m) == 6 * sizeof(int));
+    assert(sizeof(m[1]) == 3 * sizeof(int));
+    m[1][2] = 60;
+    assert(m[1][2] == 60);
+
+    local items: array[2] of Item;
+    items[1].id = 7;
+    items[1].weight = 0.5;
+    assert(items[1].id == 7 && items[1].weight == 0.5);
+
+    // index expression of any integer type
+    local idx: u8 = 3;
+    assert(a[idx] == 9);
+    return 0;
+}

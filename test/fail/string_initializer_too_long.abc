@@ -1,0 +1,9 @@
+// TEST: T0129
+// A string literal (including the terminating 0) larger than the array.
+// ERROR: excess elements
+
+fn main(): int
+{
+    local s: array[3] of char = "abc";
+    return 0;
+}

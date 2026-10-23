@@ -1,0 +1,15 @@
+// TEST: T0113
+// A non-void function that can end without returning a value.
+// ERROR: does not return a value
+
+fn f(x: int): int
+{
+    if (x) {
+	return 1;
+    }
+}
+
+fn main(): int
+{
+    return f(0);
+}

@@ -1,0 +1,8 @@
+// TEST: T0042
+// EXIT: 42
+// The return value of main is the exit status of the program.
+
+fn main(): int
+{
+    return 40 + 2;
+}

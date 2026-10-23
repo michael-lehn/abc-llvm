@@ -1,0 +1,11 @@
+// TEST: T0013
+// XFAIL: #0021 README type names long_long, unsigned_long(_long) are undefined
+
+fn main(): int
+{
+    local a: long_long = 1;
+    local b: unsigned_long = 2;
+    local c: unsigned_long_long = 3;
+    assert(a + b + c == 6);
+    return 0;
+}

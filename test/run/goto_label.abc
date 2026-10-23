@@ -1,0 +1,19 @@
+// TEST: T0023
+// goto with forward and backward jumps.
+
+fn main(): int
+{
+    local i: int = 0;
+label again:
+    i++;
+    if (i < 5) {
+	goto again;
+    }
+    assert(i == 5);
+
+    goto skip;
+    i = 100;
+label skip:
+    assert(i == 5);
+    return 0;
+}

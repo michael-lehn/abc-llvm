@@ -1,0 +1,28 @@
+// TEST: T0053
+// Calling the variadic C functions printf and snprintf (expected output in
+// printf_output.out).
+
+@ <stdio.hdr>
+@ <string.hdr>
+
+fn main(): int
+{
+    local i: int = -42;
+    local u: unsigned = 4000000000;
+    local l: i64 = -9000000000;
+    local f: float = 0.5;
+    local d: double = 3.25;
+    local s: size_t = 123;
+
+    printf("int %d unsigned %u i64 %lld\n", i, u, l);
+    printf("float %.2f double %.3f\n", f, d);
+    printf("string %s char %c hex %x size %zu\n", "abc", 'Z', 255, s);
+    printf("percent %%\n");
+
+    local buf: array[32] of char;
+    local n: int = snprintf(buf, sizeof(buf), "%d-%s", 7, "x");
+    assert(n == 3);
+    assert(strcmp(buf, "7-x") == 0);
+    printf("buf %s\n", buf);
+    return 0;
+}

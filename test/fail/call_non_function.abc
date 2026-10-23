@@ -1,0 +1,9 @@
+// TEST: T0082
+// Call of a variable that is not a function.
+// ERROR: not a function
+
+fn main(): int
+{
+    local x: int = 1;
+    return x();
+}

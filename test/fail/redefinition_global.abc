@@ -1,0 +1,11 @@
+// TEST: T0125
+// Two global variables with the same name.
+// ERROR: already defined|redefinition
+
+global x: int = 1;
+global x: int = 2;
+
+fn main(): int
+{
+    return x;
+}

@@ -1,0 +1,14 @@
+// TEST: T0098
+// A function name does not convert implicitly to a function pointer.
+// ERROR: convert
+
+fn f(a: int): int
+{
+    return a;
+}
+
+fn main(): int
+{
+    local p: -> fn(:int): int = f;
+    return 0;
+}

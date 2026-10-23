@@ -1,0 +1,10 @@
+// TEST: T0141
+// '...' has to follow at least one named parameter.
+// ERROR: expected
+
+extern fn f(...): int;
+
+fn main(): int
+{
+    return 0;
+}

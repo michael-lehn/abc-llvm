@@ -1,0 +1,9 @@
+// TEST: T0136
+// Variable of an undeclared type.
+// ERROR: type
+
+fn main(): int
+{
+    local x: undefined_t;
+    return 0;
+}

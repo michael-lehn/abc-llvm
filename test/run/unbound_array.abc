@@ -1,0 +1,19 @@
+// TEST: T0067
+// Arrays with unspecified dimension get their size from the initializer.
+
+global g: array[] of int = {1, 2, 3, 4};
+global s: array[] of char = "hello";
+
+fn main(): int
+{
+    assert(sizeof(g) == 4 * sizeof(int));
+    assert(sizeof(s) == 6);
+    assert(s[5] == 0);
+
+    local l: array[] of int = {7, 8};
+    assert(sizeof(l) == 2 * sizeof(int));
+
+    local d: array[] of int = {[4] = 1};
+    assert(sizeof(d) == 5 * sizeof(int));
+    return 0;
+}

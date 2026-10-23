@@ -1,0 +1,54 @@
+// TEST: T0050
+// Address-of, dereference with '*' and '->', pointers to pointers, pointer
+// comparison and nullptr.
+
+fn swap(a: -> int, b: -> int)
+{
+    local t: int = *a;
+    *a = *b;
+    *b = t;
+}
+
+fn main(): int
+{
+    local x: int = 1, y: int = 2;
+    local p: -> int = &x;
+
+    assert(*p == 1);
+    *p = 10;
+    assert(x == 10);
+
+    // 'p->' is equivalent to '*p'
+    p-> = 11;
+    assert(x == 11 && p-> == 11);
+
+    local pp: -> -> int = &p;
+    **pp = 12;
+    assert(x == 12);
+    pp->-> = 13;
+    assert(x == 13);
+    *pp = &y;
+    assert(*p == 2);
+
+    swap(&x, &y);
+    assert(x == 2 && y == 13);
+
+    // comparison
+    local q: -> int = &y;
+    assert(p == q);
+    q = &x;
+    assert(p != q);
+
+    // nullptr
+    local n: -> int = nullptr;
+    assert(n == nullptr);
+    assert(!n);
+    n = &x;
+    assert(n != nullptr);
+
+    // pointer to void
+    local v: -> void = &x;
+    local back: -> int = v;
+    assert(*back == 2);
+    return 0;
+}

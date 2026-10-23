@@ -1,0 +1,9 @@
+// TEST: T0139
+// Block comment without end.
+// ERROR: comment not terminated
+
+fn main(): int
+{
+    return 0;
+}
+/* unterminated

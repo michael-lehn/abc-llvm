@@ -1,0 +1,14 @@
+// TEST: T0115
+// Access to a member that does not exist.
+// ERROR: no member
+
+struct S
+{
+    a: int;
+};
+
+fn main(): int
+{
+    local s: S;
+    return s.b;
+}

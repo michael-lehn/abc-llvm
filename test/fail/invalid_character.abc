@@ -1,0 +1,8 @@
+// TEST: T0105
+// A character that is not part of any token.
+// ERROR: unexpected|expected
+
+fn main(): int
+{
+    return 1 $ 2;
+}

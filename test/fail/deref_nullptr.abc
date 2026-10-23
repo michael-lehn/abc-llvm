@@ -1,0 +1,8 @@
+// TEST: T0086
+// Dereferencing nullptr.
+// ERROR: can not be applied
+
+fn main(): int
+{
+    return *nullptr;
+}

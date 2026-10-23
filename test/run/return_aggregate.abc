@@ -1,0 +1,39 @@
+// TEST: T0056
+// Functions returning structs and arrays by value.
+
+struct Point
+{
+    x: int;
+    y: int;
+};
+
+fn makePoint(x: int, y: int): Point
+{
+    local p: Point = {x, y};
+    return p;
+}
+
+fn swap(p: Point): Point
+{
+    return Point{p.y, p.x};
+}
+
+fn iota(): array[4] of int
+{
+    local a: array[4] of int = {0, 1, 2, 3};
+    return a;
+}
+
+fn main(): int
+{
+    local p: Point = makePoint(3, 4);
+    assert(p.x == 3 && p.y == 4);
+
+    local q: Point = swap(p);
+    assert(q.x == 4 && q.y == 3);
+    assert(makePoint(5, 6).y == 6);
+
+    local a: array[4] of int = iota();
+    assert(a[0] == 0 && a[3] == 3);
+    return 0;
+}

@@ -1,0 +1,8 @@
+// TEST: T0134
+// Call of an undeclared function.
+// ERROR: undefined identifier
+
+fn main(): int
+{
+    return foo(1);
+}

@@ -1,0 +1,9 @@
+// TEST: T0009
+// XFAIL: #0010 lexer hangs on a // comment at the end of a file without newline
+// TIMEOUT: 5
+
+fn main(): int
+{
+    return 0;
+}
+// no newline after this comment
