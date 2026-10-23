@@ -1,0 +1,31 @@
+// TEST: T0213
+// XFAIL: #0039
+// Floating-point values as conditions (if, while, conditional expression):
+// zero is false, every other value (including NaN) is true.
+
+fn main(): int
+{
+    local d: double = 0.5;
+    local z: double = 0.0;
+    local f: float = 2.0;
+    local n: int = 0;
+
+    if (d) {
+	n = n + 1;
+    }
+    if (z) {
+	n = n + 10;
+    }
+    while (f) {
+	n = n + 100;
+	f = 0.0;
+    }
+    assert(n == 101);
+    assert((d ? 1 : 2) == 1);
+    assert((z ? 1 : 2) == 2);
+
+    local nan: double = z / z;
+    assert(nan != nan);
+    assert((nan ? 1 : 2) == 1);
+    return 0;
+}

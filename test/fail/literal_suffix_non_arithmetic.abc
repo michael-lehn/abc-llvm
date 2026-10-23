@@ -1,0 +1,12 @@
+// TEST: T0227
+// XFAIL: #0052
+// ERROR: suffix|literal
+// A type after a literal is a type suffix; a non-arithmetic type is an error
+// and must not be discarded silently.
+
+fn main(): int
+{
+    local x: int;
+    x = 1 -> int;
+    return x;
+}

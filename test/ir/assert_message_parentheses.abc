@@ -1,0 +1,11 @@
+// TEST: T0225
+// XFAIL: #0050
+// ARGS: -O0
+// IR-MATCH: c"a - \(b - c\) == 0
+// The message of a failed assertion shows the expression with the
+// parentheses needed for its meaning (here: a - (b - c), not a - b - c).
+
+fn check(a: int, b: int, c: int)
+{
+    assert(a - (b - c) == 0);
+}

@@ -1,0 +1,17 @@
+// TEST: T0218
+// XFAIL: #0044
+// ARGS: -target x86_64-unknown-linux-gnu
+// IR-MATCH: ^define .*@\.?second\(
+// IR-MATCH: ^define .*@\.?sum\(
+// By-value array parameters with 2 to 4 elements on x86-64 (the aggregate
+// classification of the x86-64 ABI).
+
+fn second(a: array[2] of int): int
+{
+    return a[1];
+}
+
+fn sum(a: array[4] of u8): int
+{
+    return a[0] + a[3];
+}

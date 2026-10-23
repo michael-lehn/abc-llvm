@@ -1,0 +1,32 @@
+// TEST: T0214
+// XFAIL: #0040
+// switch over a value whose type is an alias of an enum type, with all
+// enumeration values handled.
+
+enum Color : int
+{
+    RED,
+    GREEN,
+    BLUE,
+};
+
+type MyColor: Color;
+
+fn code(c: MyColor): int
+{
+    switch (c) {
+    case RED:
+	return 1;
+    case GREEN:
+	return 2;
+    case BLUE:
+	return 3;
+    }
+    return 0;
+}
+
+fn main(): int
+{
+    assert(code(GREEN) == 2);
+    return 0;
+}

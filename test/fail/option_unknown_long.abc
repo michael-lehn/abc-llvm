@@ -1,0 +1,11 @@
+// TEST: T0228
+// XFAIL: #0053
+// ARGS: --no-such-option
+// ERROR: unknown|unrecognized|invalid option
+// An unknown long option is an error (exit status not 0), like an unknown
+// short option.
+
+fn main(): int
+{
+    return 0;
+}

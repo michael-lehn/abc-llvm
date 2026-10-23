@@ -1,0 +1,79 @@
+// TEST: T0210
+// XFAIL: #0037
+// Readonly arrays whose element type is an array.  Creating the readonly
+// element type while the set of array types is searched recurses endlessly.
+// Whether the recursion is reached depends on the order of addresses in the
+// compiler's heap; 64 declarations crash every build of the compiler tested
+// (LLVM 17 to 23; builds with LLVM 17 to 20 need more than 16).
+
+global r1: readonly array[1] of array[1] of int;
+global r2: readonly array[1] of array[2] of int;
+global r3: readonly array[1] of array[3] of int;
+global r4: readonly array[1] of array[4] of int;
+global r5: readonly array[1] of array[5] of int;
+global r6: readonly array[1] of array[6] of int;
+global r7: readonly array[1] of array[7] of int;
+global r8: readonly array[1] of array[8] of int;
+global r9: readonly array[2] of array[1] of int;
+global r10: readonly array[2] of array[2] of int;
+global r11: readonly array[2] of array[3] of int;
+global r12: readonly array[2] of array[4] of int;
+global r13: readonly array[2] of array[5] of int;
+global r14: readonly array[2] of array[6] of int;
+global r15: readonly array[2] of array[7] of int;
+global r16: readonly array[2] of array[8] of int;
+global r17: readonly array[3] of array[1] of int;
+global r18: readonly array[3] of array[2] of int;
+global r19: readonly array[3] of array[3] of int;
+global r20: readonly array[3] of array[4] of int;
+global r21: readonly array[3] of array[5] of int;
+global r22: readonly array[3] of array[6] of int;
+global r23: readonly array[3] of array[7] of int;
+global r24: readonly array[3] of array[8] of int;
+global r25: readonly array[4] of array[1] of int;
+global r26: readonly array[4] of array[2] of int;
+global r27: readonly array[4] of array[3] of int;
+global r28: readonly array[4] of array[4] of int;
+global r29: readonly array[4] of array[5] of int;
+global r30: readonly array[4] of array[6] of int;
+global r31: readonly array[4] of array[7] of int;
+global r32: readonly array[4] of array[8] of int;
+global r33: readonly array[5] of array[1] of int;
+global r34: readonly array[5] of array[2] of int;
+global r35: readonly array[5] of array[3] of int;
+global r36: readonly array[5] of array[4] of int;
+global r37: readonly array[5] of array[5] of int;
+global r38: readonly array[5] of array[6] of int;
+global r39: readonly array[5] of array[7] of int;
+global r40: readonly array[5] of array[8] of int;
+global r41: readonly array[6] of array[1] of int;
+global r42: readonly array[6] of array[2] of int;
+global r43: readonly array[6] of array[3] of int;
+global r44: readonly array[6] of array[4] of int;
+global r45: readonly array[6] of array[5] of int;
+global r46: readonly array[6] of array[6] of int;
+global r47: readonly array[6] of array[7] of int;
+global r48: readonly array[6] of array[8] of int;
+global r49: readonly array[7] of array[1] of int;
+global r50: readonly array[7] of array[2] of int;
+global r51: readonly array[7] of array[3] of int;
+global r52: readonly array[7] of array[4] of int;
+global r53: readonly array[7] of array[5] of int;
+global r54: readonly array[7] of array[6] of int;
+global r55: readonly array[7] of array[7] of int;
+global r56: readonly array[7] of array[8] of int;
+global r57: readonly array[8] of array[1] of int;
+global r58: readonly array[8] of array[2] of int;
+global r59: readonly array[8] of array[3] of int;
+global r60: readonly array[8] of array[4] of int;
+global r61: readonly array[8] of array[5] of int;
+global r62: readonly array[8] of array[6] of int;
+global r63: readonly array[8] of array[7] of int;
+global r64: readonly array[8] of array[8] of int;
+
+fn main(): int
+{
+    assert(r64[7][7] == 0);
+    assert(r1[0][0] == 0);
+    return 0;
+}

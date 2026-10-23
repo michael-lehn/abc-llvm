@@ -1,0 +1,19 @@
+// TEST: T0215
+// XFAIL: #0041
+// Several static local variables in one declaration without initializer
+// (zero-initialized, keep their values between calls).
+
+fn next(): int
+{
+    static a, b: int;
+    a = a + 1;
+    b = b + 2;
+    return a + b;
+}
+
+fn main(): int
+{
+    assert(next() == 3);
+    assert(next() == 6);
+    return 0;
+}

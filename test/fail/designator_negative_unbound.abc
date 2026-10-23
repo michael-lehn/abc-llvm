@@ -1,0 +1,12 @@
+// TEST: T0233
+// XFAIL: #0058
+// TIMEOUT: 5
+// ERROR: designator|index|range|negative
+// A negative array designator for an array of unbound size is an error; the
+// compiler must not hang.
+
+fn main(): int
+{
+    local a: array[] of int = {[-1] = 1};
+    return 0;
+}

@@ -1,0 +1,13 @@
+// TEST: T0232
+// XFAIL: #0057
+// An @ <...> include inside a disabled @ifdef region is skipped like an
+// @ "..." include; the file is not searched.
+
+@ifdef NOT_DEFINED
+@ <does_not_exist.hdr>
+@endif
+
+fn main(): int
+{
+    return 0;
+}

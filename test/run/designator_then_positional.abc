@@ -1,0 +1,20 @@
+// TEST: T0220
+// XFAIL: #0046
+// A positional initializer after a designator initializes the next member
+// and is converted to the type of that member.
+
+struct S
+{
+    a: i8;
+    b: double;
+    c: i32;
+};
+
+fn main(): int
+{
+    local s: S = {.b = 1.5, 7};
+    assert(s.a == 0);
+    assert(s.b == 1.5);
+    assert(s.c == 7);
+    return 0;
+}

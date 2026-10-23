@@ -1,0 +1,47 @@
+// TEST: T0241
+// DESIGN: #0067
+// OBSERVED: ACCEPTED
+// Evaluation order of operands with side effects.  The language does not
+// specify it; the program prints the observed order (in the log of the test)
+// and does not check it.
+
+@ <stdio.hdr>
+
+global trace: int;
+
+fn f(): int
+{
+    trace = trace * 10 + 1;
+    return 1;
+}
+
+fn g(): int
+{
+    trace = trace * 10 + 2;
+    return 2;
+}
+
+fn two(a: int, b: int): int
+{
+    return a + b;
+}
+
+global arr: array[4] of int;
+
+fn main(): int
+{
+    local r: int;
+
+    trace = 0;
+    r = f() + g();
+    printf("f() + g(): %d\n", trace);
+
+    trace = 0;
+    r = two(f(), g());
+    printf("two(f(), g()): %d\n", trace);
+
+    trace = 0;
+    arr[f()] = g();
+    printf("arr[f()] = g(): %d\n", trace);
+    return 0;
+}

@@ -1,0 +1,18 @@
+// TEST: T0212
+// XFAIL: #0038
+// Compound shift assignments whose operands have different widths.  The
+// generated LLVM IR must be valid.
+
+fn main(): int
+{
+    local c: i8 = 1;
+    local n: i64 = 2;
+    c <<= n;
+    assert(c == 4);
+
+    local w: u32 = 64;
+    local m: u8 = 3;
+    w >>= m;
+    assert(w == 8);
+    return 0;
+}

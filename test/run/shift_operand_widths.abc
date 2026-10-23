@@ -1,0 +1,19 @@
+// TEST: T0211
+// XFAIL: #0038
+// Shifts whose operands have different widths (the literal shift count has
+// type i32).  The generated LLVM IR must be valid.
+
+fn main(): int
+{
+    local x: u64 = 1;
+    x = x << 3;
+    assert(x == 8);
+
+    local y: i64 = 256;
+    assert((y >> 4) == 16);
+
+    local b: u8 = 1;
+    b = b << 2;
+    assert(b == 4);
+    return 0;
+}

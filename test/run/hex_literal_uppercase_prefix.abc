@@ -1,0 +1,10 @@
+// TEST: T0216
+// XFAIL: #0042
+// Hexadecimal literals with the prefix 0X (documented in the README).
+
+fn main(): int
+{
+    assert(0XFF == 255);
+    assert(0X1f == 31);
+    return 0;
+}

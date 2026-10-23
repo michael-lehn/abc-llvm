@@ -1,0 +1,12 @@
+// TEST: T0229
+// XFAIL: #0054
+// A // comment at the end of an @define line ends the directive; the next
+// line does not become part of the macro.
+
+@define N 10 // number of elements
+
+fn main(): int
+{
+    assert(N == 10);
+    return 0;
+}

@@ -1,0 +1,22 @@
+// TEST: T0217
+// XFAIL: #0043
+// Explicit cast of a readonly struct to the non-readonly struct type, used as
+// a by-value argument and for member access.
+
+struct P
+{
+    x: int;
+};
+
+fn get(p: P): int
+{
+    return p.x;
+}
+
+fn main(): int
+{
+    local rp: readonly P = {3};
+    assert(get((P)rp) == 3);
+    assert(((P)rp).x == 3);
+    return 0;
+}

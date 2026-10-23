@@ -1,0 +1,23 @@
+// TEST: T0224
+// XFAIL: #0049
+// ARGS: -target x86_64-unknown-linux-gnu
+// IR-MATCH: load <2 x float>, ptr @gv, align 4
+// On x86-64 a struct of two floats is passed as <2 x float>.  The load from
+// the global (alignment 4) must not claim a higher alignment.
+
+struct V
+{
+    x, y: float;
+};
+
+global gv: V = {1.0, 2.0};
+
+fn len(v: V): float
+{
+    return v.x + v.y;
+}
+
+fn call(): float
+{
+    return len(gv);
+}

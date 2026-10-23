@@ -1,0 +1,12 @@
+// TEST: T0230
+// XFAIL: #0055
+// TIMEOUT: 5
+// @define in the last line of the file, without a newline at the end (this
+// file must not end with a newline).
+
+fn main(): int
+{
+    return 0;
+}
+
+@define LAST 1

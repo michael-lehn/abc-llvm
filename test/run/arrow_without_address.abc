@@ -1,0 +1,17 @@
+// TEST: T0223
+// XFAIL: #0048
+// Indirect member access (->) on a pointer expression that has no address.
+
+struct P
+{
+    x: int;
+};
+
+global arr: array[2] of P = {{1}, {2}};
+
+fn main(): int
+{
+    local p: -> P = &arr[0];
+    assert((p + 1)->x == 2);
+    return 0;
+}

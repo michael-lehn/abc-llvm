@@ -1,0 +1,21 @@
+// TEST: T0222
+// XFAIL: #0047
+// The operand of ++ and -- is evaluated once: a[i++]++ and ++a[j++] modify
+// a[0] and increment the index once.
+
+global a: array[3] of int = {1, 2, 3};
+
+fn main(): int
+{
+    local i: int = 0;
+    a[i++]++;
+    assert(i == 1);
+    assert(a[0] == 2);
+
+    local j: int = 0;
+    ++a[j++];
+    assert(j == 1);
+    assert(a[0] == 3);
+    assert(a[1] == 2);
+    return 0;
+}

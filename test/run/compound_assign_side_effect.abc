@@ -1,0 +1,16 @@
+// TEST: T0221
+// XFAIL: #0047
+// The left operand of a compound assignment is evaluated once: a[i++] += 10
+// reads and writes a[0] and increments i once.
+
+global a: array[3] of int = {1, 2, 3};
+
+fn main(): int
+{
+    local i: int = 0;
+    a[i++] += 10;
+    assert(i == 1);
+    assert(a[0] == 11);
+    assert(a[1] == 2);
+    return 0;
+}

@@ -1,0 +1,13 @@
+// TEST: T0231
+// XFAIL: #0056
+// TIMEOUT: 5
+// ERROR: expected|missing|unterminated
+// An @ <... include without the closing bracket (here at the end of the
+// file) is an error; the lexer must not hang.
+
+fn main(): int
+{
+    return 0;
+}
+
+@ <stdio.hdr
