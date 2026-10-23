@@ -224,6 +224,7 @@ lowerFunctionCall(Value fnAddr, const abc::Type *fnAbcType,
     auto fnCall = llvmBuilder->CreateCall(llvmFnType, fnAddr, abiArg);
 
     std::size_t abiIndex = 0;
+    bool hasByVal = false;
     for (std::size_t i = 0; i < abcParamType.size(); ++i) {
 	abi::ArgInfo argInfo = abi::classifyArgType(abcParamType[i]);
 	if (argInfo.kind == ArgInfo::Kind::ByVal) {
@@ -233,8 +234,18 @@ lowerFunctionCall(Value fnAddr, const abc::Type *fnAbcType,
 	                             *llvmContext, convert(argInfo.abcType)));
 	    fnCall->addParamAttr(abiIndex, llvm::Attribute::getWithAlignment(
 	                                       *llvmContext, argInfo.align));
+	    hasByVal = true;
 	}
 	abiIndex += argInfo.abiType.size();
+    }
+    // Workaround for an LLVM miscompile (LLVM 17 to at least 24,
+    // https://github.com/llvm/llvm-project/issues/235074, see
+    // doc/llvm-issues/tailcallelim-byval): tail recursion elimination writes
+    // to byval arguments but keeps memory(argmem: read), so the inliner elides
+    // the byval copy and the caller's object gets modified.  notail keeps
+    // tailcallelim away from calls with byval arguments.
+    if (hasByVal) {
+	fnCall->setTailCallKind(llvm::CallInst::TCK_NoTail);
     }
     return fnCall;
 }

@@ -1,0 +1,40 @@
+// TEST: T0209
+// A by-value struct parameter that is modified and passed on in a
+// tail-recursive self-call must not change the caller's object, also when the
+// optimizer inlines the function.  The caller's object is read by a C
+// function (see byval_tail_recursion_inline.c), so the optimizer can not
+// replace the reads by the values known before the call.  Regression test for
+// an LLVM miscompile (LLVM 17 to at least 24): tail recursion elimination
+// writes to the byval argument but keeps memory(argmem: read), and the inliner
+// then elides the byval copy (LLVM #235074,
+// doc/llvm-issues/tailcallelim-byval).  ABC marks calls with byval arguments
+// notail (gen/abi.cpp).
+
+struct Vec
+{
+    v: array[4] of i64;
+    n: int;
+};
+
+extern fn readFirst(s: -> Vec): i64;
+extern fn readCount(s: -> Vec): int;
+
+fn countDown(s: Vec): i64
+{
+    if (s.n == 0) {
+	return s.v[0];
+    }
+    s.v[0] = s.v[0] + s.n;
+    s.n--;
+    return countDown(s);
+}
+
+fn main(): int
+{
+    local s: Vec = {{1, 2, 3, 4}, 5};
+    // 1 + 5 + 4 + 3 + 2 + 1
+    assert(countDown(s) == 16);
+    assert(readFirst(&s) == 1);
+    assert(readCount(&s) == 5);
+    return 0;
+}

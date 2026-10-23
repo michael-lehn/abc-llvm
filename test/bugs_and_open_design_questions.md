@@ -268,6 +268,22 @@ option takes precedence. The tests in test/ir compile with option
 combinations and check the attributes and the optimization of the generated
 IR.
 
+Issue #0036: LLVM miscompile of by-value arguments in tail-recursive functions (LLVM #235074, worked around)
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0196 (runtime, PASS), #T0209 (runtime, PASS)
+
+An LLVM optimizer bug (LLVM 17 to at least 24): `tailcallelim` turns a
+self-recursive call with a `byval` argument into a loop that writes to the
+function's own `byval` argument, but keeps the function attribute
+`memory(argmem: read)`; the inliner then elides the `byval` copy, so the
+caller's object is modified. ABC generates valid IR; the bug is reported
+upstream as https://github.com/llvm/llvm-project/issues/235074 (reproducer:
+doc/llvm-issues/tailcallelim-byval). Workaround in ABC: calls with `byval`
+arguments are marked `notail` (`gen/abi.cpp`, `lowerFunctionCall`). T0209
+observes the caller's object through C and fails without the workaround on
+LLVM 17 to 23; T0196 fails without it on LLVM 17 to 19.
+
 ---
 
 ## Open Language Design Questions
