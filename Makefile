@@ -119,11 +119,16 @@ $(build.dir)% : $(build.dir)%.o $(lib.cpp.o)
 $(build.dir)%.o : %.abc $(ABC) | $(build.subdir) $(ABC)
 	$(ABC) -c $(ABCFLAGS) $< -o $@ -MF $(@:%.o=%.d) -MT '$@' -MD -MP
 
-$(abc-std-lib)(%.o) : $(build.dir)%.o | $(build.dir)
-	$(AR) $(ARFLAGS) $@ $<
-
-$(abc-std-lib) : $(abc-std-lib)($(lib.abc.o)) | $(lib.abc.o)
-	$(RANLIB) $@
+# Only this recipe writes the archive.  The objects are compiled in parallel,
+# then the archive is created in one step (archive member targets,
+# lib.a(member.o), are not safe with make -j: concurrent ar calls on the same
+# archive lose members).  The archive is built next to the destination and
+# renamed only when ar and ranlib succeeded, so a failed or interrupted build
+# never replaces a valid archive.
+$(abc-std-lib) : $(lib.abc.o)
+	@$(RM) $@.tmp
+	$(AR) $(ARFLAGS) $@.tmp $^ && $(RANLIB) $@.tmp && mv -f $@.tmp $@ \
+		|| { $(RM) $@.tmp; exit 1; }
 
 
 #-- generate files: E.g. headers like inttypes.hdr
