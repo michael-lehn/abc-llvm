@@ -1,2 +1,4 @@
 *.o
 *.swp
+/build/
+/compile_commands.json
