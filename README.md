@@ -15,7 +15,8 @@ ABC is a small teaching language designed to make programming and computers easi
   consistent grammar and semantics. This makes it significantly easier to learn
   than C while preserving the concepts that matter.
 
-**Requirements:** LLVM 17–22 are supported and tested.
+**Requirements:** LLVM 17 to 23 are supported and tested (see
+[Installation](#installation)).
 
 **A note on the name:** My ABC is unrelated to the ABC language developed at CWI,
 which was originally called B—also unrelated to Bell Labs’ B, the predecessor of C.
@@ -140,7 +141,7 @@ Verify that the correct LLVM version is used:
 
 ```bash
 llvm-config --version
-# should print 21.x (or higher)
+# should print a version from 17.x to 23.x
 ```
 
 Clone the repository, build, and install:
@@ -156,8 +157,12 @@ If needed, you can explicitly specify the C++ compiler and `llvm-config` when
 invoking `make`, for example:
 
 ```bash
-make CXX=g++ llvm-config=llvm-config-21
+make CXX=g++ llvm-config=llvm-config-23
 ```
+
+Building with a different C++ compiler or a different LLVM version requires
+`make clean` first, or a separate build directory, e.g.
+`make build.dir=build/llvm23/ llvm-config=llvm-config-23`.
 
 ### Running the Tests
 
@@ -207,19 +212,22 @@ and `Compile command from CDB is: ...` with the flags above, and no errors.
 
 ### Hints on Installing LLVM
 
-ABC requires **LLVM 21** (including `llvm-config` and `clang`).  
-Earlier LLVM versions will **not** work.
+ABC supports **LLVM 17 to 23** (including `llvm-config` and `clang`). The
+complete test suite (`make check`) passes with each of these versions
+(tested on macOS/arm64 with the Homebrew packages `llvm@17` to `llvm@23`).
+The build configuration also accepts LLVM 14 to 16, but these versions are
+not tested.
 
 **macOS (recommended):**
 
 ```bash
-brew install llvm@21
+brew install llvm@23
 ```
 
 After installation, make sure the Homebrew LLVM tools are in your `PATH`:
 
 ```bash
-export PATH="$(brew --prefix llvm@21)/bin:$PATH"
+export PATH="$(brew --prefix llvm@23)/bin:$PATH"
 ```
 
 **Debian/Ubuntu-based Linux:**  
@@ -449,6 +457,12 @@ material, the compiler implementation, and the bootstrapping process.
 
 # Language Description
 
+Known deviations of the current compiler from this description and open
+questions about the language are tracked in
+[test/bugs_and_open_design_questions.md](test/bugs_and_open_design_questions.md).
+References like *(open question #0024)* or *(compiler bug #0009)* refer to
+entries in that file.
+
 ## Lexical Elements
 
 Comments can be delimited by `/*` and `*/`. Nested comments are not supported.
@@ -463,21 +477,29 @@ character is a space or if the next character cannot be added to it.
 Punctuators are:
 
 `.`         `...`       `;`         `:`         `,`         `{`
-`}`         `(`         `)`         `[`         `]`         `^`
+`}`         `(`         `)`         `[`         `]`         `?`
 `+`         `++`        `+=`        `-`         `--`        `-=`
 `->`        `*`         `*=`        `/`         `/=`        `%`
 `%=`        `=`         `==`        `!`         `!=`        `>`
-`>=`        `<`         `<=`        `&`         `&&`        `|`
-`||`        `?`         `#`
+`>=`        `>>`        `>>=`       `<`         `<=`        `<<`
+`<<=`       `&`         `&&`        `&=`        `|`         `||`
+`|=`        `^`         `^=`        `#`
+
+The punctuator `#` is not used by any grammar rule *(open question #0023)*.
 
 The following keywords are reserved and cannot be used as identifiers:
 
-`alignas`   `alignof`   `array`     `break`     `case`
-`const`     `continue`  `default`   `do`        `else`
-`enum`      `extern`    `fn`        `for`       `global`
-`goto`      `if`        `label`     `local`     `nullptr`
-`of`        `return`    `sizeof`    `struct`    `switch`
-`then`      `type`      `union`     `while`
+`alignas`   `alignof`   `array`     `assert`    `break`
+`case`      `const`     `continue`  `default`   `do`
+`else`      `enum`      `extern`    `false`     `fn`
+`for`       `global`    `goto`      `if`        `label`
+`local`     `nullptr`   `of`        `readonly`  `return`
+`sizeof`    `static`    `struct`    `switch`    `then`
+`true`      `type`      `union`     `while`
+
+The keywords `readonly` and `const` are synonyms. The keywords `alignas` and
+`alignof` are reserved for operators that are not implemented yet *(compiler
+bug #0020: the compiler does not reserve them)*.
 
 Identifiers begin with a letter, i.e., `A` to `Z` and `a` to `z`, or an
 underscore `_`, and are optionally followed by a sequence of more letters,
@@ -486,112 +508,180 @@ underscores, or decimal digits `0` to `9`. Some identifiers are predefined.
 The following predefined identifiers are used as named
 [types](#types) (essentially keywords):
 
-`void`              `bool`              `u8`                `u16`
-`u32`               `u64`               `i8`                `i16`
-`i32`               `i64`               `int`               `long`
-`long_long`         `unsigned`          `unsigned_long`     `unsigned_long_long`
-`size_t`            `ptrdiff_t`         `float`             `double`
+`void`              `bool`              `char`              `u8`
+`u16`               `u32`               `u64`               `i8`
+`i16`               `i32`               `i64`               `int`
+`long`              `long_long`         `unsigned`          `unsigned_long`
+`unsigned_long_long` `size_t`           `ptrdiff_t`         `float`
+`double`
 
-The following predefined identifiers are used as named constants:
+`char` is an unsigned 8-bit integer type and `bool` is an integer type with
+the values `false` (0) and `true` (1). *Compiler bug #0021: `long_long`,
+`unsigned_long` and `unsigned_long_long` are currently not defined; compiler
+bug #0009: `long` currently has 32 bits on all targets. Open question #0029:
+`size_t` and `ptrdiff_t` are currently signed.*
 
-`nullptr`
+The keyword `nullptr` denotes the null pointer; `true` and `false` are the
+values of type `bool`.
 
 Literals can be decimal literals, octal literals, hexadecimal literals, string
 literals, character literals, and (decimal) floating point literals.
 - Decimal literals begin with a digit `1` to `9` and optionally have more
   digits from `0` to `9`. Decimal constants are unsigned and can be of
-  arbitrary size.
+  arbitrary size. *(Open question #0027: the compiler currently gives an
+  integer literal without type suffix the type `int` if the value fits,
+  otherwise `i64`.)*
 - Octal literals begin with a digit `0` and optionally have more digits from
   `0` to `7`.
-- Hexadecimal literals begin with a prefix `0x` and one or more digits from `0`
-  to `9`, 'a' to 'f', or 'A' to 'F'.
+- Hexadecimal literals begin with a prefix `0x` (or `0X`) and one or more
+  digits from `0` to `9`, `a` to `f`, or `A` to `F`. *(Compiler bug #0005:
+  hexadecimal literals currently have type `i32` and larger values are
+  truncated.)*
+- An integer literal can be directly followed by the name of an integer type,
+  which then is the type of the literal, e.g., `255u8` or `1i64`.
 - String literals are delimited by `"`. Backslashes, i.e., `\`, are escape
   characters, removing the special meaning of the following character or
-  allowing the insertion of special characters into a string.
+  allowing the insertion of special characters into a string. The escape
+  sequences are those of C: `\'`, `\"`, `\?`, `\\`, `\a`, `\b`, `\f`, `\n`,
+  `\r`, `\t`, `\v`, octal escapes with one to three digits, and hexadecimal
+  escapes `\x...` *(compiler bug #0012: octal escapes in string literals are
+  currently broken)*. Adjacent string literals are concatenated.
 - Character literals are delimited by `'` and consist of a single character
   (which can be an escaped character).
 - Currently only decimal (but not hexadecimal) floating point literals are
   supported (see
-  [floating_literal](https://en.cppreference.com/w/cpp/language/floating_literal))
+  [floating_literal](https://en.cppreference.com/w/cpp/language/floating_literal)).
+
+## Preprocessor Directives
+
+A directive begins with `@` and ends at the end of the line:
+
+- `@ <file>` includes a file that is searched in the directories given with
+  `-I` and in the installed ABC include directory. `@ "file"` includes the
+  file with the given path. Each file is included at most once, so include
+  guards are not needed.
+- `@define NAME tokens...` defines a macro: every following occurrence of the
+  identifier `NAME` is replaced by the tokens. The replacement can be empty.
+- `@ifdef NAME` ... `@endif` keeps the enclosed tokens only if `NAME` is a
+  defined macro. These directives cannot be nested.
 
 ## Expressions
 
-The syntax for expressions is very similar to expressions in C, with the following exceptions:
-- Expression lists are currently not implemented.
-- Not all operators are currently supported. On the to-do list are bitwise
-  operators, the `alignas` operator, and the `alignof` operator.
+The syntax for expressions is very similar to expressions in C, with the
+following exceptions:
+- The operators `alignas` and `alignof` are not implemented yet.
 - For a conditional expression, the ternary Operator from C can be used, e.g.,
   `x = a > b ? y : z`, or alternatively, the more verbose notation `x = a > b
   then y else z`. At least currently, "?" and "then", and ":" and "else" are
   interchangeable. That means `x = a > b ? y else z` and `x = a > b then y : z`
-  are also alternatives.
-- For type casts, the C syntax is *not* supported. Instead, the C++ style
-  notation `x = int(y)` is used for casting the expression `y` to type `int`.
+  are also alternatives. *(Open question #0026: the compiler currently only
+  accepts "?" together with ":" and "then" together with "else".)*
+- Type casts: the compiler implements the C-style cast `(T)expr` and the
+  compound literal `T{expr}`, e.g., `x = (int)y` or `x = int{y}`, for
+  converting the expression `y` to type `int`. Previous versions of this
+  description specified the C++ style notation `x = int(y)` instead of the C
+  syntax; `int(y)` is not implemented *(open question #0024)*.
 - Pointers can be dereferenced like in C with the prefix operator `*`.
   Additionally, the arrow operator `->` can be used; i.e., the use of the
   operator `->` is not restricted to "struct pointers". Hence, if `x` is a
   pointer to `int`, the expressions `*x = 42` and `x-> = 42` are equivalent,
   and in both cases, `42` is assigned to the integer at the end of pointer `x`.
+- A function name does not convert implicitly to a function pointer, and a
+  function pointer has to be dereferenced to be called: with
+  `p: -> fn(:int): int`, write `p = &f` and `p->(1)` or `(*p)(1)`.
+- `assert(expression)` aborts the program with a diagnostic if the expression
+  is false.
 
 The EBNF grammar for expressions is:
 
 ```ebnf
-          expression-list = assignment-expression { "," assignment-expression}
-    assignment-expression = conditional-expression { ("=" | "+=" | "-=" | "*=" | "/=" | "%=") assignment-expression }
+          expression-list = assignment-expression { "," assignment-expression }
+    assignment-expression = conditional-expression
+                                [ assignment-operator assignment-expression ]
+      assignment-operator = "=" | "+=" | "-=" | "*=" | "/=" | "%="
+                          | "&=" | "|=" | "^=" | "<<=" | ">>="
    conditional-expression = logical-or-expression
                                 [ ("?" | "then") assignment-expression
                                   (":" | "else") conditional-expression ]
-    logical-or-expression = logical-and-expression [ "||" logical-and-expression ]
-   logical-and-expression = equality-expression [ "&&" equality-expression ]
-      equality-expression = relational-expression [ ("==" | "!=") relational-expression ]
-    relational-expression = additive-expression [ ("<" | "<=" | ">" | ">=" ) additive-expression ]
-      additive-expression = multiplicative-expression [ ("+" | "-" ) multiplicative-expression ]
-multiplicative-expression = unary-prefix-expression [ ("*" | "/" | "%" ) unary-prefix-expression ]
+    logical-or-expression = logical-and-expression { "||" logical-and-expression }
+   logical-and-expression = bitwise-or-expression { "&&" bitwise-or-expression }
+    bitwise-or-expression = bitwise-xor-expression { "|" bitwise-xor-expression }
+   bitwise-xor-expression = bitwise-and-expression { "^" bitwise-and-expression }
+   bitwise-and-expression = equality-expression { "&" equality-expression }
+      equality-expression = relational-expression { ("==" | "!=") relational-expression }
+    relational-expression = shift-expression { ("<" | "<=" | ">" | ">=") shift-expression }
+         shift-expression = additive-expression { ("<<" | ">>") additive-expression }
+      additive-expression = multiplicative-expression { ("+" | "-") multiplicative-expression }
+multiplicative-expression = unary-prefix-expression { ("*" | "/" | "%") unary-prefix-expression }
   unary-prefix-expression = ("-" | "!" | "++" | "--" | "*" | "&") unary-prefix-expression
+                          | "(" type ")" unary-prefix-expression
                           | postfix-expression
        postfix-expression = primary-expression
                           | postfix-expression "." identifier
                           | postfix-expression "->" [ identifier ]
                           | postfix-expression "[" expression-list "]"
-                          | postfix-expression "(" expression-list ")" 
-                          | postfix-expression "++" 
+                          | postfix-expression "(" [ argument-list ] ")"
+                          | postfix-expression "++"
                           | postfix-expression "--"
+            argument-list = assignment-expression { "," assignment-expression }
        primary-expression = identifier
+                          | "(" expression-list ")"
+                          | compound-literal
                           | "sizeof" "(" (type | expression-list) ")"
-                          | "nullptr"
-                          | decimal-literal
-                          | octal-literal
-                          | hexadecimal-literal
+                          | "assert" "(" expression-list ")"
+                          | "nullptr" | "true" | "false"
+                          | integer-literal
+                          | floating-point-literal
+                          | character-literal
+                          | string-literal { string-literal }
+         compound-literal = type-name compound-expression
+                          | "(" type ")" compound-expression
 ```
 
+`integer-literal` is a decimal, octal or hexadecimal literal with optional type
+suffix, and `type-name` is an identifier that names a type.
 
 ```ebnf
-            compound-expression = string-literal
-                                | "{" compound-expression-initializer { "," compound-expression-initializer } "}"
-compound-expression-initializer = [designator "=" ] assignment-expression
-                     designator = "." identifier"
-                                | "[" assignment-expression "]" 
+            compound-expression = string-literal { string-literal }
+                                | "{" compound-expression-initializer
+                                      { "," compound-expression-initializer } [ "," ] "}"
+compound-expression-initializer = [ designator "=" ] ( compound-expression | assignment-expression )
+                     designator = "." identifier
+                                | "[" assignment-expression "]"
 ```
+
+A compound expression is the value of an array or struct (or, with a single
+element, of a scalar). A string literal is a compound expression for an array
+of characters. Elements that are not initialized are zero.
 
 For convenience, the precedence and associativity are summarized in the following table:
 
 | Precedence    |   Associativity   |   Operators                           |   Meaning     |
 |---------------|-------------------|---------------------------------------|---------------|
-| 16 (highest) |  left | Identifier <br> Literal <br> `++` (post-increment) <br> `--` (post-decrement) <br> `f()` (function call) <br> `[i]` (index operator) <br> `->` (indirect member access or dereference operator) <br> `s.member` (direct member access)  | Primary and  Unary postfix expression |
-| 15 | right | `*` (dereference operator) <br> `&` (address operator) <br> `-` (unary minus) <br>  `+` (unary plus) <br>  `!` (logical not) <br>  <br> `++` (pre-increment) <br> `--` (pre-decrement) <br> `sizeof` <br> type(expression) | Unary prefix expression |
+| 16 (highest) |  left | Identifier <br> Literal <br> `++` (post-increment) <br> `--` (post-decrement) <br> `f()` (function call) <br> `[i]` (index operator) <br> `->` (indirect member access or dereference operator) <br> `s.member` (direct member access) <br> `T{...}` (compound literal) | Primary and  Unary postfix expression |
+| 15 | right | `*` (dereference operator) <br> `&` (address operator) <br> `-` (unary minus) <br>  `+` (unary plus, *open question #0025*) <br>  `!` (logical not) <br> `++` (pre-increment) <br> `--` (pre-decrement) <br> `sizeof` <br> `(type)` (cast) <br> type(expression) (*open question #0024*) | Unary prefix expression |
 | 13 | left | `*` (multiply) <br>  `/` (divide) <br> `%` (modulo) | Multiplicative expression |
 | 12 | left | `+` (add) <br> `-` (subtract) | Additive expression |
+| 11 | left | `<<` (left shift) <br> `>>` (right shift) | Shift expression |
 | 10 | left | `<`  (less) <br> `>`  (greater) <br> `<=` (less equal) <br> `>=` (greater equal) | Relational expression |
 | 9  | left | `==` (equal) <br> `!=` (not equal) | Equality and inequality expression |
+| 8  | left | `&` | Bitwise and |
+| 7  | left | `^` | Bitwise exclusive or |
+| 6  | left | `\|` | Bitwise or |
 | 5  | left | `&&` | Logical and |
 | 4  | left | `\|\|` | Logical or |
 | 3  | right | `?` in conjunction with `:` or `then` in conjunction with `else` | Conditional expression |
-| 2  | right | `=` <br> `+=` <br> `-=` <br> `*=` <br> `/=` <br> `%=` | Assignment |
+| 2  | right | `=` <br> `+=` <br> `-=` <br> `*=` <br> `/=` <br> `%=` <br> `&=` <br> `\|=` <br> `^=` <br> `<<=` <br> `>>=` | Assignment |
+| 1  | left | `,` | Expression list |
+
+Unary plus is listed in the table but not in the grammar *(open question
+#0025)*. Mixing signed and unsigned operands follows rules that are not
+specified yet *(open question #0028)*.
 
 ## Types
 
 ```ebnf
-                 type = [const] unqualified-type
+                 type = [ "readonly" | "const" ] unqualified-type
      unqualified-type = named-type
                       | pointer-type
                       | array-type
@@ -602,6 +692,11 @@ For convenience, the precedence and associativity are summarized in the followin
    array-dim-and-type = "[" assignment-expression "]" { "[" assignment-expression "]" } "of" type
         function-type = "fn" [identifier] "(" function-parameter-list ")" [ ":" type ]
 ```
+
+The dimension of an array is a constant integer expression. In the type of a
+variable definition with initializer, or of an extern variable declaration,
+the first dimension can be empty (`array[] of int`); the dimension is then
+determined by the initializer (or the definition).
 
 ## Structure of an ABC Program
 
@@ -620,16 +715,16 @@ top-level-declaration = function-declaration-or-definition
 ```ebnf
 function-declaration-or-definition = function-header (";" | function-body)
                    function-header = "fn" identifier "(" function-parameter-list ")" [ ":" type ]
-           function-parameter-list = [ [identifier] ":" type { "," [identifier] ":" type} } ["," "..."] ]
+           function-parameter-list = [ parameter { "," parameter } [ "," "..." ] ]
+                         parameter = [identifier] ":" type
                      function-body = compound-statement
 ```
 
 ```ebnf
          extern-declaration = "extern" ( function-declaration | extern-variable-declaration ) ";"
-       function-declaration = function-type
+       function-declaration = function-header
 extern-variable-declaration = identifier-list ":" type { "," identifier-list ":" type }
             identifier-list = identifier { "," identifier }
-
 ```
 
 #### Global Variable Declarations and Definitions
@@ -637,11 +732,16 @@ extern-variable-declaration = identifier-list ":" type { "," identifier-list ":"
 ```ebnf
 global-variable-definition = "global" variable-definition-list ";"
   variable-definition-list = variable-definition { "," variable-definition }
-       variable-definition = identifier-list ":" type
-                                [ "=" initializer-expression ]
+       variable-definition = identifier-list ":" type [ "=" initializer-expression ]
+                           | identifier-list ":" [ "readonly" | "const" ] "=" initializer-expression
     initializer-expression = compound-expression
                            | assignment-expression
 ```
+
+In the second form, usually written `x := expression`, the type of the variable
+is the type of the initializer. If the identifier list has more than one
+identifier, the initializer is a compound expression with one element per
+variable, e.g., `local a, b: int = {1, 2};` or `local x, y := {1, 2.5};`.
 
 #### Type Aliases
 
@@ -653,24 +753,31 @@ type-declaration = "type" identifier ":" type ";"
 
 ```ebnf
        struct-declaration = "struct" identifier (";" | struct-member-declaration )
-struct-member-declaration = "{" { ( "union" "{" struct-member-list "}"| struct-member-list) } "}" ";"
-       struct-member-list = identifier { "," identifier } ":" ( type | struct-declaration ) ";"
+struct-member-declaration = "{" { union-section | struct-member-list } "}" ";"
+            union-section = "union" "{" struct-member-list { struct-member-list } "}" ";"
+       struct-member-list = identifier { "," identifier } ":" ( type ";" | struct-declaration )
 ```
+
+The members of a union section share their storage.
 
 #### Enumeration Type Declaration and Enumeration Constants
 
 ```ebnf
-  enum-declaration = "enum" identifier ":" integer-type "{" { enum-constant-list } "}" ";"
+  enum-declaration = "enum" identifier [ ":" integer-type ]
+                         ( ";" | "{" enum-constant-list [ "," ] "}" ";" )
 enum-constant-list = identifier [ "=" assignment-expression] { "," identifier [ "=" assignment-expression] }
 ```
+
+The default integer type is `int`. `enum E;` (or `enum E : u8;`) declares an
+enumeration type that is defined later *(compiler bug #0032: a definition
+with a different integer type is not rejected)*.
 
 ### Statements
 
 #### Compound Statements
 
 ```ebnf
-            compound-statement = "{" { statement-or-declaration-list } "}"
- statement-or-declaration-list = "{" { statement | declaration } "}"
+            compound-statement = "{" { statement | declaration } "}"
                      statement = compound-statement
                                | if-statement
                                | switch-statement
@@ -704,17 +811,21 @@ expression-statement = [expression-list] ";"
 
 ```ebnf
 if-statement      = "if" "(" expression-list ")" compound-statement
-                     [ "else" if-statement | compound-statement ]
+                     [ "else" ( if-statement | compound-statement ) ]
 ```
 
 ##### Switch statements
 
 ```ebnf
-        switch-statement = "switch" "(" expression-list ")" "{" switch-case-or-statement "}"
+        switch-statement = "switch" "(" expression-list ")" "{" { switch-case-or-statement } "}"
 switch-case-or-statement = "case" expression-list ":"
                          | "default" ":"
                          | statement
 ```
+
+Like in C, execution continues with the statements of the following case
+unless a `break` statement leaves the switch. *Open question #0031: the
+meaning of a case label with more than one expression, e.g. `case 3, 4:`.*
 
 ##### Loops
 
@@ -727,28 +838,29 @@ while-statement = "while" "(" expression-list ")" compound-statement
 ###### Do-While Loops
 
 ```ebnf
-do-while-statement = do compound-statement "while" "(" expression-list ")" ";"
+do-while-statement = "do" compound-statement "while" "(" expression-list ")" ";"
 ```
 
 ###### For Loops
 
 ```ebnf
-for-statement = "for" "(" [expression-or-local-variable-definition]
-                          [expression-list] ";" [expression-list] ")"
+for-statement = "for" "(" for-init [expression-list] ";" [expression-list] ")"
                           compound-statement
-expression-or-local-variable-definition = expression-list ";"
-                                        | local-variable-definition
+     for-init = local-variable-definition
+              | [expression-list] ";"
 ```
 
-###### Break and continue 
-
-```ebnf
-return-statement = "return" [ expression-list ] ";"
-```
+###### Break and continue
 
 ```ebnf
 break-statement = "break" ";"
 continue-statement = "continue" ";"
+```
+
+###### Return
+
+```ebnf
+return-statement = "return" [ expression-list ] ";"
 ```
 
 ###### Goto and labels
