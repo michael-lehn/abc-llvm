@@ -36,6 +36,14 @@
 #                    patterns, and FUNCTION must have the expected size
 #                    attributes and optimization (see test/check-ir.pl).
 #
+#   test/driver/*.sh Shell scripts that run the compiler as a whole (several
+#                    input files, options, generated files, diagnostics).
+#                    Each runs in an empty directory with ABC, ABC_FLAGS,
+#                    ABC_BUILD and LLVM_BINDIR set.  Exit status 0: expected
+#                    behavior, 77: SKIP (first output line is the reason).
+#                    Directives as '# TEST:', '# XFAIL:', '# TIMEOUT:' and
+#                    '# REQUIRES:' lines.
+#
 #   test/tool/*      Scripts checking the build environment, e.g. the
 #                    compilation database (compile_commands.json) and,
 #                    optionally, clangd.  Exit status 0: PASS, 77: SKIP.
@@ -138,12 +146,32 @@ rm -rf "$work"
 mkdir -p "$work"
 
 # run_limited SECONDS CMD ARGS...: run command with a time limit (status 142
-# if the limit is exceeded)
+# if the limit is exceeded).  The command runs in its own process group,
+# which is killed as a whole on timeout or interruption, so that no process
+# started by it (e.g. by a driver test) keeps running.  Other exit statuses
+# are passed on (128 + signal number if the command was killed by a signal).
 run_limited()
 {
     limit=$1
     shift
-    perl -e 'alarm shift @ARGV; exec @ARGV or exit 127' "$limit" "$@"
+    perl -e '
+	my $limit = shift @ARGV;
+	my $pid = fork() // exit 127;
+	if ($pid == 0) {
+	    setpgrp(0, 0);
+	    exec @ARGV or exit 127;
+	}
+	my $stop = sub { kill "KILL", -$pid; waitpid($pid, 0); exit $_[0] };
+	$SIG{ALRM} = sub { $stop->(142) };
+	$SIG{INT} = sub { $stop->(130) };
+	$SIG{TERM} = sub { $stop->(143) };
+	alarm $limit;
+	waitpid($pid, 0);
+	my $status = $?;
+	alarm 0;
+	kill "KILL", -$pid;    # remaining processes of the group
+	exit($status & 127 ? 128 + ($status & 127) : $status >> 8);
+    ' "$limit" "$@"
 }
 
 # directive FILE NAME: print value of directive '// NAME: value' in FILE
@@ -552,6 +580,47 @@ for src in "$top"/test/ir/*.abc; do
     msg=`ir_test "$src"`
     report "$id" "$name" "`issue "$src" XFAIL`" "$msg" \
 	"$work/ir/`basename "$src" .abc`/log"
+done
+
+#-- driver tests ---------------------------------------------------------------
+
+# directive_sh FILE NAME: print value of directive '# NAME: value' in FILE
+directive_sh()
+{
+    sed -n "s|^# $2: *||p" "$1" | head -n 1
+}
+
+for t in "$top"/test/driver/*.sh; do
+    [ -f "$t" ] || continue
+    base=`basename "$t" .sh`
+    name=driver/$base.sh
+    id=`directive_sh "$t" TEST`
+    selected "$name" "$id" || continue
+    req=`directive_sh "$t" REQUIRES`
+    if [ -n "$req" ] && [ "$req" != "$arch" ]; then
+	result SKIP "$id" "$name" "(requires $req)"
+	continue
+    fi
+    limit=`directive_sh "$t" TIMEOUT`
+    limit=${limit:-$default_timeout}
+    dir=$work/driver/$base
+    log=$dir/log
+    mkdir -p "$dir/run"
+    (cd "$dir/run" && ABC=$ABC ABC_FLAGS=$abc_flags ABC_BUILD=$ABC_BUILD \
+	LLVM_BINDIR=$LLVM_BINDIR TMPDIR=$dir/run \
+	run_limited $limit sh "$t") > "$log" 2>&1
+    status=$?
+    if [ $status -eq 77 ]; then
+	result SKIP "$id" "$name" "(`head -n 1 "$log"`)"
+	continue
+    fi
+    msg=
+    if [ $status -ne 0 ]; then
+	msg=`describe_status $status`
+    fi
+    report "$id" "$name" \
+	"`directive_sh "$t" XFAIL | sed -n 's|^\(#[0-9]*\).*|\1|p'`" \
+	"$msg" "$log"
 done
 
 #-- tool checks ----------------------------------------------------------------

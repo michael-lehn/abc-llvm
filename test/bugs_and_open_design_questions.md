@@ -12,7 +12,8 @@ Format of an entry:
     Covered by tests: #Tnnnn (kind, CLASS), ...   (or: none)
 
 - `kind` is the test kind: `runtime` (`test/run`), `reject` (`test/fail`),
-  `design` (`test/design`) or `unit` (a `CHECK_KNOWN_BUG` in `test/unit`).
+  `design` (`test/design`), `ir` (`test/ir`), `driver` (`test/driver`) or
+  `unit` (a `CHECK_KNOWN_BUG` in `test/unit`).
 - `CLASS` is the classification of the test: `PASS`, `XFAIL` or `DESIGN`.
   - An OPEN BUG is covered by XFAIL tests that describe the expected behavior.
     Once the bug is fixed they report XPASS (a failure of `make check`). Then

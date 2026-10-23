@@ -15,6 +15,8 @@
 #    and OBSERVED in test/design, the IR test directives in test/ir, ARGS
 #    also in test/run and test/fail), at most one XFAIL per test, required directives are
 #    present
+#  - driver tests (test/driver/*.sh) have one '# TEST:' and at most one
+#    '# XFAIL:' line
 #  - .c and .out companion files belong to a test in test/run
 #  - every unit test binary has a source file TESTDIR/unit/NAME.cpp
 #  - issue references (#nnnn) in README.md exist
@@ -139,6 +141,29 @@ for my $exe (@ARGV) {
         unless -f "$dir/unit/$base.cpp";
 }
 
+# driver tests (test/driver) declare their ID with '# TEST: Tnnnn' and a
+# known bug with '# XFAIL: #nnnn'
+for my $file (sort glob("$dir/driver/*")) {
+    if ($file !~ /\.sh$/) {
+	push @errors, "$file: driver tests must be '.sh' scripts";
+	next;
+    }
+    open my $fh, '<', $file or die "$file: $!";
+    my (@id, @xfail);
+    while (<$fh>) {
+	push @id, $1 if m{^# TEST: *(\S+)};
+	push @xfail, $1 if m{^# XFAIL: *(\S*)};
+    }
+    close $fh;
+    if (@id != 1) {
+	push @errors, "$file: expected exactly one '# TEST:' line";
+	next;
+    }
+    push @errors, "$file: more than one '# XFAIL:' line" if @xfail > 1;
+    add_test($id[0], file => $file, kind => 'driver',
+             class => @xfail ? 'XFAIL' : 'PASS', issue => $xfail[0]);
+}
+
 # tool checks (test/tool) declare their ID with '# TEST: Tnnnn'
 for my $file (sort glob("$dir/tool/*")) {
     if ($file !~ /\.(pl|sh)$/) {
@@ -196,7 +221,7 @@ while (<$rh>) {
 	$issue{$current}{covered} = [];
 	next if $list eq 'none';
 	for my $item (split /,\s*(?=#T)/, $list) {
-	    if ($item =~ /^#(T\d{4}) \((runtime|reject|design|ir|unit|tool), (PASS|XFAIL|DESIGN)\)$/) {
+	    if ($item =~ /^#(T\d{4}) \((runtime|reject|design|ir|unit|driver|tool), (PASS|XFAIL|DESIGN)\)$/) {
 		push @{ $issue{$current}{covered} }, [$1, $2, $3];
 	    } else {
 		push @errors, "$registry: #$current: malformed test reference '$item'";
