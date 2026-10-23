@@ -1,0 +1,56 @@
+// TEST: T0190
+// Structs and arrays smaller than 8 bytes passed by value arrive complete
+// (regression test for #0001).
+
+struct S1
+{
+    a: u8;
+};
+
+struct S3
+{
+    a: u8;
+    b: u8;
+    c: u8;
+};
+
+struct S6
+{
+    a: u16;
+    b: u16;
+    c: u16;
+};
+
+fn sum1(s: S1): int
+{
+    return s.a;
+}
+
+fn sum3(s: S3): int
+{
+    return s.a + 10 * s.b + 100 * s.c;
+}
+
+fn sum6(s: S6): int
+{
+    return s.a + 10 * s.b + 100 * s.c;
+}
+
+fn sumArr(a: array[5] of u8): int
+{
+    return a[0] + a[1] + a[2] + a[3] + a[4];
+}
+
+fn main(): int
+{
+    assert(sizeof(S1) == 1 && sizeof(S3) == 3 && sizeof(S6) == 6);
+    local s1: S1 = {7};
+    local s3: S3 = {1, 2, 3};
+    local s6: S6 = {4, 5, 6};
+    local a: array[5] of u8 = {1, 2, 3, 4, 5};
+    assert(sum1(s1) == 7);
+    assert(sum3(s3) == 321);
+    assert(sum6(s6) == 654);
+    assert(sumArr(a) == 15);
+    return 0;
+}

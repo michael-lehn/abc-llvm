@@ -1,0 +1,44 @@
+// TEST: T0194
+// Nested aggregates passed by value: structs containing structs and arrays,
+// arrays of structs (regression test for #0001).
+
+struct Point
+{
+    x: i32;
+    y: i32;
+};
+
+struct Line
+{
+    from: Point;
+    to: Point;
+    name: array[6] of char;
+};
+
+fn length2(l: Line): i32
+{
+    local dx: i32 = l.to.x - l.from.x;
+    local dy: i32 = l.to.y - l.from.y;
+    return dx * dx + dy * dy;
+}
+
+fn lastChar(l: Line): char
+{
+    return l.name[4];
+}
+
+fn sumPoints(p: array[3] of Point): i32
+{
+    return p[0].x + p[1].x + p[2].x + p[0].y + p[1].y + p[2].y;
+}
+
+fn main(): int
+{
+    local l: Line = {{1, 2}, {4, 6}, "line5"};
+    assert(length2(l) == 25);
+    assert(lastChar(l) == '5');
+
+    local p: array[3] of Point = {{1, 10}, {2, 20}, {3, 30}};
+    assert(sumPoints(p) == 66);
+    return 0;
+}

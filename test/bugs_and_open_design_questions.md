@@ -25,17 +25,22 @@ Format of an entry:
 
 ## Bugs
 
-Issue #0001: Struct and array arguments larger than 8 bytes passed by value are corrupted
+Issue #0001: Struct and array arguments passed by value are corrupted
 Type: BUG
-Status: OPEN
-Covered by tests: #T0044 (runtime, XFAIL)
+Status: RESOLVED
+Covered by tests: #T0044 (runtime, PASS), #T0190 (runtime, PASS), #T0191 (runtime, PASS), #T0192 (runtime, PASS), #T0193 (runtime, PASS), #T0194 (runtime, PASS), #T0195 (runtime, PASS), #T0196 (runtime, PASS)
 
-On targets where aggregates are passed `byval` (all non-x86-64 targets, and
-aggregates larger than 16 bytes on x86-64), the callee copies only 8 bytes of
-the argument into its local variable. `gen/abi.cpp`, `reconstructArgument()`,
-loads the argument with the ABI type of the parameter (a pointer) instead of
-the aggregate type. Expected: the callee sees a complete copy of the argument.
-The symptom may disappear at higher optimization levels (inlining).
+Aggregates without target-specific lowering are passed `byval` (on all
+targets except the four aggregate shapes coerced for x86-64). The callee
+initialized its parameter variable by loading and storing the ABI type of the
+parameter (a pointer) instead of the aggregate type (`gen/abi.cpp`,
+`reconstructArgument()`): aggregates larger than 8 bytes were only partially
+initialized, smaller ones were read and written out of bounds. This affected
+ABC-to-ABC calls on all architectures. Fixed: the callee copies the complete
+aggregate from its private `byval` copy. The tests cover sizes below 8, of
+exactly 8, of 9 to 16 and above 16 bytes, nested aggregates, several
+parameters and modification of the parameter. (C interoperability for
+aggregates is a separate matter: only the x86-64 shapes are lowered.)
 
 Issue #0002: continue in a for loop skips the update expression
 Type: BUG

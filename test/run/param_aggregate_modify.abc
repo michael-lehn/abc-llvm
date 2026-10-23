@@ -1,0 +1,50 @@
+// TEST: T0196
+// A callee can modify its by-value aggregate parameters; the modification
+// is visible in the callee only (regression test for #0001).
+
+struct Vec
+{
+    v: array[4] of i64;
+    n: int;
+};
+
+fn modifyStruct(s: Vec): i64
+{
+    s.v[3] = 1000;
+    s.n = 99;
+    // the modified copy is used afterwards
+    return s.v[0] + s.v[3] + s.n;
+}
+
+fn modifyArray(a: array[5] of i32): i32
+{
+    a[4] = 50;
+    return a[0] + a[4];
+}
+
+// recursion: every call gets its own copy
+fn countDown(s: Vec): i64
+{
+    if (s.n == 0) {
+	return s.v[0];
+    }
+    s.v[0] = s.v[0] + s.n;
+    s.n--;
+    return countDown(s);
+}
+
+fn main(): int
+{
+    local s: Vec = {{1, 2, 3, 4}, 5};
+    assert(modifyStruct(s) == 1100);
+    assert(s.v[3] == 4 && s.n == 5);
+
+    local a: array[5] of i32 = {1, 2, 3, 4, 5};
+    assert(modifyArray(a) == 51);
+    assert(a[4] == 5);
+
+    // 1 + 5 + 4 + 3 + 2 + 1
+    assert(countDown(s) == 16);
+    assert(s.v[0] == 1 && s.n == 5);
+    return 0;
+}

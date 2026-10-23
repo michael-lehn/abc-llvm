@@ -1,0 +1,69 @@
+// TEST: T0192
+// Structs and arrays of 9 to 16 bytes passed by value arrive complete
+// (regression test for #0001).
+
+struct Three
+{
+    a: i32;
+    b: i32;
+    c: i32;
+};
+
+struct Pair
+{
+    a: i64;
+    b: i64;
+};
+
+struct Mixed
+{
+    d: double;
+    c: u8;
+};
+
+struct Bytes9
+{
+    b: array[9] of u8;
+};
+
+fn sumThree(s: Three): i64
+{
+    return s.a + s.b + s.c;
+}
+
+fn sumPair(s: Pair): i64
+{
+    return s.a + s.b;
+}
+
+fn mixed(s: Mixed): double
+{
+    return s.d + s.c;
+}
+
+fn lastByte(s: Bytes9): u8
+{
+    return s.b[8];
+}
+
+fn sumArr(a: array[3] of i32): i32
+{
+    return a[0] + a[1] + a[2];
+}
+
+fn main(): int
+{
+    assert(sizeof(Three) == 12 && sizeof(Pair) == 16);
+    assert(sizeof(Mixed) == 16 && sizeof(Bytes9) == 9);
+    local t: Three = {1, 2, 3};
+    local p: Pair = {4000000000, 5};
+    local m: Mixed = {1.5, 2};
+    local b: Bytes9 = {{1, 2, 3, 4, 5, 6, 7, 8, 9}};
+    local a: array[3] of i32 = {7, 8, 9};
+    assert(sumThree(t) == 6);
+    assert(sumPair(p) == 4000000005);
+    assert(mixed(m) == 3.5);
+    assert(lastByte(b) == 9);
+    assert(sumArr(a) == 24);
+    return 0;
+}

@@ -1,0 +1,58 @@
+// TEST: T0191
+// Structs and arrays of exactly 8 bytes passed by value arrive complete
+// (regression test for #0001).
+
+struct TwoInts
+{
+    a: i32;
+    b: i32;
+};
+
+struct OneLong
+{
+    a: i64;
+};
+
+struct Bytes8
+{
+    b: array[8] of u8;
+};
+
+fn sumTwo(s: TwoInts): i64
+{
+    return s.a + s.b;
+}
+
+fn getLong(s: OneLong): i64
+{
+    return s.a;
+}
+
+fn sumBytes(s: Bytes8): int
+{
+    local sum: int = 0;
+    for (local i: int = 0; i < 8; ++i) {
+	sum += s.b[i];
+    }
+    return sum;
+}
+
+fn sumArr(a: array[2] of i32): i32
+{
+    return a[0] + a[1];
+}
+
+fn main(): int
+{
+    assert(sizeof(TwoInts) == 8 && sizeof(OneLong) == 8);
+    assert(sizeof(Bytes8) == 8);
+    local t: TwoInts = {-3, 10};
+    local l: OneLong = {1234567890123};
+    local b: Bytes8 = {{1, 2, 3, 4, 5, 6, 7, 8}};
+    local a: array[2] of i32 = {40, 2};
+    assert(sumTwo(t) == 7);
+    assert(getLong(l) == 1234567890123);
+    assert(sumBytes(b) == 36);
+    assert(sumArr(a) == 42);
+    return 0;
+}

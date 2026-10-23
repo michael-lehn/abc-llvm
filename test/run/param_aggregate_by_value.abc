@@ -1,7 +1,6 @@
 // TEST: T0044
-// XFAIL: #0001 callee copies only 8 bytes of struct/array parameters passed byval
-// (gen/abi.cpp reconstructArgument loads the argument with pointer type)
-// Larger structs and arrays passed by value arrive complete in the callee.
+// Larger structs and arrays passed by value arrive complete in the callee
+// (regression test for #0001).
 
 struct Big
 {

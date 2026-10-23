@@ -1,0 +1,32 @@
+// TEST: T0195
+// Several aggregate parameters mixed with scalar parameters keep their order
+// and values (regression test for #0001).
+
+struct Pair
+{
+    a: i64;
+    b: i64;
+};
+
+struct Small
+{
+    c: u8;
+};
+
+fn combine(x: int, p: Pair, s: Small, a: array[3] of i32, q: Pair,
+           y: double): double
+{
+    return x + p.a + p.b + s.c + a[0] + a[1] + a[2] + q.a * q.b + y;
+}
+
+fn main(): int
+{
+    local p: Pair = {10, 20};
+    local q: Pair = {3, 4};
+    local s: Small = {5};
+    local a: array[3] of i32 = {100, 200, 300};
+    assert(combine(1, p, s, a, q, 0.5) == 648.5);
+    // the same aggregate twice
+    assert(combine(0, p, s, a, p, 0) == 835);
+    return 0;
+}

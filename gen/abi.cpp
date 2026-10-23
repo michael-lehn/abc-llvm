@@ -244,8 +244,9 @@ reconstructArgument(const llvm::Function *fnDecl, std::size_t abiIndex,
                     Value addr, const ArgInfo &argInfo)
 {
     if (argInfo.kind == ArgInfo::Kind::ByVal) {
-	auto tmp =
-	    fetch(fnDecl->getArg(abiIndex), argInfo.abiType[0], argInfo.align);
+	// the argument points to the callee's private copy (byval): copy the
+	// complete aggregate (argInfo.abiType[0] is just the pointer type)
+	auto tmp = fetch(fnDecl->getArg(abiIndex), argInfo.abcType);
 
 	store(tmp, addr, argInfo.abcType);
     } else if (argInfo.kind == ArgInfo::Kind::Coerce) {

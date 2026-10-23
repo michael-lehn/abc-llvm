@@ -1,0 +1,59 @@
+// TEST: T0193
+// Structs and arrays larger than 16 bytes passed by value arrive complete
+// (regression test for #0001).
+
+struct Big
+{
+    a: i64;
+    b: i64;
+    c: i64;
+    d: i64;
+    e: u8;
+};
+
+struct Table
+{
+    n: int;
+    v: array[100] of i64;
+};
+
+fn sumBig(s: Big): i64
+{
+    return s.a + s.b + s.c + s.d + s.e;
+}
+
+fn sumTable(t: Table): i64
+{
+    local sum: i64 = 0;
+    for (local i: int = 0; i < t.n; ++i) {
+	sum += t.v[i];
+    }
+    return sum;
+}
+
+fn sumArr(a: array[10] of i64): i64
+{
+    local sum: i64 = 0;
+    for (local i: int = 0; i < 10; ++i) {
+	sum += a[i];
+    }
+    return sum;
+}
+
+fn main(): int
+{
+    assert(sizeof(Big) == 40);
+    local s: Big = {1, 2, 3, 4, 5};
+    assert(sumBig(s) == 15);
+
+    local t: Table;
+    t.n = 100;
+    for (local i: int = 0; i < 100; ++i) {
+	t.v[i] = i + 1;
+    }
+    assert(sumTable(t) == 5050);
+
+    local a: array[10] of i64 = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    assert(sumArr(a) == 55);
+    return 0;
+}
