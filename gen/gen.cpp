@@ -165,7 +165,8 @@ init(const char *name, llvm::OptimizationLevel optLevel)
 #endif
 
     if (!target) {
-	llvm::errs() << error;
+	llvm::errs() << "error: invalid target '" << tripleStr << "': " << error
+	             << "\n";
 	std::exit(1);
     }
 

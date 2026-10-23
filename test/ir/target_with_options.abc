@@ -1,0 +1,16 @@
+// TEST: T0200
+// ARGS: -target aarch64-unknown-linux-gnu -Oz -target x86_64-unknown-linux-gnu -O2
+// IR-MATCH: ^target triple = "x86_64-unknown-linux-gnu"$
+// FUNCTION: keep
+// SIZE-ATTRIBUTES: none
+// OPTIMIZED: yes
+// -target consumes exactly one argument: the options around it are still
+// applied, and the last -target and the last -O option take precedence.
+
+extern fn keep(x: int): int;
+
+fn keep(x: int): int
+{
+    local y: int = x * 2;
+    return y + 1;
+}

@@ -1,0 +1,12 @@
+// TEST: T0207
+// ARGS: --emit-llvm %s -L %b -o %o
+// IR-MATCH: ^define .*@keep\(
+// '-L dir' consumes exactly one argument: with -o there is still only one
+// input file.
+
+extern fn keep(x: int): int;
+
+fn keep(x: int): int
+{
+    return x + 1;
+}

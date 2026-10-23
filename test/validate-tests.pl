@@ -12,8 +12,9 @@
 #  - issue IDs in TESTDIR/bugs_and_open_design_questions.md are unique and
 #    the "Covered by tests" lists match the tests (ID, kind, classification)
 #  - directives are used only where they apply (ERROR in test/fail, DESIGN
-#    and OBSERVED in test/design, the IR test directives in test/ir), at most
-#    one XFAIL per test, required directives are present
+#    and OBSERVED in test/design, the IR test directives in test/ir, ARGS
+#    also in test/run and test/fail), at most one XFAIL per test, required directives are
+#    present
 #  - .c and .out companion files belong to a test in test/run
 #  - every unit test binary has a source file TESTDIR/unit/NAME.cpp
 #  - issue references (#nnnn) in README.md exist
@@ -54,7 +55,7 @@ for my $sub (sort keys %kind_of_dir) {
 	    push @observed, $1 if m{^// OBSERVED: *(\S*)};
 	    push @error, $1 if m{^// ERROR: *(.*)};
 	    push @{ $ir{$1} }, $2
-	        if m{^// (ARGS|FUNCTION|SIZE-ATTRIBUTES|OPTIMIZED):(.*)};
+	        if m{^// (ARGS|FUNCTION|SIZE-ATTRIBUTES|OPTIMIZED|IR-MATCH):(.*)};
 	}
 	close $fh;
 	if (@id != 1) {
@@ -89,19 +90,32 @@ for my $sub (sort keys %kind_of_dir) {
 	    push @errors, "$file: '// ERROR:' only allowed in test/fail";
 	}
 	if ($sub eq 'ir') {
-	    for my $d (qw(ARGS FUNCTION SIZE-ATTRIBUTES OPTIMIZED)) {
-		push @errors, "$file: IR test needs exactly one '// $d:' line"
-		    if @{ $ir{$d} // [] } != 1;
+	    push @errors, "$file: IR test needs exactly one '// ARGS:' line"
+	        if @{ $ir{ARGS} // [] } != 1;
+	    my @fn = grep { $ir{$_} } qw(FUNCTION SIZE-ATTRIBUTES OPTIMIZED);
+	    push @errors, "$file: IR test needs FUNCTION, SIZE-ATTRIBUTES and "
+	        . "OPTIMIZED together (each once) or none of them"
+	        if @fn && (@fn != 3 || grep { @{ $ir{$_} } != 1 } @fn);
+	    push @errors, "$file: IR test needs FUNCTION or IR-MATCH"
+	        unless @fn || $ir{'IR-MATCH'};
+	    if (@fn) {
+		my $size = join ' ', sort split ' ',
+		    $ir{'SIZE-ATTRIBUTES'}[0] // '';
+		push @errors, "$file: SIZE-ATTRIBUTES must be 'none', 'optsize' "
+		    . "or 'optsize minsize'"
+		    unless $size =~ /^(none|optsize|minsize optsize)$/;
+		push @errors, "$file: OPTIMIZED must be 'yes' or 'no'"
+		    unless ($ir{OPTIMIZED}[0] // '') =~ /^\s*(yes|no)\s*$/;
 	    }
-	    my $size = join ' ', sort split ' ', $ir{'SIZE-ATTRIBUTES'}[0] // '';
-	    push @errors, "$file: SIZE-ATTRIBUTES must be 'none', 'optsize' or "
-	        . "'optsize minsize'"
-	        unless $size =~ /^(none|optsize|minsize optsize)$/;
-	    push @errors, "$file: OPTIMIZED must be 'yes' or 'no'"
-	        unless ($ir{OPTIMIZED}[0] // '') =~ /^\s*(yes|no)\s*$/;
+	} elsif (($sub eq 'fail' || $sub eq 'run') && keys %ir == 1
+	         && $ir{ARGS}) {
+	    # additional options of a runtime or reject test
+	    push @errors, "$file: more than one '// ARGS:' line"
+	        if @{ $ir{ARGS} } > 1;
 	} elsif (%ir) {
 	    push @errors, "$file: '// " . join(':', sort keys %ir)
-	        . ":' only allowed in test/ir";
+	        . ":' only allowed in test/ir"
+	        . ($ir{ARGS} && keys %ir == 1 ? ", test/run and test/fail" : "");
 	}
 	add_test($id[0], file => $file, kind => $kind, class => $class,
 	         issue => $issue);

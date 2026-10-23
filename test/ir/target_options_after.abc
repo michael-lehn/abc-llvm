@@ -1,0 +1,15 @@
+// TEST: T0201
+// ARGS: --emit-llvm %s -target x86_64-unknown-linux-gnu -Os -o %o
+// IR-MATCH: ^target triple = "x86_64-unknown-linux-gnu"$
+// FUNCTION: keep
+// SIZE-ATTRIBUTES: optsize
+// OPTIMIZED: yes
+// Options after -target and its triple are applied.
+
+extern fn keep(x: int): int;
+
+fn keep(x: int): int
+{
+    local y: int = x * 2;
+    return y + 1;
+}

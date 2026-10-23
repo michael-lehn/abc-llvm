@@ -144,10 +144,11 @@ main(int argc, char *argv[])
 	    createExecutable = false;
 	} else if (!strcmp(argv[i], "-target")) {
 	    if (i + 1 < argc) {
-		std::string target = argv[i + 1];
-		gen::opt::target = target;
+		gen::opt::target = argv[++i];
 	    } else {
-		usage(argv[0]);
+		std::cerr << argv[0] << ": error: missing target triple after "
+		          << "'-target'\n";
+		std::exit(1);
 	    }
 	} else if (!strncmp(argv[i], "-mmcu=", 6)) {
 	    std::string mcu = argv[i] + 6;
@@ -248,6 +249,7 @@ main(int argc, char *argv[])
 		ldFlags += " -L";
 		if (!argv[i][2] && i + 1 < argc) {
 		    ldFlags += argv[i + 1];
+		    ++i;
 		} else if (argv[i][2]) {
 		    ldFlags += &argv[i][2];
 		} else {

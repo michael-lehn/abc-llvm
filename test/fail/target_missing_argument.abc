@@ -1,0 +1,9 @@
+// TEST: T0204
+// ARGS: -target
+// ERROR: missing target triple
+// -target as last argument: the triple is missing.
+
+fn main(): int
+{
+    return 0;
+}

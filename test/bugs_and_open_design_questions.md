@@ -28,7 +28,7 @@ Format of an entry:
 Issue #0001: Struct and array arguments passed by value are corrupted
 Type: BUG
 Status: RESOLVED
-Covered by tests: #T0044 (runtime, PASS), #T0190 (runtime, PASS), #T0191 (runtime, PASS), #T0192 (runtime, PASS), #T0193 (runtime, PASS), #T0194 (runtime, PASS), #T0195 (runtime, PASS), #T0196 (runtime, PASS)
+Covered by tests: #T0044 (runtime, PASS), #T0190 (runtime, PASS), #T0191 (runtime, PASS), #T0192 (runtime, PASS), #T0193 (runtime, PASS), #T0194 (runtime, PASS), #T0195 (runtime, PASS), #T0196 (runtime, PASS), #T0202 (ir, PASS), #T0203 (ir, PASS)
 
 Aggregates without target-specific lowering are passed `byval` (on all
 targets except the four aggregate shapes coerced for x86-64). The callee
@@ -190,11 +190,13 @@ Covered by tests: none
 
 Issue #0017: Driver option -L with separate argument is mishandled
 Type: BUG
-Status: OPEN
-Covered by tests: none
+Status: RESOLVED
+Covered by tests: #T0206 (runtime, PASS), #T0207 (ir, PASS), #T0208 (reject, PASS)
 
-In `abc/abc.cpp`, `-L dir` adds `-Ldir` to the linker flags but does not skip
-`dir`, which is then treated as input file. `-Ldir` works.
+In `abc/abc.cpp`, `-L dir` added `-Ldir` to the linker flags but did not skip
+`dir`, which was then treated as input file (the linker failed). `-Ldir`
+worked. Fixed like `-target` (#0035): the separate argument is consumed; a
+missing directory is reported (usage, exit status 1) like for -o, -I and -l.
 
 Issue #0018: Result of the LLVM function verifier is ignored
 Type: BUG
@@ -267,6 +269,20 @@ With the LLVM 23 changes, -Os and -Oz select -O2 plus the function attributes
 option takes precedence. The tests in test/ir compile with option
 combinations and check the attributes and the optimization of the generated
 IR.
+
+Issue #0035: Option -target did not consume its argument
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0197 (ir, PASS), #T0198 (ir, PASS), #T0199 (ir, PASS), #T0200 (ir, PASS), #T0201 (ir, PASS), #T0204 (reject, PASS), #T0205 (reject, PASS)
+
+The parser (`abc/abc.cpp`) stored the triple following `-target` but did
+not skip it, so the triple was also treated as an input file (e.g. "cannot
+specify --emit-llvm when generating multiple output files"). Fixed: `-target`
+consumes exactly one argument; a missing triple and an unknown triple are
+reported with a diagnostic and exit status 1. The tests check the triple and
+data layout of the generated IR for x86-64 and AArch64, the position of
+`-target` relative to the input file and other options, and both errors.
+Generating IR for a target does not imply C ABI support for that target.
 
 Issue #0036: LLVM miscompile of by-value arguments in tail-recursive functions (LLVM #235074, worked around)
 Type: BUG

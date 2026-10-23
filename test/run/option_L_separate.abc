@@ -1,0 +1,10 @@
+// TEST: T0206
+// ARGS: -L %b
+// '-L dir' with the directory as separate argument: the directory is a
+// library search path, not an input file (linking would fail).
+
+fn main(): int
+{
+    assert(1 + 1 == 2);
+    return 0;
+}

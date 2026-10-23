@@ -1,0 +1,22 @@
+// TEST: T0202
+// ARGS: -target x86_64-unknown-linux-gnu
+// IR-MATCH: define i64 @sumBig\(ptr byval\(\{ i64, i64, i64, i64 \}\)
+// IR-MATCH: = load \{ i64, i64, i64, i64 \}, ptr %0
+// Generic by-value aggregate parameter in IR for x86-64: the callee copies the
+// complete aggregate (#0001).  This checks ABC-to-ABC lowering only, not the
+// C ABI of the target.
+
+struct Big
+{
+    a: i64;
+    b: i64;
+    c: i64;
+    d: i64;
+};
+
+extern fn sumBig(s: Big): i64;
+
+fn sumBig(s: Big): i64
+{
+    return s.a + s.b + s.c + s.d;
+}

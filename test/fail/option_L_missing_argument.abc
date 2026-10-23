@@ -1,0 +1,9 @@
+// TEST: T0208
+// ARGS: -L
+// ERROR: usage
+// '-L' as last argument: the directory is missing.
+
+fn main(): int
+{
+    return 0;
+}

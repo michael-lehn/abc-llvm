@@ -32,9 +32,9 @@
 #                    compiles but fails is an error.
 #
 #   test/ir/*.abc    Programs compiled with the options of their ARGS
-#                    directive; the LLVM IR of FUNCTION must be valid and
-#                    have the expected size attributes and optimization
-#                    (see test/check-ir.pl).
+#                    directive; the LLVM IR must be valid, match the IR-MATCH
+#                    patterns, and FUNCTION must have the expected size
+#                    attributes and optimization (see test/check-ir.pl).
 #
 #   test/tool/*      Scripts checking the build environment, e.g. the
 #                    compilation database (compile_commands.json) and,
@@ -62,8 +62,13 @@
 #                        recorded behavior of a design test
 #   // REQUIRES: arch    only run on machines where 'uname -m' prints arch
 #   // TIMEOUT: secs     time limit for each compiler and program invocation
-#   // ARGS: options     compiler options of an IR test (test/ir)
-#   // FUNCTION: name    function checked by an IR test
+#   // ARGS: options     compiler options of an IR test (test/ir; %s: source
+#                        file, %o: output file) or additional options of a
+#                        runtime or reject test (test/run, test/fail; appended
+#                        after the file); %b stands for the build directory
+#   // IR-MATCH: regex   a line of the IR of an IR test must match (repeatable)
+#   // FUNCTION: name    function checked by an IR test (optional, requires
+#                        SIZE-ATTRIBUTES and OPTIMIZED)
 #   // SIZE-ATTRIBUTES: none | optsize | optsize minsize
 #                        expected size attributes of FUNCTION (IR test)
 #   // OPTIMIZED: yes | no
@@ -303,6 +308,8 @@ run_test()
     expected_exit=${expected_exit:-0}
     limit=`directive "$src" TIMEOUT`
     limit=${limit:-$default_timeout}
+    # additional options (ARGS, %b: build directory) follow the input file
+    args=`directive "$src" ARGS | sed "s|%b|$ABC_BUILD|g"`
     expected_out=`dirname "$src"`/$base.out
     c_src=`dirname "$src"`/$base.c
 
@@ -324,7 +331,7 @@ run_test()
     for level in $ABC_TEST_OPT; do
 	exe=$dir/$base$level
 	TMPDIR=$dir run_limited $limit "$ABC" $abc_flags $level \
-	    -L$ABC_BUILD "$src" $extra_obj -o "$exe" >> "$log" 2>&1
+	    -L$ABC_BUILD "$src" $args $extra_obj -o "$exe" >> "$log" 2>&1
 	status=$?
 	if [ $status -ne 0 ]; then
 	    echo "compilation with $level failed (`describe_status $status`)"
@@ -381,8 +388,10 @@ fail_test()
 	return
     fi
 
+    # additional options (ARGS) follow the input file on purpose
     TMPDIR=$dir run_limited $limit "$ABC" $abc_flags -c "$src" \
-	-o "$dir/$base.o" > "$log" 2>&1
+	-o "$dir/$base.o" `directive "$src" ARGS | sed "s|%b|$ABC_BUILD|g"` \
+	> "$log" 2>&1
     status=$?
     if [ $status -eq 0 ]; then
 	echo "compiler accepted invalid program"
@@ -484,35 +493,50 @@ done
 #-- IR tests -------------------------------------------------------------------
 
 # ir_test FILE: compile FILE with the options of its ARGS directive and check
-# the generated LLVM IR (prints an error message on failure)
+# the generated LLVM IR (prints an error message on failure).  In ARGS, %s
+# stands for the source file and %o for the output file; without %s the
+# runner appends '--emit-llvm FILE -o OUTPUT'; %b stands for the build
+# directory.
 ir_test()
 {
     src=$1
     base=`basename "$src" .abc`
     dir=$work/ir/$base
     log=$dir/log
+    ll=$dir/$base.ll
     mkdir -p "$dir"
     : > "$log"
     limit=`directive "$src" TIMEOUT`
     limit=${limit:-$default_timeout}
 
-    args=`directive "$src" ARGS`
+    args=`directive "$src" ARGS | sed "s|%b|$ABC_BUILD|g"`
+    case $args in
+    *%s*) cmd=`echo "$args" | sed -e "s|%s|$src|g" -e "s|%o|$ll|g"` ;;
+    *) cmd="$args --emit-llvm $src -o $ll" ;;
+    esac
     echo "options: $args" >> "$log"
-    # $args is split into separate options on purpose
-    TMPDIR=$dir run_limited $limit "$ABC" $abc_flags $args --emit-llvm \
-	"$src" -o "$dir/$base.ll" >> "$log" 2>&1
+    # $cmd is split into separate options on purpose
+    TMPDIR=$dir run_limited $limit "$ABC" $abc_flags $cmd >> "$log" 2>&1
     status=$?
     if [ $status -ne 0 ]; then
 	echo "compiler failed to emit LLVM IR (`describe_status $status`)"
 	return
     fi
-    if [ -n "$opt" ] && ! "$opt" -passes=verify -disable-output \
-	    "$dir/$base.ll" >> "$log" 2>&1; then
+    if [ -n "$opt" ] && ! "$opt" -passes=verify -disable-output "$ll" \
+	    >> "$log" 2>&1; then
 	echo "generated LLVM IR is invalid"
 	return
     fi
-    if ! perl "$top/test/check-ir.pl" "$dir/$base.ll" \
-	    "`directive "$src" FUNCTION`" \
+    # each IR-MATCH regex must match a line of the IR
+    sed -n 's|^// IR-MATCH: *||p' "$src" > "$dir/match"
+    while read -r pattern; do
+	if ! grep -Eq -e "$pattern" "$ll"; then
+	    echo "IR does not match /$pattern/ (options: $args)"
+	    return
+	fi
+    done < "$dir/match"
+    fn=`directive "$src" FUNCTION`
+    if [ -n "$fn" ] && ! perl "$top/test/check-ir.pl" "$ll" "$fn" \
 	    "`directive "$src" SIZE-ATTRIBUTES`" \
 	    "`directive "$src" OPTIMIZED`" > "$dir/check" 2>&1; then
 	cat "$dir/check" >> "$log"

@@ -1,0 +1,14 @@
+// TEST: T0197
+// ARGS: -target x86_64-unknown-linux-gnu
+// IR-MATCH: ^target triple = "x86_64-unknown-linux-gnu"$
+// IR-MATCH: ^target datalayout = ".*-f80:128-
+// -target sets the target triple and data layout of the module (x86-64).
+// Generating IR for a target says nothing about its C ABI support.
+
+extern fn keep(x: int): int;
+
+fn keep(x: int): int
+{
+    local y: int = x * 2;
+    return y + 1;
+}

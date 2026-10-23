@@ -1,0 +1,9 @@
+// TEST: T0205
+// ARGS: -target not-a-triple
+// ERROR: invalid target 'not-a-triple'
+// An unknown target triple is reported.
+
+fn main(): int
+{
+    return 0;
+}
