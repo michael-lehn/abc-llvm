@@ -1,3 +1,39 @@
+# GNU Make 4.2 or newer is required ($(file <) in config/prefix).  This check
+# must stay first and only use features of GNU Make 3.81 (Apple's system make),
+# so that older versions stop here with a clear message instead of failing
+# later.  Major and minor version are compared as numbers (4.10 and 5.0 are
+# newer than 4.2).
+make.version := $(subst ., ,$(MAKE_VERSION))
+make.major := $(word 1,$(make.version))
+make.minor := $(word 2,$(make.version) 0)
+ifneq ($(filter 0 1 2 3,$(make.major))$(if $(filter 4,$(make.major)),$(filter 0 1,$(make.minor))),)
+    make.indent := $(subst x,,x  x)
+    $(info Error: GNU Make 4.2 or newer is required.)
+    # Apple's /usr/bin/make runs the make of the developer tools
+    ifneq ($(filter /usr/bin/make /Library/Developer/CommandLineTools/usr/bin/make %/Contents/Developer/usr/bin/make,$(MAKE)),)
+        $(info Detected GNU Make $(MAKE_VERSION) (Apple's system make).)
+    else
+        $(info Detected GNU Make $(MAKE_VERSION) ($(MAKE)).)
+    endif
+    $(info )
+    ifneq ($(wildcard /System/Library/CoreServices/SystemVersion.plist),)
+        $(info Install a recent GNU Make using either:)
+        $(info )
+        $(info $(make.indent)Homebrew:)
+        $(info $(make.indent)$(make.indent)brew install make)
+        $(info )
+        $(info $(make.indent)MacPorts:)
+        $(info $(make.indent)$(make.indent)sudo port install gmake)
+        $(info )
+        $(info Then build using:)
+        $(info $(make.indent)$(make.indent)gmake)
+    else
+        $(info Install GNU Make 4.2 or newer, e.g. with the package manager.)
+    endif
+    $(info )
+    $(error GNU Make 4.2 or newer is required)
+endif
+
 #CPPFLAGS += -Werror -Wextra -Wall -pedantic -fsanitize=undefined,address
 CPPFLAGS += -Wextra -Wall -pedantic
 RANLIB := ranlib

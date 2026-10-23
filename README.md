@@ -137,6 +137,24 @@ was generated using this compiler.
 
 ## Installation
 
+### Requirements
+
+- LLVM 17 to 23 (see [Hints on Installing LLVM](#hints-on-installing-llvm))
+- GNU Make 4.2 or newer
+
+**macOS:** Apple's preinstalled `/usr/bin/make` is GNU Make 3.81, which is
+too old. Install a recent GNU Make with Homebrew or MacPorts:
+
+```bash
+brew install make          # Homebrew
+sudo port install gmake    # MacPorts
+```
+
+Both install it as `gmake`. Use `gmake` instead of `make` in all commands
+below (e.g. `gmake`, `gmake check`, `sudo gmake install`).
+
+### Building
+
 Verify that the correct LLVM version is used:
 
 ```bash
