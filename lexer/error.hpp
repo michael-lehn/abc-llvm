@@ -2,6 +2,7 @@
 #define LEXER_ERROR_HPP
 
 #include <ostream>
+#include <vector>
 
 #include "loc.hpp"
 #include "token.hpp"

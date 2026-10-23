@@ -30,9 +30,12 @@ getConstantInt(std::uint64_t val, const abc::Type *type)
     assert(type);
     assert(type->isInteger());
 
-    auto llvmType = llvm::dyn_cast<llvm::IntegerType>(convert(type));
-    assert(llvmType);
-    return llvm::ConstantInt::get(llvmType, val, type->isSignedInteger());
+    assert(type->numBits() <= 64);
+
+    // Truncate explicitly: since LLVM 23 ConstantInt::get() no longer
+    // truncates values that do not fit into the type (e.g. -1 for u32)
+    auto apint = llvm::APInt(64, val).zextOrTrunc(type->numBits());
+    return llvm::ConstantInt::get(*llvmContext, apint);
 }
 
 ConstantFloat
@@ -129,6 +132,12 @@ getTrue()
 {
     assert(llvmContext);
     return llvm::ConstantInt::getTrue(*llvmContext);
+}
+
+bool
+isZero(Constant value)
+{
+    return value->isNullValue() || value->isNegativeZeroValue();
 }
 
 Constant

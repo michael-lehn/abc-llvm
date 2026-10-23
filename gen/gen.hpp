@@ -37,6 +37,9 @@ namespace opt {
 extern std::string target;
 extern std::string mcu;
 
+// 0: optimize for speed, 1: optimize for size (-Os), 2: minimize size (-Oz)
+extern unsigned sizeLevel;
+
 } // namespace opt
 
 extern const char *moduleName;

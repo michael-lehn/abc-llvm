@@ -27,6 +27,7 @@ namespace opt {
 
 std::string target;
 std::string mcu;
+unsigned sizeLevel;
 
 } // namespace opt
 

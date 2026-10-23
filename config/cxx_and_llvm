@@ -1,11 +1,12 @@
 include config/os
 
-LLVM_SUPPORTED_VERSIONS := 22 21 20 19 18 17 16 15 14
+LLVM_SUPPORTED_VERSIONS := 23 22 21 20 19 18 17 16 15 14
 
 ifeq ($(origin llvm-config),undefined)
     llvm-config := $(shell \
-	for cmd in llvm-config llvm-config-22 llvm-config-21 \
-		   llvm-config-19 llvm-config-18 llvm-config-14; do \
+	for cmd in llvm-config llvm-config-23 llvm-config-22 llvm-config-21 \
+		   llvm-config-20 llvm-config-19 llvm-config-18 llvm-config-17 \
+		   llvm-config-16 llvm-config-15 llvm-config-14; do \
 	    if command -v $$cmd >/dev/null 2>&1; then \
 		echo $$cmd; \
 		break; \

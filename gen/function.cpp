@@ -1,5 +1,7 @@
 #include <cstring>
 #include <iostream>
+#include <unordered_set>
+#include <vector>
 
 #ifdef SUPPORT_SOLARIS
 // has to be included as first llvm header
@@ -24,6 +26,46 @@ namespace gen {
 
 FunctionBuildingInfo functionBuildingInfo;
 
+// Removes basic blocks that are not reachable from the entry block. Like
+// llvm::EliminateUnreachableBlocks() but jump targets may be labels that are
+// not defined yet, i.e. blocks without terminator (since LLVM 23 successors()
+// requires a terminator).
+//
+// Precondition: every block that is already inserted into the function has a
+// terminator (llvm::DeleteDeadBlocks() needs the successors of dead blocks).
+// This holds in functionDefinitionEnd(): defineLabel() closes the current
+// block before it inserts a label, and the current block is closed before
+// this function is called.
+static void
+eliminateUnreachableBlocks(llvm::Function &fn)
+{
+    std::unordered_set<llvm::BasicBlock *> reachable;
+    std::vector<llvm::BasicBlock *> pending{&fn.getEntryBlock()};
+    while (!pending.empty()) {
+	auto bb = pending.back();
+	pending.pop_back();
+	if (!reachable.insert(bb).second) {
+	    continue;
+	}
+	if (bb->empty() || !bb->back().isTerminator()) {
+	    continue;
+	}
+	auto &terminator = bb->back();
+	for (unsigned i = 0; i < terminator.getNumSuccessors(); ++i) {
+	    pending.push_back(terminator.getSuccessor(i));
+	}
+    }
+
+    std::vector<llvm::BasicBlock *> dead;
+    for (auto &bb : fn) {
+	if (!reachable.contains(&bb)) {
+	    assert(!bb.empty() && bb.back().isTerminator());
+	    dead.push_back(&bb);
+	}
+    }
+    llvm::DeleteDeadBlocks(dead);
+}
+
 bool
 bbOpen()
 {
@@ -47,6 +89,12 @@ functionDefinitionBegin(const char *ident, const abc::Type *fnType,
     forgetAllLocalVariables();
     auto fn = functionDeclaration(ident, fnType, externalLinkage);
     fn->setDoesNotThrow();
+    if (opt::sizeLevel >= 1) {
+	fn->addFnAttr(llvm::Attribute::OptimizeForSize);
+    }
+    if (opt::sizeLevel >= 2) {
+	fn->addFnAttr(llvm::Attribute::MinSize);
+    }
     llvmBB = llvm::BasicBlock::Create(*llvmContext, "entry", fn);
     llvmBuilder->SetInsertPoint(llvmBB);
 
@@ -94,7 +142,7 @@ functionDefinitionEnd()
 	jumpInstruction(checkReturn);
     }
 
-    llvm::EliminateUnreachableBlocks(*functionBuildingInfo.fn);
+    eliminateUnreachableBlocks(*functionBuildingInfo.fn);
 
     /*
     // https://stackoverflow.com/a/53634733/909565
@@ -120,7 +168,7 @@ functionDefinitionEnd()
 	}
     }
     jumpInstruction(functionBuildingInfo.leave);
-    llvm::EliminateUnreachableBlocks(*functionBuildingInfo.fn);
+    eliminateUnreachableBlocks(*functionBuildingInfo.fn);
 
     defineLabel(functionBuildingInfo.leave);
     if (functionBuildingInfo.retType->isVoid()) {

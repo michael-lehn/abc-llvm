@@ -24,6 +24,9 @@ Constant getConstantMinusOne(const abc::Type *type);
 Constant getFalse();
 Constant getTrue();
 
+// true for integer and pointer null values and for +0.0 and -0.0
+bool isZero(Constant value);
+
 Constant getString(const char *str);
 
 } // namespace gen

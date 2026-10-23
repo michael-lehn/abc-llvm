@@ -173,21 +173,27 @@ main(int argc, char *argv[])
 		    break;
 		case '0':
 		    optLevel = llvm::OptimizationLevel::O0;
+		    gen::opt::sizeLevel = 0;
 		    break;
 		case '1':
 		    optLevel = llvm::OptimizationLevel::O1;
+		    gen::opt::sizeLevel = 0;
 		    break;
 		case '2':
 		    optLevel = llvm::OptimizationLevel::O2;
+		    gen::opt::sizeLevel = 0;
 		    break;
 		case '3':
 		    optLevel = llvm::OptimizationLevel::O3;
+		    gen::opt::sizeLevel = 0;
 		    break;
 		case 's':
-		    optLevel = llvm::OptimizationLevel::Os;
+		    optLevel = llvm::OptimizationLevel::O2;
+		    gen::opt::sizeLevel = 1;
 		    break;
 		case 'z':
-		    optLevel = llvm::OptimizationLevel::Oz;
+		    optLevel = llvm::OptimizationLevel::O2;
+		    gen::opt::sizeLevel = 2;
 		    break;
 		}
 		break;

@@ -82,7 +82,7 @@ ExplicitCast::loadConstant() const
     assert(isConst());
     if (type->isBool()) {
 	auto value = expr->loadConstant();
-	if (value->isZeroValue()) {
+	if (gen::isZero(value)) {
 	    return gen::getFalse();
 	} else {
 	    return gen::getTrue();
