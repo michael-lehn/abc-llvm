@@ -194,8 +194,10 @@ that are compiled, checked with the LLVM verifier, and executed (`test/run`),
 invalid programs that must be rejected (`test/fail`), programs concerning open
 language design questions (`test/design`), checks of the LLVM IR generated for
 compiler options (`test/ir`), scripts that run the compiler as a whole,
-e.g. with several input files (`test/driver`), and checks of the compilation
-database (`test/tool`). Every test has a stable ID
+e.g. with several input files (`test/driver`), the example programs (compiled
+and checked with the LLVM verifier, but not executed; directories listed in
+`test/examples.list`, skipped with `ABC_TEST_EXAMPLES=0`), and checks of the
+compilation database (`test/tool`). Every test has a stable ID
 (`T0001`, ...). Known compiler bugs and open design questions are listed with
 issue IDs (`#0001`, ...) in
 [test/bugs_and_open_design_questions.md](test/bugs_and_open_design_questions.md);

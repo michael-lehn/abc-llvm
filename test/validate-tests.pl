@@ -17,6 +17,8 @@
 #    present
 #  - driver tests (test/driver/*.sh) have one '# TEST:' and at most one
 #    '# XFAIL:' line
+#  - test/examples.list has one 'TEST:' line, existing DIR and EXCLUDE
+#    directories, and XFAIL lines for ABC programs below a DIR
 #  - .c and .out companion files belong to a test in test/run
 #  - every unit test binary has a source file TESTDIR/unit/NAME.cpp
 #  - issue references (#nnnn) in README.md exist
@@ -180,6 +182,61 @@ for my $file (sort glob("$dir/tool/*")) {
     }
 }
 
+# examples (test/examples.list): one test ID for all examples, known failures
+# with their own test ID, issue and file below a DIR and not below an EXCLUDE
+{
+    my $file = "$dir/examples.list";
+    my $top = "$dir/..";
+    open my $fh, '<', $file or die "$file: $!";
+    my (@id, @dirs, @exclude, @xfail);
+    while (<$fh>) {
+	next if /^\s*(#|$)/;
+	if (/^TEST: *(\S+)\s*$/) {
+	    push @id, $1;
+	} elsif (/^DIR: *(\S+)\s*$/) {
+	    push @dirs, $1;
+	} elsif (/^EXCLUDE: *(\S+)\s*$/) {
+	    push @exclude, $1;
+	} elsif (/^XFAIL: *(\S+) +(\S+) +(\S+)\s*$/) {
+	    push @xfail, [$1, $2, $3];
+	} else {
+	    push @errors, "$file:$.: malformed line";
+	}
+    }
+    close $fh;
+    if (@id != 1) {
+	push @errors, "$file: expected exactly one 'TEST:' line";
+    } else {
+	add_test($id[0], file => $file, kind => 'example', class => 'PASS');
+    }
+    for my $d (@dirs, @exclude) {
+	push @errors, "$file: directory '$d' does not exist" unless -d "$top/$d";
+    }
+    for my $d (@dirs) {
+	push @errors, "$file: DIR '$d' is below another DIR"
+	    if grep { $_ ne $d && index("$d/", "$_/") == 0 } @dirs;
+    }
+    for my $e (@exclude) {
+	push @errors, "$file: EXCLUDE '$e' is not below a DIR"
+	    unless grep { index("$e/", "$_/") == 0 } @dirs;
+    }
+    my %seen;
+    for my $x (@xfail) {
+	my ($tid, $iid, $path) = @$x;
+	push @errors, "$file: $path has more than one XFAIL line"
+	    if $seen{$path}++;
+	push @errors, "$file: $path does not exist or is not a regular file"
+	    unless -f "$top/$path" && !-l "$top/$path";
+	push @errors, "$file: $path is not an ABC program below a DIR"
+	    unless $path =~ /\.abc$/
+	    && grep { index($path, "$_/") == 0 } @dirs;
+	push @errors, "$file: $path is below an EXCLUDE directory"
+	    if grep { index($path, "$_/") == 0 } @exclude;
+	add_test($tid, file => $file, kind => 'example', class => 'XFAIL',
+	         issue => $iid);
+    }
+}
+
 for my $file (sort glob("$dir/unit/*.cpp")) {
     open my $fh, '<', $file or die "$file: $!";
     my $text = do { local $/; <$fh> };
@@ -221,7 +278,7 @@ while (<$rh>) {
 	$issue{$current}{covered} = [];
 	next if $list eq 'none';
 	for my $item (split /,\s*(?=#T)/, $list) {
-	    if ($item =~ /^#(T\d{4}) \((runtime|reject|design|ir|unit|driver|tool), (PASS|XFAIL|DESIGN)\)$/) {
+	    if ($item =~ /^#(T\d{4}) \((runtime|reject|design|ir|unit|driver|tool|example), (PASS|XFAIL|DESIGN)\)$/) {
 		push @{ $issue{$current}{covered} }, [$1, $2, $3];
 	    } else {
 		push @errors, "$registry: #$current: malformed test reference '$item'";

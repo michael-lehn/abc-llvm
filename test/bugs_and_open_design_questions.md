@@ -12,8 +12,9 @@ Format of an entry:
     Covered by tests: #Tnnnn (kind, CLASS), ...   (or: none)
 
 - `kind` is the test kind: `runtime` (`test/run`), `reject` (`test/fail`),
-  `design` (`test/design`), `ir` (`test/ir`), `driver` (`test/driver`) or
-  `unit` (a `CHECK_KNOWN_BUG` in `test/unit`).
+  `design` (`test/design`), `ir` (`test/ir`), `driver` (`test/driver`),
+  `example` (an example program in `test/examples.list`) or `unit` (a
+  `CHECK_KNOWN_BUG` in `test/unit`).
 - `CLASS` is the classification of the test: `PASS`, `XFAIL` or `DESIGN`.
   - An OPEN BUG is covered by XFAIL tests that describe the expected behavior.
     Once the bug is fixed they report XPASS (a failure of `make check`). Then
@@ -329,7 +330,7 @@ compiles and runs.
 Issue #0038: Shift operands of different width produce invalid LLVM IR
 Type: BUG
 Status: OPEN
-Covered by tests: #T0211 (runtime, XFAIL), #T0212 (runtime, XFAIL)
+Covered by tests: #T0211 (runtime, XFAIL), #T0212 (runtime, XFAIL), #T0279 (example, XFAIL)
 
 For `x << n`, `x >> n`, `x <<= n` and `x >>= n` the shift count keeps its own
 type (`expr/promotion.cpp`), so operands of different width produce invalid
@@ -687,7 +688,7 @@ statement main still returns 0.
 Issue #0070: extern array of unspecified dimension followed by its definition gives invalid IR
 Type: BUG
 Status: OPEN
-Covered by tests: #T0276 (runtime, XFAIL)
+Covered by tests: #T0276 (runtime, XFAIL), #T0280 (example, XFAIL)
 
 `extern a: array[] of int; global a: array[] of int = {1, 2};` produces
 `@a = global [0 x i32] [i32 1, i32 2]`, which the LLVM verifier rejects

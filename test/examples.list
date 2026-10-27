@@ -1,0 +1,25 @@
+# Example programs checked by 'make check' (see test/run-tests.sh).
+#
+# Every *.abc file below a DIR (relative to the top-level directory) is an ABC
+# program.  It is compiled (not executed) once, at the first optimization
+# level of ABC_TEST_OPT, and its LLVM IR is verified.  A symbolic link is not
+# compiled again, but its target has to be one of the checked files.
+#
+#   TEST: Tnnnn                 test ID of all examples without known failure
+#   DIR: dir                    directory with ABC programs
+#   EXCLUDE: dir                subdirectory with programs in another language
+#   XFAIL: Tnnnn #nnnn file     known failure: own test ID, issue, program
+#
+# test/validate-tests.pl checks the IDs, issues and files.
+
+TEST: T0278
+
+DIR: abc-example
+DIR: raylib-examples
+DIR: not-abc
+
+# input programs for the not-abc compiler, written in the not-abc language
+EXCLUDE: not-abc/examples
+
+XFAIL: T0279 #0038 abc-example/misc/bitwise.abc
+XFAIL: T0280 #0070 abc-example/misc/unbound_array.abc

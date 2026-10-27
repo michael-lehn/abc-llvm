@@ -45,6 +45,14 @@
 #                    Directives as '# TEST:', '# XFAIL:', '# TIMEOUT:' and
 #                    '# REQUIRES:' lines.
 #
+#   examples         The ABC programs in the directories listed in
+#                    test/examples.list (abc-example, ...) must compile at
+#                    the first optimization level in ABC_TEST_OPT and produce
+#                    LLVM IR accepted by the LLVM verifier.  They are not
+#                    executed.  Known failures are XFAIL lines of the list
+#                    with their own test IDs; all other programs form one
+#                    test.
+#
 #   test/tool/*      Scripts checking the build environment, e.g. the
 #                    compilation database (compile_commands.json) and,
 #                    optionally, clangd.  Exit status 0: PASS, 77: SKIP.
@@ -93,6 +101,7 @@
 #   LLVM_BINDIR    directory containing 'opt'       (empty: IR not verified)
 #   UNIT_TESTS     unit test executables            (none)
 #   ABC_TEST_OPT   optimization levels for run tests ("-O0 -O2")
+#   ABC_TEST_EXAMPLES 0: skip the examples          (1)
 #   ABC_TEST_FILTER only run tests whose path or ID contains this string
 #
 # Generated files and logs of each test are kept in $ABC_BUILD/check.
@@ -623,6 +632,126 @@ for t in "$top"/test/driver/*.sh; do
 	"`directive_sh "$t" XFAIL | sed -n 's|^\(#[0-9]*\).*|\1|p'`" \
 	"$msg" "$log"
 done
+
+#-- examples -------------------------------------------------------------------
+
+# The ABC programs in the directories of test/examples.list are compiled once
+# (first optimization level of ABC_TEST_OPT) and their LLVM IR is verified;
+# they are not executed.  Programs with an XFAIL line are reported with their
+# own test ID, all other programs together as one test.
+
+examples=$top/test/examples.list
+ex_work=$work/examples
+ex_id=`sed -n 's|^TEST: *||p' "$examples" | head -n 1`
+ex_dirs=`sed -n 's|^DIR: *||p' "$examples"`
+ex_exclude=`sed -n 's|^EXCLUDE: *||p' "$examples"`
+ex_level=`echo $ABC_TEST_OPT | cut -d ' ' -f 1`
+
+# example_excluded FILE: true if FILE lies in an EXCLUDE directory
+example_excluded()
+{
+    for e in $ex_exclude; do
+	case $1 in "$e"/*) return 0 ;; esac
+    done
+    return 1
+}
+
+# example_test FILE: compile FILE (relative to the top-level directory) in its
+# directory and verify the LLVM IR (prints an error message on failure)
+example_test()
+{
+    dir=$ex_work/$1
+    log=$dir/log
+    ll=$dir/`basename "$1" .abc`.ll
+    mkdir -p "$dir"
+    (cd "$top/`dirname "$1"`" && TMPDIR=$dir run_limited $default_timeout \
+	"$ABC" -I "$ABC_INCLUDE" -I "$ABC_BUILD" $ex_level --emit-llvm \
+	"`basename "$1"`" -o "$ll") < /dev/null > "$log" 2>&1
+    status=$?
+    if [ $status -ne 0 ]; then
+	echo "compilation failed (`describe_status $status`)"
+    elif [ -n "$opt" ] && ! "$opt" -passes=verify -disable-output "$ll" \
+	    >> "$log" 2>&1; then
+	echo "generated LLVM IR is invalid"
+    fi
+}
+
+ex_xfail_ids=`sed -n 's|^XFAIL: *\(T[0-9]*\).*|\1|p' "$examples"`
+if [ "${ABC_TEST_EXAMPLES:-1}" = 0 ]; then
+    for id in $ex_id $ex_xfail_ids; do
+	result SKIP "$id" examples "(ABC_TEST_EXAMPLES=0)"
+    done
+else
+    rm -rf "$ex_work"
+    mkdir -p "$ex_work"
+    failures=$ex_work/failures
+    : > "$failures"
+    # $ex_dirs is split into separate directories on purpose
+    (cd "$top" && find $ex_dirs -name '*.abc' -type f) | sort > "$ex_work/all"
+    (cd "$top" && find $ex_dirs -name '*.abc' -type l) | sort -u \
+	> "$ex_work/links"
+    : > "$ex_work/files"
+    n_excluded=0
+    while read -r f; do
+	if example_excluded "$f"; then
+	    n_excluded=`expr $n_excluded + 1`
+	else
+	    echo "$f" >> "$ex_work/files"
+	fi
+    done < "$ex_work/all"
+    # a file below two DIRs would be checked twice
+    uniq -d "$ex_work/files" | sed 's|$|: below more than one DIR|' \
+	>> "$failures"
+    sort -u "$ex_work/files" -o "$ex_work/files"
+    # symbolic links are not compiled again, but their targets must be checked
+    real_top=`perl -MCwd=realpath -e 'print realpath(".")'`
+    n_links=0
+    while read -r f; do
+	example_excluded "$f" && continue
+	n_links=`expr $n_links + 1`
+	target=`perl -MCwd=realpath -e 'print realpath($ARGV[0])' "$top/$f"`
+	target=${target#"$real_top"/}
+	grep -qxF -e "$target" "$ex_work/files" ||
+	    echo "$f: symbolic link to $target, which is not checked" \
+		>> "$failures"
+    done < "$ex_work/links"
+
+    n_programs=0
+    n_ex_xfail=0
+    while read -r f; do
+	n_programs=`expr $n_programs + 1`
+	xfail=`awk -v f="$f" '$1 == "XFAIL:" && $4 == f { print $2, $3 }' \
+	    "$examples"`
+	if [ -n "$xfail" ]; then
+	    n_ex_xfail=`expr $n_ex_xfail + 1`
+	    xid=${xfail% *}
+	    selected "example $f" "$xid" || continue
+	    report "$xid" "example $f" "${xfail#* }" "`example_test "$f"`" \
+		"$ex_work/$f/log"
+	else
+	    selected examples "$ex_id" || continue
+	    msg=`example_test "$f"`
+	    [ -n "$msg" ] && echo "$f: $msg" >> "$failures"
+	fi
+    done < "$ex_work/files"
+
+    counts=
+    for d in $ex_dirs; do
+	counts="$counts, $d `grep -c "^$d/" "$ex_work/files"`"
+    done
+    detail="($n_programs programs:${counts#,}; $n_ex_xfail XFAIL,"
+    detail="$detail $n_links symbolic links, $n_excluded excluded)"
+    if selected examples "$ex_id"; then
+	if [ -s "$failures" ]; then
+	    result FAIL "$ex_id" examples \
+		"`wc -l < "$failures" | tr -d ' '` failed $detail"
+	    sed 's/^/    | /' "$failures"
+	    echo "    | (logs in $ex_work)"
+	else
+	    result PASS "$ex_id" examples "$detail"
+	fi
+    fi
+fi
 
 #-- tool checks ----------------------------------------------------------------
 
