@@ -645,6 +645,22 @@ last member list has several names (e.g. `union { a: int; b, c: float; };`).
 Reproduced only with AddressSanitizer (heap-buffer-overflow); the output of
 a normal build is correct. Expected: no out-of-bounds read.
 
+Issue #0068: Address of a static local variable rejected within its own declaration
+Type: BUG
+Status: OPEN
+Covered by tests: #T0251 (runtime, XFAIL)
+
+`static s: Node = {1, &s};` and `static a, b: Node = {{2, &b}, {3, &a}};`
+fail with "initializer is not a compile-time constant". The `AstStaticVar`
+constructor (`ast/ast.cpp`) gives the variables internal linkage only after
+the whole declaration including the initializer has been parsed, so the
+identifiers in the initializer have no static storage
+(`Identifier::hasStaticStorage`). They also keep the old id, while
+`Entry::setInternalLinkage()` (`symtab/entry.cpp`) renames the variable to
+`.id`. Not a regression: commit ccf1be8 (before #0006) rejects it, too.
+Expected: like for global variables (#0006), the address of a static local
+variable is constant in the initializers of its own declaration.
+
 ---
 
 ## Open Language Design Questions

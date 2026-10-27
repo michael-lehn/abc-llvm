@@ -1,0 +1,32 @@
+// TEST: T0251
+// XFAIL: #0068 &static is not constant within its own static declaration
+// Static local variables initialized with the address of the variable itself
+// and of a variable defined later in the same declaration.
+
+struct Node
+{
+    val: int;
+    next: -> Node;
+};
+
+fn self_reference(): int
+{
+    static s: Node = {1, &s};
+    return s.next->val;
+}
+
+fn forward_reference(): int
+{
+    static first, second: Node = {
+        {2, &second},
+        {3, &first},
+    };
+    return first.next->val + 10 * second.next->val;
+}
+
+fn main(): int
+{
+    assert(self_reference() == 1);
+    assert(forward_reference() == 23);
+    return 0;
+}
