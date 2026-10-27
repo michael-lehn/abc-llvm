@@ -39,7 +39,8 @@
 #   test/driver/*.sh Shell scripts that run the compiler as a whole (several
 #                    input files, options, generated files, diagnostics).
 #                    Each runs in an empty directory with ABC, ABC_FLAGS,
-#                    ABC_BUILD and LLVM_BINDIR set.  Exit status 0: expected
+#                    ABC_BUILD, LLVM_BINDIR and TOP (the top-level
+#                    directory) set.  Exit status 0: expected
 #                    behavior, 77: SKIP (first output line is the reason).
 #                    Directives as '# TEST:', '# XFAIL:', '# TIMEOUT:' and
 #                    '# REQUIRES:' lines.
@@ -607,7 +608,7 @@ for t in "$top"/test/driver/*.sh; do
     log=$dir/log
     mkdir -p "$dir/run"
     (cd "$dir/run" && ABC=$ABC ABC_FLAGS=$abc_flags ABC_BUILD=$ABC_BUILD \
-	LLVM_BINDIR=$LLVM_BINDIR TMPDIR=$dir/run \
+	LLVM_BINDIR=$LLVM_BINDIR TOP=$top TMPDIR=$dir/run \
 	run_limited $limit sh "$t") > "$log" 2>&1
     status=$?
     if [ $status -eq 77 ]; then
