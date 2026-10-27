@@ -684,6 +684,22 @@ rejects declarations and definitions of main whose return type is not int
 return type is rejected for every function as incomplete). Without a return
 statement main still returns 0.
 
+Issue #0070: extern array of unspecified dimension followed by its definition gives invalid IR
+Type: BUG
+Status: OPEN
+Covered by tests: #T0276 (runtime, XFAIL)
+
+`extern a: array[] of int; global a: array[] of int = {1, 2};` produces
+`@a = global [0 x i32] [i32 1, i32 2]`, which the LLVM verifier rejects
+("constant expression type mismatch"). `externalVariableDeclaration()`
+(`gen/variable.cpp`) creates the global with the type `[0 x i32]` of the
+extern declaration. The definition fixes the dimension in the symbol table
+(`fixUnbound` in `Symtab::add()`), but `globalVariableDefinition()` finds the
+existing global and only sets the initializer of type `[2 x i32]`, without
+changing the type of the global. The driver does not verify the module, so
+the compiler reports no error (`abc-example/misc/unbound_array.abc`).
+Expected: the global gets the complete type of its definition.
+
 ---
 
 ## Open Language Design Questions

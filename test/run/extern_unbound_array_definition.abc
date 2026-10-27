@@ -1,0 +1,19 @@
+// TEST: T0276
+// XFAIL: #0070 extern array[] followed by its definition gives invalid IR
+// An extern declaration of an array with unspecified dimension followed by
+// its definition, which gets the dimension from the initializer.
+
+extern a: array[] of int;
+global a: array[] of int = {1, 2};
+
+extern s: array[] of char;
+global s: array[] of char = "hallo";
+
+fn main(): int
+{
+    assert(sizeof(a) == 2 * sizeof(int));
+    assert(a[0] == 1 && a[1] == 2);
+    assert(sizeof(s) == 6);
+    assert(s[0] == 'h' && s[5] == 0);
+    return 0;
+}
