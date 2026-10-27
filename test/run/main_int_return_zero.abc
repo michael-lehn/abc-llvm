@@ -1,0 +1,13 @@
+// TEST: T0267
+// main with return type int with an explicit 'return 0;'.
+
+fn fortyTwo(): int
+{
+    return 42;
+}
+
+fn main(): int
+{
+    fortyTwo();
+    return 0;
+}

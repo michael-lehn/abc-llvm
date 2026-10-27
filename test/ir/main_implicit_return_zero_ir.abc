@@ -1,0 +1,12 @@
+// TEST: T0274
+// ARGS: -O2
+// IR-MATCH: ^define .*i32 @main\(\)
+// IR-MATCH: ^  ret i32 0$
+// main without return type that reaches its end returns the constant 0.
+
+extern fn puts(s: -> char): int;
+
+fn main()
+{
+    puts("hello");
+}

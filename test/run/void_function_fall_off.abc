@@ -1,0 +1,27 @@
+// TEST: T0273
+// EXIT: 3
+// Ordinary functions without return type are void: they end with 'return;'
+// or by reaching their end, and main returns the explicit value.
+
+global count: int;
+
+fn inc(n: int)
+{
+    if (n == 0) {
+        return;
+    }
+    count += n;
+}
+
+fn incTwice()
+{
+    inc(1);
+    inc(0);
+    inc(2);
+}
+
+fn main()
+{
+    incTwice();
+    return count;
+}

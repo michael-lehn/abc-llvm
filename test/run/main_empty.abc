@@ -1,0 +1,6 @@
+// TEST: T0262
+// An empty main without return type returns 0.
+
+fn main()
+{
+}

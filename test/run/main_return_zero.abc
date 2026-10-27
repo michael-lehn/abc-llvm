@@ -1,0 +1,13 @@
+// TEST: T0266
+// main without return type with an explicit 'return 0;'.
+
+fn fortyTwo(): int
+{
+    return 42;
+}
+
+fn main()
+{
+    fortyTwo();
+    return 0;
+}

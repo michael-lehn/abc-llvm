@@ -1,0 +1,18 @@
+// TEST: T0269
+// main without return type: the branch with 'return 7;' is not taken, the
+// end of main is reached and main returns 0 (cf. T0270).
+
+global g: int = 1;
+
+fn fortyTwo(): int
+{
+    return 42;
+}
+
+fn main()
+{
+    if (g == 2) {
+        return 7;
+    }
+    g = fortyTwo();
+}

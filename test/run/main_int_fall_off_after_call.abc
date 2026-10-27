@@ -1,0 +1,15 @@
+// TEST: T0265
+// main with return type int that reaches its end returns 0, also right after
+// a call that returned another value.
+
+global result: int;
+
+fn fortyTwo(): int
+{
+    return 42;
+}
+
+fn main(): int
+{
+    result = fortyTwo();
+}

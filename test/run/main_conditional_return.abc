@@ -1,0 +1,18 @@
+// TEST: T0270
+// EXIT: 7
+// main without return type: the branch with 'return 7;' is taken (cf. T0269).
+
+global g: int = 2;
+
+fn fortyTwo(): int
+{
+    return 42;
+}
+
+fn main()
+{
+    if (g == 2) {
+        return 7;
+    }
+    g = fortyTwo();
+}

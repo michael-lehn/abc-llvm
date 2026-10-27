@@ -1,0 +1,8 @@
+// TEST: T0268
+// EXIT: 3
+// main with return type int returns the value of 'return 3;' (cf. T0255).
+
+fn main(): int
+{
+    return 3;
+}

@@ -739,6 +739,15 @@ function-declaration-or-definition = function-header (";" | function-body)
                      function-body = compound-statement
 ```
 
+A function without return type returns no value: `fn f()` is a void function
+that ends with `return;` or by reaching its end. A function with a return type
+has to return a value on all control paths.
+
+The entry point `main` is the exception: its return type is always `int`.
+`fn main()` means `fn main(): int`, and any other return type of `main` is an
+error. If execution reaches the end of `main` without a `return` statement,
+`main` returns 0; `return n;` returns `n`.
+
 ```ebnf
          extern-declaration = "extern" ( function-declaration | extern-variable-declaration ) ";"
        function-declaration = function-header
