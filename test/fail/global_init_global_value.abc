@@ -1,0 +1,12 @@
+// TEST: T0249
+// The value of a global variable is not a constant expression, only its
+// address is.
+// ERROR: compile-time constant
+
+global x: int = 1;
+global y: int = x;
+
+fn main(): int
+{
+    return y - 1;
+}

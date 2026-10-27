@@ -1,0 +1,27 @@
+// TEST: T0242
+// Linked list of global nodes initialized with the addresses of globals that
+// are defined in the same declaration (HPC0 worksheet 7, step 5; regression
+// test for #0006, expected output in global_list_address_init.out).  Unlike
+// the worksheet, main has the return type int.
+
+@ <stdio.hdr>
+
+struct Node
+{
+    val: array[8] of char;
+    next: -> Node;
+};
+
+global a, b, c: Node = {
+    {"world", &b},
+    {"hello,", &c},
+    {"!"},
+};
+
+fn main(): int
+{
+    for (local p: -> Node = &a; p; p = p->next) {
+        printf("%s ", p->val);
+    }
+    printf("\n");
+}

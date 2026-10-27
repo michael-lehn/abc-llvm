@@ -84,15 +84,23 @@ the same type rules as decimal literals (see also #0027).
 
 Issue #0006: Address of a global variable rejected in global initializers
 Type: BUG
-Status: OPEN
-Covered by tests: #T0021 (runtime, XFAIL)
+Status: RESOLVED
+Covered by tests: #T0021 (runtime, PASS), #T0242 (runtime, PASS), #T0243 (runtime, PASS), #T0244 (runtime, PASS), #T0245 (runtime, PASS), #T0246 (reject, PASS), #T0247 (reject, PASS), #T0248 (reject, PASS), #T0249 (reject, PASS), #T0250 (reject, PASS)
 
-`global p: -> int = &x;` fails with "initializer is not a compile-time
+`global p: -> int = &x;` failed with "initializer is not a compile-time
 constant". Regression of commit 352a407: `Identifier::hasConstantAddress()`
-(`expr/identifier.cpp`) checks the linkage of the variable, but `global`
-variables get their linkage only later. `abc-example/misc/struct.abc` and
-`abc-example/misc/global_ptr.abc` no longer compile. Expected: addresses of
-global and static variables are constant expressions.
+(`expr/identifier.cpp`) was the linkage of the symbol table entry, taken when
+the identifier was parsed, but `global` variables never get linkage in the
+symbol table. Thus the address of a global was never constant, also in the
+initializer of a static local variable, and `abc-example/misc/struct.abc`,
+`abc-example/misc/global_ptr.abc` and the linked list of HPC0 worksheet 7
+(`global a, b, c: Node = {{"world", &b}, ...}`) no longer compiled. Fixed:
+the flag is now `Identifier::hasStaticStorage`. Besides variables with linkage
+(extern, static locals) it holds for every variable of the root scope
+(`parsePrimary()` in `parser/parseexpr.cpp`, `Symtab::RootScope`). The
+entries of all variables of a declaration exist before its initializer is
+parsed, so forward references within the declaration work. Locals and
+parameters that shadow a global are found first and remain non-constant.
 
 Issue #0007: Array converts implicitly to a pointer to a different element type
 Type: BUG

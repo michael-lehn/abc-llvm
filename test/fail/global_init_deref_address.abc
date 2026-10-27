@@ -1,0 +1,12 @@
+// TEST: T0250
+// The address of the object a global pointer points to is not a constant
+// expression.
+// ERROR: compile-time constant
+
+global p: -> int;
+global q: -> int = &*p;
+
+fn main(): int
+{
+    return 0;
+}

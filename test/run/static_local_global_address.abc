@@ -1,0 +1,49 @@
+// TEST: T0245
+// Static local variables initialized with the address of a global variable
+// (also inside nested blocks), of a previously defined static local variable,
+// and of a static local variable that shadows a global (regression test for
+// #0006).
+
+global g: int = 3;
+global n: int = 1;
+
+fn global_address(): int
+{
+    static p: -> int = &g;
+    return *p;
+}
+
+fn nested_block(): int
+{
+    {
+        for (local i: int = 0; i < 1; ++i) {
+            static p: -> int = &g;
+            return *p;
+        }
+    }
+    return 0;
+}
+
+fn previous_static(): int
+{
+    static s: int = 5;
+    static p: -> int = &s;
+    return *p;
+}
+
+fn shadowing_static(): int
+{
+    static n: int = 7;
+    static p: -> int = &n;
+    return *p;
+}
+
+fn main(): int
+{
+    assert(global_address() == 3);
+    assert(nested_block() == 3);
+    assert(previous_static() == 5);
+    assert(shadowing_static() == 7);
+    assert(n == 1);
+    return 0;
+}

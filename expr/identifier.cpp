@@ -8,18 +8,18 @@
 
 namespace abc {
 
-Identifier::Identifier(UStr name, UStr id, const Type *type, bool hasLinkage,
-                       lexer::Loc loc)
-    : Expr{loc, type}, name{name}, id{id}, hasLinkage{hasLinkage}
+Identifier::Identifier(UStr name, UStr id, const Type *type,
+                       bool hasStaticStorage, lexer::Loc loc)
+    : Expr{loc, type}, name{name}, id{id}, hasStaticStorage{hasStaticStorage}
 {
 }
 
 ExprPtr
-Identifier::create(UStr name, UStr id, const Type *type, bool hasLinkage,
+Identifier::create(UStr name, UStr id, const Type *type, bool hasStaticStorage,
                    lexer::Loc loc)
 {
     assert(type);
-    auto p = new Identifier{name, id, type, hasLinkage, loc};
+    auto p = new Identifier{name, id, type, hasStaticStorage, loc};
     return std::unique_ptr<Identifier>{p};
 }
 
@@ -27,7 +27,7 @@ bool
 Identifier::hasConstantAddress() const
 {
     // return gen::hasConstantAddress(id.c_str());
-    return hasLinkage;
+    return hasStaticStorage;
 }
 
 bool
@@ -91,8 +91,8 @@ Identifier::print(int indent) const
 	std::cerr << std::setfill(' ') << std::setw(indent) << ' ';
     }
     std::cerr << name << " [ " << type << ", "
-              << (hasLinkage ? "has linkage" : "no linkage") << " ] "
-              << std::endl;
+              << (hasStaticStorage ? "static storage" : "automatic storage")
+              << " ] " << std::endl;
 }
 
 void

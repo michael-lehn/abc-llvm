@@ -1,0 +1,21 @@
+// TEST: T0247
+// A local variable in a nested scope that shadows a global variable has no
+// constant address.
+// ERROR: compile-time constant
+
+global x: int = 1;
+
+fn get(): int
+{
+    for (local i: int = 0; i < 1; ++i) {
+        local x: int = 2;
+        static p: -> int = &x;
+        return *p;
+    }
+    return 0;
+}
+
+fn main(): int
+{
+    return get() - 2;
+}

@@ -60,6 +60,9 @@ const symtab::Entry *
 Symtab::find(UStr name, Scope inScope)
 {
     for (auto s = scope.cbegin(); s != scope.cend(); ++s) {
+	if (inScope == RootScope && std::next(s) != scope.cend()) {
+	    continue;
+	}
 	for (const auto &node : **s) {
 	    if (node.first == name) {
 		return &node.second;

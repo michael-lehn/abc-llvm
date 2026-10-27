@@ -1,0 +1,16 @@
+// TEST: T0246
+// The address of a local variable is not a constant expression and can not
+// initialize a static local variable.
+// ERROR: compile-time constant
+
+fn get(): int
+{
+    local l: int = 1;
+    static p: -> int = &l;
+    return *p;
+}
+
+fn main(): int
+{
+    return get() - 1;
+}

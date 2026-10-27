@@ -22,6 +22,7 @@ class Symtab
 	{
 	    AnyScope,
 	    CurrentScope,
+	    RootScope,
 	};
 
 	Symtab(UStr prefix = UStr{});

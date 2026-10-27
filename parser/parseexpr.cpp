@@ -638,9 +638,13 @@ parsePrimary()
 	    return expr;
 	} else if (auto sym = Symtab::variable(tok.val, Symtab::AnyScope)) {
 	    auto ty = sym->type;
-	    auto hasLinkage = sym->hasLinkage();
+	    // Variables in the root scope (global, extern) have static storage
+	    // even without linkage, so their address is constant
+	    auto hasStaticStorage =
+	        sym->hasLinkage() ||
+	        sym == Symtab::variable(tok.val, Symtab::RootScope);
 	    auto expr = Identifier::create(tok.val, sym->getId(), ty,
-	                                   hasLinkage, tok.loc);
+	                                   hasStaticStorage, tok.loc);
 	    return expr;
 	} else {
 	    error::undefinedIdentifier(tok.loc, tok.val);

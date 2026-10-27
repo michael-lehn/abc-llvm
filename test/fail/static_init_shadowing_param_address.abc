@@ -1,0 +1,16 @@
+// TEST: T0248
+// A parameter that shadows a global variable has no constant address.
+// ERROR: compile-time constant
+
+global x: int = 1;
+
+fn get(x: int): int
+{
+    static p: -> int = &x;
+    return *p;
+}
+
+fn main(): int
+{
+    return get(2) - 2;
+}

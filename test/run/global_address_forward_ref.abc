@@ -1,0 +1,32 @@
+// TEST: T0243
+// Forward references in global initializers: the address of the variable
+// itself, of a variable defined later in the same declaration, and of a
+// variable declared extern and defined later (regression test for #0006).
+
+struct Node
+{
+    val: int;
+    next: -> Node;
+};
+
+global self: Node = {1, &self};
+
+global first, second: Node = {
+    {2, &second},
+    {3, &first},
+};
+
+extern later: Node;
+global early: Node = {4, &later};
+global later: Node = {5};
+
+fn main(): int
+{
+    assert(self.next == &self);
+    assert(first.next->val == 3);
+    assert(second.next->val == 2);
+    assert(early.next == &later);
+    assert(early.next->val == 5);
+    assert(!later.next);
+    return 0;
+}
