@@ -1,0 +1,13 @@
+// TEST: T0253
+// main without return type returns int and, without a return statement, 0
+// (regression test for #0069).
+
+global count: int;
+
+fn main()
+{
+    for (local i: int = 0; i < 3; ++i) {
+        count += i;
+    }
+    assert(count == 3);
+}

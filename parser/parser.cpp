@@ -157,7 +157,8 @@ parseFunctionDeclarationOrDefinition()
 
 //------------------------------------------------------------------------------
 static const Type *parseFunctionType(Token &fnName,
-                                     std::vector<Token> &fnParamName);
+                                     std::vector<Token> &fnParamName,
+                                     bool &hasRetType);
 
 /*
  * function-header
@@ -166,9 +167,18 @@ static const Type *parseFunctionType(Token &fnName,
 static const Type *
 parseFunctionHeader(Token &fnName, std::vector<Token> &fnParamName)
 {
-    const Type *fnType = parseFunctionType(fnName, fnParamName);
+    bool hasRetType;
+    const Type *fnType = parseFunctionType(fnName, fnParamName, hasRetType);
     if (fnType && fnName.kind != TokenKind::IDENTIFIER) {
 	error::unexpectedAfter(fnName, TokenKind::IDENTIFIER);
+    }
+    // main without return type returns int (other functions return void)
+    if (fnType && !hasRetType && fnName.val == UStr::create("main")) {
+	auto intEntry = Symtab::type(UStr::create("int"), Symtab::RootScope);
+	assert(intEntry);
+	auto paramType = fnType->paramType();
+	fnType = FunctionType::create(intEntry->type, std::move(paramType),
+	                              fnType->hasVarg());
     }
     return fnType;
 }
@@ -185,7 +195,8 @@ static bool parseFunctionParameterList(std::vector<Token> &paramName,
  *	= "fn" identifier "(" function-parameter-list ")" [ ":" type ]
  */
 static const Type *
-parseFunctionType(Token &fnName, std::vector<Token> &fnParamName)
+parseFunctionType(Token &fnName, std::vector<Token> &fnParamName,
+                  bool &hasRetType)
 {
     if (token.kind != TokenKind::FN) {
 	return nullptr;
@@ -220,7 +231,8 @@ parseFunctionType(Token &fnName, std::vector<Token> &fnParamName)
     }
     getToken();
     auto fnRetType = VoidType::create();
-    if (token.kind == TokenKind::COLON) {
+    hasRetType = token.kind == TokenKind::COLON;
+    if (hasRetType) {
 	getToken();
 	auto tyLoc = token.loc;
 	fnRetType = parseType();
@@ -443,6 +455,7 @@ parseUnqualifiedType(bool allowZeroDim)
 {
     Token fnName;
     std::vector<Token> fnParamName;
+    bool fnHasRetType;
 
     if (isTypeToken(token)) {
 	auto entry = Symtab::type(token.val, Symtab::AnyScope);
@@ -453,7 +466,8 @@ parseUnqualifiedType(bool allowZeroDim)
 	return type;
     } else if (auto type = parseArrayType(allowZeroDim)) {
 	return type;
-    } else if (auto type = parseFunctionType(fnName, fnParamName)) {
+    } else if (auto type =
+                   parseFunctionType(fnName, fnParamName, fnHasRetType)) {
 	return type;
     } else {
 	return nullptr;

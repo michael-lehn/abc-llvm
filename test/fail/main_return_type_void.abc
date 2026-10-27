@@ -1,0 +1,7 @@
+// TEST: T0258
+// main with the explicit return type void (regression test for #0069).
+// ERROR: void
+
+fn main(): void
+{
+}

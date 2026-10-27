@@ -2,8 +2,8 @@
 // Linked list of global nodes initialized with the addresses of globals that
 // are defined in the same declaration (HPC0 worksheet 7, step 5; regression
 // test for #0006, expected output in global_list_address_init.out).  Unlike
-// the worksheet, main has the return type int: 'fn main()' produces invalid
-// IR (#0069, the verbatim program is T0252).
+// the worksheet, main has the explicit return type int (the verbatim program
+// is T0252).
 
 @ <stdio.hdr>
 

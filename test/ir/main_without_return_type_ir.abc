@@ -1,0 +1,21 @@
+// TEST: T0256
+// ARGS: -O0
+// IR-MATCH: ^define i32 @main\(\)
+// IR-MATCH: ^define internal void @\.?f\(\)
+// IR-MATCH: ^  ret void$
+// IR-MATCH: ^  ret i32
+// main without return type is declared and defined as returning i32, an
+// ordinary function without return type returns void (regression test for
+// #0069).
+
+global n: int;
+
+fn f()
+{
+    ++n;
+}
+
+fn main()
+{
+    f();
+}

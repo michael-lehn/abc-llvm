@@ -1,0 +1,9 @@
+// TEST: T0255
+// EXIT: 3
+// main without return type can return an int value (regression test for
+// #0069).
+
+fn main()
+{
+    return 3;
+}

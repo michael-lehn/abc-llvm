@@ -663,18 +663,26 @@ variable is constant in the initializers of its own declaration.
 
 Issue #0069: main without return type produces invalid IR
 Type: BUG
-Status: OPEN
-Covered by tests: #T0252 (runtime, XFAIL)
+Status: RESOLVED
+Covered by tests: #T0252 (runtime, PASS), #T0253 (runtime, PASS), #T0254 (runtime, PASS), #T0255 (runtime, PASS), #T0256 (ir, PASS), #T0257 (ir, PASS), #T0110 (reject, PASS), #T0258 (reject, PASS), #T0259 (reject, PASS), #T0260 (reject, PASS), #T0261 (reject, PASS), #T0142 (reject, PASS)
 
-For `fn main() { ... }` the function is declared as `define void @main()`
+For `fn main() { ... }` the function was declared as `define void @main()`
 (`lowerFunctionDeclaration()` in `gen/abi.cpp`), but
-`functionDefinitionBegin()` (`gen/function.cpp`) replaces the return type
-void of main by int and `functionDefinitionEnd()` emits `ret i32`. The LLVM
-verifier rejects the module ("value doesn't match function result type
+`functionDefinitionBegin()` (`gen/function.cpp`) replaced the return type
+void of main by int and `functionDefinitionEnd()` emitted `ret i32`. The LLVM
+verifier rejected the module ("value doesn't match function result type
 'void'"); the result of `llvm::verifyFunction()` is ignored, and the driver
-still produces a program that works. Many examples (`abc-example`,
-`not-abc`, the HPC0 worksheets) use `fn main()`. Expected: valid IR, with
-main returning int 0 (or void) consistently in declaration and definition.
+still produced a program that worked. Many examples (`abc-example`,
+`not-abc`, the HPC0 worksheets) use `fn main()`. Fixed according to the
+language rule: `fn main()` means `fn main(): int`, and any other explicit
+return type of main is an error (an ordinary `fn f()` still returns void).
+`parseFunctionHeader()` (`parser/parser.cpp`) gives main without return type
+the type `fn(...): int`, so the AST, the symbol table, the LLVM signature and
+the return instructions agree; `checkMainReturnType()` (`ast/ast.cpp`)
+rejects declarations and definitions of main whose return type is not int
+(up to aliases, so also `i32`; `readonly int` is rejected; an explicit `void`
+return type is rejected for every function as incomplete). Without a return
+statement main still returns 0.
 
 ---
 

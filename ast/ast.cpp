@@ -11,6 +11,7 @@
 #include "gen/variable.hpp"
 #include "lexer/error.hpp"
 #include "type/enumtype.hpp"
+#include "type/integertype.hpp"
 #include "type/structtype.hpp"
 #include "type/typealias.hpp"
 
@@ -165,6 +166,23 @@ AstList::apply(std::function<bool(Ast *)> op)
     }
 }
 
+// The return type of main has to be int (main without return type returns int,
+// see parseFunctionHeader())
+static void
+checkMainReturnType(lexer::Token fnName, const Type *fnType)
+{
+    if (fnName.val == UStr::create("main") &&
+        !Type::equals(fnType->retType(), IntegerType::createInt())) {
+	error::location(fnName.loc);
+	error::out() << error::setColor(error::BOLD) << fnName.loc << ": "
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << "return type of 'main' has to be 'int'\n"
+	             << error::setColor(error::NORMAL);
+	error::fatal();
+    }
+}
+
 /*
  * AstFunctionDecl
  */
@@ -176,6 +194,7 @@ AstFuncDecl::AstFuncDecl(lexer::Token fnName, const Type *fnType,
 {
     assert(this->fnParamName.size() == this->fnType->paramType().size() ||
            this->fnParamName.size() == 0);
+    checkMainReturnType(fnName, fnType);
 
     auto addDecl = Symtab::addDeclaration(fnName.loc, fnName.val, fnType);
     assert(addDecl.first);
@@ -235,19 +254,11 @@ AstFuncDecl::codegen()
 AstFuncDef::AstFuncDef(lexer::Token fnName, const Type *fnType)
     : fnName{fnName}, fnType{fnType}
 {
+    checkMainReturnType(fnName, fnType);
     auto addDecl = Symtab::addDefinition(fnName.loc, fnName.val, fnType);
     assert(addDecl.first);
     if (fnName.val == UStr::create("main")) {
 	addDecl.first->setExternalLinkage();
-	if (!fnType->retType()->isVoid() && !fnType->retType()->isInteger()) {
-	    error::location(fnName.loc);
-	    error::out() << error::setColor(error::BOLD) << fnName.loc << ": "
-	                 << error::setColor(error::BOLD_RED)
-	                 << "error: " << error::setColor(error::BOLD)
-	                 << "return type of 'main' has to be 'int'\n"
-	                 << error::setColor(error::NORMAL);
-	    error::fatal();
-	}
     } else {
 	addDecl.first->setLinkage();
     }

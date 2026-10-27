@@ -1,0 +1,10 @@
+// TEST: T0260
+// A declaration of main with a return type other than int (regression test
+// for #0069).
+// ERROR: return type of .main.
+
+extern fn main(): double;
+
+fn f()
+{
+}

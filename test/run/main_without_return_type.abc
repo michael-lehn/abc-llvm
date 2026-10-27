@@ -1,7 +1,7 @@
 // TEST: T0252
-// XFAIL: #0069 'fn main()' produces invalid IR (void @main returns i32)
 // main without return type, verbatim program of HPC0 worksheet 7, step 5
-// (expected output in main_without_return_type.out, cf. T0242).
+// (regression test for #0069, expected output in
+// main_without_return_type.out, cf. T0242).
 
 @ <stdio.hdr>
 

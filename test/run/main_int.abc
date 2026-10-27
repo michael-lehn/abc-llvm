@@ -1,0 +1,12 @@
+// TEST: T0254
+// main with return type int returns 0 without a return statement; a
+// declaration without return type has the same type (regression test for
+// #0069).
+
+fn main();
+
+fn main(): int
+{
+    local x: int = 1;
+    assert(x == 1);
+}

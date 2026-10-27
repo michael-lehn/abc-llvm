@@ -1,0 +1,9 @@
+// TEST: T0261
+// main without return type returns int, so 'return;' lacks a value
+// (regression test for #0069).
+// ERROR: should return a value
+
+fn main()
+{
+    return;
+}

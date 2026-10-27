@@ -1,0 +1,9 @@
+// TEST: T0259
+// main with an integer return type other than int (regression test for
+// #0069).
+// ERROR: return type of .main.
+
+fn main(): i64
+{
+    return 0;
+}

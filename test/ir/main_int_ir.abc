@@ -1,0 +1,10 @@
+// TEST: T0257
+// ARGS: -O0
+// IR-MATCH: ^define i32 @main\(\)
+// IR-MATCH: ^  ret i32
+// main with return type int is defined as returning i32 (regression test for
+// #0069).
+
+fn main(): int
+{
+}
