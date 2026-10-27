@@ -18,7 +18,7 @@ fn sel(s: u8): -> fn(:u64)
     return &bar;
 }
 
-fn main(): u8
+fn main()
 {
     local p: -> fn(:u64),    // pointer to function (aka "function pointer")
 	  q: ->-> fn(:u64);  // pointer to pointer to function

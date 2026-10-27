@@ -32,7 +32,7 @@ fn printList(list: -> Node)
     }
 }
 
-fn main(): u8
+fn main()
 {
     local list: -> Node;
     list = nullptr;

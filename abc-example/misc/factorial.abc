@@ -9,7 +9,7 @@ fn factorial(n: u64): u64
     return r;
 }
 
-fn main(): u64
+fn main()
 {
     local n: u64;
     

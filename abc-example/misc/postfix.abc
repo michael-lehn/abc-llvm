@@ -9,7 +9,7 @@ fn foo(n: u64)
     }
 }
 
-fn main(): u8
+fn main()
 {
     foo(5);
 }

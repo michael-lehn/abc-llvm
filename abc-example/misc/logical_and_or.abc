@@ -1,6 +1,6 @@
 @ <stdio.hdr>
 
-fn main(): u8
+fn main()
 {
     local a: u64;
     local b: u64;

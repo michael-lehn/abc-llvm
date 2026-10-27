@@ -8,7 +8,7 @@ fn foo()
     local foo : Foo;
 }
 
-fn main(): u8
+fn main()
 {
     local foo : Foo;
     return 0;

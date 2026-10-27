@@ -1,4 +1,4 @@
-fn main(): u64
+fn main(): int
 {
     local r: u64 = 1;
     for (local i: u64 = 1; i <= 5; i = i + 1) {

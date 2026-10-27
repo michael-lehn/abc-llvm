@@ -15,7 +15,7 @@ fn printArray(p: -> u64, dim: u64)
     printf("\n");
 }
 
-fn main(): u8
+fn main()
 {
     local a: array[3] of u64;
 

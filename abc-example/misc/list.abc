@@ -32,7 +32,7 @@ fn releaseList(list: -> Node)
     free(list);
 }
 
-fn main(): u8
+fn main()
 {
     local list: -> Node = nullptr;
 

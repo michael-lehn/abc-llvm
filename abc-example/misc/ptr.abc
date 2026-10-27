@@ -14,7 +14,7 @@ fn printBytes(s: -> char, n: u64)
 global x: int;
 global y: int;
 
-fn main(): u8
+fn main()
 {
     local
 	a: array[10] of -> int,	    // int *a[10]

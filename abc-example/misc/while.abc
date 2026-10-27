@@ -1,4 +1,4 @@
-fn main(): u8
+fn main(): int
 {
     local sum: u64 = 0;
     local i: u8 = 2;

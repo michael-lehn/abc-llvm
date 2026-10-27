@@ -1,6 +1,6 @@
 @ <stdio.hdr>
 
-fn main() : u8
+fn main()
 {
     struct Foo {a: u16; b: u64; c: array[5] of u16;};
 

@@ -1,4 +1,4 @@
-fn main(): u64
+fn main()
 {
     /*
     local a: i8 = 12;

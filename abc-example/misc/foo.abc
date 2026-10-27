@@ -1,6 +1,6 @@
 type str10: array[10] of char;
 
-fn main(): u8
+fn main()
 {
     local a: -> int;
     //a = 0; // error

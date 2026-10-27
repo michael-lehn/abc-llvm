@@ -1,6 +1,6 @@
 @ <stdio.hdr>
 
-fn main(): u8
+fn main()
 {
     local ch: i16;
 
