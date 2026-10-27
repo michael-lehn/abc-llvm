@@ -85,4 +85,12 @@ tmp=$output.tmp
     done
     echo
     echo "]"
-} > "$tmp" && mv "$tmp" "$output"
+} > "$tmp" || exit 1
+
+# replace the database only if it changed: an up-to-date database keeps its
+# timestamp and owner (e.g. 'sudo make install' after 'make')
+if cmp -s "$tmp" "$output"; then
+    rm -f "$tmp"
+else
+    mv "$tmp" "$output"
+fi
