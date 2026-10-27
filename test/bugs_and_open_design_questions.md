@@ -661,6 +661,21 @@ identifiers in the initializer have no static storage
 Expected: like for global variables (#0006), the address of a static local
 variable is constant in the initializers of its own declaration.
 
+Issue #0069: main without return type produces invalid IR
+Type: BUG
+Status: OPEN
+Covered by tests: #T0252 (runtime, XFAIL)
+
+For `fn main() { ... }` the function is declared as `define void @main()`
+(`lowerFunctionDeclaration()` in `gen/abi.cpp`), but
+`functionDefinitionBegin()` (`gen/function.cpp`) replaces the return type
+void of main by int and `functionDefinitionEnd()` emits `ret i32`. The LLVM
+verifier rejects the module ("value doesn't match function result type
+'void'"); the result of `llvm::verifyFunction()` is ignored, and the driver
+still produces a program that works. Many examples (`abc-example`,
+`not-abc`, the HPC0 worksheets) use `fn main()`. Expected: valid IR, with
+main returning int 0 (or void) consistently in declaration and definition.
+
 ---
 
 ## Open Language Design Questions
