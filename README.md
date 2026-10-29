@@ -33,6 +33,7 @@ historical continuity is purely alphabetical.
 - [A Compiler Written in ABC](#a-compiler-written-in-abc)
 - [Language Description](#language-description)
 - [Usage](#usage)
+- [Use of AI-assisted development](#use-of-ai-assisted-development)
 
 
 # ABC: A Better C
@@ -900,6 +901,22 @@ return-statement = "return" [ expression-list ] ";"
 label-definition = "label" identifier ":"
 ```
 
+
+## Use of AI-assisted development
+
+ABC and its compiler were designed and implemented by me. I wrote most of the
+original compiler in approximately two months, using Vim as my editor. The
+compiler's core implementation, including its internal architecture and code
+generation, was not AI-generated.
+
+More recently, I have used Claude as a development assistant, primarily to
+expand existing test cases into a comprehensive, extensible regression test
+suite and to modernize the build system.
+
+I use AI assistance for engineering tasks that I understand and could perform
+myself. This allows me to delegate routine or time-consuming work while
+retaining responsibility for the design, technical decisions, and validation of
+the results.
 
 ## License
 
