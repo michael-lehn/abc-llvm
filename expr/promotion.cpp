@@ -123,6 +123,12 @@ static BinaryResult binaryStruct(BinaryExpr::Kind kind, ExprPtr &&left,
 BinaryResult
 binary(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right, lexer::Loc *loc)
 {
+    // the value of a function is only available with the operator '&', and void
+    // has no value
+    if (left->type->isFunction() || right->type->isFunction() ||
+        left->type->isVoid() || right->type->isVoid()) {
+	return binaryErr(kind, std::move(left), std::move(right), loc);
+    }
     // the value of a function is only available with the operator '&'
     if (left->type->isFunction() || right->type->isFunction()) {
 	return binaryErr(kind, std::move(left), std::move(right), loc);
@@ -334,10 +340,11 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	    if (!operand->type->isPointer()) {
 		continue;
 	    }
-	    // INDEX reports dereferencing nullptr itself
+	    // INDEX reports dereferencing nullptr itself. No size: void, a
+	    // function or a struct without definition
 	    if (operand->type->isNullptr()
 	            ? kind != BinaryExpr::INDEX
-	            : operand->type->refType()->isVoid()) {
+	            : !operand->type->refType()->hasSize()) {
 		return binaryErr(kind, std::move(left), std::move(right), loc);
 	    }
 	}
@@ -426,18 +433,6 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	                 << "'\n"
 	                 << error::setColor(error::NORMAL);
 	    break;
-	} else if (right->type->isPointer()) {
-	    if (!left->isLValue()) {
-		error::out() << error::setColor(error::BOLD) << left->loc
-		             << ": " << error::setColor(error::BOLD_RED)
-		             << "error: " << error::setColor(error::BOLD)
-		             << "not an LValue\n"
-		             << error::setColor(error::NORMAL);
-	    } else {
-		type = IntegerType::createSigned(64);
-		newLeftType = left->type;
-		newRightType = right->type;
-	    }
 	} else if (right->type->isInteger()) {
 	    if (!left->isLValue()) {
 		error::out() << error::setColor(error::BOLD) << left->loc
@@ -608,7 +603,7 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
     default:
 	break;
     case UnaryExpr::ADDRESS:
-	if (child->hasAddress()) {
+	if (child->hasAddress() && !child->type->isVoid()) {
 	    type = PointerType::create(child->type);
 	    newChildType = child->type;
 	}
@@ -616,7 +611,9 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
     case UnaryExpr::ASTERISK_DEREF:
     case UnaryExpr::ARROW_DEREF:
 	if (child->type->isPointer() && !child->type->isNullptr() &&
-	    !child->type->refType()->isVoid()) {
+	    !child->type->refType()->isVoid() &&
+	    !(child->type->refType()->isStruct() &&
+	      !child->type->refType()->hasSize())) {
 	    type = child->type->refType();
 	    newChildType = child->type;
 	}
@@ -647,10 +644,10 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 	    break;
 	}
 	if (child->isLValue()) {
-	    bool toVoid =
-	        child->type->isPointer() && child->type->refType()->isVoid();
+	    bool noSize = child->type->isPointer() &&
+	                  !child->type->refType()->hasSize();
 	    if (child->type->isInteger() ||
-	        (child->type->isPointer() && !toVoid) ||
+	        (child->type->isPointer() && !noSize) ||
 	        child->type->isFloatType()) {
 		type = newChildType = child->type;
 	    }

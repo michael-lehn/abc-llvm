@@ -208,6 +208,19 @@ identifiers in the initializer have no static storage
 Expected: like for global variables (#0006), the address of a static local
 variable is constant in the initializers of its own declaration.
 
+Issue #0094: Assertions for aggregates in constant expressions
+Type: BUG
+Status: OPEN
+Covered by tests: #T0324 (runtime, XFAIL), #T0325 (runtime, XFAIL), #T0326 (runtime, XFAIL)
+
+`global d: i64 = a[1] - a[0];` with an array of arrays fails an assertion in
+`gen::pointerIncrement()`: `BinaryExpr::isConst()` calls `loadValue()` of the
+operands, which for such an element generates an instruction outside of a
+function. `global x: int = "s" ? 1 : 2;` fails an LLVM assertion:
+`ConditionalExpr::isConst()` compares the condition with a zero, which is not
+possible for an array, and `global x: int = &a ? 1 : 2;` crashes the compiler the
+same way. Expected: these are constants, with the values 2, 1 and 1.
+
 ---
 
 ## Design
@@ -925,7 +938,7 @@ Fixed: the parser appends all characters (`UStr::str()`), and
 Issue #0076: Value of a void function used as an operand
 Type: BUG
 Status: RESOLVED
-Covered by tests: #T0302 (reject, PASS), #T0303 (reject, PASS), #T0316 (driver, PASS)
+Covered by tests: #T0302 (reject, PASS), #T0303 (reject, PASS), #T0316 (driver, PASS), #T0322 (driver, PASS)
 
 `if (f())` with a void function `f` fails an assertion of LLVM ("Both operands
 to ICmp instruction are not of the same type"). `printf("%d", f())` gives an
@@ -964,7 +977,7 @@ pointers. Assigning, comparing and converting a pointer to void stay valid.
 Issue #0079: sizeof of void or of a function crashes the compiler
 Type: BUG
 Status: RESOLVED
-Covered by tests: #T0309 (reject, PASS), #T0310 (reject, PASS), #T0316 (driver, PASS)
+Covered by tests: #T0309 (reject, PASS), #T0310 (reject, PASS), #T0316 (driver, PASS), #T0322 (driver, PASS)
 
 `sizeof(void)` and `sizeof(f)` for a function `f` crash the compiler without a
 message. Expected: an error.
@@ -1079,3 +1092,61 @@ program's object file. The files were not removed either. Fixed: each run create
 the first free directory `abc-<n>` for its object files, named with the number of
 the input file, and removes it at exit. Creating a directory fails if it exists,
 so a run only uses a directory it has created itself.
+
+Issue #0088: Assignment of an aggregate as an argument crashes the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0323 (runtime, PASS)
+
+`g(s = t)` failed the assertion `!loadAddr || a->hasAddress()` in
+`CallExpr::loadValue()`, as such an argument is passed by its address, which the
+value of an assignment does not have. Fixed: it is passed by a temporary.
+
+Issue #0089: Pointer to a struct without definition crashes the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0322 (driver, PASS)
+
+With `struct F;` and `p: -> F`, the expressions `*p`, `p[0]`, `p + 1`, `++p` and
+`sizeof(F)` were segmentation faults. Fixed: these are errors. Assigning and
+comparing such a pointer stays valid, as does all of this once `F` is defined.
+
+Issue #0090: Function pointer arithmetic crashes the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0322 (driver, PASS)
+
+With `p: -> fn()`, `++p` gave an internal compiler error, and `p + 1`, `p[0]` and
+`*p` as a statement crashed the compiler, as did `&f()` for a void function.
+Fixed: `*p` is like the name of a function, the others are errors, as a function
+has no size.
+
+Issue #0091: Compound assignment with a pointer on the right gives invalid IR
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0322 (driver, PASS)
+
+`i -= p` and `d -= a` with a pointer or array on the right gave an internal
+compiler error, and `p -= q` stored a difference in a pointer. `binaryPtr()` took
+a pointer as right operand of `-=` for valid, whatever was on the left. Fixed:
+these are errors, as for `+=`.
+
+Issue #0092: Huge initializer hangs the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0322 (driver, PASS)
+
+`{[4294967296] = 1}` kept the compiler busy, as `CompoundExpr::create()` allocates
+one element for each element of the type. Fixed: more than 2^28 elements are an
+error.
+
+Issue #0093: Literals and members of types without a size or members crash the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0322 (driver, PASS)
+
+`F{}` for a struct without definition and `void{}`, `nullptr->a`, and a condition
+`c ? s : s` with a struct or array failed assertions. `(1).a` and `nullptr.a` gave
+the message "has no address (internal compiler error)". Fixed: these are errors.
+The value of an assignment still has no members: `(s = t).a` is the error
+"has no address to access a member".

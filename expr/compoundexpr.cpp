@@ -63,6 +63,19 @@ CompoundExpr::create(std::vector<Designator> &&designator,
     assert(type->hasSize());
     assert(!designator.size() || designator.size() == parsedExpr.size());
 
+    // one element of 'expr' for each element of the type
+    constexpr std::size_t maxInitializerSize = std::size_t{1} << 28;
+    if (type->aggregateSize() > maxInitializerSize) {
+	error::location(loc);
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << "sorry, an initializer can not have more than "
+	             << maxInitializerSize << " elements\n"
+	             << error::setColor(error::NORMAL);
+	error::fatal();
+    }
+
     std::vector<ExprPtr> expr(type->aggregateSize());
     std::vector<const Expr *> parsedExpr_;
     for (std::size_t i = 0, index = 0; i < parsedExpr.size(); ++i, ++index) {

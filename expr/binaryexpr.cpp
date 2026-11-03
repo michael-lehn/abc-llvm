@@ -86,6 +86,9 @@ BinaryExpr::isConst() const
 	    return left->type->isNullptr() && right->type->isNullptr();
 	}
 	auto refType = left->type->refType();
+	if (!refType->hasSize()) {
+	    return false; // e.g. functions: can be compared, but not at this point
+	}
 	auto diff = gen::pointerConstantDifference(refType, left->loadValue(),
 	                                           right->loadValue());
 	return diff.has_value();

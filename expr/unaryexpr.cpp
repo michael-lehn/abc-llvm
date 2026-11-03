@@ -130,6 +130,9 @@ UnaryExpr::loadValue() const
 	                 << std::endl;
 	    error::fatal();
 	}
+	if (type->isFunction()) {
+	    return child->loadValue(); // like the name of a function
+	}
 	return gen::fetch(child->loadValue(), type);
     case ADDRESS:
 	return child->loadAddress();

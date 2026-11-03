@@ -70,8 +70,17 @@ CallExpr::loadValue() const
     std::vector<gen::Value> argValue;
     for (const auto &a : arg) {
 	bool loadAddr = gen::abi::needsAddress(a->type);
-	assert(!loadAddr || a->hasAddress());
-	auto aValue = loadAddr ? a->loadAddress() : a->loadValue();
+	gen::Value aValue = nullptr;
+	if (loadAddr && !a->hasAddress()) {
+	    // an aggregate without address, e.g. 's = t': passed by a temporary
+	    static std::size_t idCount;
+	    std::stringstream ss;
+	    ss << ".arg" << idCount++;
+	    aValue = gen::localVariableDefinition(ss.str().c_str(), a->type);
+	    gen::store(a->loadValue(), aValue, a->type);
+	} else {
+	    aValue = loadAddr ? a->loadAddress() : a->loadValue();
+	}
 	argValue.push_back(aValue);
     }
     auto fnAddr = fn->loadAddress();

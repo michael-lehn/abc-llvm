@@ -125,7 +125,7 @@ include these markers. Markdown files have no such markers.
 | `expr/identifier.cpp` | 76-80 | `Identifier::loadValueFrom()`: record the source location of a read |
 | `expr/member.cpp` | 3-5 | Include `<sstream>` for the source text of a read |
 | `expr/member.cpp` | 7-9 | Include `analysis/analysis.hpp` |
-| `expr/member.cpp` | 151-159 | `Member::loadValueFrom()`: record location and source text of a read, e.g. `list->next` |
+| `expr/member.cpp` | 162-170 | `Member::loadValueFrom()`: record location and source text of a read, e.g. `list->next` |
 
 ## Limitations
 

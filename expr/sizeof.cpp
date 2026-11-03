@@ -13,7 +13,7 @@ namespace abc {
 static void
 checkHasSize(const Type *type, lexer::Loc loc)
 {
-    if (type->isVoid() || type->isFunction()) {
+    if (!type->hasSize() && !type->isNullptr()) {
 	error::location(loc);
 	error::out() << error::setColor(error::BOLD) << loc << ": "
 	             << error::setColor(error::BOLD_RED)

@@ -1,0 +1,13 @@
+// TEST: T0324
+// XFAIL: #0094
+// The elements of an array of arrays have constant addresses, so the difference
+// of their addresses is a constant.
+
+global a: array[3] of array[2] of int;
+global d: i64 = a[1] - a[0];
+
+fn main(): int
+{
+    assert(d == 2);
+    return 0;
+}

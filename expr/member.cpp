@@ -38,16 +38,27 @@ Member::create(ExprPtr &&structure, bool derefStructPtr, UStr member,
 	error::fatal();
     }
 
+    if (structure->type->isNullptr()) {
+	error::location(loc);
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << "dereferencing nullptr\n"
+	             << error::setColor(error::NORMAL);
+	error::fatal();
+    }
+
     auto structureType =
         derefStructPtr ? structure->type->refType() : structure->type;
 
     // -> only needs the value of the pointer
-    if (!derefStructPtr && !structure->hasAddress()) {
+    if (!derefStructPtr && structureType->isStruct() &&
+        !structure->hasAddress()) {
 	error::location(loc);
 	error::out() << error::setColor(error::BOLD) << structure->loc << ": "
 	             << error::setColor(error::BOLD_RED)
-	             << "error: " << error::setColor(error::BOLD) << structure
-	             << " has no address (internal compiler error)\n"
+	             << "error: " << error::setColor(error::BOLD) << "sorry, "
+	             << structure << " has no address to access a member\n"
 	             << error::setColor(error::NORMAL);
 	error::fatal();
 	return nullptr;

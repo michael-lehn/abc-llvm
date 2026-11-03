@@ -155,7 +155,7 @@ ConditionalExpr::loadAddress() const
 void
 ConditionalExpr::condition(gen::Label trueLabel, gen::Label falseLabel) const
 {
-    if (type->isVoid()) {
+    if (type->isVoid() || !type->isScalar()) {
 	Expr::condition(trueLabel, falseLabel); // reports the error
 	return;
     }

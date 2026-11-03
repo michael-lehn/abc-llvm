@@ -1,0 +1,44 @@
+// TEST: T0323
+// An assignment of an aggregate is an expression with a value, also as an
+// argument, where it has no address and is passed by a temporary.
+
+struct S
+{
+    a: int;
+    b: array[8] of i64;
+};
+
+fn get(s: S): i64
+{
+    s.b[7] += 1; // changes the copy
+    return s.a + s.b[7];
+}
+
+fn two(x: S, y: S): i64
+{
+    return x.a * 100 + y.a;
+}
+
+fn main(): int
+{
+    local s: S = {1, {[7] = 2}};
+    local t: S;
+
+    assert(get(t = s) == 4);
+    assert(t.a == 1);
+    assert(t.b[7] == 2);
+    assert(s.b[7] == 2);
+
+    local u: S;
+    u.a = 7;
+    assert(two(t = u, u) == 707);
+    assert(t.a == 7);
+
+    // assignments as values elsewhere
+    local v: S;
+    local w: S = v = s;
+    assert(w.a == 1 && v.a == 1);
+    v = w = u;
+    assert(v.a == 7 && w.a == 7);
+    return 0;
+}

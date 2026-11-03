@@ -35,6 +35,17 @@ parseCompoundExpression(const Type *type)
 {
     assert(type);
 
+    if (token.kind == TokenKind::LBRACE && !type->hasSize() &&
+        !type->isUnboundArray()) {
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD) << "type '"
+	             << type << "' can not be initialized, it has no size\n"
+	             << error::setColor(error::NORMAL);
+	error::fatal();
+    }
+
     auto tok = token;
     std::size_t exprSize = 0;
     std::vector<ExprPtr> exprVec;
