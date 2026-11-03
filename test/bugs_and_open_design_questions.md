@@ -1055,3 +1055,13 @@ invalid IR. Only a call was noticed, as a linker error about the symbol `.f`.
 With the verifier of #0018, also a declaration nothing uses was rejected, with an
 internal compiler error. Fixed: a declaration nothing uses is removed, and a used
 one is the error "function 'f' is used but not defined".
+
+Issue #0086: Function name used as a value
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0319 (driver, PASS)
+
+According to the README a function name does not convert implicitly to a function
+pointer, but `if (f)`, `d = f` and `c ? f : f` failed assertions, and
+`printf("%p", f)` was accepted. Fixed: these are errors, and the address of a
+function is `&f`.

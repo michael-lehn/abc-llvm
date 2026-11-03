@@ -31,6 +31,15 @@ Expr::loadConstantAddress() const
 void
 Expr::condition(gen::Label trueLabel, gen::Label falseLabel) const
 {
+    if (type->isFunction()) {
+	error::location(loc);
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << "use '&' to get the address of a function\n"
+	             << error::setColor(error::NORMAL);
+	error::fatal();
+    }
     if (type->isVoid()) {
 	error::location(loc);
 	error::out() << error::setColor(error::BOLD) << loc << ": "

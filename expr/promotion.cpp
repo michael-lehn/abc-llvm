@@ -62,7 +62,15 @@ call(ExprPtr &&fn, std::vector<ExprPtr> &&arg, lexer::Loc *loc)
 	    //	 pointer (required to interface with C)
 	    // - float is casted to double
 	    // - integers narrower than int are converted to int
-	    if (arg[i]->type->isVoid()) {
+	    if (arg[i]->type->isFunction()) {
+		error::location(arg[i]->loc);
+		error::out() << error::setColor(error::BOLD) << arg[i]->loc
+		             << ": " << error::setColor(error::BOLD_RED)
+		             << "error: " << error::setColor(error::BOLD)
+		             << "use '&' to get the address of a function\n"
+		             << error::setColor(error::NORMAL);
+		error::fatal();
+	    } else if (arg[i]->type->isVoid()) {
 		error::location(arg[i]->loc);
 		error::out() << error::setColor(error::BOLD) << arg[i]->loc
 		             << ": " << error::setColor(error::BOLD_RED)
@@ -107,6 +115,10 @@ static BinaryResult binaryStruct(BinaryExpr::Kind kind, ExprPtr &&left,
 BinaryResult
 binary(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right, lexer::Loc *loc)
 {
+    // the value of a function is only available with the operator '&'
+    if (left->type->isFunction() || right->type->isFunction()) {
+	return binaryErr(kind, std::move(left), std::move(right), loc);
+    }
     if (left->type->isStruct() || right->type->isStruct()) {
 	return binaryStruct(kind, std::move(left), std::move(right), loc);
     } else if (left->type->isArray() || right->type->isArray()) {

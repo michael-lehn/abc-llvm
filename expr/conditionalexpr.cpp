@@ -27,6 +27,16 @@ ConditionalExpr::create(ExprPtr cond, ExprPtr trueExpr, ExprPtr falseExpr,
     assert(trueExpr->type);
     assert(falseExpr->type);
     auto type = Type::common(trueExpr->type, falseExpr->type);
+    if (type && type->isFunction()) {
+	error::location(loc);
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << "use '&' to get the address of a function\n"
+	             << error::setColor(error::NORMAL);
+	error::fatal();
+	return nullptr;
+    }
     if (!type) {
 	error::location(loc);
 	error::out() << error::setColor(error::BOLD) << loc << ": "
