@@ -2,7 +2,7 @@
 #include <iostream>
 
 // for lint (begin)
-#include "analysis/uninit.hpp"
+#include "analysis/analysis.hpp"
 // for lint (end)
 #include "gen/variable.hpp"
 #include "symtab/symtab.hpp"

@@ -41,4 +41,5 @@ if "$ABC" $ABC_FLAGS -Wnot-an-analysis -c uninit.abc -o unknown.o 2> /dev/null; 
 fi
 
 "$ABC" --help 2> help.txt
-grep -q -- '-Wall' help.txt && grep -q -- '-Wuninitialized' help.txt
+grep -q -- '-Wall' help.txt && grep -q -- '-Wuninitialized' help.txt &&
+    grep -q -- '-Wnull-dereference' help.txt

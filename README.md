@@ -966,6 +966,7 @@ This extra step is requested with an option:
 |--------|--------|
 | `-Wall` | Enable all static analyses |
 | `-Wuninitialized` | Warn about local variables that are, or may be, used uninitialized |
+| `-Wnull-dereference` | Warn about pointers that are, or may be, null or freed when dereferenced, and about pointers freed twice |
 
 ```console
 $ abc -Wall -c sign.abc
@@ -983,6 +984,14 @@ The analysis has limits too, and they are also worth studying.  It checks only
 variables whose address is never taken, so it says nothing about struct members
 and array elements.  The absence of a warning therefore does not mean that a
 program is correct.
+
+`malloc` is an example for `-Wnull-dereference`, as it returns `nullptr` if it
+fails.  This warns about `*p`, unless the program tests `p` first:
+
+```abc
+local p: -> int = malloc(sizeof(*p));
+*p = 1;
+```
 
 Most of the static analysis is done by code in `analysis/`, separated from the
 rest of the compiler.  The few locations in the compiler that enable it as an

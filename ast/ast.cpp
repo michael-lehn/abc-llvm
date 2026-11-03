@@ -3,7 +3,7 @@
 #include <unordered_map>
 
 // for lint (begin)
-#include "analysis/uninit.hpp"
+#include "analysis/analysis.hpp"
 // for lint (end)
 #include "expr/compoundexpr.hpp"
 #include "expr/expr.hpp"
@@ -342,7 +342,7 @@ AstFuncDef::codegen()
 	error::fatal();
     }
     // for lint (begin)
-    analysis::checkUninitialized(*gen::llvmModule->getFunction(fnId.c_str()));
+    analysis::run(*gen::llvmModule->getFunction(fnId.c_str()));
     // for lint (end)
 }
 

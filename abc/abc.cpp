@@ -6,7 +6,7 @@
 #include <vector>
 
 // for lint (begin)
-#include "analysis/uninit.hpp"
+#include "analysis/analysis.hpp"
 // for lint (end)
 #include "expr/implicitcast.hpp"
 #include "gen/gen.hpp"
@@ -115,6 +115,9 @@ usage(const char *prog, int exit = 1)
                  "          \t\t\t-W<name> no static analysis is done.\n";
     std::cerr << "  -Wuninitialized \t\tWarn about local variables that are, or\n"
                  "          \t\t\tmay be, used uninitialized.\n";
+    std::cerr << "  -Wnull-dereference \t\tWarn about pointers that are, or may\n"
+                 "          \t\t\tbe, null or freed when dereferenced, and\n"
+                 "          \t\t\tabout pointers freed twice.\n";
     // for lint (end)
     std::cerr << "  --print-ast \t\t\tPrint code represented by the AST.\n";
     std::cerr << "  --help \t\t\tDisplay this information.\n";
@@ -235,9 +238,13 @@ main(int argc, char *argv[])
 		break;
 	    // for lint (begin)
 	    case 'W':
-		if (!strcmp(argv[i], "-Wall") ||
-		    !strcmp(argv[i], "-Wuninitialized")) {
+		if (!strcmp(argv[i], "-Wall")) {
 		    abc::analysis::opt::uninitialized = true;
+		    abc::analysis::opt::nullDereference = true;
+		} else if (!strcmp(argv[i], "-Wuninitialized")) {
+		    abc::analysis::opt::uninitialized = true;
+		} else if (!strcmp(argv[i], "-Wnull-dereference")) {
+		    abc::analysis::opt::nullDereference = true;
 		} else {
 		    usage(argv[0]);
 		}

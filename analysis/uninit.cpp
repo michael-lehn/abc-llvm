@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <cstdint>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #ifdef SUPPORT_SOLARIS
@@ -14,7 +13,6 @@
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/ValueHandle.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 
 #include "lexer/error.hpp"
@@ -24,20 +22,7 @@
 namespace abc {
 namespace analysis {
 
-namespace opt {
-
-bool uninitialized = false;
-
-} // namespace opt
-
 namespace {
-
-struct Local
-{
-    llvm::AllocaInst *addr;
-    UStr name;
-    lexer::Loc loc;
-};
 
 // Set of states a variable can be in on the paths reaching a program point
 using State = std::uint8_t;
@@ -45,32 +30,6 @@ constexpr State UNASSIGNED = 1, ASSIGNED = 2;
 using StateVec = std::vector<State>;
 
 } // namespace
-
-static std::vector<Local> local;
-
-// Weak handles as instructions in unreachable blocks get deleted. Not a
-// ValueMap: LLVM is usually built without RTTI, and a ValueMap would need the
-// typeinfo of its base class CallbackVH.
-static std::vector<std::pair<llvm::WeakVH, lexer::Loc>> recordedRead;
-
-void
-declareLocal(gen::Value addr, UStr name, lexer::Loc loc)
-{
-    if (!opt::uninitialized) {
-	return;
-    }
-    auto alloca = llvm::cast<llvm::AllocaInst>(addr);
-    local.push_back({alloca, name, loc});
-}
-
-void
-noteRead(gen::Value load, lexer::Loc loc)
-{
-    if (!opt::uninitialized) {
-	return;
-    }
-    recordedRead.emplace_back(load, loc);
-}
 
 // Successors that can actually be reached. Code generation keeps branches on
 // constants, e.g. for 'while (1)' or 'if (0)'
@@ -108,24 +67,15 @@ transfer(const llvm::BasicBlock &bb, StateVec &state,
 }
 
 void
-checkUninitialized(llvm::Function &fn)
+checkUninitialized(llvm::Function &fn, const SourceInfo &info)
 {
-    if (!opt::uninitialized) {
-	return;
-    }
-
-    llvm::DenseMap<const llvm::Value *, lexer::Loc> readLoc;
-    for (const auto &[load, loc] : recordedRead) {
-	if (load) {
-	    readLoc[load] = loc;
-	}
-    }
+    const auto &readLoc = info.readLoc;
 
     // Only variables whose address never escapes: every access is a plain load
     // or store of the whole variable, so the CFG shows all reads and writes
     std::vector<const Local *> tracked;
     llvm::DenseMap<const llvm::Value *, std::size_t> index;
-    for (const auto &var : local) {
+    for (const auto &var : info.local) {
 	if (llvm::isAllocaPromotable(var.addr)) {
 	    index[var.addr] = tracked.size();
 	    tracked.push_back(&var);
@@ -219,9 +169,6 @@ checkUninitialized(llvm::Function &fn)
 	                 << error::setColor(error::NORMAL);
 	}
     }
-
-    local.clear();
-    recordedRead.clear();
 }
 
 } // namespace analysis
