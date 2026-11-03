@@ -1,6 +1,7 @@
 #ifndef ANALYSIS_SOURCEINFO_HPP
 #define ANALYSIS_SOURCEINFO_HPP
 
+#include <string>
 #include <vector>
 
 #ifdef SUPPORT_SOLARIS
@@ -29,6 +30,8 @@ struct SourceInfo
 {
 	const std::vector<Local> &local;
 	const llvm::DenseMap<const llvm::Value *, lexer::Loc> &readLoc;
+	// source text of reads of members, e.g. list->next
+	const llvm::DenseMap<const llvm::Value *, std::string> &readText;
 };
 
 } // namespace analysis

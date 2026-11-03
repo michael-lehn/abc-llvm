@@ -117,7 +117,11 @@ usage(const char *prog, int exit = 1)
                  "          \t\t\tmay be, used uninitialized.\n";
     std::cerr << "  -Wnull-dereference \t\tWarn about pointers that are, or may\n"
                  "          \t\t\tbe, null or freed when dereferenced, and\n"
-                 "          \t\t\tabout pointers freed twice.\n";
+                 "          \t\t\tabout pointers freed twice. Only checks\n"
+                 "          \t\t\tlocal pointer variables.\n";
+    std::cerr << "  -Wnull-dereference=strict \tAlso check members of structs, where\n"
+                 "          \t\t\tan unknown member may be null, and tests\n"
+                 "          \t\t\tkept in a variable. Enabled by -Wall.\n";
     // for lint (end)
     std::cerr << "  --print-ast \t\t\tPrint code represented by the AST.\n";
     std::cerr << "  --help \t\t\tDisplay this information.\n";
@@ -240,11 +244,13 @@ main(int argc, char *argv[])
 	    case 'W':
 		if (!strcmp(argv[i], "-Wall")) {
 		    abc::analysis::opt::uninitialized = true;
-		    abc::analysis::opt::nullDereference = true;
+		    abc::analysis::opt::nullDereferenceStrict = true;
 		} else if (!strcmp(argv[i], "-Wuninitialized")) {
 		    abc::analysis::opt::uninitialized = true;
 		} else if (!strcmp(argv[i], "-Wnull-dereference")) {
 		    abc::analysis::opt::nullDereference = true;
+		} else if (!strcmp(argv[i], "-Wnull-dereference=strict")) {
+		    abc::analysis::opt::nullDereferenceStrict = true;
 		} else {
 		    usage(argv[0]);
 		}

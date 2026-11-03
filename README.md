@@ -964,9 +964,10 @@ This extra step is requested with an option:
 
 | Option | Effect |
 |--------|--------|
-| `-Wall` | Enable all static analyses |
+| `-Wall` | Enable all static analyses, with the strict variant of `-Wnull-dereference` |
 | `-Wuninitialized` | Warn about local variables that are, or may be, used uninitialized |
-| `-Wnull-dereference` | Warn about pointers that are, or may be, null or freed when dereferenced, and about pointers freed twice |
+| `-Wnull-dereference` | Warn about local pointer variables that are, or may be, null or freed when dereferenced, and about pointers freed twice |
+| `-Wnull-dereference=strict` | Also check members of structs, where an unknown member may be null, and tests kept in a variable |
 
 ```console
 $ abc -Wall -c sign.abc
@@ -992,6 +993,23 @@ fails.  This warns about `*p`, unless the program tests `p` first:
 local p: -> int = malloc(sizeof(*p));
 *p = 1;
 ```
+
+The two variants of this check are kept on purpose, as they show what a static
+analysis has to decide.  Without any information about `list`, is this correct?
+
+```abc
+fn second(list: -> Node): int
+{
+    return list->next->val;
+}
+```
+
+`-Wnull-dereference` says nothing, as it only follows local variables.
+`-Wnull-dereference=strict` warns about `list->next`, as it assumes that a member
+nothing is known about may be null.  This finds more bugs, but also warns if the
+program guarantees in another way that a member is valid, which the analysis can
+not know.  An analysis can not avoid both, missing bugs and warning about correct
+programs, so it has to choose.
 
 Most of the static analysis is done by code in `analysis/`, separated from the
 rest of the compiler.  The few locations in the compiler that enable it as an

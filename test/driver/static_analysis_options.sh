@@ -42,4 +42,5 @@ fi
 
 "$ABC" --help 2> help.txt
 grep -q -- '-Wall' help.txt && grep -q -- '-Wuninitialized' help.txt &&
-    grep -q -- '-Wnull-dereference' help.txt
+    grep -q -- '-Wnull-dereference ' help.txt &&
+    grep -q -- '-Wnull-dereference=strict' help.txt

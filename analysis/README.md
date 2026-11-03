@@ -12,9 +12,10 @@ extra step that has to be requested:
 
 | Option | Effect |
 |--------|--------|
-| `-Wall` | Enable all static analyses |
+| `-Wall` | Enable all static analyses, with the strict variant of `-Wnull-dereference` |
 | `-Wuninitialized` | Warn about local variables that are, or may be, used uninitialized |
-| `-Wnull-dereference` | Warn about pointers that are, or may be, null or freed when dereferenced, and about pointers freed twice |
+| `-Wnull-dereference` | Warn about local pointer variables that are, or may be, null or freed when dereferenced, and about pointers freed twice |
+| `-Wnull-dereference=strict` | Also check members of structs, where an unknown member may be null, and tests kept in a variable |
 
 The generated code is the same with and without these options.
 
@@ -39,20 +40,30 @@ a test tells which value it has on each edge. Unlike in astl-c, the code after
 `for (; n; n = n->next)` therefore stays reachable for the analysis. `exit`, `abort`, `_Exit` and `__assert` end a path, as they do not
 return but are not marked like that in the IR.
 
+`-Wnull-dereference=strict` is a separate implementation, so that the simpler
+one can be read first. It adds access paths: the state belongs to `list`,
+`list->next` and so on instead of a variable, and a path gets forgotten if it can
+have changed by a store through another pointer or a call of an unknown function.
+It also knows facts like "if `ok` is true then `p` is not null". The assumption
+that an unknown member may be null is what makes it strict.
+
 ## New files
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `analysis/analysis.hpp` | 1-31 | Interface for the compiler: `opt`, `declareLocal()`, `noteRead()`, `run()` |
-| `analysis/analysis.cpp` | 1-79 | Options, side table, and `run()` that calls the enabled analyses |
-| `analysis/sourceinfo.hpp` | 1-37 | `SourceInfo`: what an analysis gets to know besides the IR |
+| `analysis/analysis.hpp` | 1-36 | Interface for the compiler: `opt`, `declareLocal()`, `noteRead()`, `run()` |
+| `analysis/analysis.cpp` | 1-102 | Options, side table, and `run()` that calls the enabled analyses |
+| `analysis/sourceinfo.hpp` | 1-40 | `SourceInfo`: what an analysis gets to know besides the IR |
 | `analysis/uninit.hpp` | 1-18 | Interface of `-Wuninitialized` |
 | `analysis/uninit.cpp` | 1-175 | Dataflow analysis of `-Wuninitialized` (see below) |
 | `analysis/nullderef.hpp` | 1-18 | Interface of `-Wnull-dereference` |
 | `analysis/nullderef.cpp` | 1-340 | Dataflow analysis of `-Wnull-dereference` (see below) |
+| `analysis/nullderef-v2.hpp` | 1-19 | Interface of `-Wnull-dereference=strict` |
+| `analysis/nullderef-v2.cpp` | 1-573 | Dataflow analysis of `-Wnull-dereference=strict` (see below) |
 | `analysis/README.md` | all | This file |
 | `test/driver/static_analysis_options.sh` | all | Test T0281: no analysis by default, `-Wall` and `-Wuninitialized` enable it, generated code unchanged, unknown `-W` option rejected, options listed by `--help` |
 | `test/driver/null_dereference.sh` | all | Test T0287: warnings of `-Wnull-dereference` for each kind of test and access |
+| `test/driver/null_dereference_strict.sh` | all | Test T0288: warnings of `-Wnull-dereference=strict`, and that `-Wall` enables it |
 
 Parts of `analysis/uninit.cpp`:
 
@@ -71,6 +82,17 @@ Parts of `analysis/nullderef.cpp`:
 | 169-224 | `refine()`: what the condition of a branch tells about a variable on each edge |
 | 226-337 | `checkNullDereference()`: selects the variables to track, computes the fixed point, and reports |
 
+Parts of `analysis/nullderef-v2.cpp`:
+
+| Lines | Purpose |
+|-------|---------|
+| 108-158 | `get()`, `forget()`, `forgetMemory()`: the state of an access path, and when it gets forgotten |
+| 160-213 | `named()`, `stateOfValue()`, `onlyDirectAccess()`: which values can be null, and which variables can be the root of a path |
+| 229-390 | `transfer()`: effect of a basic block, with paths of SSA values, facts of tests and the checks |
+| 392-440 | `refine()`: what the condition of a branch tells about a path on each edge |
+| 442-471 | `join()`: merges the states of two edges |
+| 473-570 | `checkNullDereferenceStrict()`: selects the roots, computes the fixed point, and reports |
+
 ## Modified files
 
 In source files, modified lines are enclosed by `// for lint (begin)` and
@@ -80,17 +102,20 @@ include these markers. Markdown files have no such markers.
 | File | Lines | Purpose |
 |------|-------|---------|
 | `README.md` | 35 | Contents: entry for the section "Static Analysis" |
-| `README.md` | 906-998 | Section "Static Analysis": why there is no static analysis by default, and what a compiler has to do for such a warning |
+| `README.md` | 906-1016 | Section "Static Analysis": why there is no static analysis by default, and what a compiler has to do for such a warning |
 | `Makefile` | 74-76 | Add `analysis/*.cpp` to the compiler sources |
 | `abc/abc.cpp` | 8-10 | Include `analysis/analysis.hpp` |
-| `abc/abc.cpp` | 113-121 | Usage message: `-Wall`, `-Wuninitialized` and `-Wnull-dereference` |
-| `abc/abc.cpp` | 239-252 | Parse these options; any other `-W` option is an error |
+| `abc/abc.cpp` | 113-125 | Usage message: `-Wall`, `-Wuninitialized`, `-Wnull-dereference` and `-Wnull-dereference=strict` |
+| `abc/abc.cpp` | 243-258 | Parse these options; any other `-W` option is an error |
 | `ast/ast.cpp` | 5-7 | Include `analysis/analysis.hpp` |
 | `ast/ast.cpp` | 344-346 | `AstFuncDef::codegen()`: run the analyses once the function is complete and unreachable blocks are removed |
 | `ast/ast.cpp` | 816-821 | `AstLocalVar::codegen()`: record name and location of a local variable (declaration of a single variable) |
 | `ast/ast.cpp` | 831-836 | `AstLocalVar::codegen()`: record name and location of a local variable (declaration of a variable list) |
 | `expr/identifier.cpp` | 4-6 | Include `analysis/analysis.hpp` |
 | `expr/identifier.cpp` | 70-74 | `Identifier::loadValue()`: record the source location of a read |
+| `expr/member.cpp` | 3-5 | Include `<sstream>` for the source text of a read |
+| `expr/member.cpp` | 7-9 | Include `analysis/analysis.hpp` |
+| `expr/member.cpp` | 144-152 | `Member::loadValue()`: record location and source text of a read, e.g. `list->next` |
 
 ## Limitations
 
@@ -109,3 +134,8 @@ include these markers. Markdown files have no such markers.
   gets a false warning.
 - Functions are recognized by name, so an own allocation function that can
   return null is not known.
+- `-Wnull-dereference=strict` handles the test kept in a variable and members,
+  but not a flag set on a path: `ok = false; if (p) ok = true; if (ok) *p = 1;`
+  gets a false warning, as this needs to follow each path separately. It warns
+  about members the program guarantees to be valid in another way, and does not
+  track global variables and array elements.

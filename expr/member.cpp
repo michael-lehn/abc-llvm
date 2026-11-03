@@ -1,6 +1,12 @@
 #include <iomanip>
 #include <iostream>
+// for lint (begin)
+#include <sstream>
+// for lint (end)
 
+// for lint (begin)
+#include "analysis/analysis.hpp"
+// for lint (end)
 #include "gen/variable.hpp"
 #include "lexer/error.hpp"
 
@@ -135,7 +141,15 @@ gen::Value
 Member::loadValue() const
 {
     assert(type);
-    return gen::fetch(loadAddress(), type);
+    // for lint (begin)
+    auto val = gen::fetch(loadAddress(), type);
+    if (analysis::recording()) {
+	std::stringstream text;
+	printFlat(text, 0);
+	analysis::noteMemberRead(val, loc, text.str());
+    }
+    return val;
+    // for lint (end)
 }
 
 gen::Value
