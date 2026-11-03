@@ -1,24 +1,20 @@
-## TL;DR
+# ABC
 
-ABC is a small teaching language designed to make programming and computers easier to understand — not to hide how they work.
+**A small language for teaching how programs are executed: as close to the
+machine as C, but with a simpler and more consistent grammar.**
 
-- **Understand the machine.**
-  ABC exposes the basic ideas of memory, addresses, data representation, and
-  how programs interact with the computer.
-- **Learn the problem before the solution.**
-  Many features of modern programming languages solve problems inherited from
-  C. With ABC, you first encounter and understand these problems — making it
-  much easier to see *why* languages such as C++, Odin, Rust, or others provide
-  certain features.
-- **Simpler than C, without being more magical.**
-  ABC keeps the low-level programming model, but uses a smaller and more
-  consistent grammar and semantics. This makes it significantly easier to learn
-  than C while preserving the concepts that matter.
+ABC ("A Better C") is a programming language I developed for teaching, in
+particular for my course *Introduction to High Performance Computing* at Ulm
+University.  It keeps the programming model of C: variables live somewhere in
+memory, they have addresses, and pointers are just addresses.  But ABC does
+not have to be backwards compatible with C.  So I could clean up the parts of
+C that make it unnecessarily hard to learn.  The compiler is written in C++
+and uses LLVM as backend.
 
-**Requirements:** LLVM 17 to 23 are supported and tested (see
+Requirements: LLVM 17 to 23 and GNU Make 4.2 or newer (see
 [Installation](#installation)).
 
-**A note on the name:** My ABC is unrelated to the ABC language developed at CWI,
+**About the name:** My ABC is unrelated to the ABC language developed at CWI,
 which was originally called B—also unrelated to Bell Labs’ B, the predecessor of C.
 My ABC shares a taste for small, close-to-the-machine languages with Bell Labs’ B,
 and continues CWI’s tradition of naming a language after an unrelated one. Any
@@ -26,115 +22,70 @@ historical continuity is purely alphabetical.
 
 ## Contents
 
-- [ABC: A Better C](#abc-a-better-c)
-- [Examples](#examples)
+- [Why ABC?](#why-abc)
+- [Repository Layout](#repository-layout)
 - [Installation](#installation)
+- [Declarations in C and ABC](#declarations-in-c-and-abc)
+- [Examples](#examples)
 - [Raylib Examples](#raylib-examples)
 - [A Compiler Written in ABC](#a-compiler-written-in-abc)
 - [Language Description](#language-description)
 - [Static Analysis](#static-analysis)
-- [Usage](#usage)
 - [Use of AI-assisted development](#use-of-ai-assisted-development)
+- [License](#license)
 
+## Why ABC?
 
-# ABC: A Better C
+Pascal was once a good language for learning programming from first
+principles: variables and types, control flow and procedures, how memory is
+organized, stack and heap.  Students who had learned Pascal usually picked up
+other languages quickly, because they knew how a program is actually
+executed.
 
-**ABC** was designed as a modern educational programming language, continuing
-the teaching philosophy of **Pascal**, but with the practical relevance of
-**C**.
+Python hides most of these details.  C exposes all of them, but it also has
+pitfalls in its syntax and semantics that have nothing to do with these
+concepts, for example
 
-Pascal was once an ideal language to **learn programming from first
-principles**. It allowed students to truly understand and implement fundamental
-concepts, such as:
+- the declaration syntax (`int *p[10]` vs. `int (*p)[10]`),
+- arrays and structs that are treated differently in function calls,
+- the preprocessor.
 
-- variables and types
-- control flow and procedures
-- memory organization
-- stack and heap behavior
+In ABC, declarations are read from left to right like in Pascal (see
+[Declarations in C and ABC](#declarations-in-c-and-abc)), and inconsistencies
+of C are removed where this is possible.  What remains are the actual
+problems of low-level programming:
 
-After learning Pascal, students were typically able to pick up other
-programming languages quickly and confidently, because they had developed a
-solid understanding of **how software is fundamentally executed**.
+- global, local and static variables,
+- stack vs. dynamic memory vs. global data,
+- parameter passing,
+- the memory layout of structs, arrays and pointers,
+- explicit memory management.
 
-Today, many modern languages (such as Python) abstract away too many of these
-details, giving learners an incomplete mental model of what is really happening
-"under the hood." At the other extreme, languages like C expose all the
-low-level mechanisms — but suffer from **syntactic pitfalls** and **semantic
-inconsistencies** that make them unnecessarily difficult to learn, especially
-for beginners.
+Students should run into these problems themselves.  Afterwards it is much
+easier to see why C++, Rust, Odin and other languages have references, RAII,
+reference counting, garbage collection or a borrow checker.
 
-For example:
-
-- complex declaration syntax (`int *p[10]` vs `int (*p)[10]`)
-- inconsistent treatment of arrays and structs in function calls
-- subtle pointer behavior
-
-ABC is intentionally designed to address these issues:
-
-- The **declaration syntax** is inspired by Pascal, making it more readable and
-  consistent.
-- **Semantic inconsistencies** from C are deliberately cleaned up, thanks to
-  the freedom of not requiring backwards compatibility.
-- ABC offers a clear, consistent model of memory and data handling — allowing
-  students to experience and understand the core problems that modern languages
-  are designed to solve (e.g. memory management, ownership, aliasing).
-
-Understanding these problems is critical:
-
-You can only fully appreciate advanced solutions like Rust's **Borrow
-Checker**, reference counting, or garbage collection if you first understand
-the underlying challenges. ABC enables students to encounter these issues
-consciously, in a clean and accessible language.
-
-In particular, ABC helps learners understand:
-
-- global, local, and static variables
-- stack vs. dynamic memory vs. global data
-- parameter passing mechanisms
-- memory layout of structs, arrays, and pointers
-- explicit memory management
-- how software is executed on the machine
-
-ABC is therefore intended as a **modern didactic programming language** — not
-only for teaching *how to program*, but also for teaching *how computers
-execute programs*. It is suitable for use in:
-
-- introductory programming courses
-- systems programming courses
-- high-performance computing courses
-- compiler construction courses
-- and as a foundation for understanding modern language features.
+So ABC is not only about learning *how to program* but also about *how
+computers execute programs*.  It can be used in introductory programming
+courses as well as in courses on systems programming, high performance
+computing or compiler construction.
 
 ## Repository Layout
 
-**Note:** This project uses hard tabs with a tab width of 8. If the code looks
-misaligned on GitHub, append `?ts=8` to the URL or configure your GitHub tab
-width accordingly.
+The sources use hard tabs with a tab width of 8.  If the code looks
+misaligned on GitHub, append `?ts=8` to the URL.
 
-### `examples/`
-
-Contains a collection of small example programs illustrating different language
-features, including
-
-- recursion,
-- pointers,
-- dynamic memory allocation,
-- and linked lists.
-
-### `not-abc/`
-
-Contains the compiler project developed as part of the undergraduate course
-*Introduction to High Performance Computing*. In the course, students implement
-a simple compiler for the `not-abc` language in **ABC**.
-
-The directory has its own [not-abc/README](not-abc/README.md) describing how to
-build and use the compiler.
-
-The initial LLVM IR for the self-hosting compiler in the companion repository
-
-https://github.com/michael-lehn/not-abc
-
-was generated using this compiler.
+- `abc/`, `ast/`, `expr/`, `gen/`, `lexer/`, `parser/`, `symtab/`, `type/`,
+  `util/`: the compiler (C++).
+- `abc-include/`, `abc-lib/`: headers and sources of the small ABC library.
+- `abc-example/`: example programs.  `misc/` contains small programs, e.g.
+  for recursion, pointers, dynamic memory and linked lists.  `01_simple` to
+  `07_test` develop a calculator step by step into a small compiler.
+- `raylib-examples/`: programs using raylib (see
+  [Raylib Examples](#raylib-examples)).
+- `not-abc/`: a compiler written in ABC (see
+  [A Compiler Written in ABC](#a-compiler-written-in-abc)).
+- `test/`: the test suite (see [Running the Tests](#running-the-tests)).
 
 
 ## Installation
@@ -157,7 +108,7 @@ below (e.g. `gmake`, `gmake check`, `sudo gmake install`).
 
 ### Building
 
-Verify that the correct LLVM version is used:
+Check which LLVM version is used:
 
 ```bash
 llvm-config --version
@@ -173,15 +124,14 @@ make
 sudo make install
 ```
 
-If needed, you can explicitly specify the C++ compiler and `llvm-config` when
-invoking `make`, for example:
+The C++ compiler and `llvm-config` can be specified explicitly, for example:
 
 ```bash
 make CXX=g++ llvm-config=llvm-config-23
 ```
 
-Building with a different C++ compiler or a different LLVM version requires
-`make clean` first, or a separate build directory, e.g.
+After changing the C++ compiler or the LLVM version, run `make clean` first,
+or use a separate build directory, e.g.
 `make build.dir=build/llvm23/ llvm-config=llvm-config-23`.
 
 ### Running the Tests
@@ -190,40 +140,44 @@ Building with a different C++ compiler or a different LLVM version requires
 make check
 ```
 
-builds the compiler and runs the test suite without installing ABC. It
-consists of unit tests for compiler components (`test/unit`), ABC programs
-that are compiled, checked with the LLVM verifier, and executed (`test/run`),
-invalid programs that must be rejected (`test/fail`), programs concerning open
-language design questions (`test/design`), checks of the LLVM IR generated for
-compiler options (`test/ir`), scripts that run the compiler as a whole,
-e.g. with several input files (`test/driver`), the example programs (compiled
-and checked with the LLVM verifier, but not executed; directories listed in
-`test/examples.list`, skipped with `ABC_TEST_EXAMPLES=0`), and checks of the
-compilation database (`test/tool`). Every test has a stable ID
-(`T0001`, ...). Known compiler bugs and open design questions are listed with
-issue IDs (`#0001`, ...) in
-[test/bugs_and_open_design_questions.md](test/bugs_and_open_design_questions.md);
-the tests that cover them are reported as XFAIL and DESIGN. See
-`test/run-tests.sh` for details. Logs are kept in `build/check`.
+builds the compiler and runs the test suite.  ABC does not have to be
+installed for this.  The tests are in `test/`:
+
+- `unit/`: unit tests for parts of the compiler,
+- `run/`: programs that are compiled, checked with the LLVM verifier and
+  executed,
+- `fail/`: invalid programs that the compiler has to reject,
+- `design/`: programs concerning open questions of the language design,
+- `ir/`: checks of the LLVM IR generated for compiler options,
+- `driver/`: scripts that run the compiler as a whole, e.g. with several
+  input files,
+- `tool/`: checks of the compilation database.
+
+In addition, the example programs in the directories listed in
+`test/examples.list` are compiled and checked with the LLVM verifier (but
+not executed).  This can be skipped with `ABC_TEST_EXAMPLES=0 make check`.
+
+Every test has an ID (`T0001`, ...).  Known compiler bugs and open design
+questions have issue numbers (`#0001`, ...) and are listed in
+[test/bugs_and_open_design_questions.md](test/bugs_and_open_design_questions.md).
+Their tests are reported as XFAIL or DESIGN instead of failing.  Logs are
+kept in `build/check`; for details see `test/run-tests.sh`.
 
 ### Compilation Database (clangd)
 
-Every `make` (and `make check`) writes `compile_commands.json` in the
-top-level directory, a [compilation
-database](https://clang.llvm.org/docs/JSONCompilationDatabase.html) for the
-C++ sources of the compiler and the unit tests. It records the actual compiler
-invocations of the last `make`, i.e., the selected C++ compiler (`CXX`), the
-flags, the LLVM include directory and `-DLLVM_MAJOR_VERSION` of the selected
-`llvm-config`, and the object files in `build.dir`. To make it describe
-another LLVM version, run `make` with that configuration, e.g.
+Every `make` writes `compile_commands.json` in the top-level directory, a
+[compilation database](https://clang.llvm.org/docs/JSONCompilationDatabase.html)
+for the C++ sources.  So clangd and similar tools see the same compiler,
+flags and LLVM version as the last build.  The file is generated by
+`config/compile_commands.sh` and is not under version control.  For another
+LLVM version run `make` with that configuration, e.g.
 
 ```bash
 make llvm-config=llvm-config-23
 ```
 
-The file is generated by `config/compile_commands.sh` and is not under version
-control. To check that clangd uses it (`make check` does this automatically if
-clangd is installed with the selected LLVM):
+To check that clangd uses it (`make check` does this too if clangd is
+installed with the selected LLVM):
 
 ```bash
 clangd --check=gen/function.cpp --check-locations=false --log=verbose 2>&1 |
@@ -231,30 +185,29 @@ clangd --check=gen/function.cpp --check-locations=false --log=verbose 2>&1 |
 ```
 
 clangd should report `Loaded compilation database from .../compile_commands.json`
-and `Compile command from CDB is: ...` with the flags above, and no errors.
+and `Compile command from CDB is: ...`, and no errors.
 
 ### Hints on Installing LLVM
 
-ABC supports **LLVM 17 to 23** (including `llvm-config` and `clang`). The
-complete test suite (`make check`) passes with each of these versions
-(tested on macOS/arm64 with the Homebrew packages `llvm@17` to `llvm@23`).
-The build configuration also accepts LLVM 14 to 16, but these versions are
-not tested.
+ABC supports LLVM 17 to 23.  `make check` passes with each of these
+versions (tested on macOS/arm64 with the Homebrew packages `llvm@17` to
+`llvm@23`).  The build configuration also accepts LLVM 14 to 16, but these
+versions are not tested.
 
-**macOS (recommended):**
+**macOS:**
 
 ```bash
 brew install llvm@23
 ```
 
-After installation, make sure the Homebrew LLVM tools are in your `PATH`:
+Then put the Homebrew LLVM tools in your `PATH`:
 
 ```bash
 export PATH="$(brew --prefix llvm@23)/bin:$PATH"
 ```
 
 **Debian/Ubuntu-based Linux:**  
-Packages are available via the official LLVM APT repository:  
+Packages are available from the official LLVM APT repository:  
 https://apt.llvm.org
 
 **Arch Linux:**
@@ -271,9 +224,8 @@ sudo dnf install llvm clang
 
 **Windows:**
 
-Windows is not supported natively.  
-Please install **WSL (Windows Subsystem for Linux)** and use the Linux
-instructions above.
+Windows is not supported natively.  Use WSL (Windows Subsystem for Linux)
+and the Linux instructions above.
 
 ## Declarations in C and ABC
 
@@ -375,7 +327,7 @@ returns a pointer to an integer. Now declare this in C without typedefs ;-)
 
 <img width="319" height="119" alt="Screenshot 2026-09-05 at 05 21 13" src="https://github.com/user-attachments/assets/1be9e28f-880a-4739-be34-bbcad7f62ca1" />
 
-The worst part of C is the  C preprocessor (CPP). Hence it is greate that new C
+The worst part of C is the C preprocessor (CPP). Hence it is great that new C
 like languages are avoiding the preprocessor. But because ABC is just "A Better
 C, but still C" it does have a preprocessor. Students need to be prepared for
 this ugly side of C. However, compared to CPP the preprocessor has limited
@@ -390,7 +342,7 @@ the following code:
 
 
 Compared to using CPP no include guards are required when the ABC preprocessor
-is used. Every file gets included only once (like using `@pragma once` with
+is used. Every file gets included only once (like using `#pragma once` with
 CPPs that support this pragma). 
 
 For teaching purposes (i.e. for showing the ugly side of C), consider this
@@ -410,8 +362,8 @@ the error message the actual problem:
 
 Sure, the error message actually could show the code the compiler got from the
 preprocessor. But using the preprocessor should not be attractive. If you want
-to use symbols for literals use languages features, e.g. enum constants or
-constant expressions. Intead of macro functions use inline functions. Don't use
+to use symbols for literals use language features, e.g. enum constants or
+constant expressions. Instead of macro functions use inline functions. Don't use
 a preprocessor.
 
 ## Raylib Examples
@@ -440,43 +392,38 @@ cd raylib-examples
 make
 ```
 
-The current examples are ports of selected C examples from the raylib example
-collection. Translating these examples from C to ABC is mostly mechanical work
-and can easily be done by hand or with a small script. Contributions adding
-more examples are very welcome.
+The examples are ports of some C examples from the raylib example collection.
+Translating them from C to ABC is mostly mechanical and can be done by hand or
+with a small script.  More examples are welcome.
 
 ### ABI Support
 
-Originally, ABC was developed for teaching purposes and did not need to
-interoperate with external C libraries. Using raylib is a practical test case
-for adding such interoperability and, in particular, for implementing
-target-specific C ABI support in the compiler.
+For teaching, ABC did not need to call external C libraries.  raylib was a
+good test case for this, and it required implementing the target-specific C
+ABI in the compiler.
 
-Currently, the raylib examples are supported only on x86-64. This is not
-intended to be a fundamental limitation of ABC: the ABI layer is designed so
-that support for additional target architectures can be added independently.
-
-ARM support is planned next and should follow soon. Contributions implementing
-or testing additional ABIs are very welcome.
+So far, the raylib examples only work on x86-64.  ARM is next.  The ABI layer
+is designed such that other targets can be added independently, and help with
+implementing or testing them is welcome.
 
 ## A Compiler Written in ABC
 
-ABC was originally developed for my course
-*Introduction to High Performance Computing*. As part of the course, students
-write their own small compiler, **not-abc**, in ABC itself.
+In my course *Introduction to High Performance Computing*, students write
+their own small compiler, *not-abc*, in ABC itself.
 
-The [`not-abc`](not-abc/) directory contains the compiler developed by the
-students during the semester and used for bootstrapping. If ABC is installed,
-it can simply be built with:
+The [`not-abc`](not-abc/) directory contains the compiler developed during the
+semester.  The initial LLVM IR of the self-hosting compiler in the
+[not-abc repository](https://github.com/michael-lehn/not-abc) was generated
+from it with this compiler.  If ABC is installed, it can be built with:
 
 ```sh
 cd not-abc
 make
 ```
 
-The separate [not-abc repository](https://github.com/michael-lehn/not-abc)
-contains more information about the project, including the complete course
-material, the compiler implementation, and the bootstrapping process.
+The [not-abc repository](https://github.com/michael-lehn/not-abc) has the
+course material, the compiler and a description of the bootstrapping process.
+The directory [not-abc/](not-abc/README.md) has its own README.
 
 # Language Description
 
@@ -901,7 +848,6 @@ return-statement = "return" [ expression-list ] ";"
   goto-statement = "goto" identifier ";"
 label-definition = "label" identifier ":"
 ```
-
 
 # Static Analysis
 
