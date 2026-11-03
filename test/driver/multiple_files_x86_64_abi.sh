@@ -1,10 +1,9 @@
 # TEST: T0234
-# XFAIL: #0059
 # Compiling several files for x86-64 in one invocation.  The x86-64 ABI code
-# keeps a pointer to an interned type across input files (it is freed when
-# the type system is reset for the next file): a later file is miscompiled
-# (a 4-byte struct passed in memory instead of a register) or the compiler
-# crashes.  Expected: each object file is the same as when the file is
+# kept a pointer to an interned type across input files (it is freed when the
+# type system is reset for the next file): a later file was miscompiled (a
+# 4-byte struct passed in memory instead of a register) or the compiler crashed
+# (issue #0059).  Expected: each object file is the same as when the file is
 # compiled alone.  Several files make the failure independent of the heap
 # layout of the compiler.
 
@@ -26,14 +25,15 @@ fn red(c: Rgba): int
 }
 EOF
 mkdir alone
-cp rgba.abc alone/rgba.abc
-(cd alone && "$ABC" $ABC_FLAGS -target x86_64-unknown-linux-gnu -c rgba.abc) \
-    || exit 1
 for n in 2 3 4 5; do
     cp rgba.abc s$n.abc
+    cp rgba.abc alone/s$n.abc
+    # an object file contains the name of its module
+    (cd alone && "$ABC" $ABC_FLAGS -target x86_64-unknown-linux-gnu -c s$n.abc) \
+	|| exit 1
 done
 "$ABC" $ABC_FLAGS -target x86_64-unknown-linux-gnu \
     -c first.abc s2.abc s3.abc s4.abc s5.abc || exit 1
 for n in 2 3 4 5; do
-    cmp s$n.o alone/rgba.o || exit 1
+    cmp s$n.o alone/s$n.o || exit 1
 done

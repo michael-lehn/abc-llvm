@@ -29,7 +29,10 @@ struct ArgInfo
 	llvm::Align align;
 };
 
-ArgInfo classifyArgType(const abc::Type *abcType);
+std::vector<ArgInfo> classifyParamTypes(const abc::Type *abcFnType);
+
+void returnInstruction(llvm::Function *fn, Value addr,
+                       const abc::Type *retType);
 
 llvm::FunctionType *lowerFunctionType(const abc::Type *abcFnType);
 

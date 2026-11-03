@@ -560,19 +560,16 @@ a size the designator is rejected. Expected: an error.
 
 Issue #0059: Several input files for x86-64 crash the compiler (freed type)
 Type: BUG
-Status: OPEN
-Covered by tests: #T0234 (driver, XFAIL)
+Status: RESOLVED
+Covered by tests: #T0234 (driver, PASS)
 
-`lowerType_x86_64()` (`gen/abi.cpp`) keeps pointers to interned types in
+`lowerType_x86_64()` (`gen/abi.cpp`) kept pointers to interned types in
 `static` variables. The driver resets the type system for each input file
-(`abc/abc.cpp`, `initTypeSystem()`), which frees them; classifying a
-4-byte aggregate in a later file then uses freed memory (AddressSanitizer:
-heap-use-after-free). Depending on the heap, the compiler crashes or
-silently miscompiles: a struct of four `u8` is passed in memory (`byval`)
-instead of in a register, which breaks the ABI. The test compiles four such
-files after another one (no run of 350 was correct with any build).
-Expected: several files can be compiled in one invocation, each with the
-same result as alone.
+(`abc/abc.cpp`, `initTypeSystem()`), which freed them; classifying a 4-byte
+aggregate in a later file then used freed memory. Depending on the heap, the
+compiler crashed or silently miscompiled: a struct of four `u8` was passed in
+memory (`byval`) instead of in a register, which breaks the ABI. Fixed with
+issue #0073: the classification no longer needs these types.
 
 Issue #0060: Input files with the same name overwrite each other's object file
 Type: BUG
@@ -725,6 +722,20 @@ the function. A goto to such a label created a branch to a block without a
 function, and the compiler crashed or hung afterwards. The symptom varied
 between runs. Fixed: the if statement is generated like any other statement,
 and `gen::functionDefinitionEnd()` removes the blocks if they are not reached.
+
+Issue #0073: Wrong C ABI for structs on x86-64
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0008 (runtime, PASS), #T0285 (runtime, PASS), #T0286 (ir, PASS)
+
+`gen/abi.cpp` only handled four shapes of arguments on x86-64 (2, 3 or 4 floats
+and 4 `u8`) and passed everything else in memory. Return values were not lowered
+at all, so a struct returned by a C function was read from the wrong registers,
+and LLVM returned `{ i64, i64, i64 }` in registers instead of using memory
+provided by the caller as C does. Calls between ABC functions worked as both
+sides used the same wrong convention. Fixed: aggregates are classified by
+eightbytes as specified by the System V x86-64 ABI, for arguments and return
+values, and passed in memory if the registers do not suffice.
 
 ---
 

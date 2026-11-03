@@ -156,7 +156,7 @@ functionDefinitionEnd()
     defineLabel(checkReturn);
     if (checkReturn->hasNPredecessorsOrMore(1)) {
 	wellFormed = functionBuildingInfo.isMain ||
-	             functionBuildingInfo.fn->getReturnType()->isVoidTy();
+	             functionBuildingInfo.retType->isVoid();
 	if (!wellFormed) {
 	    llvmBuilder->CreateUnreachable();
 	}
@@ -168,9 +168,9 @@ functionDefinitionEnd()
     if (functionBuildingInfo.retType->isVoid()) {
 	llvmBuilder->CreateRetVoid();
     } else {
-	auto retVal =
-	    fetch(functionBuildingInfo.retVal, functionBuildingInfo.retType);
-	llvmBuilder->CreateRet(retVal);
+	abi::returnInstruction(functionBuildingInfo.fn,
+	                       functionBuildingInfo.retVal,
+	                       functionBuildingInfo.retType);
     }
 
     llvm::verifyFunction(*functionBuildingInfo.fn);

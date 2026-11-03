@@ -1,0 +1,31 @@
+// TEST: T0286
+// ARGS: -target x86_64-unknown-linux-gnu
+// IR-MATCH: ^declare <2 x float> @vec2\(<2 x float>, <2 x float>\)
+// IR-MATCH: ^declare \{ <2 x float>, float \} @vec3\(<2 x float>, float\)
+// IR-MATCH: ^declare \{ <2 x float>, <2 x float> \} @vec4\(\)
+// IR-MATCH: ^declare \{ i64, i64 \} @pair\(i64, i64\)
+// IR-MATCH: ^declare \{ i64, double \} @mixed\(i64, double\)
+// IR-MATCH: ^declare i24 @bytes3\(i24\)
+// IR-MATCH: ^declare void @large\(ptr sret\(\{ i64, i64, i64 \}\), ptr byval\(\{ i64, i64, i64 \}\) align 8\)
+// IR-MATCH: ^declare i32 @noRegisters\(i32, i32, i32, i32, i32, ptr byval\(\{ i64, i64 \}\) align 8, i32\)
+// C ABI on x86-64: aggregates of at most 16 bytes are split into eightbytes that
+// get passed and returned in registers, larger ones use memory.  If not all
+// eightbytes fit into the remaining registers the aggregate is passed in memory
+// (issue #0073).
+
+struct Vec2 { x, y: float; };
+struct Vec3 { x, y, z: float; };
+struct Vec4 { x, y, z, w: float; };
+struct Pair { a, b: i64; };
+struct Mixed { a: i64; b: double; };
+struct Bytes3 { a, b, c: u8; };
+struct Large { a, b, c: i64; };
+
+extern fn vec2(a: Vec2, b: Vec2): Vec2;
+extern fn vec3(a: Vec3): Vec3;
+extern fn vec4(): Vec4;
+extern fn pair(a: Pair): Pair;
+extern fn mixed(a: Mixed): Mixed;
+extern fn bytes3(a: Bytes3): Bytes3;
+extern fn large(a: Large): Large;
+extern fn noRegisters(a: int, b: int, c: int, d: int, e: int, p: Pair, f: int): int;
