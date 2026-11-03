@@ -159,16 +159,6 @@ Inside a disabled `@ifdef` region an `@ <file>` include is still searched and
 reported as "can not find file" (`lexer/lexer.cpp`); an `@ "file"` include is
 skipped there. Expected: both forms are skipped.
 
-Issue #0060: Input files with the same name overwrite each other's object file
-Type: BUG
-Status: OPEN
-Covered by tests: #T0235 (driver, XFAIL)
-
-When linking, each input file is compiled to `<temporary directory>/<name>.o`
-(`abc/abc.cpp`), so `d1/same.abc` and `d2/same.abc` use the same object file
-and the first is lost (link error). The temporary files are not removed
-either. Expected: unique temporary files, removed after linking.
-
 Issue #0062: Error at the end of the second input file is reported in the first
 Type: BUG
 Status: OPEN
@@ -1075,3 +1065,17 @@ Covered by tests: #T0109 (runtime, PASS), #T0320 (runtime, PASS)
 `!d` were errors. Fixed: as in C a value is true if it is not equal to 0, so
 `-0.0` is false and NaN is true. In a constant expression `!&a` was true for every
 pointer (`UnaryExpr::loadConstant()`), now it is false for an address.
+
+Issue #0060: Temporary object files of different inputs and compilers overwrite each other
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0235 (driver, PASS), #T0321 (driver, PASS)
+
+When linking, each input file was compiled to `<temporary directory>/<name>.o`
+(`abc/abc.cpp`). So `d1/same.abc` and `d2/same.abc` used the same object file and
+the first was lost. Compilers running at the same time did the same with files of
+the same name, and without an error a program could be linked from another
+program's object file. The files were not removed either. Fixed: each run creates
+the first free directory `abc-<n>` for its object files, named with the number of
+the input file, and removes it at exit. Creating a directory fails if it exists,
+so a run only uses a directory it has created itself.

@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <string>
 #include <vector>
 
 // for lint (begin)
@@ -66,6 +67,39 @@ std::filesystem::path abcIncludeDir = xstr(ABC_INCLUDEDIR);
 #else
 std::filesystem::path abcIncludeDir = abcPrefix / "include" / "abc";
 #endif
+
+// Object files of an executable are only needed for linking. Each run of the
+// compiler gets its own directory for them, so that compilers running at the
+// same time can not use each other's files. Creating a directory fails if it
+// exists, so a run only uses a directory it has created itself.
+static std::filesystem::path tmpDir;
+
+static void
+removeTmpDir()
+{
+    std::error_code ignored;
+    std::filesystem::remove_all(tmpDir, ignored);
+}
+
+static void
+createTmpDir(const char *progName)
+{
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    auto base = fs::temp_directory_path(ec);
+    for (unsigned long n = 0; !ec; ++n) {
+	auto path = base / ("abc-" + std::to_string(n));
+	if (fs::create_directory(path, ec)) {
+	    fs::permissions(path, fs::perms::owner_all, ec);
+	    tmpDir = path;
+	    std::atexit(removeTmpDir);
+	    return;
+	}
+    }
+    std::cerr << progName << ": error: can not create a temporary directory: "
+              << ec.message() << "\n";
+    std::exit(1);
+}
 
 void
 usage(const char *prog, int exit = 1)
@@ -372,7 +406,13 @@ main(int argc, char *argv[])
 	    }
 	}
 	if (createExecutable) {
-	    outfile = std::filesystem::temp_directory_path() / outfile;
+	    if (tmpDir.empty()) {
+		createTmpDir(argv[0]);
+	    }
+	    // the number: input files in different directories can have the
+	    // same name
+	    outfile = tmpDir / (std::to_string(i) + "-" +
+	                        outfile.filename().string());
 	}
 	if (infile[i].extension() == ".o") {
 	    objFile.push_back(infile[i]);
@@ -480,7 +520,7 @@ main(int argc, char *argv[])
 		std::exit(1);
 	    }
 	    if (depTarget.empty()) {
-		depTarget = outfile;
+		depTarget = createExecutable ? executable : outfile;
 	    }
 	    fs << depTarget.c_str() << ": " << infile[i].c_str() << " ";
 	    for (const auto &file : abc::lexer::includedFiles()) {

@@ -1,5 +1,4 @@
 # TEST: T0235
-# XFAIL: #0060
 # Two input files with the same name in different directories are compiled
 # into different temporary object files and linked together.
 

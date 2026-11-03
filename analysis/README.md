@@ -114,9 +114,9 @@ include these markers. Markdown files have no such markers.
 | `README.md` | 853-965 | Section "Static Analysis": why there is no static analysis by default, and what a compiler has to do for such a warning |
 | `test/examples.list` | 19 | Compile the programs in `analysis/examples` in `make check` |
 | `Makefile` | 74-76 | Add `analysis/*.cpp` to the compiler sources |
-| `abc/abc.cpp` | 8-10 | Include `analysis/analysis.hpp` |
-| `abc/abc.cpp` | 113-125 | Usage message: `-Wall`, `-Wuninitialized`, `-Wnull-dereference` and `-Wnull-dereference=strict` |
-| `abc/abc.cpp` | 245-260 | Parse these options; any other `-W` option is an error |
+| `abc/abc.cpp` | 9-11 | Include `analysis/analysis.hpp` |
+| `abc/abc.cpp` | 147-159 | Usage message: `-Wall`, `-Wuninitialized`, `-Wnull-dereference` and `-Wnull-dereference=strict` |
+| `abc/abc.cpp` | 279-294 | Parse these options; any other `-W` option is an error |
 | `ast/ast.cpp` | 5-7 | Include `analysis/analysis.hpp` |
 | `ast/ast.cpp` | 344-346 | `AstFuncDef::codegen()`: run the analyses once the function is complete and unreachable blocks are removed |
 | `ast/ast.cpp` | 817-822 | `AstLocalVar::codegen()`: record name and location of a local variable (declaration of a single variable) |
