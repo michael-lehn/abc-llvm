@@ -32,6 +32,7 @@ historical continuity is purely alphabetical.
 - [Raylib Examples](#raylib-examples)
 - [A Compiler Written in ABC](#a-compiler-written-in-abc)
 - [Language Description](#language-description)
+- [Static Analysis](#static-analysis)
 - [Usage](#usage)
 - [Use of AI-assisted development](#use-of-ai-assisted-development)
 
@@ -900,6 +901,92 @@ return-statement = "return" [ expression-list ] ";"
   goto-statement = "goto" identifier ";"
 label-definition = "label" identifier ":"
 ```
+
+
+# Static Analysis
+
+By default the ABC compiler does not analyze a program for likely bugs, so it
+does not warn about them.  This might be surprising for a language made for
+teaching, where one would expect the compiler to help as much as it can.  It is
+a deliberate decision with two educational purposes.
+
+The first is to understand concepts like *undefined behavior*.  This program
+reads the local variable `result` although nothing was assigned to it if `n` is
+zero:
+
+```abc
+@ <stdio.hdr>
+
+fn sign(n: int): int
+{
+    local result: int;
+
+    if (n > 0) {
+        result = 1;
+    } else if (n < 0) {
+        result = -1;
+    }
+    return result;
+}
+
+fn main()
+{
+    printf("%d\n", sign(0));
+}
+```
+
+It compiles without any message, and then its output depends on the
+optimization level.  On one machine it printed these values, and on yours they
+may well be different:
+
+| Option | Output |
+|--------|--------|
+| `-O0` | `1` |
+| `-O1`, `-O2` | `-100040448` |
+
+Neither output is wrong, because the program has no defined behavior.  A
+program can work for years and still be incorrect, and students should see this
+for themselves.
+
+The second is to understand what has to be done in compiler construction to
+generate such a warning, because it is not a by-product of translating a
+program.  Taken on its own, `return result;` is correct.  Whether `result` has a
+value at this point depends on the paths on which the program can get there.
+So a compiler needs an extra step, a *static analysis*:
+
+1. Represent the possible paths through a function as a control flow graph.
+2. Follow what is known about each variable (unassigned, assigned, or either)
+   along these paths, until the result no longer changes.
+3. Report the reads of variables that can be unassigned, at their location in
+   the source code.
+
+This extra step is requested with an option:
+
+| Option | Effect |
+|--------|--------|
+| `-Wall` | Enable all static analyses |
+| `-Wuninitialized` | Warn about local variables that are, or may be, used uninitialized |
+
+```console
+$ abc -Wall -c sign.abc
+
+    return result;
+           ^^^^^^^
+sign.abc:12.12-12.18: warning: variable 'result' may be used uninitialized
+
+    local result: int;
+          ^^^^^^^
+sign.abc:5.11-5.17: note: variable declared here
+```
+
+The analysis has limits too, and they are also worth studying.  It checks only
+variables whose address is never taken, so it says nothing about struct members
+and array elements.  The absence of a warning therefore does not mean that a
+program is correct.
+
+Most of the static analysis is done by code in `analysis/`, separated from the
+rest of the compiler.  The few locations in the compiler that enable it as an
+add-on are marked and documented in [analysis/README.md](analysis/README.md).
 
 
 ## Use of AI-assisted development

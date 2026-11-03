@@ -71,6 +71,10 @@ src.cpp := \
 	$(wildcard type/*.cpp) \
 	$(wildcard util/*.cpp)
 
+# for lint (begin)
+src.cpp += $(wildcard analysis/*.cpp)
+# for lint (end)
+
 src.abc := \
 	$(wildcard abc-lib/*.abc)
 

@@ -1,6 +1,9 @@
 #include <iomanip>
 #include <iostream>
 
+// for lint (begin)
+#include "analysis/uninit.hpp"
+// for lint (end)
 #include "gen/variable.hpp"
 #include "symtab/symtab.hpp"
 
@@ -64,7 +67,11 @@ Identifier::loadValue() const
     if (type->isFunction()) {
 	return loadAddress();
     }
-    return gen::fetch(loadAddress(), type);
+    // for lint (begin)
+    auto val = gen::fetch(loadAddress(), type);
+    analysis::noteRead(val, loc);
+    return val;
+    // for lint (end)
 }
 
 gen::Constant
