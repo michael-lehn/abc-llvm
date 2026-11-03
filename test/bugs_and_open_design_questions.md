@@ -401,14 +401,14 @@ yields the struct value.
 
 Issue #0044: By-value array parameters with 2 to 4 elements crash the compiler on x86-64
 Type: BUG
-Status: OPEN
-Covered by tests: #T0218 (ir, XFAIL)
+Status: RESOLVED
+Covered by tests: #T0218 (ir, PASS), #T0044 (runtime, PASS), #T0045 (runtime, PASS), #T0191 (runtime, PASS), #T0192 (runtime, PASS), #T0194 (runtime, PASS), #T0195 (runtime, PASS)
 
-On x86-64 `fn f(a: array[2] of int)` or `fn f(a: array[4] of u8)` aborts with
+On x86-64 `fn f(a: array[2] of int)` or `fn f(a: array[4] of u8)` aborted with
 the assertion `abcType->isStruct()` in `isHomogeneousAggregate()`
-(`gen/abi.cpp`): for an array whose element type is not the one checked for,
-the function falls through to the struct case. Other targets are not
-affected. Expected: such arrays are passed according to the x86-64 ABI.
+(`gen/abi.cpp`): for an array whose element type was not the one checked for,
+the function fell through to the struct case. Other targets were not affected.
+Fixed: for an array the result only depends on the element type.
 
 Issue #0045: --print-ast crashes after an initializer overrides another
 Type: BUG

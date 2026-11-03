@@ -35,9 +35,8 @@ isHomogeneousAggregate(const abc::Type *abcType, const abc::Type *elementType,
     if (abcType->aggregateSize() != size) {
 	return false;
     }
-    if (abcType->isArray() &&
-        abc::Type::equals(abcType->refType(), elementType)) {
-	return true;
+    if (abcType->isArray()) {
+	return abc::Type::equals(abcType->refType(), elementType);
     }
     assert(abcType->isStruct());
     for (std::size_t i = 0; i < size; ++i) {

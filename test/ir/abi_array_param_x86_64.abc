@@ -1,5 +1,4 @@
 // TEST: T0218
-// XFAIL: #0044
 // ARGS: -target x86_64-unknown-linux-gnu
 // IR-MATCH: ^define .*@\.?second\(
 // IR-MATCH: ^define .*@\.?sum\(
