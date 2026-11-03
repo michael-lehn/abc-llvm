@@ -1415,10 +1415,11 @@ AstFor::codegen()
 {
     auto condLabel = gen::getLabel("cond");
     auto loopLabel = gen::getLabel("loop");
+    auto updateLabel = gen::getLabel("update");
     auto endLabel = gen::getLabel("end");
 
     body->apply(createSetBreakLabel(endLabel));
-    body->apply(createSetContinueLabel(condLabel));
+    body->apply(createSetContinueLabel(updateLabel));
 
     if (initAst) {
 	initAst->codegen();
@@ -1433,6 +1434,8 @@ AstFor::codegen()
 
     gen::defineLabel(loopLabel);
     body->codegen();
+
+    gen::defineLabel(updateLabel);
     if (update) {
 	update->loadValue();
     }

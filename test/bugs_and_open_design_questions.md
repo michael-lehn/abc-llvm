@@ -46,12 +46,12 @@ aggregates is a separate matter: only the x86-64 shapes are lowered.)
 
 Issue #0002: continue in a for loop skips the update expression
 Type: BUG
-Status: OPEN
-Covered by tests: #T0017 (runtime, XFAIL)
+Status: RESOLVED
+Covered by tests: #T0017 (runtime, PASS), #T0284 (runtime, PASS)
 
-`AstFor::codegen()` (`ast/ast.cpp`) uses the condition label as continue
-target, so `for (...; ...; ++i) { continue; }` never increments `i`.
-Expected: `continue` jumps to the update expression, then to the condition.
+`AstFor::codegen()` (`ast/ast.cpp`) used the condition label as continue
+target, so `for (...; ...; ++i) { continue; }` never incremented `i`. Fixed:
+the update expression has its own label, which is the continue target.
 
 Issue #0003: pointer - integer crashes the compiler
 Type: BUG

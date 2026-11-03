@@ -1,5 +1,4 @@
 // TEST: T0017
-// XFAIL: #0002 'continue' in a for loop skips the update expression (AstFor)
 // In a for loop, continue jumps to the update expression, not directly to
 // the condition.
 // TIMEOUT: 5
