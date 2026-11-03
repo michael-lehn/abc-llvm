@@ -1,4 +1,5 @@
 // TEST: T0199
+// REQUIRES-TARGET: AArch64
 // ARGS: --emit-llvm %s -o %o -target aarch64-unknown-linux-gnu
 // IR-MATCH: ^target triple = "aarch64-unknown-linux-gnu"$
 // -target after the input file and -o: the triple is not an input file.

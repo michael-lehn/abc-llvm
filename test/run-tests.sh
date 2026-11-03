@@ -78,6 +78,9 @@
 #   // OBSERVED: ACCEPTED | REJECTED
 #                        recorded behavior of a design test
 #   // REQUIRES: arch    only run on machines where 'uname -m' prints arch
+#   // REQUIRES-TARGET: target
+#                        IR test: only run if LLVM was built with this target
+#                        (as printed by 'llvm-config --targets-built')
 #   // TIMEOUT: secs     time limit for each compiler and program invocation
 #   // ARGS: options     compiler options of an IR test (test/ir; %s: source
 #                        file, %o: output file) or additional options of a
@@ -143,6 +146,11 @@ else
 fi
 
 arch=`uname -m`
+
+llvm_targets=
+if [ -n "$LLVM_BINDIR" ] && [ -x "$LLVM_BINDIR/llvm-config" ]; then
+    llvm_targets=`"$LLVM_BINDIR/llvm-config" --targets-built`
+fi
 
 n_pass=0
 n_fail=0
@@ -587,6 +595,16 @@ for src in "$top"/test/ir/*.abc; do
     name=ir/`basename "$src"`
     id=`directive "$src" TEST`
     selected "$name" "$id" || continue
+    target=`directive "$src" REQUIRES-TARGET`
+    if [ -n "$target" ] && [ -n "$llvm_targets" ]; then
+	case " $llvm_targets " in
+	*" $target "*) ;;
+	*)
+	    result SKIP "$id" "$name" "(requires LLVM target $target)"
+	    continue
+	    ;;
+	esac
+    fi
     msg=`ir_test "$src"`
     report "$id" "$name" "`issue "$src" XFAIL`" "$msg" \
 	"$work/ir/`basename "$src" .abc`/log"

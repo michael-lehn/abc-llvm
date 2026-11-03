@@ -1,4 +1,5 @@
 // TEST: T0198
+// REQUIRES-TARGET: AArch64
 // ARGS: -target aarch64-unknown-linux-gnu
 // IR-MATCH: ^target triple = "aarch64-unknown-linux-gnu"$
 // IR-MATCH: ^target datalayout = "e-m:e-.*-n32:64

@@ -1,4 +1,5 @@
 // TEST: T0203
+// REQUIRES-TARGET: AArch64
 // ARGS: -target aarch64-unknown-linux-gnu
 // IR-MATCH: define i64 @sumBig\(ptr byval\(\{ i64, i64, i64, i64 \}\)
 // IR-MATCH: = load \{ i64, i64, i64, i64 \}, ptr %0
