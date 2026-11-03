@@ -1,0 +1,28 @@
+// Warning options: -Wnull-dereference=strict, -Wall
+//
+// The state of a member comes from what gets assigned to it.
+
+@ <stdlib.hdr>
+
+struct Node
+{
+    val: int;
+    next: -> Node;
+};
+
+fn assignedNull(n: -> Node): int
+{
+    n->next = nullptr;
+    return n->next->val; // WARNING: pointer 'n->next' is null when dereferenced
+}
+
+fn assignedMalloc(n: -> Node): int
+{
+    n->next = malloc(sizeof(*n));
+    return n->next->val; // WARNING: pointer 'n->next' may be null when dereferenced
+}
+
+fn main(): int
+{
+    return 0;
+}

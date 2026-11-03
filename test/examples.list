@@ -16,6 +16,7 @@ TEST: T0278
 
 DIR: abc-example
 DIR: raylib-examples
+DIR: analysis/examples
 DIR: not-abc
 
 # input programs for the not-abc compiler, written in the not-abc language

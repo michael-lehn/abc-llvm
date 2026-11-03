@@ -1014,6 +1014,8 @@ programs, so it has to choose.
 Most of the static analysis is done by code in `analysis/`, separated from the
 rest of the compiler.  The few locations in the compiler that enable it as an
 add-on are marked and documented in [analysis/README.md](analysis/README.md).
+[analysis/examples](analysis/examples/README.md) has a small program for each kind
+of warning, with a comment saying which options generate it.
 
 
 ## Use of AI-assisted development

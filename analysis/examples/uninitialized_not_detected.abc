@@ -1,0 +1,18 @@
+// Warning options: none
+//
+// This is undefined behavior, but no option warns about it: the analysis only
+// tracks variables whose address is never taken, as another function could
+// assign to them through a pointer. No warning does not mean that a program is
+// correct.
+
+fn keepAddress(p: -> int): -> int
+{
+    return p;
+}
+
+fn main(): int
+{
+    local x: int;
+    keepAddress(&x);
+    return x;
+}

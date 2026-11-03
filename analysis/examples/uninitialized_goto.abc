@@ -1,0 +1,19 @@
+// Warning options: -Wuninitialized, -Wall
+//
+// A goto can jump over an initializer. The variable exists, as its storage does
+// not depend on the declaration being executed, but it has no value.
+
+fn f(c: int): int
+{
+    if (c) {
+	goto target;
+    }
+    local x: int = 3;
+label target:
+    return x; // WARNING: variable 'x' may be used uninitialized
+}
+
+fn main(): int
+{
+    return f(0);
+}

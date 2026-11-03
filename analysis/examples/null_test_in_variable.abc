@@ -1,0 +1,19 @@
+// Warning options: -Wnull-dereference
+//
+// A false warning, and only the simple analysis has it: this program is correct.
+// -Wnull-dereference does not know what ok says about p. The strict analysis, and
+// so -Wall, knows the fact "if ok is true then p is not null".
+
+@ <stdlib.hdr>
+
+fn main(): int
+{
+    local p: -> int = malloc(sizeof(*p));
+    local ok: bool = p != nullptr;
+
+    if (ok) {
+	*p = 1; // WARNING: pointer 'p' may be null when dereferenced
+	free(p);
+    }
+    return 0;
+}

@@ -1,0 +1,21 @@
+// Warning options: -Wnull-dereference=strict, -Wall
+//
+// Nothing is known about list->next. -Wnull-dereference says nothing, as it only
+// follows local variables. The strict analysis assumes that an unknown member may
+// be null, so it has to be tested before it is used.
+
+struct Node
+{
+    val: int;
+    next: -> Node;
+};
+
+fn second(list: -> Node): int
+{
+    return list->next->val; // WARNING: pointer 'list->next' may be null when dereferenced
+}
+
+fn main(): int
+{
+    return 0;
+}

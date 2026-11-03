@@ -1,0 +1,26 @@
+// Warning options: -Wnull-dereference=strict, -Wall
+//
+// other() could change list->next, as it can reach the memory by a global variable
+// or a pointer stored elsewhere. So the result of the test gets forgotten.
+
+extern fn other();
+
+struct Node
+{
+    val: int;
+    next: -> Node;
+};
+
+fn second(list: -> Node): int
+{
+    if (list->next) {
+	other();
+	return list->next->val; // WARNING: pointer 'list->next' may be null when dereferenced
+    }
+    return 0;
+}
+
+fn main(): int
+{
+    return 0;
+}

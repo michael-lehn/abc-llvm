@@ -19,6 +19,8 @@ extra step that has to be requested:
 
 The generated code is the same with and without these options.
 
+[examples/](examples/README.md) has a small program for each kind of warning.
+
 ## Design
 
 The analyses run on the unoptimized LLVM IR of a completed function. LLVM IR
@@ -61,6 +63,8 @@ that an unknown member may be null is what makes it strict.
 | `analysis/nullderef-v2.hpp` | 1-19 | Interface of `-Wnull-dereference=strict` |
 | `analysis/nullderef-v2.cpp` | 1-573 | Dataflow analysis of `-Wnull-dereference=strict` (see below) |
 | `analysis/README.md` | all | This file |
+| `analysis/examples/` | all | One small program for each kind of warning, with a comment saying which options generate it |
+| `test/driver/analysis_examples.sh` | all | Test T0289: the comments in `analysis/examples` are correct |
 | `test/driver/static_analysis_options.sh` | all | Test T0281: no analysis by default, `-Wall` and `-Wuninitialized` enable it, generated code unchanged, unknown `-W` option rejected, options listed by `--help` |
 | `test/driver/null_dereference.sh` | all | Test T0287: warnings of `-Wnull-dereference` for each kind of test and access |
 | `test/driver/null_dereference_strict.sh` | all | Test T0288: warnings of `-Wnull-dereference=strict`, and that `-Wall` enables it |
@@ -102,7 +106,8 @@ include these markers. Markdown files have no such markers.
 | File | Lines | Purpose |
 |------|-------|---------|
 | `README.md` | 35 | Contents: entry for the section "Static Analysis" |
-| `README.md` | 906-1016 | Section "Static Analysis": why there is no static analysis by default, and what a compiler has to do for such a warning |
+| `README.md` | 906-1018 | Section "Static Analysis": why there is no static analysis by default, and what a compiler has to do for such a warning |
+| `test/examples.list` | 19 | Compile the programs in `analysis/examples` in `make check` |
 | `Makefile` | 74-76 | Add `analysis/*.cpp` to the compiler sources |
 | `abc/abc.cpp` | 8-10 | Include `analysis/analysis.hpp` |
 | `abc/abc.cpp` | 113-125 | Usage message: `-Wall`, `-Wuninitialized`, `-Wnull-dereference` and `-Wnull-dereference=strict` |

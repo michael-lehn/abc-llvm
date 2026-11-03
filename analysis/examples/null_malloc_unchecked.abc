@@ -1,0 +1,13 @@
+// Warning options: -Wnull-dereference, -Wnull-dereference=strict, -Wall
+//
+// malloc returns nullptr if it fails.
+
+@ <stdlib.hdr>
+
+fn main(): int
+{
+    local p: -> int = malloc(sizeof(*p));
+    *p = 1; // WARNING: pointer 'p' may be null when dereferenced
+    free(p);
+    return 0;
+}

@@ -1,0 +1,35 @@
+// Warning options: -Wnull-dereference=strict, -Wall
+//
+// A false warning: an Expr always has a left operand, as newExpr() is the only
+// function that creates one. The analysis looks at one function at a time and can
+// not know this. This is the price of finding more bugs with the strict analysis,
+// and member_unknown.abc is what it finds. An analysis can not avoid both, missing
+// bugs and warning about correct programs, so it has to choose.
+
+@ <stdlib.hdr>
+
+struct Expr
+{
+    val: int;
+    left: -> Expr;
+};
+
+global leaf: Expr;
+
+fn newExpr(left: -> Expr): -> Expr
+{
+    local e: -> Expr = malloc(sizeof(*e));
+    assert(e);
+    e->left = left ? left : &leaf;
+    return e;
+}
+
+fn leftValue(e: -> Expr): int
+{
+    return e->left->val; // WARNING: pointer 'e->left' may be null when dereferenced
+}
+
+fn main(): int
+{
+    return leftValue(newExpr(nullptr));
+}

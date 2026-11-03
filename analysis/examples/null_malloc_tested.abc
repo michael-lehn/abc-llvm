@@ -1,0 +1,63 @@
+// Warning options: none
+//
+// All ways to test a pointer are the same for the analysis, as they result in
+// the same control flow: if (p), if (!p), p == nullptr, p && ..., p ? ... : ...
+// Functions that do not return, like exit and assert on failure, end a path.
+
+@ <stdlib.hdr>
+
+fn tested(): int
+{
+    local p: -> int = malloc(sizeof(*p));
+    if (p) {
+	*p = 1;
+	free(p);
+    }
+    return 0;
+}
+
+fn comparedWithNull(): int
+{
+    local p: -> int = malloc(sizeof(*p));
+    if (p == nullptr) {
+	return 1;
+    }
+    *p = 1;
+    free(p);
+    return 0;
+}
+
+fn shortCircuit(): int
+{
+    local p: -> int = malloc(sizeof(*p));
+    if (p && *p) {
+	return 1;
+    }
+    return 0;
+}
+
+fn endsThePath(): int
+{
+    local p: -> int = malloc(sizeof(*p));
+    if (!p) {
+	exit(1);
+    }
+    *p = 1;
+    free(p);
+    return 0;
+}
+
+fn asserted(): int
+{
+    local p: -> int = malloc(sizeof(*p));
+    assert(p);
+    *p = 1;
+    free(p);
+    return 0;
+}
+
+fn main(): int
+{
+    return tested() + comparedWithNull() + shortCircuit() + endsThePath() +
+           asserted();
+}

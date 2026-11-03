@@ -1,0 +1,23 @@
+// Warning options: -Wnull-dereference, -Wnull-dereference=strict, -Wall
+//
+// A false warning of both analyses: this program is correct. To see this, an
+// analysis has to follow each path separately instead of merging what it knows
+// where paths meet. This gets expensive, as the number of paths can grow
+// exponentially. An analysis has to stop somewhere.
+
+@ <stdlib.hdr>
+
+fn main(): int
+{
+    local p: -> int = malloc(sizeof(*p));
+    local ok: bool = false;
+
+    if (p) {
+	ok = true;
+    }
+    if (ok) {
+	*p = 1; // WARNING: pointer 'p' may be null when dereferenced
+	free(p);
+    }
+    return 0;
+}

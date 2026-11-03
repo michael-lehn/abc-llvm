@@ -1,0 +1,20 @@
+// Warning options: -Wuninitialized, -Wall
+//
+// The analysis follows the control flow of && and ||. The assignment is only
+// executed if a is not zero: inside the if statement x has a value, behind it
+// x may have none.
+
+fn f(a: int, b: int): int
+{
+    local x: int;
+
+    if (a && (x = b)) {
+	return x;
+    }
+    return x; // WARNING: variable 'x' may be used uninitialized
+}
+
+fn main(): int
+{
+    return f(1, 0);
+}

@@ -1,0 +1,20 @@
+// Warning options: -Wnull-dereference, -Wnull-dereference=strict, -Wall
+//
+// Here the pointer is null on all paths, so this is "is null" instead of
+// "may be null". The test tells it: the branch is only taken if p is null.
+
+fn f(q: -> int): int
+{
+    local p: -> int = q;
+
+    if (!p) {
+	return *p; // WARNING: pointer 'p' is null when dereferenced
+    }
+    return 0;
+}
+
+fn main(): int
+{
+    local x: int = 0;
+    return f(&x);
+}

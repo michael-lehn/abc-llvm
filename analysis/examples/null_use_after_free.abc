@@ -1,0 +1,15 @@
+// Warning options: -Wnull-dereference, -Wnull-dereference=strict, -Wall
+//
+// The same analysis tracks calls of free.
+
+@ <stdlib.hdr>
+
+fn main(): int
+{
+    local p: -> int = malloc(sizeof(*p));
+    if (!p) {
+	return 1;
+    }
+    free(p);
+    return *p; // WARNING: pointer 'p' is dereferenced after free
+}

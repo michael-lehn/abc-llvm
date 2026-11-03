@@ -1,0 +1,9 @@
+// Warning options: -Wuninitialized, -Wall
+//
+// No path assigns a value to x, so this is "is used uninitialized".
+
+fn main(): int
+{
+    local x: int;
+    return x; // WARNING: variable 'x' is used uninitialized
+}

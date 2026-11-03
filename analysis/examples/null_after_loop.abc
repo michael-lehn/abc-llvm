@@ -1,0 +1,24 @@
+// Warning options: -Wnull-dereference, -Wnull-dereference=strict, -Wall
+//
+// Nothing is known about list, which gets no warning. But the loop only ends if
+// n is null, which the analysis knows behind the loop.
+
+struct Node
+{
+    val: int;
+    next: -> Node;
+};
+
+fn last(list: -> Node): int
+{
+    local n: -> Node = list;
+    while (n) {
+	n = n->next;
+    }
+    return n->val; // WARNING: pointer 'n' is null when dereferenced
+}
+
+fn main(): int
+{
+    return 0;
+}

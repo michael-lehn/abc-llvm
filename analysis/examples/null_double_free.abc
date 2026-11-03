@@ -1,0 +1,14 @@
+// Warning options: -Wnull-dereference, -Wnull-dereference=strict, -Wall
+//
+// free(nullptr) is allowed, so setting the pointer to nullptr after free avoids
+// this warning.
+
+@ <stdlib.hdr>
+
+fn main(): int
+{
+    local p: -> int = malloc(sizeof(*p));
+    free(p);
+    free(p); // WARNING: pointer 'p' is freed twice
+    return 0;
+}

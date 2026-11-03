@@ -1,0 +1,23 @@
+// Warning options: none
+//
+// A test of a member counts like a test of a variable, as long as the member can
+// not have changed. See member_forgotten.abc for what happens otherwise.
+
+struct Node
+{
+    val: int;
+    next: -> Node;
+};
+
+fn second(list: -> Node): int
+{
+    if (list->next) {
+	return list->next->val;
+    }
+    return 0;
+}
+
+fn main(): int
+{
+    return 0;
+}
