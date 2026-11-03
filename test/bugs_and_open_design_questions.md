@@ -1195,3 +1195,12 @@ Covered by tests: #T0327 (driver, PASS), #T0328 (runtime, PASS)
 `IntegerLiteral::loadConstant()`, as `isFloat()` is only true for `float`.
 Fixed, also for hexadecimal and octal digits like `0x10 double`, which the
 conversion of a string to a floating point constant does not understand.
+
+Issue #0097: Disabled @ifdef region without @endif hangs the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0331 (reject, PASS)
+
+`@ifdef NOT_DEFINED` without `@endif` kept the compiler busy: `getToken()` skips
+tokens as long as the region is disabled, and the end of the input is a token it
+gets again and again. Fixed: an error.

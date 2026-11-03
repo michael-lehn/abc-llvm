@@ -1,0 +1,14 @@
+// TEST: T0331
+// TIMEOUT: 5
+// ERROR: @endif
+// A disabled @ifdef region has to end before the end of the file.
+
+fn main(): int
+{
+    return 0;
+}
+
+@ifdef NOT_DEFINED
+fn notCompiled()
+{
+}

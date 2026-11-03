@@ -147,7 +147,16 @@ getToken()
 	    keyword.contains(token.val)) {
 	    token = Token(token.loc, keyword.at(token.val), token.val);
 	}
-    } while (macro::ignoreToken());
+    } while (macro::ignoreToken() && token.kind != TokenKind::EOI);
+    if (macro::ignoreToken()) {
+	error::location(token.loc);
+	error::out() << error::setColor(error::BOLD) << token.loc << ": "
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << "end of file in a disabled @ifdef region, @endif expected\n"
+	             << error::setColor(error::NORMAL);
+	error::fatal();
+    }
     return token.kind;
 }
 

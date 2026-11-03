@@ -89,6 +89,13 @@ fn main(): int
     assert(code(RED) == 1 && code(GREEN) == 2);
     assert(withDefault(RED) == 1 && withDefault(GREEN) == 3);
 
+    // an explicit cast of an array to another pointer type
+    local bytes: array[4] of u8 = {1, 1, 1, 1};
+    local whole: -> u32 = (-> u32) bytes;
+    assert(*whole == 16843009);
+    local chars: -> readonly u8 = (-> readonly u8) "A";
+    assert(*chars == 65);
+
     // integer literals with a floating point type suffix
     local dd: double = 1 double;
     assert(dd == 1.0);

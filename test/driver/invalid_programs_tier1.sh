@@ -55,6 +55,11 @@ accept "fn main() { local s: -> readonly char = \"x\"; }"
 accept "fn main() { local r: readonly array[2] of int; local p: -> readonly int = r; }"
 accept "type T: int; fn main() { local t: array[2] of T; local p: -> int = t; }"
 accept "global g: array[2] of int; global p: -> int = g;"
+# an explicit cast can change the type
+accept "fn main() { $a local p: -> double = (-> double) a; }"
+accept "fn main() { local p: -> int = (-> int) \"s\"; }"
+accept "fn main() { $aa local p: -> int = (-> int) aa; }"
+accept "global g: array[2] of int; global p: -> double = (-> double) g;"
 
 # a type after a literal is a type suffix
 reject 'fn main() { local x: int; x = 1 -> int; }'
