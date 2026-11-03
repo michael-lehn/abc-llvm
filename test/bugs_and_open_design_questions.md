@@ -4,6 +4,9 @@ This file is the registry of known issues of the ABC compiler and of open
 questions about the ABC language. Issue IDs are stable and never reused.
 Tests refer to issues; `make check` validates these references.
 
+The issues are in three sections, each sorted by ID: **Open** for known bugs,
+**Design** for open questions about the language, and **Resolved** for fixed bugs.
+
 Format of an entry:
 
     Issue #NNNN: Short descriptive title
@@ -18,40 +21,15 @@ Format of an entry:
 - `CLASS` is the classification of the test: `PASS`, `XFAIL` or `DESIGN`.
   - An OPEN BUG is covered by XFAIL tests that describe the expected behavior.
     Once the bug is fixed they report XPASS (a failure of `make check`). Then
-    turn them into regular tests and set the issue to RESOLVED.
+    turn them into regular tests, set the issue to RESOLVED and move it to the
+    section Resolved.
   - An OPEN DESIGN question is covered by DESIGN tests that record the
     currently observed behavior (ACCEPTED or REJECTED) without making it the
     language specification.
 
 ---
 
-## Bugs
-
-Issue #0001: Struct and array arguments passed by value are corrupted
-Type: BUG
-Status: RESOLVED
-Covered by tests: #T0044 (runtime, PASS), #T0190 (runtime, PASS), #T0191 (runtime, PASS), #T0192 (runtime, PASS), #T0193 (runtime, PASS), #T0194 (runtime, PASS), #T0195 (runtime, PASS), #T0196 (runtime, PASS), #T0202 (ir, PASS), #T0203 (ir, PASS)
-
-Aggregates without target-specific lowering are passed `byval` (on all
-targets except the four aggregate shapes coerced for x86-64). The callee
-initialized its parameter variable by loading and storing the ABI type of the
-parameter (a pointer) instead of the aggregate type (`gen/abi.cpp`,
-`reconstructArgument()`): aggregates larger than 8 bytes were only partially
-initialized, smaller ones were read and written out of bounds. This affected
-ABC-to-ABC calls on all architectures. Fixed: the callee copies the complete
-aggregate from its private `byval` copy. The tests cover sizes below 8, of
-exactly 8, of 9 to 16 and above 16 bytes, nested aggregates, several
-parameters and modification of the parameter. (C interoperability for
-aggregates is a separate matter: only the x86-64 shapes are lowered.)
-
-Issue #0002: continue in a for loop skips the update expression
-Type: BUG
-Status: RESOLVED
-Covered by tests: #T0017 (runtime, PASS), #T0284 (runtime, PASS)
-
-`AstFor::codegen()` (`ast/ast.cpp`) used the condition label as continue
-target, so `for (...; ...; ++i) { continue; }` never incremented `i`. Fixed:
-the update expression has its own label, which is the continue target.
+## Open
 
 Issue #0003: pointer - integer crashes the compiler
 Type: BUG
@@ -82,26 +60,6 @@ Covered by tests: #T0033 (runtime, XFAIL), #T0156 (unit, XFAIL)
 for the value 0. Thus every hexadecimal literal gets type i32 and e.g.
 `0x100000000` becomes 0 without warning. Expected: hexadecimal literals get
 the same type rules as decimal literals (see also #0027).
-
-Issue #0006: Address of a global variable rejected in global initializers
-Type: BUG
-Status: RESOLVED
-Covered by tests: #T0021 (runtime, PASS), #T0242 (runtime, PASS), #T0243 (runtime, PASS), #T0244 (runtime, PASS), #T0245 (runtime, PASS), #T0246 (reject, PASS), #T0247 (reject, PASS), #T0248 (reject, PASS), #T0249 (reject, PASS), #T0250 (reject, PASS)
-
-`global p: -> int = &x;` failed with "initializer is not a compile-time
-constant". Regression of commit 352a407: `Identifier::hasConstantAddress()`
-(`expr/identifier.cpp`) was the linkage of the symbol table entry, taken when
-the identifier was parsed, but `global` variables never get linkage in the
-symbol table. Thus the address of a global was never constant, also in the
-initializer of a static local variable, and `abc-example/misc/struct.abc`,
-`abc-example/misc/global_ptr.abc` and the linked list of HPC0 worksheet 7
-(`global a, b, c: Node = {{"world", &b}, ...}`) no longer compiled. Fixed:
-the flag is now `Identifier::hasStaticStorage`. Besides variables with linkage
-(extern, static locals) it holds for every variable of the root scope
-(`parsePrimary()` in `parser/parseexpr.cpp`, `Symtab::RootScope`). The
-entries of all variables of a declaration exist before its initializer is
-parsed, so forward references within the declaration work. Locals and
-parameters that shadow a global are found first and remain non-constant.
 
 Issue #0007: Array converts implicitly to a pointer to a different element type
 Type: BUG
@@ -198,16 +156,6 @@ Covered by tests: none
 `CARET_EQUAL`, `AND_EQUAL` and `OR_EQUAL` and fails an assertion, e.g. when
 `lexer/xtest_lexer` prints `a ^= b`. Not testable in-process (abort).
 
-Issue #0017: Driver option -L with separate argument is mishandled
-Type: BUG
-Status: RESOLVED
-Covered by tests: #T0206 (runtime, PASS), #T0207 (ir, PASS), #T0208 (reject, PASS)
-
-In `abc/abc.cpp`, `-L dir` added `-Ldir` to the linker flags but did not skip
-`dir`, which was then treated as input file (the linker failed). `-Ldir`
-worked. Fixed like `-target` (#0035): the separate argument is consumed; a
-missing directory is reported (usage, exit status 1) like for -o, -I and -l.
-
 Issue #0018: Result of the LLVM function verifier is ignored
 Type: BUG
 Status: OPEN
@@ -266,49 +214,6 @@ After `enum F : u8;` the definition `enum F : u16 { A };` is accepted and
 `enum F : u8 { ... }` silently keeps int. A redefinition of the constants is
 rejected as incompatible. Expected: a definition whose type differs from the
 forward declaration is an incompatible redefinition.
-
-Issue #0034: Later optimization option did not reset -Os or -Oz
-Type: BUG
-Status: RESOLVED
-Covered by tests: #T0169 (ir, PASS), #T0170 (ir, PASS), #T0171 (ir, PASS), #T0172 (ir, PASS), #T0173 (ir, PASS), #T0174 (ir, PASS), #T0175 (ir, PASS), #T0176 (ir, PASS), #T0177 (ir, PASS), #T0178 (ir, PASS), #T0179 (ir, PASS), #T0180 (ir, PASS), #T0181 (ir, PASS), #T0182 (ir, PASS), #T0183 (ir, PASS), #T0184 (ir, PASS), #T0185 (ir, PASS), #T0186 (ir, PASS), #T0187 (ir, PASS)
-
-With the LLVM 23 changes, -Os and -Oz select -O2 plus the function attributes
-`optsize` (and `minsize`) via `gen::opt::sizeLevel` (`abc/abc.cpp`). A later
--O0, -O1, -O2 or -O3 did not reset the size level, so `-Os -O2` still emitted
-`optsize`. Fixed before the change was committed: the last optimization
-option takes precedence. The tests in test/ir compile with option
-combinations and check the attributes and the optimization of the generated
-IR.
-
-Issue #0035: Option -target did not consume its argument
-Type: BUG
-Status: RESOLVED
-Covered by tests: #T0197 (ir, PASS), #T0198 (ir, PASS), #T0199 (ir, PASS), #T0200 (ir, PASS), #T0201 (ir, PASS), #T0204 (reject, PASS), #T0205 (reject, PASS)
-
-The parser (`abc/abc.cpp`) stored the triple following `-target` but did
-not skip it, so the triple was also treated as an input file (e.g. "cannot
-specify --emit-llvm when generating multiple output files"). Fixed: `-target`
-consumes exactly one argument; a missing triple and an unknown triple are
-reported with a diagnostic and exit status 1. The tests check the triple and
-data layout of the generated IR for x86-64 and AArch64, the position of
-`-target` relative to the input file and other options, and both errors.
-Generating IR for a target does not imply C ABI support for that target.
-
-Issue #0036: LLVM miscompile of by-value arguments in tail-recursive functions (LLVM #235074, worked around)
-Type: BUG
-Status: RESOLVED
-Covered by tests: #T0196 (runtime, PASS), #T0209 (runtime, PASS)
-
-An LLVM optimizer bug (LLVM 17 to at least 24): `tailcallelim` turns a
-self-recursive call with a `byval` argument into a loop that writes to the
-function's own `byval` argument, but keeps the function attribute
-`memory(argmem: read)`; the inliner then elides the `byval` copy, so the
-caller's object is modified. ABC generates valid IR; the bug is reported
-upstream as https://github.com/llvm/llvm-project/issues/235074 (reproducer:
-doc/llvm-issues/tailcallelim-byval). Workaround in ABC: calls with `byval`
-arguments are marked `notail` (`gen/abi.cpp`, `lowerFunctionCall`). T0209
-observes the caller's object through C and fails without the workaround on
-LLVM 17 to 23; T0196 fails without it on LLVM 17 to 19.
 
 Issue #0037: A readonly array of arrays crashes the compiler
 Type: BUG
@@ -398,17 +303,6 @@ returns true, but `ExplicitCast::loadAddress()` (`expr/explicitcast.cpp`)
 returns a null pointer after storing the value in a temporary
 (`ImplicitCast::loadAddress()` returns the temporary). Expected: the cast
 yields the struct value.
-
-Issue #0044: By-value array parameters with 2 to 4 elements crash the compiler on x86-64
-Type: BUG
-Status: RESOLVED
-Covered by tests: #T0218 (ir, PASS), #T0044 (runtime, PASS), #T0045 (runtime, PASS), #T0191 (runtime, PASS), #T0192 (runtime, PASS), #T0194 (runtime, PASS), #T0195 (runtime, PASS)
-
-On x86-64 `fn f(a: array[2] of int)` or `fn f(a: array[4] of u8)` aborted with
-the assertion `abcType->isStruct()` in `isHomogeneousAggregate()`
-(`gen/abi.cpp`): for an array whose element type was not the one checked for,
-the function fell through to the struct case. Other targets were not affected.
-Fixed: for an array the result only depends on the element type.
 
 Issue #0045: --print-ast crashes after an initializer overrides another
 Type: BUG
@@ -558,19 +452,6 @@ with `getUnsignedIntValue()` (`parser/parseexpr.cpp`) and the bound check is
 skipped for an unbound array, so the index wraps around. For an array with
 a size the designator is rejected. Expected: an error.
 
-Issue #0059: Several input files for x86-64 crash the compiler (freed type)
-Type: BUG
-Status: RESOLVED
-Covered by tests: #T0234 (driver, PASS)
-
-`lowerType_x86_64()` (`gen/abi.cpp`) kept pointers to interned types in
-`static` variables. The driver resets the type system for each input file
-(`abc/abc.cpp`, `initTypeSystem()`), which freed them; classifying a 4-byte
-aggregate in a later file then used freed memory. Depending on the heap, the
-compiler crashed or silently miscompiled: a struct of four `u8` was passed in
-memory (`byval`) instead of in a register, which breaks the ABI. Fixed with
-issue #0073: the classification no longer needs these types.
-
 Issue #0060: Input files with the same name overwrite each other's object file
 Type: BUG
 Status: OPEN
@@ -659,29 +540,6 @@ identifiers in the initializer have no static storage
 Expected: like for global variables (#0006), the address of a static local
 variable is constant in the initializers of its own declaration.
 
-Issue #0069: main without return type produces invalid IR
-Type: BUG
-Status: RESOLVED
-Covered by tests: #T0252 (runtime, PASS), #T0253 (runtime, PASS), #T0254 (runtime, PASS), #T0255 (runtime, PASS), #T0256 (ir, PASS), #T0257 (ir, PASS), #T0110 (reject, PASS), #T0258 (reject, PASS), #T0259 (reject, PASS), #T0260 (reject, PASS), #T0261 (reject, PASS), #T0142 (reject, PASS)
-
-For `fn main() { ... }` the function was declared as `define void @main()`
-(`lowerFunctionDeclaration()` in `gen/abi.cpp`), but
-`functionDefinitionBegin()` (`gen/function.cpp`) replaced the return type
-void of main by int and `functionDefinitionEnd()` emitted `ret i32`. The LLVM
-verifier rejected the module ("value doesn't match function result type
-'void'"); the result of `llvm::verifyFunction()` is ignored, and the driver
-still produced a program that worked. Many examples (`abc-example`,
-`not-abc`, the HPC0 worksheets) use `fn main()`. Fixed according to the
-language rule: `fn main()` means `fn main(): int`, and any other explicit
-return type of main is an error (an ordinary `fn f()` still returns void).
-`parseFunctionHeader()` (`parser/parser.cpp`) gives main without return type
-the type `fn(...): int`, so the AST, the symbol table, the LLVM signature and
-the return instructions agree; `checkMainReturnType()` (`ast/ast.cpp`)
-rejects declarations and definitions of main whose return type is not int
-(up to aliases, so also `i32`; `readonly int` is rejected; an explicit `void`
-return type is rejected for every function as incomplete). Without a return
-statement main still returns 0.
-
 Issue #0070: extern array of unspecified dimension followed by its definition gives invalid IR
 Type: BUG
 Status: OPEN
@@ -698,48 +556,9 @@ changing the type of the global. The driver does not verify the module, so
 the compiler reports no error (`abc-example/misc/unbound_array.abc`).
 Expected: the global gets the complete type of its definition.
 
-Issue #0071: Local variable declared in unreachable code crashes the compiler
-Type: BUG
-Status: RESOLVED
-Covered by tests: #T0282 (runtime, PASS)
-
-`AstLocalVar::codegen()` (`ast/ast.cpp`) returned without doing anything if
-the current basic block was closed, e.g. after `return`. So the variable got
-no storage, although the parser had accepted the name for the rest of the
-block. A following label makes this code reachable again, and a read of the
-variable failed the assertion in `gen::loadAddress()`
-(`gen/variable.cpp`), even if the label is not a jump target. Fixed: the
-variable always gets defined, only its initializer is skipped.
-
-Issue #0072: goto to a label in an unreachable if statement crashes the compiler
-Type: BUG
-Status: RESOLVED
-Covered by tests: #T0283 (runtime, PASS)
-
-`AstIf::codegen()` (`ast/ast.cpp`) returned without generating its body if the
-current basic block was closed, so labels in the body never got inserted into
-the function. A goto to such a label created a branch to a block without a
-function, and the compiler crashed or hung afterwards. The symptom varied
-between runs. Fixed: the if statement is generated like any other statement,
-and `gen::functionDefinitionEnd()` removes the blocks if they are not reached.
-
-Issue #0073: Wrong C ABI for structs on x86-64
-Type: BUG
-Status: RESOLVED
-Covered by tests: #T0008 (runtime, PASS), #T0285 (runtime, PASS), #T0286 (ir, PASS)
-
-`gen/abi.cpp` only handled four shapes of arguments on x86-64 (2, 3 or 4 floats
-and 4 `u8`) and passed everything else in memory. Return values were not lowered
-at all, so a struct returned by a C function was read from the wrong registers,
-and LLVM returned `{ i64, i64, i64 }` in registers instead of using memory
-provided by the caller as C does. Calls between ABC functions worked as both
-sides used the same wrong convention. Fixed: aggregates are classified by
-eightbytes as specified by the System V x86-64 ABI, for arguments and return
-values, and passed in memory if the registers do not suffice.
-
 ---
 
-## Open Language Design Questions
+## Design
 
 Issue #0023: Purpose of the punctuator #
 Type: DESIGN
@@ -857,3 +676,192 @@ reproduced: GCC cannot link against the LLVM installation used for testing).
 Call arguments are evaluated in an explicit loop. The design test prints the
 observed order and does not check it. Open: specify the order (e.g. left to
 right, as in Java) or leave it unspecified (as in C).
+
+---
+
+## Resolved
+
+Issue #0001: Struct and array arguments passed by value are corrupted
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0044 (runtime, PASS), #T0190 (runtime, PASS), #T0191 (runtime, PASS), #T0192 (runtime, PASS), #T0193 (runtime, PASS), #T0194 (runtime, PASS), #T0195 (runtime, PASS), #T0196 (runtime, PASS), #T0202 (ir, PASS), #T0203 (ir, PASS)
+
+Aggregates without target-specific lowering are passed `byval` (on all
+targets except the four aggregate shapes coerced for x86-64). The callee
+initialized its parameter variable by loading and storing the ABI type of the
+parameter (a pointer) instead of the aggregate type (`gen/abi.cpp`,
+`reconstructArgument()`): aggregates larger than 8 bytes were only partially
+initialized, smaller ones were read and written out of bounds. This affected
+ABC-to-ABC calls on all architectures. Fixed: the callee copies the complete
+aggregate from its private `byval` copy. The tests cover sizes below 8, of
+exactly 8, of 9 to 16 and above 16 bytes, nested aggregates, several
+parameters and modification of the parameter. (C interoperability for
+aggregates is a separate matter: only the x86-64 shapes are lowered.)
+
+Issue #0002: continue in a for loop skips the update expression
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0017 (runtime, PASS), #T0284 (runtime, PASS)
+
+`AstFor::codegen()` (`ast/ast.cpp`) used the condition label as continue
+target, so `for (...; ...; ++i) { continue; }` never incremented `i`. Fixed:
+the update expression has its own label, which is the continue target.
+
+Issue #0006: Address of a global variable rejected in global initializers
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0021 (runtime, PASS), #T0242 (runtime, PASS), #T0243 (runtime, PASS), #T0244 (runtime, PASS), #T0245 (runtime, PASS), #T0246 (reject, PASS), #T0247 (reject, PASS), #T0248 (reject, PASS), #T0249 (reject, PASS), #T0250 (reject, PASS)
+
+`global p: -> int = &x;` failed with "initializer is not a compile-time
+constant". Regression of commit 352a407: `Identifier::hasConstantAddress()`
+(`expr/identifier.cpp`) was the linkage of the symbol table entry, taken when
+the identifier was parsed, but `global` variables never get linkage in the
+symbol table. Thus the address of a global was never constant, also in the
+initializer of a static local variable, and `abc-example/misc/struct.abc`,
+`abc-example/misc/global_ptr.abc` and the linked list of HPC0 worksheet 7
+(`global a, b, c: Node = {{"world", &b}, ...}`) no longer compiled. Fixed:
+the flag is now `Identifier::hasStaticStorage`. Besides variables with linkage
+(extern, static locals) it holds for every variable of the root scope
+(`parsePrimary()` in `parser/parseexpr.cpp`, `Symtab::RootScope`). The
+entries of all variables of a declaration exist before its initializer is
+parsed, so forward references within the declaration work. Locals and
+parameters that shadow a global are found first and remain non-constant.
+
+Issue #0017: Driver option -L with separate argument is mishandled
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0206 (runtime, PASS), #T0207 (ir, PASS), #T0208 (reject, PASS)
+
+In `abc/abc.cpp`, `-L dir` added `-Ldir` to the linker flags but did not skip
+`dir`, which was then treated as input file (the linker failed). `-Ldir`
+worked. Fixed like `-target` (#0035): the separate argument is consumed; a
+missing directory is reported (usage, exit status 1) like for -o, -I and -l.
+
+Issue #0034: Later optimization option did not reset -Os or -Oz
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0169 (ir, PASS), #T0170 (ir, PASS), #T0171 (ir, PASS), #T0172 (ir, PASS), #T0173 (ir, PASS), #T0174 (ir, PASS), #T0175 (ir, PASS), #T0176 (ir, PASS), #T0177 (ir, PASS), #T0178 (ir, PASS), #T0179 (ir, PASS), #T0180 (ir, PASS), #T0181 (ir, PASS), #T0182 (ir, PASS), #T0183 (ir, PASS), #T0184 (ir, PASS), #T0185 (ir, PASS), #T0186 (ir, PASS), #T0187 (ir, PASS)
+
+With the LLVM 23 changes, -Os and -Oz select -O2 plus the function attributes
+`optsize` (and `minsize`) via `gen::opt::sizeLevel` (`abc/abc.cpp`). A later
+-O0, -O1, -O2 or -O3 did not reset the size level, so `-Os -O2` still emitted
+`optsize`. Fixed before the change was committed: the last optimization
+option takes precedence. The tests in test/ir compile with option
+combinations and check the attributes and the optimization of the generated
+IR.
+
+Issue #0035: Option -target did not consume its argument
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0197 (ir, PASS), #T0198 (ir, PASS), #T0199 (ir, PASS), #T0200 (ir, PASS), #T0201 (ir, PASS), #T0204 (reject, PASS), #T0205 (reject, PASS)
+
+The parser (`abc/abc.cpp`) stored the triple following `-target` but did
+not skip it, so the triple was also treated as an input file (e.g. "cannot
+specify --emit-llvm when generating multiple output files"). Fixed: `-target`
+consumes exactly one argument; a missing triple and an unknown triple are
+reported with a diagnostic and exit status 1. The tests check the triple and
+data layout of the generated IR for x86-64 and AArch64, the position of
+`-target` relative to the input file and other options, and both errors.
+Generating IR for a target does not imply C ABI support for that target.
+
+Issue #0036: LLVM miscompile of by-value arguments in tail-recursive functions (LLVM #235074, worked around)
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0196 (runtime, PASS), #T0209 (runtime, PASS)
+
+An LLVM optimizer bug (LLVM 17 to at least 24): `tailcallelim` turns a
+self-recursive call with a `byval` argument into a loop that writes to the
+function's own `byval` argument, but keeps the function attribute
+`memory(argmem: read)`; the inliner then elides the `byval` copy, so the
+caller's object is modified. ABC generates valid IR; the bug is reported
+upstream as https://github.com/llvm/llvm-project/issues/235074 (reproducer:
+doc/llvm-issues/tailcallelim-byval). Workaround in ABC: calls with `byval`
+arguments are marked `notail` (`gen/abi.cpp`, `lowerFunctionCall`). T0209
+observes the caller's object through C and fails without the workaround on
+LLVM 17 to 23; T0196 fails without it on LLVM 17 to 19.
+
+Issue #0044: By-value array parameters with 2 to 4 elements crash the compiler on x86-64
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0218 (ir, PASS), #T0044 (runtime, PASS), #T0045 (runtime, PASS), #T0191 (runtime, PASS), #T0192 (runtime, PASS), #T0194 (runtime, PASS), #T0195 (runtime, PASS)
+
+On x86-64 `fn f(a: array[2] of int)` or `fn f(a: array[4] of u8)` aborted with
+the assertion `abcType->isStruct()` in `isHomogeneousAggregate()`
+(`gen/abi.cpp`): for an array whose element type was not the one checked for,
+the function fell through to the struct case. Other targets were not affected.
+Fixed: for an array the result only depends on the element type.
+
+Issue #0059: Several input files for x86-64 crash the compiler (freed type)
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0234 (driver, PASS)
+
+`lowerType_x86_64()` (`gen/abi.cpp`) kept pointers to interned types in
+`static` variables. The driver resets the type system for each input file
+(`abc/abc.cpp`, `initTypeSystem()`), which freed them; classifying a 4-byte
+aggregate in a later file then used freed memory. Depending on the heap, the
+compiler crashed or silently miscompiled: a struct of four `u8` was passed in
+memory (`byval`) instead of in a register, which breaks the ABI. Fixed with
+issue #0073: the classification no longer needs these types.
+
+Issue #0069: main without return type produces invalid IR
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0252 (runtime, PASS), #T0253 (runtime, PASS), #T0254 (runtime, PASS), #T0255 (runtime, PASS), #T0256 (ir, PASS), #T0257 (ir, PASS), #T0110 (reject, PASS), #T0258 (reject, PASS), #T0259 (reject, PASS), #T0260 (reject, PASS), #T0261 (reject, PASS), #T0142 (reject, PASS)
+
+For `fn main() { ... }` the function was declared as `define void @main()`
+(`lowerFunctionDeclaration()` in `gen/abi.cpp`), but
+`functionDefinitionBegin()` (`gen/function.cpp`) replaced the return type
+void of main by int and `functionDefinitionEnd()` emitted `ret i32`. The LLVM
+verifier rejected the module ("value doesn't match function result type
+'void'"); the result of `llvm::verifyFunction()` is ignored, and the driver
+still produced a program that worked. Many examples (`abc-example`,
+`not-abc`, the HPC0 worksheets) use `fn main()`. Fixed according to the
+language rule: `fn main()` means `fn main(): int`, and any other explicit
+return type of main is an error (an ordinary `fn f()` still returns void).
+`parseFunctionHeader()` (`parser/parser.cpp`) gives main without return type
+the type `fn(...): int`, so the AST, the symbol table, the LLVM signature and
+the return instructions agree; `checkMainReturnType()` (`ast/ast.cpp`)
+rejects declarations and definitions of main whose return type is not int
+(up to aliases, so also `i32`; `readonly int` is rejected; an explicit `void`
+return type is rejected for every function as incomplete). Without a return
+statement main still returns 0.
+
+Issue #0071: Local variable declared in unreachable code crashes the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0282 (runtime, PASS)
+
+`AstLocalVar::codegen()` (`ast/ast.cpp`) returned without doing anything if
+the current basic block was closed, e.g. after `return`. So the variable got
+no storage, although the parser had accepted the name for the rest of the
+block. A following label makes this code reachable again, and a read of the
+variable failed the assertion in `gen::loadAddress()`
+(`gen/variable.cpp`), even if the label is not a jump target. Fixed: the
+variable always gets defined, only its initializer is skipped.
+
+Issue #0072: goto to a label in an unreachable if statement crashes the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0283 (runtime, PASS)
+
+`AstIf::codegen()` (`ast/ast.cpp`) returned without generating its body if the
+current basic block was closed, so labels in the body never got inserted into
+the function. A goto to such a label created a branch to a block without a
+function, and the compiler crashed or hung afterwards. The symptom varied
+between runs. Fixed: the if statement is generated like any other statement,
+and `gen::functionDefinitionEnd()` removes the blocks if they are not reached.
+
+Issue #0073: Wrong C ABI for structs on x86-64
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0008 (runtime, PASS), #T0285 (runtime, PASS), #T0286 (ir, PASS)
+
+`gen/abi.cpp` only handled four shapes of arguments on x86-64 (2, 3 or 4 floats
+and 4 `u8`) and passed everything else in memory. Return values were not lowered
+at all, so a struct returned by a C function was read from the wrong registers,
+and LLVM returned `{ i64, i64, i64 }` in registers instead of using memory
+provided by the caller as C does. Calls between ABC functions worked as both
+sides used the same wrong convention. Fixed: aggregates are classified by
+eightbytes as specified by the System V x86-64 ABI, for arguments and return
+values, and passed in memory if the registers do not suffice.
