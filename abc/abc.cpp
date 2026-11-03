@@ -5,6 +5,9 @@
 #include <iostream>
 #include <vector>
 
+// for lint (begin)
+#include "analysis/uninit.hpp"
+// for lint (end)
 #include "expr/implicitcast.hpp"
 #include "gen/gen.hpp"
 #include "gen/print.hpp"
@@ -107,6 +110,12 @@ usage(const char *prog, int exit = 1)
         << "  -static \t\t\tOn systems that support dynamic linking, this\n"
            "          \t\t\tprevents linking with the shared libraries.  \n"
            "          \t\t\tOn other systems, this option has no effect.\n";
+    // for lint (begin)
+    std::cerr << "  -Wall \t\t\tEnable all static analyses. Without -Wall or\n"
+                 "          \t\t\t-W<name> no static analysis is done.\n";
+    std::cerr << "  -Wuninitialized \t\tWarn about local variables that are, or\n"
+                 "          \t\t\tmay be, used uninitialized.\n";
+    // for lint (end)
     std::cerr << "  --print-ast \t\t\tPrint code represented by the AST.\n";
     std::cerr << "  --help \t\t\tDisplay this information.\n";
     /*
@@ -224,6 +233,16 @@ main(int argc, char *argv[])
 		    usage(argv[0]);
 		}
 		break;
+	    // for lint (begin)
+	    case 'W':
+		if (!strcmp(argv[i], "-Wall") ||
+		    !strcmp(argv[i], "-Wuninitialized")) {
+		    abc::analysis::opt::uninitialized = true;
+		} else {
+		    usage(argv[0]);
+		}
+		break;
+	    // for lint (end)
 	    case 'I':
 		if (!argv[i][2] && i + 1 < argc) {
 		    abc::lexer::addSearchPath(argv[i + 1]);

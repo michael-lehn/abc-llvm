@@ -2,6 +2,9 @@
 #include <set>
 #include <unordered_map>
 
+// for lint (begin)
+#include "analysis/uninit.hpp"
+// for lint (end)
 #include "expr/compoundexpr.hpp"
 #include "expr/expr.hpp"
 #include "expr/implicitcast.hpp"
@@ -338,6 +341,9 @@ AstFuncDef::codegen()
 	    << error::setColor(error::NORMAL);
 	error::fatal();
     }
+    // for lint (begin)
+    analysis::checkUninitialized(*gen::llvmModule->getFunction(fnId.c_str()));
+    // for lint (end)
 }
 
 /*
@@ -807,8 +813,12 @@ AstLocalVar::codegen()
 	assert(var);
 	auto initializer = reachable ? var->getInitializerExpr() : nullptr;
 	if (var->count() == 1) {
-	    gen::localVariableDefinition(var->getId(0).c_str(),
-	                                 var->getType(0));
+	    // for lint (begin)
+	    auto addr = gen::localVariableDefinition(var->getId(0).c_str(),
+	                                             var->getType(0));
+	    analysis::declareLocal(addr, var->varName[0].val,
+	                           var->varName[0].loc);
+	    // for lint (end)
 	    if (initializer) {
 		gen::store(initializer->loadValue(),
 		           gen::loadAddress(var->getId(0).c_str()),
@@ -818,8 +828,12 @@ AstLocalVar::codegen()
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
 	    assert(!initializer || compExpr);
 	    for (std::size_t i = 0; i < var->count(); ++i) {
-		gen::localVariableDefinition(var->getId(i).c_str(),
-		                             var->getType(i));
+		// for lint (begin)
+		auto addr = gen::localVariableDefinition(var->getId(i).c_str(),
+		                                         var->getType(i));
+		analysis::declareLocal(addr, var->varName[i].val,
+		                       var->varName[i].loc);
+		// for lint (end)
 	    }
 	    for (std::size_t i = 0; i < var->count(); ++i) {
 		if (initializer) {
