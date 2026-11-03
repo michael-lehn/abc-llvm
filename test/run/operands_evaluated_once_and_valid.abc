@@ -1,0 +1,112 @@
+// TEST: T0317
+// Pointer operands of '-' and of comparisons are evaluated once. Operands that
+// stay valid next to the invalid ones: pointers to void without arithmetic,
+// constant comparisons of pointers and conditional expressions.
+
+global a: array[4] of int;
+global calls: int = 0;
+
+fn first(): -> int
+{
+    ++calls;
+    return &a[0];
+}
+
+fn last(): -> int
+{
+    ++calls;
+    return &a[3];
+}
+
+fn one()
+{
+    calls += 1;
+}
+
+fn ten()
+{
+    calls += 10;
+}
+
+global diff: i64 = &a[3] - &a[0];
+global negativeDiff: i64 = &a[0] - &a[3];
+global inOrder: bool = &a[0] < &a[3];
+global notInOrder: bool = &a[3] < &a[0];
+global lessEqual: bool = &a[0] <= &a[3];
+global greater: bool = &a[0] > &a[3];
+global greaterEqual: bool = &a[0] >= &a[3];
+global sameNull: bool = nullptr == nullptr;
+global notNull: bool = nullptr != nullptr;
+
+fn main(): int
+{
+    assert(last() - first() == 3);
+    assert(calls == 2);
+
+    calls = 0;
+    local less: bool = first() < last();
+    assert(less);
+    assert(calls == 2);
+
+    calls = 0;
+    local same: bool = first() == first();
+    assert(same);
+    assert(calls == 2);
+
+    assert(diff == 3);
+    assert(negativeDiff == -3);
+    local localDiff: i64 = &a[1] - &a[3];
+    assert(localDiff == -2);
+    assert(inOrder);
+    assert(!notInOrder);
+    assert(lessEqual);
+    assert(!greater);
+    assert(!greaterEqual);
+    local before: bool = &a[0] < &a[3];
+    assert(before);
+    assert(sameNull);
+    assert(!notNull);
+
+    // not constant, but a valid comparison at run time
+    local x, y: int;
+    local differ: bool = &x != &y;
+    assert(differ);
+    local isNull: bool = &x == nullptr;
+    assert(!isNull);
+
+    // pointers to void
+    local p: -> void = &x;
+    local q: -> void = &x;
+    local r: -> void = nullptr;
+    local e: bool = p == q;
+    assert(e);
+    e = p == nullptr;
+    assert(!e);
+    assert(!r);
+    assert(p);
+    r = p;
+    local ip: -> int = r;
+    x = 5;
+    assert(*ip == 5);
+    assert(sizeof(p) == sizeof(ip));
+
+    // value of a conditional expression that is constant
+    calls = 0;
+    local c: int = 0;
+    c ? one() : ten();
+    1 ? one() : ten();
+    0 ? one() : ten();
+    assert(calls == 21);
+
+    // integer types and enums in a switch stay valid
+    local big: i64 = 2;
+    switch (big) {
+    case 2:
+	calls = 1;
+	break;
+    default:
+	calls = 2;
+    }
+    assert(calls == 1);
+    return 0;
+}

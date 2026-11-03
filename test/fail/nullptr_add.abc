@@ -1,5 +1,4 @@
 // TEST: T0311
-// XFAIL: #0080
 // nullptr has no type it points to, so nothing can be added to it.
 // ERROR: can not be applied|invalid operand|no referenced
 

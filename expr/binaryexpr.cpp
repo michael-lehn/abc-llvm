@@ -72,8 +72,19 @@ BinaryExpr::isLValue() const
 bool
 BinaryExpr::isConst() const
 {
-    // special case
-    if (kind == SUB && left->type->isPointer() && right->type->isPointer()) {
+    // special case: pointers are compared by their difference, and addresses of
+    // different objects have no constant one
+    bool isComparison = kind == LESS || kind == LESS_EQUAL || kind == GREATER ||
+                        kind == GREATER_EQUAL || kind == NOT_EQUAL ||
+                        kind == EQUAL;
+    if ((kind == SUB || isComparison) && left->type->isPointer() &&
+        right->type->isPointer()) {
+	if (!left->isConst() || !right->isConst()) {
+	    return false;
+	}
+	if (left->type->isNullptr() || right->type->isNullptr()) {
+	    return left->type->isNullptr() && right->type->isNullptr();
+	}
 	auto refType = left->type->refType();
 	auto diff = gen::pointerConstantDifference(refType, left->loadValue(),
 	                                           right->loadValue());
@@ -170,7 +181,12 @@ BinaryExpr::loadConstant() const
     case GREATER_EQUAL:
     case NOT_EQUAL:
     case EQUAL:
-	if (left->type->isPointer()) {
+	if (left->type->isNullptr()) {
+	    // nullptr compared with nullptr: both have the same value
+	    return kind == EQUAL || kind == LESS_EQUAL || kind == GREATER_EQUAL
+	               ? gen::getTrue()
+	               : gen::getFalse();
+	} else if (left->type->isPointer()) {
 	    // pointer - pointer
 	    assert(right->type->isPointer());
 	    assert(Type::equals(left->type->refType(), right->type->refType()));
@@ -179,7 +195,7 @@ BinaryExpr::loadConstant() const
 	        refType, left->loadValue(), right->loadValue());
 	    assert(diff.has_value());
 	    auto ptrdiffType = IntegerType::createPtrdiffType();
-	    return gen::instruction(getGenInstructionOp(kind, left->type),
+	    return gen::instruction(getGenInstructionOp(kind, ptrdiffType),
 	                            diff.value(),
 	                            gen::getConstantZero(ptrdiffType));
 	} else {

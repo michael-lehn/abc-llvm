@@ -62,7 +62,15 @@ call(ExprPtr &&fn, std::vector<ExprPtr> &&arg, lexer::Loc *loc)
 	    //	 pointer (required to interface with C)
 	    // - float is casted to double
 	    // - integers narrower than int are converted to int
-	    if (arg[i]->type->isArray()) {
+	    if (arg[i]->type->isVoid()) {
+		error::location(arg[i]->loc);
+		error::out() << error::setColor(error::BOLD) << arg[i]->loc
+		             << ": " << error::setColor(error::BOLD_RED)
+		             << "error: " << error::setColor(error::BOLD)
+		             << "argument of type 'void' has no value\n"
+		             << error::setColor(error::NORMAL);
+		error::fatal();
+	    } else if (arg[i]->type->isArray()) {
 		auto argType = PointerType::create(arg[i]->type->refType());
 		arg[i] = ImplicitCast::create(std::move(arg[i]), argType);
 	    } else if (arg[i]->type->isFloat()) {
@@ -290,6 +298,28 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 {
     if (kind == BinaryExpr::ADD && !left->type->isPointer()) {
 	left.swap(right);
+    }
+    // pointer arithmetic needs the size of what the pointer refers to
+    switch (kind) {
+    case BinaryExpr::ADD:
+    case BinaryExpr::SUB:
+    case BinaryExpr::INDEX:
+    case BinaryExpr::ADD_ASSIGN:
+    case BinaryExpr::SUB_ASSIGN:
+	for (const auto *operand : {left.get(), right.get()}) {
+	    if (!operand->type->isPointer()) {
+		continue;
+	    }
+	    // INDEX reports dereferencing nullptr itself
+	    if (operand->type->isNullptr()
+	            ? kind != BinaryExpr::INDEX
+	            : operand->type->refType()->isVoid()) {
+		return binaryErr(kind, std::move(left), std::move(right), loc);
+	    }
+	}
+	break;
+    default:
+	break;
     }
     const Type *type = nullptr;
     const Type *newLeftType = nullptr;
@@ -559,7 +589,8 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 	break;
     case UnaryExpr::ASTERISK_DEREF:
     case UnaryExpr::ARROW_DEREF:
-	if (child->type->isPointer() && !child->type->isNullptr()) {
+	if (child->type->isPointer() && !child->type->isNullptr() &&
+	    !child->type->refType()->isVoid()) {
 	    type = child->type->refType();
 	    newChildType = child->type;
 	}
@@ -590,7 +621,10 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 	    break;
 	}
 	if (child->isLValue()) {
-	    if (child->type->isInteger() || child->type->isPointer() ||
+	    bool toVoid =
+	        child->type->isPointer() && child->type->refType()->isVoid();
+	    if (child->type->isInteger() ||
+	        (child->type->isPointer() && !toVoid) ||
 	        child->type->isFloatType()) {
 		type = newChildType = child->type;
 	    }

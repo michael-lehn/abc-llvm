@@ -1142,6 +1142,16 @@ AstIf::apply(std::function<bool(Ast *)> op)
  */
 AstSwitch::AstSwitch(ExprPtr &&expr) : hasDefault{false}, expr{std::move(expr)}
 {
+    if (!this->expr->type->isInteger()) {
+	error::location(this->expr->loc);
+	error::out() << error::setColor(error::BOLD) << this->expr->loc << ": "
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << "switch expression has to be of integer type, not '"
+	             << this->expr->type << "'\n"
+	             << error::setColor(error::NORMAL);
+	error::fatal();
+    }
 }
 
 void
@@ -1574,9 +1584,17 @@ void
 AstEnumDecl::add(lexer::Token name, ExprPtr &&expr)
 {
     if (expr) {
-	assert(expr->isConst());
 	assert(expr->type);
-	assert(expr->type->isInteger());
+	if (!expr->isConst() || !expr->type->isInteger()) {
+	    error::location(expr->loc);
+	    error::out() << error::setColor(error::BOLD) << expr->loc << ": "
+	                 << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD)
+	                 << "enumeration value has to be a constant integer "
+	                 << "expression\n"
+	                 << error::setColor(error::NORMAL);
+	    error::fatal();
+	}
 
 	enumLastVal = expr->getSignedIntValue();
     }

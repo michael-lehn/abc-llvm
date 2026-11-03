@@ -1,5 +1,4 @@
 // TEST: T0303
-// XFAIL: #0076
 // A call of a void function has no value to pass as an argument.
 // ERROR: no value|void value|type .void
 

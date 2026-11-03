@@ -31,6 +31,15 @@ Expr::loadConstantAddress() const
 void
 Expr::condition(gen::Label trueLabel, gen::Label falseLabel) const
 {
+    if (type->isVoid()) {
+	error::location(loc);
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << "expression of type 'void' has no value to test\n"
+	             << error::setColor(error::NORMAL);
+	error::fatal();
+    }
     if (!type->isScalar()) {
 	error::location(loc);
 	error::out() << error::setColor(error::BOLD) << loc << ": "

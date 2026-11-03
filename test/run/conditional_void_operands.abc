@@ -1,5 +1,4 @@
 // TEST: T0304
-// XFAIL: #0077
 // A conditional expression with calls of void functions as operands calls one
 // of them, like in C.
 

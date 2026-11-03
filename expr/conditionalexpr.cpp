@@ -115,6 +115,9 @@ ConditionalExpr::loadValue() const
     auto falseValue = falseExpr->loadValue();
     elseLabel = gen::jumpInstruction(endLabel); // update needed for phi
     gen::defineLabel(endLabel);
+    if (type->isVoid()) {
+	return nullptr; // calls of void functions: no value to select
+    }
     return gen::phi(trueValue, thenLabel, falseValue, elseLabel, type);
 }
 
@@ -142,6 +145,10 @@ ConditionalExpr::loadAddress() const
 void
 ConditionalExpr::condition(gen::Label trueLabel, gen::Label falseLabel) const
 {
+    if (type->isVoid()) {
+	Expr::condition(trueLabel, falseLabel); // reports the error
+	return;
+    }
     auto zero = gen::getConstantZero(type);
     auto cond = gen::instruction(gen::conditionOp(type), loadValue(), zero);
     gen::jumpInstruction(cond, trueLabel, falseLabel);

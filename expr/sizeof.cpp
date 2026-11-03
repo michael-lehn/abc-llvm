@@ -3,11 +3,26 @@
 
 #include "gen/constant.hpp"
 #include "gen/gentype.hpp"
+#include "lexer/error.hpp"
 #include "type/integertype.hpp"
 
 #include "sizeof.hpp"
 
 namespace abc {
+
+static void
+checkHasSize(const Type *type, lexer::Loc loc)
+{
+    if (type->isVoid() || type->isFunction()) {
+	error::location(loc);
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << "sizeof can not be applied to type '" << type << "'\n"
+	             << error::setColor(error::NORMAL);
+	error::fatal();
+    }
+}
 
 Sizeof::Sizeof(const Type *sizeofType, ExprPtr &&sizeofExpr, lexer::Loc loc)
     : Expr{loc, IntegerType::createSizeType()}, sizeofType{sizeofType},
@@ -19,6 +34,7 @@ ExprPtr
 Sizeof::create(const Type *sizeofType, lexer::Loc loc)
 {
     assert(sizeofType);
+    checkHasSize(sizeofType, loc);
     auto p = new Sizeof{sizeofType, nullptr, loc};
     return std::unique_ptr<Sizeof>{p};
 }
@@ -28,6 +44,7 @@ Sizeof::create(ExprPtr &&sizeofExpr, lexer::Loc loc)
 {
     assert(sizeofExpr);
     assert(sizeofExpr->type);
+    checkHasSize(sizeofExpr->type, loc);
     auto p = new Sizeof{nullptr, std::move(sizeofExpr), loc};
     return std::unique_ptr<Sizeof>{p};
 }

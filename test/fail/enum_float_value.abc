@@ -1,5 +1,4 @@
 // TEST: T0314
-// XFAIL: #0081
 // The value of an enumeration constant is an integer.
 // ERROR: integer
 

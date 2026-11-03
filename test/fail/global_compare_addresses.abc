@@ -1,5 +1,4 @@
 // TEST: T0315
-// XFAIL: #0082
 // The addresses of two different objects have no constant difference, so their
 // comparison is not a compile-time constant.
 // ERROR: compile-time constant

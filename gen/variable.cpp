@@ -229,7 +229,9 @@ pointerConstantDifference(const abc::Type *type, Value pointer1, Value pointer2)
     auto llvmType = convert(type);
     auto dl = llvmModule->getDataLayout();
     if (auto diff = pointer1->getPointerOffsetFrom(pointer2, dl)) {
-	return getConstantInt(diff.value() / dl.getTypeAllocSize(llvmType),
+	// the size has an unsigned type: as is, a negative difference gets wrong
+	auto size = std::int64_t(dl.getTypeAllocSize(llvmType).getFixedValue());
+	return getConstantInt(diff.value() / size,
 	                      abc::IntegerType::createPtrdiffType());
     } else {
 	return std::nullopt;

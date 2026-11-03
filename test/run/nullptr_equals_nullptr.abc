@@ -1,5 +1,4 @@
 // TEST: T0312
-// XFAIL: #0080
 // Two null pointers are equal.
 
 fn main(): int
