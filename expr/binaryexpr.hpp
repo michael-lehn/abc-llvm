@@ -75,7 +75,8 @@ class BinaryExpr : public Expr
 	gen::Constant loadConstant() const override;
 
     private:
-	gen::Value handleArithmetricOperation(Kind kind) const;
+	gen::Value handleArithmetricOperation(Kind kind, gen::Value leftVal) const;
+	gen::Value handleCompoundAssignment(Kind kind) const;
 
     public:
 	gen::Value loadValue() const override;

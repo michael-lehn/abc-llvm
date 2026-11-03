@@ -486,10 +486,10 @@ The following predefined identifiers are used as named
 `double`
 
 `char` is an unsigned 8-bit integer type and `bool` is an integer type with
-the values `false` (0) and `true` (1). *Compiler bug #0021: `long_long`,
-`unsigned_long` and `unsigned_long_long` are currently not defined; compiler
-bug #0009: `long` currently has 32 bits on all targets. Open question #0029:
-`size_t` and `ptrdiff_t` are currently signed.*
+the values `false` (0) and `true` (1). `long` and `unsigned_long` have 64 bits on
+a target with 64-bit pointers and 32 bits otherwise, `long_long` and
+`unsigned_long_long` have 64 bits. *Open question #0029: `size_t` and `ptrdiff_t`
+are currently signed.*
 
 The keyword `nullptr` denotes the null pointer; `true` and `false` are the
 values of type `bool`.
@@ -504,9 +504,8 @@ literals, character literals, and (decimal) floating point literals.
 - Octal literals begin with a digit `0` and optionally have more digits from
   `0` to `7`.
 - Hexadecimal literals begin with a prefix `0x` (or `0X`) and one or more
-  digits from `0` to `9`, `a` to `f`, or `A` to `F`. *(Compiler bug #0005:
-  hexadecimal literals currently have type `i32` and larger values are
-  truncated.)*
+  digits from `0` to `9`, `a` to `f`, or `A` to `F`. They get their type like
+  decimal literals.
 - An integer literal can be directly followed by the name of an integer type,
   which then is the type of the literal, e.g., `255u8` or `1i64`.
 - String literals are delimited by `"`. Backslashes, i.e., `\`, are escape
@@ -514,8 +513,8 @@ literals, character literals, and (decimal) floating point literals.
   allowing the insertion of special characters into a string. The escape
   sequences are those of C: `\'`, `\"`, `\?`, `\\`, `\a`, `\b`, `\f`, `\n`,
   `\r`, `\t`, `\v`, octal escapes with one to three digits, and hexadecimal
-  escapes `\x...` *(compiler bug #0012: octal escapes in string literals are
-  currently broken)*. Adjacent string literals are concatenated.
+  escapes `\x...`. *(Compiler bug #0075: a string literal is currently cut at
+  an embedded null character.)* Adjacent string literals are concatenated.
 - Character literals are delimited by `'` and consist of a single character
   (which can be an escaped character).
 - Currently only decimal (but not hexadecimal) floating point literals are

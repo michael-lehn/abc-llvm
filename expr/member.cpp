@@ -142,8 +142,14 @@ gen::Value
 Member::loadValue() const
 {
     assert(type);
+    return loadValueFrom(loadAddress());
+}
+
+gen::Value
+Member::loadValueFrom(gen::Value addr) const
+{
     // for lint (begin)
-    auto val = gen::fetch(loadAddress(), type);
+    auto val = gen::fetch(addr, type);
     if (analysis::recording()) {
 	std::stringstream text;
 	printFlat(text, 0);

@@ -1,5 +1,4 @@
 // TEST: T0233
-// XFAIL: #0058
 // TIMEOUT: 5
 // ERROR: designator|index|range|negative
 // A negative array designator for an array of unbound size is an error; the

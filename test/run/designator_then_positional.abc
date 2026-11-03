@@ -1,5 +1,4 @@
 // TEST: T0220
-// XFAIL: #0046
 // A positional initializer after a designator initializes the next member
 // and is converted to the type of that member.
 

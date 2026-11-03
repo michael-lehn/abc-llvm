@@ -66,7 +66,7 @@ CompoundExpr::create(std::vector<Designator> &&designator,
     std::vector<ExprPtr> expr(type->aggregateSize());
     std::vector<const Expr *> parsedExpr_;
     for (std::size_t i = 0, index = 0; i < parsedExpr.size(); ++i, ++index) {
-	auto ty = type->aggregateType(i);
+	const Type *ty = nullptr;
 	if (designator.size()) {
 	    if (std::holds_alternative<lexer::Token>(designator[i])) {
 		assert(type->isStruct());
@@ -74,11 +74,15 @@ CompoundExpr::create(std::vector<Designator> &&designator,
 		auto index_ = type->memberIndex(name);
 		assert(index_.has_value());
 		index = index_.value();
+		// differs from aggregateType(index) for a member of a union
 		ty = type->memberType(name);
 	    } else if (std::holds_alternative<ExprPtr>(designator[i])) {
 		assert(type->isArray());
 		index = std::get<ExprPtr>(designator[i])->getUnsignedIntValue();
 	    }
+	}
+	if (!ty) {
+	    ty = type->aggregateType(index);
 	}
 	if (expr[index]) {
 	    error::location(parsedExpr[i]->loc);

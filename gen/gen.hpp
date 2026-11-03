@@ -47,6 +47,7 @@ extern const char *moduleName;
 void init(const char *name = nullptr,
           llvm::OptimizationLevel optLevel = llvm::OptimizationLevel::O0);
 
+std::size_t getLongBits(); // number of bits of C's long on the target
 llvm::OptimizationLevel getOptimizationLevel();
 
 } // namespace gen

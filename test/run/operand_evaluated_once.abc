@@ -1,0 +1,94 @@
+// TEST: T0291
+// The operand of a compound assignment, ++ and -- is evaluated once, whatever
+// the operand is, and the result of the expression is the expected one.
+
+struct S
+{
+    val: int;
+    next: -> S;
+};
+
+global a: array[4] of int = {1, 2, 3, 4};
+global calls: int = 0;
+global node: S;
+
+fn nextNode(): -> S
+{
+    ++calls;
+    return &node;
+}
+
+fn element(): -> int
+{
+    ++calls;
+    return &a[3];
+}
+
+fn main(): int
+{
+    // through a pointer
+    local p: -> int = &a[0];
+    *p++ += 10;
+    assert(p == &a[1]);
+    assert(a[0] == 11);
+    assert(a[1] == 2);
+
+    // member, the structure is the result of a call
+    nextNode()->val += 5;
+    assert(calls == 1);
+    nextNode()->val++;
+    assert(calls == 2);
+    assert(--nextNode()->val == 5);
+    assert(calls == 3);
+    assert(node.val == 5);
+
+    // dereferenced result of a call
+    *element() *= 2;
+    assert(calls == 4);
+    assert((*element())-- == 8);
+    assert(calls == 5);
+    assert(a[3] == 7);
+
+    // a pointer as operand
+    local v: array[3] of -> int;
+    v[0] = &a[0];
+    v[1] = &a[0];
+    local i: int = 0;
+    v[i++] += 2;
+    assert(i == 1);
+    assert(v[0] == &a[2]);
+    assert(v[1] == &a[0]);
+    i = 0;
+    v[i++]--;
+    assert(i == 1);
+    assert(v[0] == &a[1]);
+
+    // the other operators, each with a variable as index
+    i = 0;
+    a[0] = 16;
+    a[i++] -= 1;
+    a[--i] /= 3;
+    a[i++] %= 4;
+    a[--i] <<= 3;
+    a[i++] >>= 1;
+    a[--i] |= 3;
+    a[i++] &= 6;
+    a[--i] ^= 1;
+    assert(i == 0);
+    assert(a[0] == 7);
+
+    // values
+    local x: int = 1;
+    assert(x++ == 1);
+    assert(++x == 3);
+    assert(x-- == 3);
+    assert(--x == 1);
+    assert((x += 2) == 3);
+
+    // a floating point operand
+    local d: double = 1.5;
+    d += 1;
+    d++;
+    assert(d == 3.5);
+    return 0;
+}

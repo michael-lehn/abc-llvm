@@ -567,13 +567,11 @@ checkNullDereferenceStrict(llvm::Function &fn, const SourceInfo &info)
 	static const char *const maybe[] = {" may be null when dereferenced",
 	                                    " may be dereferenced after free",
 	                                    " may be freed twice",
-	                                    " is tested for null after it may have"
-	                                    " been dereferenced"};
+	                                    " is tested for null after it may have been dereferenced"};
 	static const char *const sure[] = {" is null when dereferenced",
 	                                   " is dereferenced after free",
 	                                   " is freed twice",
-	                                   " is tested for null after it was"
-	                                   " dereferenced"};
+	                                   " is tested for null after it was dereferenced"};
 	bool isSure = r.kind == 3 ? !(r.state & ~(NON_NULL | DEREFERENCED))
 	                          : r.state == (r.kind == 0 ? IS_NULL : FREED);
 	error::location(loc);

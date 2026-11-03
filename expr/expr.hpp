@@ -30,6 +30,9 @@ class Expr
 	// for code generation
 	virtual gen::Constant loadConstant() const = 0;
 	virtual gen::Value loadValue() const = 0;
+	// value at an address from loadAddress(), for operators that read and
+	// write their operand and thus must evaluate it only once
+	virtual gen::Value loadValueFrom(gen::Value addr) const;
 	virtual gen::Constant loadConstantAddress() const;
 	virtual gen::Value loadAddress() const = 0;
 	virtual void condition(gen::Label trueLabel,

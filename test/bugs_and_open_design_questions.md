@@ -31,17 +31,6 @@ Format of an entry:
 
 ## Open
 
-Issue #0005: Hexadecimal literals always have type i32 and are truncated
-Type: BUG
-Status: OPEN
-Covered by tests: #T0033 (runtime, XFAIL), #T0156 (unit, XFAIL)
-
-`getIntType()` in `expr/integerliteral.cpp` passes the literal including the
-`0x` prefix to `std::from_chars`, which stops at the `x` and reports success
-for the value 0. Thus every hexadecimal literal gets type i32 and e.g.
-`0x100000000` becomes 0 without warning. Expected: hexadecimal literals get
-the same type rules as decimal literals (see also #0027).
-
 Issue #0007: Array converts implicitly to a pointer to a different element type
 Type: BUG
 Status: OPEN
@@ -52,26 +41,6 @@ element type merely converts to the referenced type, so
 `local p: -> double = a;` with `a: array[2] of int` compiles. Expected: like
 pointer-to-pointer conversion, the element type and the referenced type must
 be equal (up to readonly).
-
-Issue #0009: Type long has 32 bits
-Type: BUG
-Status: OPEN
-Covered by tests: #T0041 (runtime, XFAIL)
-
-`parser/defaulttype.cpp` defines `long` with `IntegerType::createInt()`
-(the unused `createLong()` exists). C's `long` has 64 bits on LP64 targets,
-so C functions declared with `long` in the ABC headers (e.g. `strtol` in
-`abc-include/stdio.hdr`) return truncated values. Expected: `long` matches
-the C type of the target.
-
-Issue #0012: Octal escape sequences in string literals corrupt the literal
-Type: BUG
-Status: OPEN
-Covered by tests: #T0061 (runtime, XFAIL), #T0159 (unit, XFAIL)
-
-`parseStringLiteral()` in `lexer/lexer.cpp` stores the value of an octal
-escape in `reader->ch`, overwriting the next character: `"\101B"` becomes
-`"AA"`, and `"a\0"` consumes the closing quote. Expected: escapes as in C.
 
 Issue #0014: Parenthesized expression starting with a compound literal is parsed as a cast
 Type: BUG
@@ -112,15 +81,6 @@ Covered by tests: #T0158 (unit, XFAIL)
 The README lists `alignas` and `alignof` as reserved keywords (the operators
 are documented as not yet implemented), but the lexer treats them as
 identifiers. Expected: they cannot be used as identifiers.
-
-Issue #0021: Documented type names long_long, unsigned_long, unsigned_long_long are undefined
-Type: BUG
-Status: OPEN
-Covered by tests: #T0013 (runtime, XFAIL)
-
-The README lists them as predefined type names; they existed as type aliases
-(commit 4038f15, February 2024) but are missing in `parser/defaulttype.cpp`.
-Expected: defined with the sizes of the corresponding C types (see #0009).
 
 Issue #0022: Lexer diagnostics show the location of the previous token
 Type: BUG
@@ -170,30 +130,6 @@ AddressSanitizer: heap-use-after-free). `CompoundExpr::create()`
 (`expr/compoundexpr.cpp`) replaces the first expression but keeps a pointer
 to it in `parsedExpr`, which `printFlat()` uses. Expected: the AST is printed
 as written.
-
-Issue #0046: Positional initializer after a designator is converted to the wrong type
-Type: BUG
-Status: OPEN
-Covered by tests: #T0220 (runtime, XFAIL)
-
-In `{.b = 1.5, 7}` for `struct S { a: i8; b: double; c: i32; }` the value
-`7` initializes `c` but is converted to the type of the second member
-(`double`): `CompoundExpr::create()` (`expr/compoundexpr.cpp`) takes the
-type from the position in the initializer list (`aggregateType(i)`) instead
-of the initialized member. `s.c` gets a wrong value. Expected: `s.c == 7`.
-
-Issue #0047: Compound assignment, ++ and -- evaluate their operand twice
-Type: BUG
-Status: OPEN
-Covered by tests: #T0221 (runtime, XFAIL), #T0222 (runtime, XFAIL)
-
-`a[i++] += 10` reads `a[0]`, writes `a[1]` and increments `i` twice;
-`a[i++]++`, `++a[i++]` and `*p++ += 10` behave alike. The operand is
-evaluated once for its value and once more for its address
-(`BinaryExpr::loadValue()` in `expr/binaryexpr.cpp`, `UnaryExpr::loadValue()`
-in `expr/unaryexpr.cpp`). Simple assignment is not affected. The README does
-not specify compound assignment; expected (as in C): the operand is
-evaluated once.
 
 Issue #0049: Coerced x86-64 aggregate arguments are accessed with too high alignment
 Type: BUG
@@ -258,16 +194,6 @@ Covered by tests: #T0232 (runtime, XFAIL)
 Inside a disabled `@ifdef` region an `@ <file>` include is still searched and
 reported as "can not find file" (`lexer/lexer.cpp`); an `@ "file"` include is
 skipped there. Expected: both forms are skipped.
-
-Issue #0058: Negative designator for an array of unbound size hangs the compiler
-Type: BUG
-Status: OPEN
-Covered by tests: #T0233 (reject, XFAIL)
-
-`local a: array[] of int = {[-1] = 1};` hangs: the designator is converted
-with `getUnsignedIntValue()` (`parser/parseexpr.cpp`) and the bound check is
-skipped for an unbound array, so the index wraps around. For an array with
-a size the designator is rejected. Expected: an error.
 
 Issue #0060: Input files with the same name overwrite each other's object file
 Type: BUG
@@ -343,6 +269,15 @@ existing global and only sets the initializer of type `[2 x i32]`, without
 changing the type of the global. The driver does not verify the module, so
 the compiler reports no error (`abc-example/misc/unbound_array.abc`).
 Expected: the global gets the complete type of its definition.
+
+Issue #0075: String literal is cut at an embedded null character
+Type: BUG
+Status: OPEN
+Covered by tests: #T0296 (runtime, XFAIL)
+
+`"a\0b"` has size 2 instead of 4: `parser/parseexpr.cpp` appends the value with
+`c_str()`, and `gen::getString()` takes a `const char *`. Expected: the literal
+keeps all its characters.
 
 ---
 
@@ -514,6 +449,22 @@ Covered by tests: #T0049 (runtime, PASS)
 `-=`. `p += n` and `p--` are accepted. Expected: `p -= n` is equivalent to
 `p = p - n`. Fixed: `p -= n` is accepted like `p += n`.
 
+Issue #0005: Hexadecimal literals always have type i32 and are truncated
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0033 (runtime, PASS), #T0293 (runtime, PASS)
+
+`getIntType()` in `expr/integerliteral.cpp` passes the literal including the
+`0x` prefix to `std::from_chars`, which stops at the `x` and reports success
+for the value 0. Thus every hexadecimal literal gets type i32 and e.g.
+`0x100000000` becomes 0 without warning. Expected: hexadecimal literals get
+the same type rules as decimal literals (see also #0027).
+
+Fixed: the prefix is skipped when the type is determined, so hexadecimal
+literals follow the rules of decimal literals: i32 if they fit, otherwise i64.
+As for decimal literals, a value above the range of i64 such as
+`0xffffffffffffffff` gets a warning (see #0027).
+
 Issue #0006: Address of a global variable rejected in global initializers
 Type: BUG
 Status: RESOLVED
@@ -544,6 +495,23 @@ type float to double but passes i8/i16/u8/u16 values unchanged, so
 `printf("%d", (i8)-1)` prints 255. Expected (C interoperability): integers
 narrower than int are converted to int (sign or zero extended). Fixed: Integers narrower than int are converted to int.
 
+Issue #0009: Type long has 32 bits
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0041 (runtime, PASS), #T0292 (driver, PASS)
+
+`parser/defaulttype.cpp` defines `long` with `IntegerType::createInt()`
+(the unused `createLong()` exists). C's `long` has 64 bits on LP64 targets,
+so C functions declared with `long` in the ABC headers (e.g. `strtol` in
+`abc-include/stdio.hdr`) return truncated values. Expected: `long` matches
+the C type of the target.
+
+Fixed: `long` has 64 bits on a target with 64-bit pointers and 32 bits
+otherwise (`gen::getLongBits()` in `gen/gen.cpp`), as this is the size of the
+C type on the supported targets. The size comes from the target, not from the
+machine the compiler runs on. `IntegerType::createLong()` used the latter and
+was removed.
+
 Issue #0010: Lexer hangs on a // comment at the end of a file without newline
 Type: BUG
 Status: RESOLVED
@@ -560,6 +528,18 @@ Covered by tests: #T0005 (runtime, PASS)
 
 After `*/` the lexer reads the next character and reports "multi line comment
 not terminated" if it is EOF. Expected: the comment is terminated. Fixed: The lexer remembers that the comment was closed.
+
+Issue #0012: Octal escape sequences in string literals corrupt the literal
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0061 (runtime, PASS), #T0293 (runtime, PASS)
+
+`parseStringLiteral()` in `lexer/lexer.cpp` stores the value of an octal
+escape in `reader->ch`, overwriting the next character: `"\101B"` becomes
+`"AA"`, and `"a\0"` consumes the closing quote. Expected: escapes as in C.
+
+Fixed: the value is added to the literal, and `reader->ch` stays the next
+character. (A literal is still cut at an embedded null character, see #0075.)
 
 Issue #0013: ++ and -- are rejected for double
 Type: BUG
@@ -597,6 +577,18 @@ In `abc/abc.cpp`, `-L dir` added `-Ldir` to the linker flags but did not skip
 `dir`, which was then treated as input file (the linker failed). `-Ldir`
 worked. Fixed like `-target` (#0035): the separate argument is consumed; a
 missing directory is reported (usage, exit status 1) like for -o, -I and -l.
+
+Issue #0021: Documented type names long_long, unsigned_long, unsigned_long_long are undefined
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0013 (runtime, PASS), #T0292 (driver, PASS)
+
+The README lists them as predefined type names; they existed as type aliases
+(commit 4038f15, February 2024) but are missing in `parser/defaulttype.cpp`.
+Expected: defined with the sizes of the corresponding C types (see #0009).
+
+Fixed: defined in `parser/defaulttype.cpp`. `long_long` and
+`unsigned_long_long` have 64 bits, `unsigned_long` has the size of `long`.
 
 Issue #0034: Later optimization option did not reset -Os or -Oz
 Type: BUG
@@ -724,6 +716,40 @@ the assertion `abcType->isStruct()` in `isHomogeneousAggregate()`
 the function fell through to the struct case. Other targets were not affected.
 Fixed: for an array the result only depends on the element type.
 
+Issue #0046: Positional initializer after a designator is converted to the wrong type
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0220 (runtime, PASS), #T0294 (runtime, PASS)
+
+In `{.b = 1.5, 7}` for `struct S { a: i8; b: double; c: i32; }` the value
+`7` initializes `c` but is converted to the type of the second member
+(`double`): `CompoundExpr::create()` (`expr/compoundexpr.cpp`) takes the
+type from the position in the initializer list (`aggregateType(i)`) instead
+of the initialized member. `s.c` gets a wrong value. Expected: `s.c == 7`.
+
+Fixed: the type is taken from the initialized member (`aggregateType(index)`),
+or from the named member after a designator, which differs for a member of a
+union.
+
+Issue #0047: Compound assignment, ++ and -- evaluate their operand twice
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0221 (runtime, PASS), #T0222 (runtime, PASS), #T0281 (driver, PASS), #T0291 (runtime, PASS)
+
+`a[i++] += 10` reads `a[0]`, writes `a[1]` and increments `i` twice;
+`a[i++]++`, `++a[i++]` and `*p++ += 10` behave alike. The operand is
+evaluated once for its value and once more for its address
+(`BinaryExpr::loadValue()` in `expr/binaryexpr.cpp`, `UnaryExpr::loadValue()`
+in `expr/unaryexpr.cpp`). Simple assignment is not affected. The README does
+not specify compound assignment; expected (as in C): the operand is
+evaluated once.
+
+Fixed: the address is evaluated once and used for reading and writing
+(`handleCompoundAssignment()` in `expr/binaryexpr.cpp`,
+`UnaryExpr::loadValue()`). The new virtual `Expr::loadValueFrom()` reads from
+such an address, so identifiers and members still record the read for static
+analysis.
+
 Issue #0048: -> on a pointer expression without address is rejected
 Type: BUG
 Status: RESOLVED
@@ -761,6 +787,18 @@ Covered by tests: #T0231 (reject, PASS)
 The lexer reads the name of an `@ <...>` include up to the next `>`
 (`lexer/lexer.cpp`) without checking for the end of the line or the input;
 without `>` it loops forever at the end of the file. Expected: an error. Fixed: A missing `>` at the end of the line or the file is an error.
+
+Issue #0058: Negative designator for an array of unbound size hangs the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0233 (reject, PASS), #T0295 (reject, PASS)
+
+`local a: array[] of int = {[-1] = 1};` hangs: the designator is converted
+with `getUnsignedIntValue()` (`parser/parseexpr.cpp`) and the bound check is
+skipped for an unbound array, so the index wraps around. For an array with
+a size the designator is rejected. Expected: an error.
+
+Fixed: a designator with a negative value is an error for every array.
 
 Issue #0059: Several input files for x86-64 crash the compiler (freed type)
 Type: BUG

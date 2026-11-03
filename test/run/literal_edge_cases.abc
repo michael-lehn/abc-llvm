@@ -1,0 +1,26 @@
+// TEST: T0293
+// Hexadecimal literals follow the rules of decimal literals: type i32 if they
+// fit, otherwise i64. Octal escapes end where they end, also at the closing quote.
+
+@ <string.hdr>
+
+fn main(): int
+{
+    assert(sizeof(0x7fffffff) == 4);
+    assert(sizeof(0x80000000) == 8);
+    assert(sizeof(0Xffffffff) == 8);
+    assert(0xffffffff == 4294967295);
+    assert(0x7fffffffffffffff == 9223372036854775807);
+    assert(sizeof(2147483647) == sizeof(0x7fffffff));
+    assert(sizeof(2147483648) == sizeof(0x80000000));
+
+    local u: u32 = 0xffffffff;
+    assert(u == 0xffffffff);
+
+    assert(strcmp("\101", "A") == 0);
+    assert(strcmp("\101\102", "AB") == 0);
+    assert(strcmp("\1012", "A2") == 0);
+    assert(strcmp("x\60y", "x0y") == 0);
+    assert(strcmp("a\0", "a") == 0);
+    return 0;
+}

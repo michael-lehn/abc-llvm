@@ -158,7 +158,8 @@ testLiteralTypes()
     CHECK(typeOf("1.5 < 2")->isBool());
     CHECK(typeOf("1 + 1.5")->isDouble());
 
-    CHECK_KNOWN_BUG("T0156", "#0005", eval("0x100000000") == 4294967296);
+    CHECK(eval("0x100000000") == 4294967296);
+    CHECK(eval("0X100000000") == 4294967296);
 }
 
 static void

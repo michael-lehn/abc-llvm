@@ -103,6 +103,17 @@ parseCompoundExpression(const Type *type)
 		        << error::setColor(error::NORMAL);
 		    error::fatal();
 		}
+		if (expr->type->isSignedInteger() &&
+		    expr->getSignedIntValue() < 0) {
+		    error::location(loc);
+		    error::out()
+		        << error::setColor(error::BOLD) << loc << ": "
+		        << error::setColor(error::BOLD_RED)
+		        << "error: " << error::setColor(error::BOLD)
+		        << "array designator has a negative value\n"
+		        << error::setColor(error::NORMAL);
+		    error::fatal();
+		}
 		i = expr->getUnsignedIntValue();
 		hasDesignator = true;
 		designatorVec.push_back(std::move(expr));

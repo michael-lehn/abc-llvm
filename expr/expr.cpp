@@ -1,5 +1,6 @@
 #include "gen/constant.hpp"
 #include "gen/instruction.hpp"
+#include "gen/variable.hpp"
 #include "lexer/error.hpp"
 
 #include "expr.hpp"
@@ -12,6 +13,12 @@ bool
 Expr::hasConstantAddress() const
 {
     return false;
+}
+
+gen::Value
+Expr::loadValueFrom(gen::Value addr) const
+{
+    return gen::fetch(addr, type);
 }
 
 gen::Constant

@@ -187,6 +187,13 @@ init(const char *name, llvm::OptimizationLevel optLevel)
     llvmModule->setDataLayout(targetMachine->createDataLayout());
 }
 
+std::size_t
+getLongBits()
+{
+    assert(llvmModule);
+    return llvmModule->getDataLayout().getPointerSizeInBits() < 64 ? 32 : 64;
+}
+
 llvm::OptimizationLevel
 getOptimizationLevel()
 {

@@ -31,6 +31,7 @@ class Identifier : public Expr
 	// for code generation
 	gen::Constant loadConstant() const override;
 	gen::Value loadValue() const override;
+	gen::Value loadValueFrom(gen::Value addr) const override;
 	gen::Constant loadConstantAddress() const override;
 	gen::Value loadAddress() const override;
 

@@ -1,3 +1,4 @@
+#include "gen/gen.hpp"
 #include "symtab/symtab.hpp"
 #include "type/floattype.hpp"
 #include "type/integertype.hpp"
@@ -26,8 +27,17 @@ initDefaultType()
                     IntegerType::createInt()->getAlias("int"));
     Symtab::addType(lexer::Loc{}, UStr::create("unsigned"),
                     IntegerType::createUnsigned()->getAlias("unsigned"));
-    Symtab::addType(lexer::Loc{}, UStr::create("long"),
-                    IntegerType::createInt()->getAlias("long"));
+    Symtab::addType(
+        lexer::Loc{}, UStr::create("long"),
+        IntegerType::createSigned(gen::getLongBits())->getAlias("long"));
+    Symtab::addType(lexer::Loc{}, UStr::create("long_long"),
+                    IntegerType::createSigned(64)->getAlias("long_long"));
+    Symtab::addType(lexer::Loc{}, UStr::create("unsigned_long"),
+                    IntegerType::createUnsigned(gen::getLongBits())
+                        ->getAlias("unsigned_long"));
+    Symtab::addType(
+        lexer::Loc{}, UStr::create("unsigned_long_long"),
+        IntegerType::createUnsigned(64)->getAlias("unsigned_long_long"));
     Symtab::addType(lexer::Loc{}, UStr::create("size_t"),
                     IntegerType::createSizeType()->getAlias("size_t"));
     Symtab::addType(lexer::Loc{}, UStr::create("ptrdiff_t"),

@@ -1,5 +1,4 @@
 // TEST: T0222
-// XFAIL: #0047
 // The operand of ++ and -- is evaluated once: a[i++]++ and ++a[j++] modify
 // a[0] and increment the index once.
 

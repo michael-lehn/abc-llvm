@@ -66,7 +66,7 @@ the test, so a pointer that is never tested still gets no warning.
 | `analysis/nullderef.hpp` | 1-18 | Interface of `-Wnull-dereference` |
 | `analysis/nullderef.cpp` | 1-340 | Dataflow analysis of `-Wnull-dereference` (see below) |
 | `analysis/nullderef-v2.hpp` | 1-19 | Interface of `-Wnull-dereference=strict` |
-| `analysis/nullderef-v2.cpp` | 1-589 | Dataflow analysis of `-Wnull-dereference=strict` (see below) |
+| `analysis/nullderef-v2.cpp` | 1-587 | Dataflow analysis of `-Wnull-dereference=strict` (see below) |
 | `analysis/README.md` | all | This file |
 | `analysis/examples/` | all | One small program for each kind of warning, with a comment saying which options generate it |
 | `test/driver/analysis_examples.sh` | all | Test T0289: the comments in `analysis/examples` are correct |
@@ -100,7 +100,7 @@ Parts of `analysis/nullderef-v2.cpp`:
 | 235-401 | `transfer()`: effect of a basic block, with paths of SSA values, facts of tests and the checks |
 | 403-451 | `refine()`: what the condition of a branch tells about a path on each edge |
 | 453-482 | `join()`: merges the states of two edges |
-| 484-586 | `checkNullDereferenceStrict()`: selects the roots, computes the fixed point, and reports |
+| 484-584 | `checkNullDereferenceStrict()`: selects the roots, computes the fixed point, and reports |
 
 ## Modified files
 
@@ -111,7 +111,7 @@ include these markers. Markdown files have no such markers.
 | File | Lines | Purpose |
 |------|-------|---------|
 | `README.md` | 33 | Contents: entry for the section "Static Analysis" |
-| `README.md` | 852-964 | Section "Static Analysis": why there is no static analysis by default, and what a compiler has to do for such a warning |
+| `README.md` | 851-963 | Section "Static Analysis": why there is no static analysis by default, and what a compiler has to do for such a warning |
 | `test/examples.list` | 19 | Compile the programs in `analysis/examples` in `make check` |
 | `Makefile` | 74-76 | Add `analysis/*.cpp` to the compiler sources |
 | `abc/abc.cpp` | 8-10 | Include `analysis/analysis.hpp` |
@@ -122,10 +122,10 @@ include these markers. Markdown files have no such markers.
 | `ast/ast.cpp` | 817-822 | `AstLocalVar::codegen()`: record name and location of a local variable (declaration of a single variable) |
 | `ast/ast.cpp` | 832-837 | `AstLocalVar::codegen()`: record name and location of a local variable (declaration of a variable list) |
 | `expr/identifier.cpp` | 4-6 | Include `analysis/analysis.hpp` |
-| `expr/identifier.cpp` | 70-74 | `Identifier::loadValue()`: record the source location of a read |
+| `expr/identifier.cpp` | 76-80 | `Identifier::loadValueFrom()`: record the source location of a read |
 | `expr/member.cpp` | 3-5 | Include `<sstream>` for the source text of a read |
 | `expr/member.cpp` | 7-9 | Include `analysis/analysis.hpp` |
-| `expr/member.cpp` | 144-152 | `Member::loadValue()`: record location and source text of a read, e.g. `list->next` |
+| `expr/member.cpp` | 151-159 | `Member::loadValueFrom()`: record location and source text of a read, e.g. `list->next` |
 
 ## Limitations
 

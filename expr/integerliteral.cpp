@@ -139,8 +139,9 @@ getIntType(const char *s, const char *end, std::uint8_t radix,
     // TODO: Handle type of integer literals like in Rust. Currently handled
     //	    like in C, i.e. it is at least of type 'int' (where i32 is choosen)
     const abc::Type *ty = nullptr;
-    if (getIntType<std::int32_t, 32>(s, end, radix, ty) ||
-        getIntType<std::int64_t, 64>(s, end, radix, ty)) {
+    const char *digits = radix == 16 ? s + 2 : s; // skip the prefix '0x'
+    if (getIntType<std::int32_t, 32>(digits, end, radix, ty) ||
+        getIntType<std::int64_t, 64>(digits, end, radix, ty)) {
 	return ty;
     }
     abc::error::out() << loc << ": warning: signed integer '" << s

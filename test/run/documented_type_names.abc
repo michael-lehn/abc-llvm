@@ -1,5 +1,4 @@
 // TEST: T0013
-// XFAIL: #0021 README type names long_long, unsigned_long(_long) are undefined
 
 fn main(): int
 {

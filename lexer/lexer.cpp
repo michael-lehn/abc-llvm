@@ -513,8 +513,7 @@ parseStringLiteral()
 		    octalval = octalval * 8 + reader->ch - '0';
 		    nextCh();
 		}
-		reader->ch = octalval;
-		processed += reader->ch;
+		processed += char(octalval);
 	    } else {
 		switch (reader->ch) {
 		// simple-escape-sequence

@@ -1,0 +1,41 @@
+// TEST: T0294
+// After a designator a positional initializer is converted to the type of the
+// member it initializes, also in a constant initializer and for nested types.
+
+struct In
+{
+    x: i8;
+    y: double;
+};
+
+struct S
+{
+    a: double;
+    b: In;
+    c: i64;
+    d: double;
+};
+
+global g: S = {.b = {.y = 2.5}, 3, 4};
+
+fn main(): int
+{
+    assert(g.b.y == 2.5);
+    assert(g.c == 3);
+    assert(g.d == 4.0);
+
+    local s: S = {.c = 1, 2.5};
+    assert(s.c == 1);
+    assert(s.d == 2.5);
+
+    local a: array[4] of double = {[1] = 1, 2};
+    assert(a[1] == 1.0);
+    assert(a[2] == 2.0);
+
+    local b: array[] of int = {[2] = 5, [0] = 1, 2};
+    assert(sizeof(b) == 3 * sizeof(int));
+    assert(b[0] == 1);
+    assert(b[1] == 2);
+    assert(b[2] == 5);
+    return 0;
+}

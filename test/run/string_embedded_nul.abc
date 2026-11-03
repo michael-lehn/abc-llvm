@@ -1,0 +1,13 @@
+// TEST: T0296
+// XFAIL: #0075
+// A string literal with an embedded null character keeps all its characters.
+
+global s: array[] of char = "a\0b";
+
+fn main(): int
+{
+    assert(sizeof(s) == 4);
+    assert(s[2] == 'b');
+    assert(sizeof("a\0b") == 4);
+    return 0;
+}

@@ -221,8 +221,7 @@ testStringLiterals()
     // adjacent string literals are separate tokens (joined by the parser)
     CHECK_EQ(kinds("\"a\" \"b\""), (std::vector{STRING_LITERAL,
                                                 STRING_LITERAL}));
-    CHECK_KNOWN_BUG("T0159", "#0012",
-                    isSingle("\"\\101B\"", STRING_LITERAL, "AB"));
+    CHECK(isSingle("\"\\101B\"", STRING_LITERAL, "AB"));
 }
 
 static void

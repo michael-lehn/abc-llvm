@@ -207,9 +207,10 @@ BinaryExpr::loadConstant() const
 }
 
 gen::Value
-BinaryExpr::handleArithmetricOperation(Kind kind) const
+BinaryExpr::handleArithmetricOperation(Kind kind, gen::Value leftVal) const
 {
     assert(type);
+    auto rightVal = right->loadValue();
     switch (kind) {
     default:
 	assert(0);
@@ -220,10 +221,10 @@ BinaryExpr::handleArithmetricOperation(Kind kind) const
 	    assert(left->type->isPointer());
 	    assert(right->type->isInteger());
 	    return gen::pointerIncrement(left->type->refType(),
-	                                 left->loadValue(), right->loadValue());
+	                                 leftVal, rightVal);
 	} else {
 	    return gen::instruction(getGenInstructionOp(kind, type),
-	                            left->loadValue(), right->loadValue());
+	                            leftVal, rightVal);
 	}
     case SUB:
 	if (type->isPointer()) {
@@ -231,18 +232,18 @@ BinaryExpr::handleArithmetricOperation(Kind kind) const
 	    assert(right->type->isInteger());
 	    auto offset = gen::instruction(gen::SUB,
 	                                   gen::getConstantZero(right->type),
-	                                   right->loadValue());
+	                                   rightVal);
 	    return gen::pointerIncrement(left->type->refType(),
-	                                 left->loadValue(), offset);
+	                                 leftVal, offset);
 	} else if (left->type->isPointer()) {
 	    // pointer - pointer
 	    assert(right->type->isPointer());
 	    assert(type->isInteger());
 	    return gen::pointerDifference(
-	        left->type->refType(), left->loadValue(), right->loadValue());
+	        left->type->refType(), leftVal, rightVal);
 	} else {
 	    return gen::instruction(getGenInstructionOp(kind, type),
-	                            left->loadValue(), right->loadValue());
+	                            leftVal, rightVal);
 	}
     case MUL:
     case DIV:
@@ -253,8 +254,17 @@ BinaryExpr::handleArithmetricOperation(Kind kind) const
     case BITWISE_LEFT_SHIFT:
     case BITWISE_RIGHT_SHIFT:
 	return gen::instruction(getGenInstructionOp(kind, type),
-	                        left->loadValue(), right->loadValue());
+	                        leftVal, rightVal);
     }
+}
+
+gen::Value
+BinaryExpr::handleCompoundAssignment(Kind kind) const
+{
+    // the left operand is evaluated once
+    auto addr = left->loadAddress();
+    auto val = handleArithmetricOperation(kind, left->loadValueFrom(addr));
+    return gen::store(val, addr, left->type);
 }
 
 gen::Value
@@ -268,35 +278,25 @@ BinaryExpr::loadValue() const
     case ASSIGN:
 	return gen::store(right->loadValue(), left->loadAddress(), right->type);
     case ADD_ASSIGN:
-	return gen::store(handleArithmetricOperation(ADD), left->loadAddress(),
-	                  right->type);
+	return handleCompoundAssignment(ADD);
     case SUB_ASSIGN:
-	return gen::store(handleArithmetricOperation(SUB), left->loadAddress(),
-	                  right->type);
+	return handleCompoundAssignment(SUB);
     case MUL_ASSIGN:
-	return gen::store(handleArithmetricOperation(MUL), left->loadAddress(),
-	                  right->type);
+	return handleCompoundAssignment(MUL);
     case DIV_ASSIGN:
-	return gen::store(handleArithmetricOperation(DIV), left->loadAddress(),
-	                  right->type);
+	return handleCompoundAssignment(DIV);
     case MOD_ASSIGN:
-	return gen::store(handleArithmetricOperation(MOD), left->loadAddress(),
-	                  right->type);
+	return handleCompoundAssignment(MOD);
     case BITWISE_AND_ASSIGN:
-	return gen::store(handleArithmetricOperation(BITWISE_AND),
-	                  left->loadAddress(), right->type);
+	return handleCompoundAssignment(BITWISE_AND);
     case BITWISE_OR_ASSIGN:
-	return gen::store(handleArithmetricOperation(BITWISE_OR),
-	                  left->loadAddress(), right->type);
+	return handleCompoundAssignment(BITWISE_OR);
     case BITWISE_XOR_ASSIGN:
-	return gen::store(handleArithmetricOperation(BITWISE_XOR),
-	                  left->loadAddress(), right->type);
+	return handleCompoundAssignment(BITWISE_XOR);
     case BITWISE_LEFT_SHIFT_ASSIGN:
-	return gen::store(handleArithmetricOperation(BITWISE_LEFT_SHIFT),
-	                  left->loadAddress(), right->type);
+	return handleCompoundAssignment(BITWISE_LEFT_SHIFT);
     case BITWISE_RIGHT_SHIFT_ASSIGN:
-	return gen::store(handleArithmetricOperation(BITWISE_RIGHT_SHIFT),
-	                  left->loadAddress(), right->type);
+	return handleCompoundAssignment(BITWISE_RIGHT_SHIFT);
     case ADD:
     case SUB:
     case MUL:
@@ -307,7 +307,7 @@ BinaryExpr::loadValue() const
     case BITWISE_XOR:
     case BITWISE_LEFT_SHIFT:
     case BITWISE_RIGHT_SHIFT:
-	return handleArithmetricOperation(kind);
+	return handleArithmetricOperation(kind, left->loadValue());
     case LESS:
     case LESS_EQUAL:
     case GREATER:

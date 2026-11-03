@@ -67,8 +67,14 @@ Identifier::loadValue() const
     if (type->isFunction()) {
 	return loadAddress();
     }
+    return loadValueFrom(loadAddress());
+}
+
+gen::Value
+Identifier::loadValueFrom(gen::Value addr) const
+{
     // for lint (begin)
-    auto val = gen::fetch(loadAddress(), type);
+    auto val = gen::fetch(addr, type);
     analysis::noteRead(val, loc);
     return val;
     // for lint (end)

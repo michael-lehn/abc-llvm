@@ -137,34 +137,24 @@ UnaryExpr::loadValue() const
     case ADDRESS:
 	return child->loadAddress();
     case PREFIX_INC:
-    case PREFIX_DEC: {
-	auto incType =
-	    type->isPointer() ? IntegerType::createSigned(8) : child->type;
-	auto inc = kind == PREFIX_INC ? gen::getConstantOne(incType)
-	                              : gen::getConstantMinusOne(incType);
-	gen::Value val =
-	    type->isPointer() ? gen::pointerIncrement(child->type->refType(),
-	                                              child->loadValue(), inc)
-	    : type->isInteger()
-	        ? gen::instruction(gen::ADD, child->loadValue(), inc)
-	        : gen::instruction(gen::FADD, child->loadValue(), inc);
-	gen::store(val, child->loadAddress(), child->type);
-	return val;
-    }
+    case PREFIX_DEC:
     case POSTFIX_INC:
     case POSTFIX_DEC: {
-	auto prevLeftVal = child->loadValue();
+	// the operand is evaluated once
+	auto addr = child->loadAddress();
+	auto prevVal = child->loadValueFrom(addr);
 	auto incType =
 	    type->isPointer() ? IntegerType::createSigned(8) : child->type;
-	auto inc = kind == POSTFIX_INC ? gen::getConstantOne(incType)
-	                               : gen::getConstantMinusOne(incType);
+	auto inc = kind == PREFIX_INC || kind == POSTFIX_INC
+	               ? gen::getConstantOne(incType)
+	               : gen::getConstantMinusOne(incType);
 	gen::Value val =
-	    type->isPointer()   ? gen::pointerIncrement(child->type->refType(),
-	                                                prevLeftVal, inc)
-	    : type->isInteger() ? gen::instruction(gen::ADD, prevLeftVal, inc)
-	                        : gen::instruction(gen::FADD, prevLeftVal, inc);
-	gen::store(val, child->loadAddress(), child->type);
-	return prevLeftVal;
+	    type->isPointer()
+	        ? gen::pointerIncrement(child->type->refType(), prevVal, inc)
+	    : type->isInteger() ? gen::instruction(gen::ADD, prevVal, inc)
+	                        : gen::instruction(gen::FADD, prevVal, inc);
+	gen::store(val, addr, child->type);
+	return kind == PREFIX_INC || kind == PREFIX_DEC ? val : prevVal;
     }
     case MINUS:
 	return gen::instruction(type->isFloatType() ? gen::FSUB : gen::SUB,

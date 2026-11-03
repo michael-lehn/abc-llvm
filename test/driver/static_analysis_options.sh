@@ -28,6 +28,19 @@ for option in -Wall -Wuninitialized; do
     fi
 done
 
+# operators that read and write their operand read it, too
+cat > update.abc <<'EOF'
+fn f(): int { local x: int; x += 1; return x; }
+fn g(): int { local x: int; x++; return x; }
+fn main(): int { return f() + g(); }
+EOF
+"$ABC" $ABC_FLAGS -Wuninitialized -c update.abc -o update.o 2> update.txt || exit 1
+if [ `grep -c 'is used uninitialized' update.txt` != 2 ]; then
+    echo "no warning for an operator that updates its operand:"
+    cat update.txt
+    exit 1
+fi
+
 "$ABC" $ABC_FLAGS --emit-llvm uninit.abc -o default.ll 2> /dev/null || exit 1
 "$ABC" $ABC_FLAGS -Wall --emit-llvm uninit.abc -o enabled.ll 2> /dev/null || exit 1
 if ! cmp default.ll enabled.ll; then
