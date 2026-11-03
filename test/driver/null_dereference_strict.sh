@@ -38,6 +38,15 @@ fn head(h: -> H): int { return h->first->val; } // WARN: may be null when derefe
 fn localStruct(): int { local h: H; h.first = nullptr; return h.first->val; } // WARN: is null when dereferenced
 fn localStructOk(): int { local h: H; h.first = nullptr; if (h.first) { return h.first->val; } return 0; } // ok
 fn deep(): int { local n: -> N = malloc(16); if (!n) { return 0; } n->next = nullptr; n = malloc(16); if (!n) { return 0; } n->next = malloc(16); if (!n->next) { return 0; } return n->next->val; } // ok
+fn testAfter(list: -> N): int { if (list->next && list) { return list->next->val; } return 0; } // WARN: is tested for null after it was dereferenced
+fn testAfterEq(p: -> int): int { local v: int = *p; if (p == nullptr) { return 0; } return v; } // WARN: is tested for null after it was dereferenced
+fn testAfterFlag(p: -> int): int { local v: int = *p; local ok: bool = p != nullptr; return ok ? v : 0; } // WARN: is tested for null after it was dereferenced
+fn testAfterOnPath(p: -> int, c: int): int { local v: int = 0; if (c) { v = *p; } if (p) { v = 1; } return v; } // WARN: is tested for null after it may have been dereferenced
+fn testBeforeLoop(p: -> int, n: int): int { local v: int = 0; for (local i: int = 0; i < n; ++i) { if (p) { v = 1; } v = *p; } return v; } // WARN: may be null when dereferenced
+fn testBefore(list: -> N): int { if (list && list->next) { return list->next->val; } return 0; } // ok
+fn testTwice(p: -> int): int { if (!p) { return 0; } local v: int = *p; if (p) { v = 1; } return v; } // ok
+fn testOtherBranch(p: -> int, c: int): int { if (c) { return *p; } if (p) { return 1; } return 0; } // ok
+fn testAssigned(p: -> int, q: -> int): int { local v: int = *p; p = q; if (p) { v = 1; } return v; } // ok
 fn main(): int { return 0; }
 EOF
 

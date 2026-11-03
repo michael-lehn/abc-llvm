@@ -15,7 +15,7 @@ extra step that has to be requested:
 | `-Wall` | Enable all static analyses, with the strict variant of `-Wnull-dereference` |
 | `-Wuninitialized` | Warn about local variables that are, or may be, used uninitialized |
 | `-Wnull-dereference` | Warn about local pointer variables that are, or may be, null or freed when dereferenced, and about pointers freed twice |
-| `-Wnull-dereference=strict` | Also check members of structs, where an unknown member may be null, and tests kept in a variable |
+| `-Wnull-dereference=strict` | Also check members of structs, where an unknown member may be null, tests kept in a variable, and tests after a dereference |
 
 The generated code is the same with and without these options.
 
@@ -49,6 +49,11 @@ have changed by a store through another pointer or a call of an unknown function
 It also knows facts like "if `ok` is true then `p` is not null". The assumption
 that an unknown member may be null is what makes it strict.
 
+A dereference of a parameter gets no warning, as nothing is known about it. A
+later test against null shows that it can be null, so the strict analysis warns
+about the test: `if (list->next && list)`. It only looks at what happened before
+the test, so a pointer that is never tested still gets no warning.
+
 ## New files
 
 | File | Lines | Purpose |
@@ -61,7 +66,7 @@ that an unknown member may be null is what makes it strict.
 | `analysis/nullderef.hpp` | 1-18 | Interface of `-Wnull-dereference` |
 | `analysis/nullderef.cpp` | 1-340 | Dataflow analysis of `-Wnull-dereference` (see below) |
 | `analysis/nullderef-v2.hpp` | 1-19 | Interface of `-Wnull-dereference=strict` |
-| `analysis/nullderef-v2.cpp` | 1-573 | Dataflow analysis of `-Wnull-dereference=strict` (see below) |
+| `analysis/nullderef-v2.cpp` | 1-589 | Dataflow analysis of `-Wnull-dereference=strict` (see below) |
 | `analysis/README.md` | all | This file |
 | `analysis/examples/` | all | One small program for each kind of warning, with a comment saying which options generate it |
 | `test/driver/analysis_examples.sh` | all | Test T0289: the comments in `analysis/examples` are correct |
@@ -90,12 +95,12 @@ Parts of `analysis/nullderef-v2.cpp`:
 
 | Lines | Purpose |
 |-------|---------|
-| 108-158 | `get()`, `forget()`, `forgetMemory()`: the state of an access path, and when it gets forgotten |
-| 160-213 | `named()`, `stateOfValue()`, `onlyDirectAccess()`: which values can be null, and which variables can be the root of a path |
-| 229-390 | `transfer()`: effect of a basic block, with paths of SSA values, facts of tests and the checks |
-| 392-440 | `refine()`: what the condition of a branch tells about a path on each edge |
-| 442-471 | `join()`: merges the states of two edges |
-| 473-570 | `checkNullDereferenceStrict()`: selects the roots, computes the fixed point, and reports |
+| 114-164 | `get()`, `forget()`, `forgetMemory()`: the state of an access path, and when it gets forgotten |
+| 166-219 | `named()`, `stateOfValue()`, `onlyDirectAccess()`: which values can be null, and which variables can be the root of a path |
+| 235-401 | `transfer()`: effect of a basic block, with paths of SSA values, facts of tests and the checks |
+| 403-451 | `refine()`: what the condition of a branch tells about a path on each edge |
+| 453-482 | `join()`: merges the states of two edges |
+| 484-586 | `checkNullDereferenceStrict()`: selects the roots, computes the fixed point, and reports |
 
 ## Modified files
 
@@ -144,3 +149,6 @@ include these markers. Markdown files have no such markers.
   gets a false warning, as this needs to follow each path separately. It warns
   about members the program guarantees to be valid in another way, and does not
   track global variables and array elements.
+- A test after a dereference is only found by `-Wnull-dereference=strict`, and
+  only for a pointer nothing was known about. After `q = p; *q;` a test of `p`
+  gets no warning, as the dereference belongs to `q`.

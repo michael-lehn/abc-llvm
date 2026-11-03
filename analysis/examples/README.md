@@ -26,6 +26,7 @@ abc -Wall -c uninitialized_always.abc
 | `null_double_free.abc` | `free` twice |  | warning | warning | warning |
 | `null_test_in_variable.abc` | false warning of the simple analysis only |  | warning |  |  |
 | `null_flag_on_path.abc` | false warning of both analyses |  | warning | warning | warning |
+| `null_test_after_dereference.abc` | a test of a parameter that comes too late |  |  | warning | warning |
 | `member_unknown.abc` | an unknown member may be null |  |  | warning | warning |
 | `member_tested.abc` | testing a member |  |  |  |  |
 | `member_forgotten.abc` | a call forgets what was tested |  |  | warning | warning |

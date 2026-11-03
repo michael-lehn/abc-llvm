@@ -1,0 +1,34 @@
+// Warning options: -Wnull-dereference=strict -Wall
+//
+// Nothing is known about a parameter, so dereferencing 'list' alone gets no
+// warning. The test shows that it can be null, but comes too late: '&&' evaluates
+// the left operand first. The same test in front of the dereference is correct.
+
+struct Node {
+    val: int;
+    next: -> Node;
+};
+
+fn second(list: -> Node): int
+{
+    if (list->next && list) {  // WARNING: pointer 'list' is tested for null after it was dereferenced
+	return list->next->val;
+    }
+    return 0;
+}
+
+fn secondCorrect(list: -> Node): int
+{
+    if (list && list->next) {
+	return list->next->val;
+    }
+    return 0;
+}
+
+fn main(): int
+{
+    local node: Node;
+    node.val = 1;
+    node.next = nullptr;
+    return second(&node) + secondCorrect(&node);
+}

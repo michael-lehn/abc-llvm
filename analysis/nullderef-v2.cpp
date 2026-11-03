@@ -9,6 +9,10 @@
 // (3) A member nothing is known about may be null. This one assumption is what
 //     makes it strict: a member has to be tested before it is used, even if the
 //     program guarantees in another way that it is valid.
+// (4) A test after a dereference: 'if (list->next && list)'. Nothing is known
+//     about 'list', so its dereference gets no warning, but the test shows that
+//     it can be null. What is known afterwards is marked as coming from a
+//     dereference, and the test gets the warning.
 
 #include <algorithm>
 #include <cstdint>
@@ -41,6 +45,8 @@ namespace {
 
 using State = std::uint8_t;
 constexpr State IS_NULL = 1, NON_NULL = 2, FREED = 4, UNKNOWN = 8;
+// not null only because an unknown pointer was dereferenced without a test
+constexpr State DEREFERENCED = 16;
 
 struct Step
 {
@@ -262,7 +268,8 @@ transfer(const llvm::BasicBlock &bb, Env &env, Block &b,
 	    onReport(Report{i.read, describe(i), s, 0});
 	}
 	forget(env, *i.derefBase, false);
-	env.state[*i.derefBase] = NON_NULL;
+	env.state[*i.derefBase] =
+	    NON_NULL | ((s & (UNKNOWN | DEREFERENCED)) ? DEREFERENCED : 0);
     };
 
     for (const auto &inst : bb) {
@@ -353,6 +360,10 @@ transfer(const llvm::BasicBlock &bb, Env &env, Block &b,
 	    auto i = infoOf(lhs);
 	    if (i.holds && llvm::isa<llvm::ConstantPointerNull>(rhs) &&
 	        icmp->isEquality()) {
+		auto s = get(env, *i.holds);
+		if ((s & DEREFERENCED) && i.read) {
+		    onReport(Report{i.read, describe(i), s, 3});
+		}
 		b.facts.push_back(std::make_unique<Fact>(
 		    Fact{*i.holds,
 		         icmp->getPredicate() == llvm::ICmpInst::ICMP_NE}));
@@ -555,11 +566,16 @@ checkNullDereferenceStrict(llvm::Function &fn, const SourceInfo &info)
 	auto loc = locOf(r);
 	static const char *const maybe[] = {" may be null when dereferenced",
 	                                    " may be dereferenced after free",
-	                                    " may be freed twice"};
+	                                    " may be freed twice",
+	                                    " is tested for null after it may have"
+	                                    " been dereferenced"};
 	static const char *const sure[] = {" is null when dereferenced",
 	                                   " is dereferenced after free",
-	                                   " is freed twice"};
-	bool isSure = r.state == (r.kind == 0 ? IS_NULL : FREED);
+	                                   " is freed twice",
+	                                   " is tested for null after it was"
+	                                   " dereferenced"};
+	bool isSure = r.kind == 3 ? !(r.state & ~(NON_NULL | DEREFERENCED))
+	                          : r.state == (r.kind == 0 ? IS_NULL : FREED);
 	error::location(loc);
 	error::out() << error::setColor(error::BOLD) << loc << ": "
 	             << error::setColor(error::BOLD_BLUE)
