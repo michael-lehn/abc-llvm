@@ -451,6 +451,9 @@ main(int argc, char *argv[])
 	    }
 	    if (codegen) {
 		ast->codegen();
+		if (!gen::checkDeclaredFunctions()) {
+		    std::exit(1);
+		}
 		if (!gen::verifyModule()) {
 		    std::cerr << argv[0] << ": internal compiler error: "
 		              << "invalid LLVM IR generated for "

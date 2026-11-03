@@ -4,6 +4,7 @@
 #include "llvm/Support/Solaris/sys/regset.h"
 #endif // SUPPORT_SOLARIS
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/CodeGen.h"
@@ -186,6 +187,27 @@ init(const char *name, llvm::OptimizationLevel optLevel)
 #endif
 
     llvmModule->setDataLayout(targetMachine->createDataLayout());
+}
+
+bool
+checkDeclaredFunctions()
+{
+    assert(llvmModule);
+    bool ok = true;
+    for (auto &fn : llvm::make_early_inc_range(llvmModule->functions())) {
+	if (!fn.isDeclaration() || !fn.hasLocalLinkage()) {
+	    continue;
+	}
+	if (fn.use_empty()) {
+	    fn.eraseFromParent();
+	} else {
+	    // the name of a function with internal linkage is '.name'
+	    llvm::errs() << "error: function '" << fn.getName().drop_front()
+	                 << "' is used but not defined\n";
+	    ok = false;
+	}
+    }
+    return ok;
 }
 
 bool

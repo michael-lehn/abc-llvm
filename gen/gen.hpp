@@ -47,6 +47,11 @@ extern const char *moduleName;
 void init(const char *name = nullptr,
           llvm::OptimizationLevel optLevel = llvm::OptimizationLevel::O0);
 
+// Functions declared without 'extern' have internal linkage, so their definition
+// has to be in this file. Removes such a declaration if nothing uses it. Returns
+// false if something does, with the reason on stderr.
+bool checkDeclaredFunctions();
+
 // false if the generated IR is invalid, with the reason on stderr
 bool verifyModule();
 

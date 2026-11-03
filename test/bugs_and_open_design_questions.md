@@ -1044,3 +1044,14 @@ false and `&a[0] > &a[3]` was true, in a global initializer and in a function.
 an unsigned size, and `BinaryExpr::loadConstant()` compared the difference with
 0 as unsigned values, because it took the operator from the pointer type. Fixed:
 the division is signed, and the operator comes from the type of the difference.
+
+Issue #0085: Function declared but not defined gives invalid IR
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0318 (driver, PASS)
+
+`fn f();` without a definition in the file produced `declare internal`, which is
+invalid IR. Only a call was noticed, as a linker error about the symbol `.f`.
+With the verifier of #0018, also a declaration nothing uses was rejected, with an
+internal compiler error. Fixed: a declaration nothing uses is removed, and a used
+one is the error "function 'f' is used but not defined".
