@@ -1,0 +1,12 @@
+// TEST: T0312
+// XFAIL: #0080
+// Two null pointers are equal.
+
+fn main(): int
+{
+    local b: bool = nullptr == nullptr;
+    assert(b);
+    b = nullptr != nullptr;
+    assert(!b);
+    return 0;
+}

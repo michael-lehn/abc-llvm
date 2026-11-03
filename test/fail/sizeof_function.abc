@@ -1,0 +1,13 @@
+// TEST: T0310
+// XFAIL: #0079
+// A function has no size.
+// ERROR: no size|incomplete|can not be applied
+
+fn f()
+{
+}
+
+fn main(): int
+{
+    return sizeof(f);
+}

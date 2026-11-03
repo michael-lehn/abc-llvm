@@ -1,0 +1,27 @@
+// TEST: T0304
+// XFAIL: #0077
+// A conditional expression with calls of void functions as operands calls one
+// of them, like in C.
+
+global calls: int = 0;
+
+fn one()
+{
+    calls += 1;
+}
+
+fn ten()
+{
+    calls += 10;
+}
+
+fn main(): int
+{
+    local c: int = 1;
+    c ? one() : ten();
+    assert(calls == 1);
+    c = 0;
+    c ? one() : ten();
+    assert(calls == 11);
+    return 0;
+}

@@ -1,0 +1,16 @@
+// TEST: T0302
+// XFAIL: #0076
+// A call of a void function has no value to test.
+// ERROR: no value|void value|type .void
+
+fn f()
+{
+}
+
+fn main(): int
+{
+    if (f()) {
+	return 1;
+    }
+    return 0;
+}

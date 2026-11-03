@@ -1,0 +1,11 @@
+// TEST: T0307
+// XFAIL: #0078
+// A pointer to void can not be dereferenced.
+// ERROR: no size|incomplete|can not be applied|invalid operand|type .void
+
+fn main(): int
+{
+    local p: -> void = nullptr;
+    *p;
+    return 0;
+}

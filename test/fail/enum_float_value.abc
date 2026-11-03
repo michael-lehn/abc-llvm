@@ -1,0 +1,14 @@
+// TEST: T0314
+// XFAIL: #0081
+// The value of an enumeration constant is an integer.
+// ERROR: integer
+
+enum E
+{
+    A = 1.5,
+};
+
+fn main(): int
+{
+    return 0;
+}

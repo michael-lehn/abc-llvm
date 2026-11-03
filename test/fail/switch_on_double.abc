@@ -1,0 +1,16 @@
+// TEST: T0313
+// XFAIL: #0081
+// The expression of a switch has an integer type.
+// ERROR: integer
+
+fn main(): int
+{
+    local x: double = 1;
+    switch (x) {
+    case 1:
+	break;
+    default:
+	break;
+    }
+    return 0;
+}

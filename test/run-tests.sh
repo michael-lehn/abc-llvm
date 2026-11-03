@@ -443,6 +443,8 @@ fail_test()
 	echo "compiler accepted invalid program"
     elif [ $status -ge 128 ]; then
 	echo "compiler crashed or hung (`describe_status $status`)"
+    elif strip_color < "$log" | grep -q 'internal compiler error'; then
+	echo "internal compiler error"
     elif ! strip_color < "$log" | grep -Eiq -e "$pattern"; then
 	echo "diagnostic does not match /$pattern/"
     fi

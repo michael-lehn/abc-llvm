@@ -218,6 +218,73 @@ identifiers in the initializer have no static storage
 Expected: like for global variables (#0006), the address of a static local
 variable is constant in the initializers of its own declaration.
 
+Issue #0076: Value of a void function used as an operand
+Type: BUG
+Status: OPEN
+Covered by tests: #T0302 (reject, XFAIL), #T0303 (reject, XFAIL)
+
+`if (f())` with a void function `f` fails an assertion of LLVM ("Both operands
+to ICmp instruction are not of the same type"). `printf("%d", f())` gives an
+internal compiler error (invalid IR: "Instruction operands must be first-class
+values"). Expected: an error.
+
+Issue #0077: Conditional expression with void operands gives invalid IR
+Type: BUG
+Status: OPEN
+Covered by tests: #T0304 (runtime, XFAIL)
+
+`c ? f() : g();` with void functions builds a `phi void`: internal compiler
+error ("Instruction operands must be first-class values"). The README does not
+specify this case. Expected (as in C): one of the functions is called and the
+expression has no value.
+
+Issue #0078: Pointer to void can be incremented, indexed and dereferenced
+Type: BUG
+Status: OPEN
+Covered by tests: #T0305 (reject, XFAIL), #T0306 (reject, XFAIL), #T0307 (reject, XFAIL), #T0308 (reject, XFAIL)
+
+With `p: -> void`, `++p` and `p + 1` give an internal compiler error (invalid
+IR: "GEP into unsized type"); `*p` and `p[0]` crash the compiler without a
+message. Expected: an error.
+
+Issue #0079: sizeof of void or of a function crashes the compiler
+Type: BUG
+Status: OPEN
+Covered by tests: #T0309 (reject, XFAIL), #T0310 (reject, XFAIL)
+
+`sizeof(void)` and `sizeof(f)` for a function `f` crash the compiler without a
+message. Expected: an error.
+
+Issue #0080: nullptr as an operand crashes the compiler
+Type: BUG
+Status: OPEN
+Covered by tests: #T0311 (reject, XFAIL), #T0312 (runtime, XFAIL)
+
+`nullptr + 1`, and `nullptr == nullptr` used as a value, fail the assertion
+"Nullptr has no referenced type" (`type/nullptrtype.cpp`); as a condition, e.g.
+in `assert(nullptr == nullptr)`, the comparison works. Expected: `nullptr + 1`
+is an error, and `nullptr == nullptr` is true.
+
+Issue #0081: Non-integer switch expression or enumeration value crashes the compiler
+Type: BUG
+Status: OPEN
+Covered by tests: #T0313 (reject, XFAIL), #T0314 (reject, XFAIL)
+
+A `switch` on a `double` fails an assertion in `Expr::getConstantInt()`
+(`expr/expr.cpp`), and `enum E { A = 1.5 };` one in `ast/ast.cpp`. The type is
+not checked before the value is used. Expected: an error.
+
+Issue #0082: Comparing addresses of different objects in a global initializer crashes the compiler
+Type: BUG
+Status: OPEN
+Covered by tests: #T0315 (reject, XFAIL)
+
+`global b: bool = &a == &z;` fails the assertion `diff.has_value()` in
+`BinaryExpr::loadConstant()` (`expr/binaryexpr.cpp`): `isConst()` only checks
+that both operands are constant, but these addresses have no constant
+difference. Addresses within one array work. Expected: "not a compile-time
+constant".
+
 ---
 
 ## Design

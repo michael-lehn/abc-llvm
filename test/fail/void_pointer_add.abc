@@ -1,0 +1,11 @@
+// TEST: T0306
+// XFAIL: #0078
+// void has no size, so nothing can be added to a pointer to it.
+// ERROR: no size|incomplete|can not be applied|invalid operand|type .void
+
+fn main(): int
+{
+    local p: -> void = nullptr;
+    p = p + 1;
+    return 0;
+}
