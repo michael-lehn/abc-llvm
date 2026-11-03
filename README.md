@@ -538,6 +538,9 @@ A directive begins with `@` and ends at the end of the line:
 The syntax for expressions is very similar to expressions in C, with the
 following exceptions:
 - The operators `alignas` and `alignof` are not implemented yet.
+- As in C, a condition and the operands of `&&`, `||` and `!` can be integers,
+  floating point values or pointers. A value is true if it is not equal to 0, so
+  `-0.0` is false and NaN is true.
 - For a conditional expression, the ternary Operator from C can be used, e.g.,
   `x = a > b ? y : z`, or alternatively, the more verbose notation `x = a > b
   then y else z`. At least currently, "?" and "then", and ":" and "else" are

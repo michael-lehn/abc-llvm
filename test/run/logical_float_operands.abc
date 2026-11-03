@@ -1,0 +1,105 @@
+// TEST: T0320
+// &&, || and ! accept floating point operands like C: a value is true if it is
+// not equal to 0. -0.0 is false, NaN is true, and the right operand of && and ||
+// is only evaluated if needed.
+
+global a: int;
+global calls: int = 0;
+global g1: bool = 0.5 && 1;
+global g2: bool = 0.0 || 0;
+global g3: bool = !0.5;
+global g4: bool = !0.0;
+global g5: bool = -0.0 || 0.0;
+global g6: bool = !&a;
+global g7: bool = !nullptr;
+global g8: bool = 0.25 && 1.5;
+
+fn count(): double
+{
+    ++calls;
+    return 1.0;
+}
+
+fn main(): int
+{
+    local half: double = 0.5;
+    local zero: double = 0.0;
+    local minusZero: double = -0.0;
+    local nan: double = zero / zero;
+    local f: float = 0.25;
+    local i: int = 1;
+    local p: -> int = &a;
+    local b: bool;
+
+    // values less than 1 do not become 0
+    b = half && 1;
+    assert(b);
+    b = 1 && half;
+    assert(b);
+    b = half && f;
+    assert(b);
+    b = zero || half;
+    assert(b);
+    b = zero || zero;
+    assert(!b);
+    b = !half;
+    assert(!b);
+    b = !zero;
+    assert(b);
+    b = !f;
+    assert(!b);
+
+    // special values
+    b = minusZero || 0;
+    assert(!b);
+    b = !minusZero;
+    assert(b);
+    b = nan && 1;
+    assert(b);
+    b = !nan;
+    assert(!b);
+
+    // mixed with integers and pointers
+    b = half && i;
+    assert(b);
+    b = half && p;
+    assert(b);
+    b = p && half;
+    assert(b);
+    b = zero || p;
+    assert(b);
+    b = p && zero;
+    assert(!b);
+
+    // as conditions
+    if (half && i) {
+	calls = 0;
+    } else {
+	assert(0);
+    }
+    if (!half) {
+	assert(0);
+    }
+    assert(half);
+    assert(!zero);
+    assert(half && !zero);
+
+    // short circuit
+    b = zero && count();
+    assert(!b && calls == 0);
+    b = half || count();
+    assert(b && calls == 0);
+    b = half && count();
+    assert(b && calls == 1);
+
+    // constants
+    assert(g1);
+    assert(!g2);
+    assert(!g3);
+    assert(g4);
+    assert(!g5);
+    assert(!g6);
+    assert(g7);
+    assert(g8);
+    return 0;
+}

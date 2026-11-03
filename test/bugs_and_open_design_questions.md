@@ -1065,3 +1065,13 @@ According to the README a function name does not convert implicitly to a functio
 pointer, but `if (f)`, `d = f` and `c ? f : f` failed assertions, and
 `printf("%p", f)` was accepted. Fixed: these are errors, and the address of a
 function is `&f`.
+
+Issue #0087: Floating point operands of &&, || and ! rejected, wrong !&a
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0109 (runtime, PASS), #T0320 (runtime, PASS)
+
+`if (d)` and `d ? 1 : 2` accept a floating point value, but `d && 1`, `d || 0` and
+`!d` were errors. Fixed: as in C a value is true if it is not equal to 0, so
+`-0.0` is false and NaN is true. In a constant expression `!&a` was true for every
+pointer (`UnaryExpr::loadConstant()`), now it is false for an address.

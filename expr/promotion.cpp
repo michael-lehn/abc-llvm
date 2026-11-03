@@ -99,6 +99,14 @@ call(ExprPtr &&fn, std::vector<ExprPtr> &&arg, lexer::Loc *loc)
 /*
  * Rules for binary expressions
  */
+// A floating point operand of '&&' or '||' stays as it is: it is compared with 0.
+// Converting it to bool is not possible, and 0.5 would become false.
+static const Type *
+logicalOperandType(const Type *type)
+{
+    return type->isFloatType() ? type : IntegerType::createBool();
+}
+
 static BinaryResult binaryErr(BinaryExpr::Kind kind, ExprPtr &&left,
                               ExprPtr &&right, lexer::Loc *loc);
 static BinaryResult binaryInt(BinaryExpr::Kind kind, ExprPtr &&left,
@@ -222,7 +230,9 @@ binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	break;
     case BinaryExpr::Kind::LOGICAL_AND:
     case BinaryExpr::Kind::LOGICAL_OR:
-	type = newLeftType = newRightType = IntegerType::createBool();
+	type = IntegerType::createBool();
+	newLeftType = logicalOperandType(left->type);
+	newRightType = logicalOperandType(right->type);
 	break;
     default:
 	type = nullptr;
@@ -290,7 +300,9 @@ binaryFlt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	break;
     case BinaryExpr::Kind::LOGICAL_AND:
     case BinaryExpr::Kind::LOGICAL_OR:
-	type = newLeftType = newRightType = IntegerType::createBool();
+	type = IntegerType::createBool();
+	newLeftType = logicalOperandType(left->type);
+	newRightType = logicalOperandType(right->type);
 	break;
     default:
 	type = nullptr;
@@ -464,9 +476,11 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	newLeftType = newRightType = Type::common(left->type, right->type);
     } break;
     case BinaryExpr::Kind::LOGICAL_AND:
-    case BinaryExpr::Kind::LOGICAL_OR: {
-	type = newLeftType = newRightType = IntegerType::createBool();
-    } break;
+    case BinaryExpr::Kind::LOGICAL_OR:
+	type = IntegerType::createBool();
+	newLeftType = logicalOperandType(left->type);
+	newRightType = logicalOperandType(right->type);
+	break;
     default:;
     }
     if (!type || !newLeftType || !newRightType) {
@@ -643,7 +657,8 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 	}
 	break;
     case UnaryExpr::LOGICAL_NOT:
-	if (child->type->isInteger() || child->type->isPointer()) {
+	if (child->type->isInteger() || child->type->isPointer() ||
+	    child->type->isFloatType()) {
 	    newChildType = child->type;
 	    type = IntegerType::createBool();
 	}

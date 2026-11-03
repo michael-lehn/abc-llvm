@@ -1,0 +1,13 @@
+// TEST: T0109
+// Logical not of a floating point value, like in C.
+
+fn main(): int
+{
+    local d: double = 1.5;
+    local e: double = 0.0;
+    local b: bool = !d;
+    assert(!b);
+    b = !e;
+    assert(b);
+    return 0;
+}

@@ -111,7 +111,7 @@ include these markers. Markdown files have no such markers.
 | File | Lines | Purpose |
 |------|-------|---------|
 | `README.md` | 33 | Contents: entry for the section "Static Analysis" |
-| `README.md` | 850-962 | Section "Static Analysis": why there is no static analysis by default, and what a compiler has to do for such a warning |
+| `README.md` | 853-965 | Section "Static Analysis": why there is no static analysis by default, and what a compiler has to do for such a warning |
 | `test/examples.list` | 19 | Compile the programs in `analysis/examples` in `make check` |
 | `Makefile` | 74-76 | Add `analysis/*.cpp` to the compiler sources |
 | `abc/abc.cpp` | 8-10 | Include `analysis/analysis.hpp` |

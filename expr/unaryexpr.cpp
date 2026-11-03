@@ -96,12 +96,8 @@ UnaryExpr::loadConstant() const
 	assert(0);
 	return nullptr;
     case LOGICAL_NOT:
-	if (child->type->isPointer()) {
-	    return gen::getTrue();
-	} else {
-	    return gen::instruction(gen::EQ, gen::getConstantZero(child->type),
-	                            child->loadConstant());
-	}
+	return gen::isZero(child->loadConstant()) ? gen::getTrue()
+	                                          : gen::getFalse();
     case MINUS:
 	return gen::instruction(type->isFloatType() ? gen::FSUB : gen::SUB,
 	                        gen::getConstantZero(type),
@@ -124,7 +120,8 @@ UnaryExpr::loadValue() const
 
     switch (kind) {
     case LOGICAL_NOT:
-	return gen::instruction(gen::EQ, gen::getConstantZero(child->type),
+	return gen::instruction(child->type->isFloatType() ? gen::FEQ : gen::EQ,
+	                        gen::getConstantZero(child->type),
 	                        child->loadValue());
     case ARROW_DEREF:
     case ASTERISK_DEREF:
