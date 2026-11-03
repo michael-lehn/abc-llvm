@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #ifdef SUPPORT_SOLARIS
@@ -13,7 +14,7 @@
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/ValueMap.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 
 #include "lexer/error.hpp"
@@ -47,8 +48,10 @@ using StateVec = std::vector<State>;
 
 static std::vector<Local> local;
 
-// A ValueMap as instructions in unreachable blocks get deleted
-static llvm::ValueMap<const llvm::Value *, lexer::Loc> readLoc;
+// Weak handles as instructions in unreachable blocks get deleted. Not a
+// ValueMap: LLVM is usually built without RTTI, and a ValueMap would need the
+// typeinfo of its base class CallbackVH.
+static std::vector<std::pair<llvm::WeakVH, lexer::Loc>> recordedRead;
 
 void
 declareLocal(gen::Value addr, UStr name, lexer::Loc loc)
@@ -66,7 +69,7 @@ noteRead(gen::Value load, lexer::Loc loc)
     if (!opt::uninitialized) {
 	return;
     }
-    readLoc[load] = loc;
+    recordedRead.emplace_back(load, loc);
 }
 
 // Successors that can actually be reached. Code generation keeps branches on
@@ -109,6 +112,13 @@ checkUninitialized(llvm::Function &fn)
 {
     if (!opt::uninitialized) {
 	return;
+    }
+
+    llvm::DenseMap<const llvm::Value *, lexer::Loc> readLoc;
+    for (const auto &[load, loc] : recordedRead) {
+	if (load) {
+	    readLoc[load] = loc;
+	}
     }
 
     // Only variables whose address never escapes: every access is a plain load
@@ -211,7 +221,7 @@ checkUninitialized(llvm::Function &fn)
     }
 
     local.clear();
-    readLoc.clear();
+    recordedRead.clear();
 }
 
 } // namespace analysis

@@ -28,7 +28,7 @@ carry is recorded during code generation in a side table.
 | File | Lines | Purpose |
 |------|-------|---------|
 | `analysis/uninit.hpp` | 1-29 | Interface: `opt::uninitialized`, `declareLocal()`, `noteRead()`, `checkUninitialized()` |
-| `analysis/uninit.cpp` | 1-218 | Side table and dataflow analysis (see below) |
+| `analysis/uninit.cpp` | 1-228 | Side table and dataflow analysis (see below) |
 | `analysis/README.md` | all | This file |
 | `test/driver/static_analysis_options.sh` | all | Test T0281: no analysis by default, `-Wall` and `-Wuninitialized` enable it, generated code unchanged, unknown `-W` option rejected, options listed by `--help` |
 
@@ -36,12 +36,12 @@ Parts of `analysis/uninit.cpp`:
 
 | Lines | Purpose |
 |-------|---------|
-| 26-30 | `opt::uninitialized`: is the analysis enabled (default: no) |
-| 48-51 | Side table: declared local variables, and source location of each read |
-| 53-70 | `declareLocal()` and `noteRead()` fill the side table if the analysis is enabled |
-| 72-84 | `feasibleSuccessors()`: follows only the taken edge of a branch on a constant, e.g. `while (1)` or `if (0)` |
-| 86-105 | `transfer()`: effect of a basic block on the state of the variables |
-| 107-215 | `checkUninitialized()`: selects the variables to track, computes the fixed point, reports the first read of each variable in source order, and clears the side table |
+| 27-31 | `opt::uninitialized`: is the analysis enabled (default: no) |
+| 49-54 | Side table: declared local variables, and source location of each read |
+| 56-73 | `declareLocal()` and `noteRead()` fill the side table if the analysis is enabled |
+| 75-87 | `feasibleSuccessors()`: follows only the taken edge of a branch on a constant, e.g. `while (1)` or `if (0)` |
+| 89-108 | `transfer()`: effect of a basic block on the state of the variables |
+| 110-225 | `checkUninitialized()`: selects the variables to track, computes the fixed point, reports the first read of each variable in source order, and clears the side table |
 
 ## Modified files
 
