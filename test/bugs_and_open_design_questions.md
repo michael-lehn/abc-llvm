@@ -701,6 +701,31 @@ changing the type of the global. The driver does not verify the module, so
 the compiler reports no error (`abc-example/misc/unbound_array.abc`).
 Expected: the global gets the complete type of its definition.
 
+Issue #0071: Local variable declared in unreachable code crashes the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0282 (runtime, PASS)
+
+`AstLocalVar::codegen()` (`ast/ast.cpp`) returned without doing anything if
+the current basic block was closed, e.g. after `return`. So the variable got
+no storage, although the parser had accepted the name for the rest of the
+block. A following label makes this code reachable again, and a read of the
+variable failed the assertion in `gen::loadAddress()`
+(`gen/variable.cpp`), even if the label is not a jump target. Fixed: the
+variable always gets defined, only its initializer is skipped.
+
+Issue #0072: goto to a label in an unreachable if statement crashes the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0283 (runtime, PASS)
+
+`AstIf::codegen()` (`ast/ast.cpp`) returned without generating its body if the
+current basic block was closed, so labels in the body never got inserted into
+the function. A goto to such a label created a branch to a block without a
+function, and the compiler crashed or hung afterwards. The symptom varied
+between runs. Fixed: the if statement is generated like any other statement,
+and `gen::functionDefinitionEnd()` removes the blocks if they are not reached.
+
 ---
 
 ## Open Language Design Questions

@@ -1,0 +1,104 @@
+// TEST: T0282
+// A local variable declared in unreachable code is in scope for the rest of its
+// block. A label can make this part of the block reachable, so the variable
+// needs storage. Its initializer is not executed (issue #0071).
+
+struct S {
+    a: int;
+};
+
+global initialized: int = 0;
+
+fn sideEffect(): int
+{
+    initialized = 1;
+    return 1;
+}
+
+fn afterReturn(c: int): int
+{
+    if (c) {
+	goto target;
+    }
+    return 1;
+    local y: int = 2;
+label target:
+    y = 3;
+    return y;
+}
+
+// The label is not a jump target: the read of y gets generated and then removed
+fn labelWithoutGoto(): int
+{
+    return 4;
+    local y: int = 2;
+label target:
+    return y;
+}
+
+fn variableList(c: int): int
+{
+    if (c) {
+	goto target;
+    }
+    return 1;
+    local a, b: int = {1, 2};
+label target:
+    a = 2;
+    b = 3;
+    return a + b;
+}
+
+fn structAndArray(): int
+{
+    goto target;
+    local s: S;
+    local v: array[3] of int;
+label target:
+    s.a = 2;
+    v[1] = 4;
+    return s.a + v[1];
+}
+
+fn initializerNotExecuted(): int
+{
+    goto target;
+    local y: int = sideEffect();
+label target:
+    y = 7;
+    return y;
+}
+
+fn forLoopVariable(): int
+{
+    goto target;
+    for (local i: int = 0; i < 1; ++i) {
+label target:
+	i = 8;
+	return i;
+    }
+    return 1;
+}
+
+fn main(): int
+{
+    if (afterReturn(1) != 3 || afterReturn(0) != 1) {
+	return 1;
+    }
+    if (labelWithoutGoto() != 4) {
+	return 2;
+    }
+    if (variableList(1) != 5 || variableList(0) != 1) {
+	return 3;
+    }
+    if (structAndArray() != 6) {
+	return 4;
+    }
+    if (initializerNotExecuted() != 7 || initialized != 0) {
+	return 5;
+    }
+    if (forLoopVariable() != 8) {
+	return 6;
+    }
+    return 0;
+}
