@@ -92,7 +92,7 @@ createSetGotoLabel(const std::unordered_map<UStr, gen::Label> &label)
 		error::out() << error::setColor(error::BOLD) << astLabel->loc
 		             << ": " << error::setColor(error::BOLD_RED)
 		             << "error: " << error::setColor(error::BOLD)
-		             << ": error: label not defined within function\n"
+		             << "label not defined within function\n"
 		             << error::setColor(error::NORMAL);
 		error::fatal();
 	    } else {
@@ -799,14 +799,13 @@ AstLocalVar::print(int indent) const
 void
 AstLocalVar::codegen()
 {
-    if (!gen::bbOpen()) {
-	// TODO: generate wanring/error?
-	return;
-    }
+    // In unreachable code the variables still get defined, as a label further
+    // down can make their scope reachable. Only the initializers are skipped.
+    const bool reachable = gen::bbOpen();
     for (const auto &item : declList->node) {
 	auto var = dynamic_cast<const AstVar *>(item.get());
 	assert(var);
-	auto initializer = var->getInitializerExpr();
+	auto initializer = reachable ? var->getInitializerExpr() : nullptr;
 	if (var->count() == 1) {
 	    gen::localVariableDefinition(var->getId(0).c_str(),
 	                                 var->getType(0));
@@ -1078,9 +1077,11 @@ AstIf::printElseIfCase(int indent) const
 void
 AstIf::codegen()
 {
+    // Code gets generated even if the statement is not reachable, as a label in
+    // its body can be the target of a goto. Without such a jump the blocks get
+    // removed by gen::functionDefinitionEnd().
     if (!gen::bbOpen()) {
 	error::out() << loc << ": warning: if statement not reachabel\n";
-	return;
     }
 
     auto thenLabel = gen::getLabel("then");

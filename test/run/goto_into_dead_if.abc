@@ -1,0 +1,199 @@
+// TEST: T0283
+// An if statement that can not be reached by falling through can contain a
+// label that is the target of a goto. The body of the if statement has to be
+// generated (issue #0072).
+
+global count: int = 0;
+
+fn intoThen(c: int): int
+{
+    goto target;
+    if (c) {
+label target:
+	return 1;
+    }
+    return 2;
+}
+
+fn intoElse(c: int): int
+{
+    goto target;
+    if (c) {
+	return 1;
+    } else {
+label target:
+	return 3;
+    }
+    return 2;
+}
+
+// After the then block control continues behind the if statement
+fn fallThrough(c: int): int
+{
+    local x: int = 1;
+    goto target;
+    if (c) {
+label target:
+	x = 4;
+    } else {
+	x = 5;
+    }
+    return x;
+}
+
+fn afterReturn(c: int): int
+{
+    if (c) {
+	goto target;
+    }
+    return 6;
+    if (c) {
+label target:
+	return 7;
+    }
+    return 8;
+}
+
+fn nested(a: int, b: int): int
+{
+    goto target;
+    if (a) {
+	if (b) {
+label target:
+	    return 9;
+	}
+    }
+    return 2;
+}
+
+fn localInBody(c: int): int
+{
+    goto target;
+    if (c) {
+	local x: int = 1;
+label target:
+	x = 10;
+	return x;
+    }
+    return 2;
+}
+
+fn staticInBody(c: int): int
+{
+    goto target;
+    if (c) {
+	static s: int = 11;
+label target:
+	return s;
+    }
+    return 2;
+}
+
+fn constantCondition(): int
+{
+    goto target;
+    if (0) {
+label target:
+	return 12;
+    }
+    return 2;
+}
+
+fn switchInBody(c: int): int
+{
+    goto target;
+    if (c) {
+	switch (c) {
+	    case 1:
+label target:
+		return 13;
+	    default:
+		return 2;
+	}
+    }
+    return 2;
+}
+
+// break and continue of a loop outside and inside of the if statement
+fn loops(): int
+{
+    local i: int = 0;
+    goto target;
+    while (i < 3) {
+	i++;
+	if (i == 100) {
+	    break;
+	}
+	if (i == 100) {
+label target:
+	    i += 10;
+	    continue;
+	}
+    }
+    return i;
+}
+
+fn loopInBody(c: int): int
+{
+    goto target;
+    if (c) {
+	while (true) {
+label target:
+	    break;
+	}
+	return 14;
+    }
+    return 2;
+}
+
+// No goto: the if statement does not affect the program
+fn withoutGoto(c: int): int
+{
+    return 15;
+    if (c) {
+	count = 1;
+	return 1;
+    }
+    return 2;
+}
+
+fn main(): int
+{
+    if (intoThen(0) != 1 || intoThen(1) != 1) {
+	return 1;
+    }
+    if (intoElse(1) != 3) {
+	return 2;
+    }
+    if (fallThrough(0) != 4) {
+	return 3;
+    }
+    if (afterReturn(1) != 7 || afterReturn(0) != 6) {
+	return 4;
+    }
+    if (nested(0, 0) != 9) {
+	return 5;
+    }
+    if (localInBody(0) != 10) {
+	return 6;
+    }
+    if (staticInBody(0) != 11) {
+	return 7;
+    }
+    if (constantCondition() != 12) {
+	return 8;
+    }
+    if (switchInBody(0) != 13) {
+	return 9;
+    }
+    if (loops() != 10) {
+	return 10;
+    }
+    if (loopInBody(0) != 14) {
+	return 11;
+    }
+    if (withoutGoto(1) != 15 || count != 0) {
+	return 12;
+    }
+    return 0;
+}
