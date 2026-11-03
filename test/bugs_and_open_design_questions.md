@@ -135,6 +135,19 @@ identifiers in the initializer have no static storage
 Expected: like for global variables (#0006), the address of a static local
 variable is constant in the initializers of its own declaration.
 
+Issue #0096: Large aggregates by value crash the x86-64 backend
+Type: BUG
+Status: OPEN
+Covered by tests: #T0330 (driver, XFAIL)
+
+An aggregate with more than about 65000 elements crashes LLVM for x86-64 when it
+is handled by value: `local z: array[] of int = {[70000] = 1};`, `a = b`, an
+initialization from a variable, an argument and a return value. Code generation
+loads and stores the whole aggregate as one value (`gen::fetch()`, `gen::store()`),
+and the selection of instructions can not handle so many parts. The same programs
+compile for AArch64. Expected: they compile, which needs copying such values with
+`memcpy` in all of these places.
+
 ---
 
 ## Design

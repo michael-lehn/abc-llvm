@@ -71,7 +71,7 @@ accept 'fn main() { local p: -> int; p += 1; p -= 1; local i: i64 = p - p; }'
 reject 'fn main() { local z: array[] of int = {[4294967296] = 1}; }'
 reject 'fn main() { local z: array[4294967296] of int = {[1] = 1}; }'
 reject 'global z: array[4294967296] of int = {1};'
-accept 'fn main() { local z: array[] of int = {[99999] = 1}; }'
+accept 'fn main() { local z: array[] of int = {[9999] = 1}; }'
 
 # literals and members
 reject "$F fn main() { F{}; }"
