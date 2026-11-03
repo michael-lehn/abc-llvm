@@ -12,6 +12,15 @@
 
 namespace abc {
 
+// The value of a constant condition. No instruction: this is also used outside of
+// functions, and an address can not be compared there. An array is an address, so
+// it is true, also a string literal without any character.
+static bool
+constantCondition(const Expr *cond)
+{
+    return cond->type->isArray() || !gen::isZero(cond->loadConstant());
+}
+
 ConditionalExpr::ConditionalExpr(ExprPtr cond, ExprPtr trueExpr,
                                  ExprPtr falseExpr, const Type *type,
                                  bool thenElseStyle, lexer::Loc loc)
@@ -84,10 +93,7 @@ ConditionalExpr::isConst() const
     if (!cond->isConst()) {
 	return false;
     }
-    auto condValue = gen::instruction(gen::conditionOp(cond->type),
-	                                      cond->loadConstant(),
-                                      gen::getConstantZero(cond->type));
-    if (!condValue->isNullValue()) {
+    if (constantCondition(cond.get())) {
 	return trueExpr->isConst();
     } else {
 	return falseExpr->isConst();
@@ -99,10 +105,7 @@ gen::Constant
 ConditionalExpr::loadConstant() const
 {
     assert(isConst());
-    auto condValue = gen::instruction(gen::conditionOp(cond->type),
-	                                      cond->loadConstant(),
-                                      gen::getConstantZero(cond->type));
-    if (!condValue->isNullValue()) {
+    if (constantCondition(cond.get())) {
 	return trueExpr->loadConstant();
     } else {
 	return falseExpr->loadConstant();

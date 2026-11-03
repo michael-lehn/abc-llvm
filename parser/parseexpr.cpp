@@ -620,9 +620,17 @@ parsePostfix(ExprPtr &&expr)
 static const Type *
 parseSuffixType()
 {
+    auto loc = token.loc;
     auto type = parseType();
     if (type && !type->isInteger() && !type->isFloatType()) {
-	return nullptr;
+	error::location(loc);
+	error::out() << error::setColor(error::BOLD) << loc << ": "
+	             << error::setColor(error::BOLD_RED)
+	             << "error: " << error::setColor(error::BOLD)
+	             << "type '" << type << "' after a literal: a type suffix "
+	             << "has to be an integer or floating point type\n"
+	             << error::setColor(error::NORMAL);
+	error::fatal();
     }
     return type;
 }

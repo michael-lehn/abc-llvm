@@ -468,8 +468,7 @@ The following keywords are reserved and cannot be used as identifiers:
 `true`      `type`      `union`     `while`
 
 The keywords `readonly` and `const` are synonyms. The keywords `alignas` and
-`alignof` are reserved for operators that are not implemented yet *(compiler
-bug #0020: the compiler does not reserve them)*.
+`alignof` are reserved for operators that are not implemented yet..
 
 Identifiers begin with a letter, i.e., `A` to `Z` and `a` to `z`, or an
 underscore `_`, and are optionally followed by a sequence of more letters,

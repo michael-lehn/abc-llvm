@@ -1,5 +1,4 @@
 // TEST: T0325
-// XFAIL: #0094
 // A string literal is true as a condition, also in a constant expression.
 
 global x: int = "s" ? 1 : 2;

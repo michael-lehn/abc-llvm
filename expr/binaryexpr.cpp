@@ -89,8 +89,8 @@ BinaryExpr::isConst() const
 	if (!refType->hasSize()) {
 	    return false; // e.g. functions: can be compared, but not at this point
 	}
-	auto diff = gen::pointerConstantDifference(refType, left->loadValue(),
-	                                           right->loadValue());
+	auto diff = gen::pointerConstantDifference(
+	    refType, left->loadConstant(), right->loadConstant());
 	return diff.has_value();
     }
 
@@ -152,7 +152,7 @@ BinaryExpr::loadConstant() const
 	    assert(Type::equals(left->type->refType(), right->type->refType()));
 	    auto refType = left->type->refType();
 	    auto diff = gen::pointerConstantDifference(
-	        refType, left->loadValue(), right->loadValue());
+	        refType, left->loadConstant(), right->loadConstant());
 	    assert(diff.has_value());
 	    return diff.value();
 	} else if (type->isPointer()) {
@@ -195,7 +195,7 @@ BinaryExpr::loadConstant() const
 	    assert(Type::equals(left->type->refType(), right->type->refType()));
 	    auto refType = left->type->refType();
 	    auto diff = gen::pointerConstantDifference(
-	        refType, left->loadValue(), right->loadValue());
+	        refType, left->loadConstant(), right->loadConstant());
 	    assert(diff.has_value());
 	    auto ptrdiffType = IntegerType::createPtrdiffType();
 	    return gen::instruction(getGenInstructionOp(kind, ptrdiffType),

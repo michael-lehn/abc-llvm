@@ -95,6 +95,8 @@ init()
     keyword[UStr::create("of")] = TokenKind::OF;
     keyword[UStr::create("return")] = TokenKind::RETURN;
     keyword[UStr::create("sizeof")] = TokenKind::SIZEOF;
+    keyword[UStr::create("alignas")] = TokenKind::ALIGNAS;
+    keyword[UStr::create("alignof")] = TokenKind::ALIGNOF;
     keyword[UStr::create("struct")] = TokenKind::STRUCT;
     keyword[UStr::create("switch")] = TokenKind::SWITCH;
     keyword[UStr::create("then")] = TokenKind::THEN;
@@ -783,13 +785,16 @@ parseAddDirective()
 	    nextCh();
 	}
 	nextCh();
+	if (macro::ignoreToken()) {
+	    return;
+	}
 	auto path = searchFile(str);
 	if (path.empty()) {
 	    error::out() << token.loc << ": can not find file " << str
 	                 << std::endl;
 	    error::fatal();
 	}
-	if (macro::ignoreToken() || includedFiles_.contains(path)) {
+	if (includedFiles_.contains(path)) {
 	    return;
 	}
 	includedFiles_.insert(path);

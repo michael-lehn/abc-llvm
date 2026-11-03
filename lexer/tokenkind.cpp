@@ -77,6 +77,10 @@ TokenKindCStr(TokenKind kind)
 	return "RETURN";
     case TokenKind::SIZEOF:
 	return "SIZEOF";
+    case TokenKind::ALIGNAS:
+	return "ALIGNAS";
+    case TokenKind::ALIGNOF:
+	return "ALIGNOF";
     case TokenKind::STRUCT:
 	return "STRUCT";
     case TokenKind::SWITCH:
@@ -245,6 +249,10 @@ getCStr(TokenKind kind)
 	return "return";
     case TokenKind::SIZEOF:
 	return "sizeof";
+    case TokenKind::ALIGNAS:
+	return "alignas";
+    case TokenKind::ALIGNOF:
+	return "alignof";
     case TokenKind::STRUCT:
 	return "struct";
     case TokenKind::SWITCH:

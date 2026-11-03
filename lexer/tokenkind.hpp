@@ -41,6 +41,8 @@ enum class TokenKind
     ARRAY,
     OF,
     SIZEOF,
+    ALIGNAS,
+    ALIGNOF,
     NULLPTR,
     STRUCT,
     UNION,

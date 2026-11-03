@@ -1,5 +1,4 @@
 // TEST: T0075
-// XFAIL: #0007 array of int converts implicitly to pointer to double (type.cpp)
 // An array converts implicitly only to a pointer to its element type.
 // ERROR: convert
 

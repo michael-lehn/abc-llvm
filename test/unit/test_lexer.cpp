@@ -141,8 +141,8 @@ testKeywords()
     CHECK_EQ(kinds("int u8 void"),
              (std::vector{IDENTIFIER, IDENTIFIER, IDENTIFIER}));
     // README reserves alignas and alignof
-    CHECK_KNOWN_BUG("T0158", "#0020", kinds("alignas")[0] != IDENTIFIER &&
-                                          kinds("alignof")[0] != IDENTIFIER);
+    CHECK(kinds("alignas")[0] != IDENTIFIER &&
+          kinds("alignof")[0] != IDENTIFIER);
 }
 
 static void

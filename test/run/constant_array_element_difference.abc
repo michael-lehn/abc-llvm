@@ -1,5 +1,4 @@
 // TEST: T0324
-// XFAIL: #0094
 // The elements of an array of arrays have constant addresses, so the difference
 // of their addresses is a constant.
 

@@ -1,5 +1,4 @@
 // TEST: T0326
-// XFAIL: #0094
 // An address is true as a condition, also in a constant expression.
 
 global a: array[2] of int;

@@ -93,10 +93,13 @@ const Type *
 EnumType::complete(std::vector<UStr> &&constName,
                    std::vector<std::int64_t> &&constValue)
 {
+    auto &readonlyVariant = enumConstMap.at(id_);
+    readonlyVariant.constName_ = constName;
+    readonlyVariant.constValue_ = constValue;
+    readonlyVariant.isComplete_ = true;
     constName_ = std::move(constName);
     constValue_ = std::move(constValue);
     isComplete_ = true;
-    enumConstMap.at(id_).isComplete_ = true;
     return this;
 }
 

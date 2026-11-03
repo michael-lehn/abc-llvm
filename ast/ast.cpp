@@ -1544,7 +1544,9 @@ AstEnumDecl::AstEnumDecl(lexer::Token name, const Type *intType)
     if (auto found = Symtab::type(name.val, Symtab::CurrentScope)) {
 	// if <name> is already a type declaration it has to be an incomplete
 	// enum type
-	if (!found->type->isEnum() || found->type->hasSize()) {
+	if (!found->type->isEnum() || found->type->hasSize() ||
+	    found->type->numBits() != intType->numBits() ||
+	    found->type->isSignedInteger() != intType->isSignedInteger()) {
 	    error::location(name.loc);
 	    error::out() << error::setColor(error::BOLD) << name.loc << ": "
 	                 << error::setColor(error::BOLD_RED)
@@ -1817,7 +1819,9 @@ AstStructDecl::print(int indent) const
 		error::out() << "\n";
 	    }
 	    if (unionSection) {
-		if (lastPos || (memberIndex[pos - 1] != memberIndex[pos])) {
+		// pos is behind the names of this declaration
+		if (pos == memberIndex.size() ||
+		    memberIndex[pos - 1] != memberIndex[pos]) {
 		    unionSection = false;
 		    error::out(indent) << "};\n";
 		    indent -= 4;

@@ -148,7 +148,13 @@ convert(const Type *from, const Type *to, bool checkConst)
 	if (from->isNullptr()) {
 	    return to;
 	}
-	if (convert(from->refType(), to->refType(), true)) {
+	if (to->refType()->isVoid()) {
+	    return to;
+	}
+	// like pointers: the types have to be equal, except for readonly
+	if (convert(from->refType(), to->refType(), true) &&
+	    Type::equals(from->refType()->getConstRemoved(),
+	                 to->refType()->getConstRemoved())) {
 	    return to;
 	} else {
 	    return nullptr;

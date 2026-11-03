@@ -1,0 +1,102 @@
+// TEST: T0328
+// Constant conditions decided without an instruction, differences of addresses of
+// elements of nested arrays, and a switch over a readonly enum that handles all
+// values or has a default label.
+
+enum Color : int
+{
+    RED,
+    GREEN,
+};
+
+fn code(c: readonly Color): int
+{
+    switch (c) {
+    case RED:
+	return 1;
+    case GREEN:
+	return 2;
+    }
+    return 0;
+}
+
+fn withDefault(c: readonly Color): int
+{
+    switch (c) {
+    case RED:
+	return 1;
+    default:
+	return 3;
+    }
+}
+
+fn f(): int
+{
+    return 1;
+}
+
+global a: array[3] of array[2] of int;
+global i: int;
+
+global diff: i64 = a[2] - a[0];
+global negative: i64 = a[0] - a[2];
+global same: bool = a[1] == a[1];
+global before: bool = a[0] < a[1];
+
+global str: int = "s" ? 1 : 2;
+global emptyStr: int = "" ? 1 : 2;
+global notNull: int = &i ? 1 : 2;
+global element: int = &a[1][1] ? 1 : 2;
+global isNull: int = nullptr ? 1 : 2;
+global function: int = &f ? 1 : 2;
+global half: int = 0.5 ? 1 : 2;
+global zero: int = 0.0 ? 1 : 2;
+global integer: int = 0 ? 1 : 2;
+global strAnd: bool = "" && 1;
+global strOr: bool = "" || 0;
+global addrAnd: bool = &i && 1;
+global nested: int = &i ? ("s" ? 3 : 4) : 5;
+
+fn main(): int
+{
+    assert(diff == 4);
+    assert(negative == -4);
+    assert(same);
+    assert(before);
+
+    assert(str == 1);
+    assert(emptyStr == 1);
+    assert(notNull == 1);
+    assert(element == 1);
+    assert(isNull == 2);
+    assert(function == 1);
+    assert(half == 1);
+    assert(zero == 2);
+    assert(integer == 2);
+    assert(strAnd);
+    assert(strOr);
+    assert(addrAnd);
+    assert(nested == 3);
+
+    // the same within a function
+    local d: i64 = a[1] - a[0];
+    assert(d == 2);
+    local r: int = "" ? 1 : 2;
+    assert(r == 1);
+    r = &i ? 1 : 2;
+    assert(r == 1);
+
+    assert(code(RED) == 1 && code(GREEN) == 2);
+    assert(withDefault(RED) == 1 && withDefault(GREEN) == 3);
+
+    // integer literals with a floating point type suffix
+    local dd: double = 1 double;
+    assert(dd == 1.0);
+    local ff: float = 3 float;
+    assert(ff == 3.0);
+    dd = 0x10 double;
+    assert(dd == 16.0);
+    dd = 010 double;
+    assert(dd == 8.0);
+    return 0;
+}

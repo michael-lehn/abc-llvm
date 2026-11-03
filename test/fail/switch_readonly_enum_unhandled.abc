@@ -1,5 +1,4 @@
 // TEST: T0226
-// XFAIL: #0051
 // ERROR: not handled in switch
 // A switch over a readonly enum value without default must handle all
 // enumeration values (as for a non-readonly enum value).

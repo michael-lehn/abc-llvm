@@ -97,6 +97,9 @@ ImplicitCast::loadConstant() const
 {
     assert(isConst());
     if (type->isBool()) {
+	if (expr->type->isArray()) {
+	    return gen::getTrue(); // an address, also of an empty string literal
+	}
 	auto value = expr->loadConstant();
 	if (gen::isZero(value)) {
 	    return gen::getFalse();

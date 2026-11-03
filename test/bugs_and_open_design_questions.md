@@ -31,17 +31,6 @@ Format of an entry:
 
 ## Open
 
-Issue #0007: Array converts implicitly to a pointer to a different element type
-Type: BUG
-Status: OPEN
-Covered by tests: #T0075 (reject, XFAIL), #T0157 (unit, XFAIL)
-
-`convert()` in `type/type.cpp` accepts array-to-pointer conversions if the
-element type merely converts to the referenced type, so
-`local p: -> double = a;` with `a: array[2] of int` compiles. Expected: like
-pointer-to-pointer conversion, the element type and the referenced type must
-be equal (up to readonly).
-
 Issue #0014: Parenthesized expression starting with a compound literal is parsed as a cast
 Type: BUG
 Status: OPEN
@@ -64,15 +53,6 @@ consumes tokens of the including file up to its next newline; the text of a
 token at the end of the file is taken from the including file's reader.
 Expected: the end of an included file ends the current token and directive.
 
-Issue #0020: alignas and alignof are not reserved
-Type: BUG
-Status: OPEN
-Covered by tests: #T0158 (unit, XFAIL)
-
-The README lists `alignas` and `alignof` as reserved keywords (the operators
-are documented as not yet implemented), but the lexer treats them as
-identifiers. Expected: they cannot be used as identifiers.
-
 Issue #0022: Lexer diagnostics show the location of the previous token
 Type: BUG
 Status: OPEN
@@ -81,17 +61,6 @@ Covered by tests: none
 Errors detected while scanning a token (invalid octal/hexadecimal literal,
 unterminated string or comment, ...) are reported at `token.loc`, the location
 of the previous token (`:1.1-1.1` without file name at the start of a file).
-
-Issue #0032: Underlying type of an enum definition ignored after a forward declaration
-Type: BUG
-Status: OPEN
-Covered by tests: #T0091 (reject, XFAIL)
-
-After `enum F : u8;` the definition `enum F : u16 { A };` is accepted and
-`F` keeps type u8; after `enum F;` (type int) the definition
-`enum F : u8 { ... }` silently keeps int. A redefinition of the constants is
-rejected as incompatible. Expected: a definition whose type differs from the
-forward declaration is an incompatible redefinition.
 
 Issue #0045: --print-ast crashes after an initializer overrides another
 Type: BUG
@@ -129,36 +98,6 @@ is printed as `a - b - c`. This affects the message of a failed assertion
 (`Assertion 'a - b - c == 0' failed`), diagnostics and `--print-ast`.
 Expected: parentheses are kept where they are needed for the meaning.
 
-Issue #0051: switch over a readonly enum does not report unhandled values
-Type: BUG
-Status: OPEN
-Covered by tests: #T0226 (reject, XFAIL)
-
-A switch without default over a value of type `readonly Color` that does not
-handle all enumeration values is accepted; for type `Color` it is rejected
-("enumeration values ... not handled in switch"). The readonly variant of an
-enum type has no enumeration constants (`EnumType::complete()` in
-`type/enumtype.cpp` only marks it complete). Expected: the same error as for
-the non-readonly type.
-
-Issue #0052: Non-arithmetic type after a literal is silently discarded
-Type: BUG
-Status: OPEN
-Covered by tests: #T0227 (reject, XFAIL)
-
-`parseSuffixType()` (`parser/parseexpr.cpp`) parses a type after a literal
-as type suffix and returns no type if it is not arithmetic, after consuming
-its tokens: `x = 1 -> int;` compiles as `x = 1;`. Expected: an error.
-
-Issue #0057: @ <file> include is searched in a disabled @ifdef region
-Type: BUG
-Status: OPEN
-Covered by tests: #T0232 (runtime, XFAIL)
-
-Inside a disabled `@ifdef` region an `@ <file>` include is still searched and
-reported as "can not find file" (`lexer/lexer.cpp`); an `@ "file"` include is
-skipped there. Expected: both forms are skipped.
-
 Issue #0062: Error at the end of the second input file is reported in the first
 Type: BUG
 Status: OPEN
@@ -180,18 +119,6 @@ named after the first file and with its target, but with the dependencies of
 the last file (`abc/abc.cpp` sets the file name and target only once).
 Expected: one dependency file per input file.
 
-Issue #0066: --print-ast of a struct with a union reads out of bounds
-Type: BUG
-Status: OPEN
-Covered by tests: none
-
-`AstStructDecl::print()` (`ast/ast.cpp`) computes whether a member list is
-the last one before advancing the position over several member names, then
-reads `memberIndex[pos]` with `pos == memberIndex.size()` for a union whose
-last member list has several names (e.g. `union { a: int; b, c: float; };`).
-Reproduced only with AddressSanitizer (heap-buffer-overflow); the output of
-a normal build is correct. Expected: no out-of-bounds read.
-
 Issue #0068: Address of a static local variable rejected within its own declaration
 Type: BUG
 Status: OPEN
@@ -207,19 +134,6 @@ identifiers in the initializer have no static storage
 `.id`. Not a regression: commit ccf1be8 (before #0006) rejects it, too.
 Expected: like for global variables (#0006), the address of a static local
 variable is constant in the initializers of its own declaration.
-
-Issue #0094: Assertions for aggregates in constant expressions
-Type: BUG
-Status: OPEN
-Covered by tests: #T0324 (runtime, XFAIL), #T0325 (runtime, XFAIL), #T0326 (runtime, XFAIL)
-
-`global d: i64 = a[1] - a[0];` with an array of arrays fails an assertion in
-`gen::pointerIncrement()`: `BinaryExpr::isConst()` calls `loadValue()` of the
-operands, which for such an element generates an instruction outside of a
-function. `global x: int = "s" ? 1 : 2;` fails an LLVM assertion:
-`ConditionalExpr::isConst()` compares the condition with a zero, which is not
-possible for an array, and `global x: int = &a ? 1 : 2;` crashes the compiler the
-same way. Expected: these are constants, with the values 2, 1 and 1.
 
 ---
 
@@ -427,6 +341,20 @@ entries of all variables of a declaration exist before its initializer is
 parsed, so forward references within the declaration work. Locals and
 parameters that shadow a global are found first and remain non-constant.
 
+Issue #0007: Array converts implicitly to a pointer to a different element type
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0075 (reject, PASS), #T0327 (driver, PASS)
+
+`convert()` in `type/type.cpp` accepts array-to-pointer conversions if the
+element type merely converts to the referenced type, so
+`local p: -> double = a;` with `a: array[2] of int` compiles. Expected: like
+pointer-to-pointer conversion, the element type and the referenced type must
+be equal (up to readonly).
+
+Fixed: the same rule as for pointers. The element type and the referenced type
+have to be equal, except for readonly, or the pointer is a pointer to void.
+
 Issue #0008: Small integer arguments of variadic functions are not promoted
 Type: BUG
 Status: RESOLVED
@@ -534,6 +462,17 @@ variables, before a file is written, and the driver stops with an internal
 compiler error if it is invalid. The call of `llvm::verifyFunction()` is no
 longer needed.
 
+Issue #0020: alignas and alignof are not reserved
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0327 (driver, PASS)
+
+The README lists `alignas` and `alignof` as reserved keywords (the operators
+are documented as not yet implemented), but the lexer treats them as
+identifiers. Expected: they cannot be used as identifiers.
+
+Fixed: they are keywords.
+
 Issue #0021: Documented type names long_long, unsigned_long, unsigned_long_long are undefined
 Type: BUG
 Status: RESOLVED
@@ -545,6 +484,20 @@ Expected: defined with the sizes of the corresponding C types (see #0009).
 
 Fixed: defined in `parser/defaulttype.cpp`. `long_long` and
 `unsigned_long_long` have 64 bits, `unsigned_long` has the size of `long`.
+
+Issue #0032: Underlying type of an enum definition ignored after a forward declaration
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0091 (reject, PASS), #T0327 (driver, PASS)
+
+After `enum F : u8;` the definition `enum F : u16 { A };` is accepted and
+`F` keeps type u8; after `enum F;` (type int) the definition
+`enum F : u8 { ... }` silently keeps int. A redefinition of the constants is
+rejected as incompatible. Expected: a definition whose type differs from the
+forward declaration is an incompatible redefinition.
+
+Fixed: a declaration or definition with another type is an incompatible
+redefinition, also if a definition has no type and thus the default type.
 
 Issue #0034: Later optimization option did not reset -Os or -Oz
 Type: BUG
@@ -736,6 +689,31 @@ error)": `Member::create()` (`expr/member.cpp`) requires an address of the
 operand also for `->`, where only its value is needed. Expected: `->` works
 for every pointer expression. Fixed: Only `.` requires the address of its operand.
 
+Issue #0051: switch over a readonly enum does not report unhandled values
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0226 (reject, PASS), #T0328 (runtime, PASS)
+
+A switch without default over a value of type `readonly Color` that does not
+handle all enumeration values is accepted; for type `Color` it is rejected
+("enumeration values ... not handled in switch"). The readonly variant of an
+enum type has no enumeration constants (`EnumType::complete()` in
+`type/enumtype.cpp` only marks it complete). Expected: the same error as for
+the non-readonly type.
+
+Fixed: the readonly variant gets the constants as well.
+
+Issue #0052: Non-arithmetic type after a literal is silently discarded
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0227 (reject, PASS), #T0327 (driver, PASS)
+
+`parseSuffixType()` (`parser/parseexpr.cpp`) parses a type after a literal
+as type suffix and returns no type if it is not arithmetic, after consuming
+its tokens: `x = 1 -> int;` compiles as `x = 1;`. Expected: an error.
+
+Fixed: an error.
+
 Issue #0053: Unknown long option exits with status 0
 Type: BUG
 Status: RESOLVED
@@ -777,6 +755,17 @@ The lexer reads the name of an `@ <...>` include up to the next `>`
 (`lexer/lexer.cpp`) without checking for the end of the line or the input;
 without `>` it loops forever at the end of the file. Expected: an error. Fixed: A missing `>` at the end of the line or the file is an error.
 
+Issue #0057: @ <file> include is searched in a disabled @ifdef region
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0232 (runtime, PASS)
+
+Inside a disabled `@ifdef` region an `@ <file>` include is still searched and
+reported as "can not find file" (`lexer/lexer.cpp`); an `@ "file"` include is
+skipped there. Expected: both forms are skipped.
+
+Fixed: the file is only searched outside of a disabled region.
+
 Issue #0058: Negative designator for an array of unbound size hangs the compiler
 Type: BUG
 Status: RESOLVED
@@ -801,6 +790,20 @@ aggregate in a later file then used freed memory. Depending on the heap, the
 compiler crashed or silently miscompiled: a struct of four `u8` was passed in
 memory (`byval`) instead of in a register, which breaks the ABI. Fixed with
 issue #0073: the classification no longer needs these types.
+
+Issue #0060: Temporary object files of different inputs and compilers overwrite each other
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0235 (driver, PASS), #T0321 (driver, PASS)
+
+When linking, each input file was compiled to `<temporary directory>/<name>.o`
+(`abc/abc.cpp`). So `d1/same.abc` and `d2/same.abc` used the same object file and
+the first was lost. Compilers running at the same time did the same with files of
+the same name, and without an error a program could be linked from another
+program's object file. The files were not removed either. Fixed: each run creates
+the first free directory `abc-<n>` for its object files, named with the number of
+the input file, and removes it at exit. Creating a directory fails if it exists,
+so a run only uses a directory it has created itself.
 
 Issue #0061: With -c an input file that is not ABC source is compiled as ABC
 Type: BUG
@@ -830,6 +833,22 @@ Covered by tests: #T0240 (driver, PASS)
 `m3`), which LLVM does not know: it warns "'m3' is not a recognized processor
 for this target (ignoring processor)" and generates code for a generic
 processor. Expected: the processor `cortex-m3`. Fixed: The name of the MCU is used as processor.
+
+Issue #0066: --print-ast of a struct with a union reads out of bounds
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0329 (driver, PASS)
+
+`AstStructDecl::print()` (`ast/ast.cpp`) computes whether a member list is
+the last one before advancing the position over several member names, then
+reads `memberIndex[pos]` with `pos == memberIndex.size()` for a union whose
+last member list has several names (e.g. `union { a: int; b, c: float; };`).
+Reproduced only with AddressSanitizer (heap-buffer-overflow); the output of
+a normal build is correct. Expected: no out-of-bounds read.
+
+Fixed: the end of the union is determined with the position behind the names
+of the member list. T0329 checks the output, which is correct in a normal
+build also with the bug; the read itself was checked with AddressSanitizer.
 
 Issue #0069: main without return type produces invalid IR
 Type: BUG
@@ -1079,20 +1098,6 @@ Covered by tests: #T0109 (runtime, PASS), #T0320 (runtime, PASS)
 `-0.0` is false and NaN is true. In a constant expression `!&a` was true for every
 pointer (`UnaryExpr::loadConstant()`), now it is false for an address.
 
-Issue #0060: Temporary object files of different inputs and compilers overwrite each other
-Type: BUG
-Status: RESOLVED
-Covered by tests: #T0235 (driver, PASS), #T0321 (driver, PASS)
-
-When linking, each input file was compiled to `<temporary directory>/<name>.o`
-(`abc/abc.cpp`). So `d1/same.abc` and `d2/same.abc` used the same object file and
-the first was lost. Compilers running at the same time did the same with files of
-the same name, and without an error a program could be linked from another
-program's object file. The files were not removed either. Fixed: each run creates
-the first free directory `abc-<n>` for its object files, named with the number of
-the input file, and removes it at exit. Creating a directory fails if it exists,
-so a run only uses a directory it has created itself.
-
 Issue #0088: Assignment of an aggregate as an argument crashes the compiler
 Type: BUG
 Status: RESOLVED
@@ -1150,3 +1155,30 @@ Covered by tests: #T0322 (driver, PASS)
 the message "has no address (internal compiler error)". Fixed: these are errors.
 The value of an assignment still has no members: `(s = t).a` is the error
 "has no address to access a member".
+
+Issue #0094: Assertions for aggregates in constant expressions
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0324 (runtime, PASS), #T0325 (runtime, PASS), #T0326 (runtime, PASS), #T0328 (runtime, PASS)
+
+`global d: i64 = a[1] - a[0];` with an array of arrays fails an assertion in
+`gen::pointerIncrement()`: `BinaryExpr::isConst()` calls `loadValue()` of the
+operands, which for such an element generates an instruction outside of a
+function. `global x: int = "s" ? 1 : 2;` fails an LLVM assertion:
+`ConditionalExpr::isConst()` compares the condition with a zero, which is not
+possible for an array, and `global x: int = &a ? 1 : 2;` crashes the compiler the
+same way. Expected: these are constants, with the values 2, 1 and 1.
+
+Fixed: constant expressions use `loadConstant()` of their operands, and a
+constant condition is decided without an instruction. An array is true, also
+an empty string literal.
+
+Issue #0095: Integer literal with a floating point type suffix crashes the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0327 (driver, PASS), #T0328 (runtime, PASS)
+
+`1 double` failed the assertion `type->isInteger() || type->isFloat()` in
+`IntegerLiteral::loadConstant()`, as `isFloat()` is only true for `float`.
+Fixed, also for hexadecimal and octal digits like `0x10 double`, which the
+conversion of a string to a floating point constant does not understand.

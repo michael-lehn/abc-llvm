@@ -1,7 +1,9 @@
 #include <charconv>
+#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <string>
 
 #include "gen/constant.hpp"
 #include "lexer/error.hpp"
@@ -69,11 +71,15 @@ IntegerLiteral::isConst() const
 gen::Constant
 IntegerLiteral::loadConstant() const
 {
-    assert(type->isInteger() || type->isFloat());
+    assert(type->isInteger() || type->isFloatType());
     if (type->isInteger()) {
 	return gen::getConstantInt(val.c_str(), type, radix);
-    } else {
+    } else if (radix == 10) {
 	return gen::getConstantFloat(val.c_str(), type);
+    } else {
+	// a floating point constant only gets its value from decimal digits
+	auto value = std::strtoull(val.c_str(), nullptr, radix);
+	return gen::getConstantFloat(std::to_string(value).c_str(), type);
     }
 }
 

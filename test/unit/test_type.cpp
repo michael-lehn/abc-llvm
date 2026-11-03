@@ -214,7 +214,7 @@ testImplicitConversion()
 
     // arrays decay to pointers to their element type
     CHECK(Type::convert(arr(i32, 3), ptr(i32)) == ptr(i32));
-    CHECK_KNOWN_BUG("T0157", "#0007", !Type::convert(arr(i32, 3), ptr(dbl)));
+    CHECK(!Type::convert(arr(i32, 3), ptr(dbl)));
     // arrays only convert to arrays with the same dimension (or unbound)
     CHECK(Type::convert(arr(i32, 3), arr(i32, 3)));
     CHECK(!Type::convert(arr(i32, 3), arr(i32, 4)));
