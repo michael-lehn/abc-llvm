@@ -513,8 +513,7 @@ literals, character literals, and (decimal) floating point literals.
   allowing the insertion of special characters into a string. The escape
   sequences are those of C: `\'`, `\"`, `\?`, `\\`, `\a`, `\b`, `\f`, `\n`,
   `\r`, `\t`, `\v`, octal escapes with one to three digits, and hexadecimal
-  escapes `\x...`. *(Compiler bug #0075: a string literal is currently cut at
-  an embedded null character.)* Adjacent string literals are concatenated.
+  escapes `\x...`. Adjacent string literals are concatenated.
 - Character literals are delimited by `'` and consist of a single character
   (which can be an escaped character).
 - Currently only decimal (but not hexadecimal) floating point literals are

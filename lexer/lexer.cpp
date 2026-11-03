@@ -368,7 +368,7 @@ getToken_(bool skipNewline)
 	    while (reader->ch != '\n' && reader->ch != EOF) {
 		nextCh();
 	    }
-	    return getToken();
+	    return getToken_(skipNewline);
 	} else if (reader->ch == '*') {
 	    nextCh();
 	    // skip to next '*', '/'
@@ -389,7 +389,7 @@ getToken_(bool skipNewline)
 		error::fatal();
 		return setToken(TokenKind::BAD);
 	    }
-	    return getToken();
+	    return getToken_(skipNewline);
 	}
 	return setToken(TokenKind::SLASH);
     } else if (reader->ch == '%') {

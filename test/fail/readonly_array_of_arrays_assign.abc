@@ -1,0 +1,11 @@
+// TEST: T0298
+// ERROR: read-only
+// The elements of a readonly array of arrays are readonly.
+
+global a: readonly array[2] of array[3] of int;
+
+fn main(): int
+{
+    a[1][2] = 1;
+    return 0;
+}

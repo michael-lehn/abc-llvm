@@ -47,6 +47,9 @@ extern const char *moduleName;
 void init(const char *name = nullptr,
           llvm::OptimizationLevel optLevel = llvm::OptimizationLevel::O0);
 
+// false if the generated IR is invalid, with the reason on stderr
+bool verifyModule();
+
 std::size_t getLongBits(); // number of bits of C's long on the target
 llvm::OptimizationLevel getOptimizationLevel();
 

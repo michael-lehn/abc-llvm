@@ -8,7 +8,6 @@
 #include "llvm/Support/Solaris/sys/regset.h"
 #endif // SUPPORT_SOLARIS
 
-#include "llvm/IR/Verifier.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #include "abi.hpp"
@@ -172,8 +171,6 @@ functionDefinitionEnd()
 	                       functionBuildingInfo.retVal,
 	                       functionBuildingInfo.retType);
     }
-
-    llvm::verifyFunction(*functionBuildingInfo.fn);
 
     functionBuildingInfo.fn = nullptr;
     functionBuildingInfo.leave = nullptr;

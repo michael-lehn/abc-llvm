@@ -1,6 +1,7 @@
 // TEST: T0296
-// XFAIL: #0075
 // A string literal with an embedded null character keeps all its characters.
+
+@ <string.hdr>
 
 global s: array[] of char = "a\0b";
 
@@ -9,5 +10,19 @@ fn main(): int
     assert(sizeof(s) == 4);
     assert(s[2] == 'b');
     assert(sizeof("a\0b") == 4);
+
+    // through a pointer, literals differing behind the null are not the same
+    local p: -> readonly char = "a\0b";
+    local q: -> readonly char = "a\0c";
+    assert(p[2] == 'b');
+    assert(q[2] == 'c');
+    assert(strlen(p) == 1);
+
+    // adjacent literals, and the terminating null
+    assert(sizeof("a\0" "b") == 4);
+    assert(sizeof("\0") == 2);
+    local t: array[] of char = "x\0y" "z";
+    assert(sizeof(t) == 5);
+    assert(t[3] == 'z' && t[4] == 0);
     return 0;
 }

@@ -141,7 +141,7 @@ isZero(Constant value)
 }
 
 Constant
-getString(const char *str)
+getString(const std::string &str)
 {
     assert(llvmContext);
     return llvm::ConstantDataArray::getString(*llvmContext, str);

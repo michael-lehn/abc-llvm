@@ -12,7 +12,7 @@ bool externalVariableDeclaration(const char *ident, const abc::Type *varType);
 void globalVariableDefinition(const char *ident, const abc::Type *varType,
                               Constant initialValue = nullptr);
 
-Constant loadStringAddress(const char *str);
+Constant loadStringAddress(const std::string &str);
 
 Value localVariableDefinition(const char *ident, const abc::Type *varType);
 

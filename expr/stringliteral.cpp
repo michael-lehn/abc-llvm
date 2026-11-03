@@ -53,7 +53,7 @@ StringLiteral::isConst() const
 gen::Constant
 StringLiteral::loadConstant() const
 {
-    return gen::getString(val.c_str());
+    return gen::getString(val.str());
 }
 
 gen::Value
@@ -66,7 +66,7 @@ gen::Constant
 StringLiteral::loadConstantAddress() const
 {
     assert(hasAddress());
-    return gen::loadStringAddress(val.c_str());
+    return gen::loadStringAddress(val.str());
 }
 
 gen::Value
@@ -88,7 +88,7 @@ StringLiteral::print(int indent) const
     if (indent) {
 	std::cerr << std::setfill(' ') << std::setw(indent) << ' ';
     }
-    std::cerr << "\"" << val << "\" [ " << type << " ] " << std::endl;
+    std::cerr << valRaw << " [ " << type << " ] " << std::endl;
 }
 
 void

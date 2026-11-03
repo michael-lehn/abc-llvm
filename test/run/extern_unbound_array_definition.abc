@@ -1,5 +1,4 @@
 // TEST: T0276
-// XFAIL: #0070 extern array[] followed by its definition gives invalid IR
 // An extern declaration of an array with unspecified dimension followed by
 // its definition, which gets the dimension from the initializer.
 

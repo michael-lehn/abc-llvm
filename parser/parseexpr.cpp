@@ -44,7 +44,7 @@ parseCompoundExpression(const Type *type)
 	// "abc" is treated as {'a', 'b', 'c', 0}
 	std::string str{};
 	do {
-	    str += token.processedVal.c_str();
+	    str += token.processedVal.str();
 	    getToken();
 	} while (token.kind == TokenKind::STRING_LITERAL);
 	for (char &c : str) {
@@ -701,7 +701,7 @@ parsePrimary()
 	std::string str{};
 	std::string strRaw{};
 	do {
-	    str += token.processedVal.c_str();
+	    str += token.processedVal.str();
 	    strRaw += token.val.c_str();
 	    getToken();
 	} while (token.kind == TokenKind::STRING_LITERAL);

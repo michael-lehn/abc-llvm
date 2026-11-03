@@ -1,0 +1,38 @@
+// TEST: T0299
+// An extern array without dimension can be used before its definition, which
+// replaces the global: in functions, in constant initializers, also in its own
+// initializer. The definition can have no initializer.
+
+extern a: array[] of int;
+extern b: array[] of int;
+extern self: array[] of -> int;
+
+global p: -> int = &a[1];
+
+fn first(): int
+{
+    return a[0];
+}
+
+fn setB(i: int, v: int)
+{
+    b[i] = v;
+}
+
+global a: array[] of int = {1, 2, 3};
+global b: array[2] of int;
+global x: int = 7;
+global self: array[] of -> int = {&x, nullptr};
+
+fn main(): int
+{
+    assert(first() == 1);
+    assert(*p == 2);
+    assert(sizeof(a) == 3 * sizeof(int));
+    assert(b[1] == 0);
+    setB(1, 5);
+    assert(b[1] == 5);
+    assert(*self[0] == 7);
+    assert(!self[1]);
+    return 0;
+}

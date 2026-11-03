@@ -451,6 +451,12 @@ main(int argc, char *argv[])
 	    }
 	    if (codegen) {
 		ast->codegen();
+		if (!gen::verifyModule()) {
+		    std::cerr << argv[0] << ": internal compiler error: "
+		              << "invalid LLVM IR generated for "
+		              << infile[i].c_str() << "\n";
+		    std::exit(1);
+		}
 		gen::print(outfile.c_str(), outputFileType);
 		if (outputFileType == gen::OBJECT_FILE) {
 		    objFile.push_back(outfile);

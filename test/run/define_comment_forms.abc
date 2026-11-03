@@ -1,0 +1,25 @@
+// TEST: T0297
+// Comments in a directive: a // comment ends with its line and the directive
+// with it, a /* */ comment in the middle does not end the directive.
+
+@define A 1 // comment with tokens: 2 + 3
+@define B /* before */ 2
+@define C 3 /* behind */
+@define D 4 /* over
+               two lines */ + 1
+@define E // an empty macro
+@define F 6 // comment
+@define G 7
+
+fn main(): int
+{
+    assert(A == 1);
+    assert(B == 2);
+    assert(C == 3);
+    assert(D == 5);
+    assert(E F == 6); // a comment behind code that uses a macro
+    assert(G == 7);
+    /* a comment between tokens */ assert(A /* in between */ == // and here
+	1);
+    return 0;
+}

@@ -30,6 +30,13 @@ class UStr
 	    return c_str_;
 	}
 
+	// all characters, also those behind an embedded null character
+	std::string
+	str() const
+	{
+	    return c_str_ ? std::string{c_str_, len} : std::string{};
+	}
+
 	std::size_t
 	length() const
 	{

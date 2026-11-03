@@ -4,6 +4,7 @@
 #include "llvm/Support/Solaris/sys/regset.h"
 #endif // SUPPORT_SOLARIS
 
+#include "llvm/IR/Verifier.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/TargetSelect.h"
@@ -185,6 +186,13 @@ init(const char *name, llvm::OptimizationLevel optLevel)
 #endif
 
     llvmModule->setDataLayout(targetMachine->createDataLayout());
+}
+
+bool
+verifyModule()
+{
+    assert(llvmModule);
+    return !llvm::verifyModule(*llvmModule, &llvm::errs());
 }
 
 std::size_t

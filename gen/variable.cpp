@@ -73,7 +73,18 @@ globalVariableDefinition(const char *ident, const abc::Type *varType,
 	// variable exists, assert it is a global variable
 	auto var = llvm::dyn_cast<llvm::GlobalVariable>(found);
 	assert(var);
-	var->setInitializer(initialValue);
+	if (var->getValueType() == llvmVarType) {
+	    var->setInitializer(initialValue);
+	    return;
+	}
+	// extern declaration of an array without dimension: the type of a global
+	// can not be changed, so it gets replaced
+	auto def = new llvm::GlobalVariable(*llvmModule, llvmVarType,
+	                                    /*isConstant=*/false, var->getLinkage(),
+	                                    initialValue);
+	def->takeName(var);
+	var->replaceAllUsesWith(def);
+	var->eraseFromParent();
 	return;
     }
 
@@ -85,18 +96,16 @@ globalVariableDefinition(const char *ident, const abc::Type *varType,
 }
 
 Constant
-loadStringAddress(const char *stringLiteral)
+loadStringAddress(const std::string &str)
 {
     assert(llvmContext);
     assert(llvmModule);
 
-    std::string str{stringLiteral};
     if (!stringMap.contains(str)) {
 	std::stringstream ss;
 	ss << ".L" << stringMap.size();
 	stringMap[str] = ss.str();
-	auto llvmStr =
-	    llvm::ConstantDataArray::getString(*llvmContext, stringLiteral);
+	auto llvmStr = llvm::ConstantDataArray::getString(*llvmContext, str);
 	new llvm::GlobalVariable(*llvmModule, llvmStr->getType(),
 	                         /*isConstant=*/true,
 	                         /*Linkage=*/llvm::GlobalValue::InternalLinkage,

@@ -7,6 +7,8 @@ namespace abc {
 
 class ArrayType : public Type
 {
+    friend bool operator<(const ArrayType &x, const ArrayType &y);
+
     private:
 	ArrayType(const Type *refType, std::size_t dim, bool constFlag,
 	          UStr name);

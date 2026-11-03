@@ -52,15 +52,6 @@ cast, so `(u8{300} == 44)`, `(Point{1, 2}).y` and `assert(int{y} == 3)` are
 rejected. Expected: a compound literal is a primary expression and can be
 parenthesized.
 
-Issue #0018: Result of the LLVM function verifier is ignored
-Type: BUG
-Status: OPEN
-Covered by tests: none
-
-`functionDefinitionEnd()` (`gen/function.cpp`) calls `llvm::verifyFunction()`
-without checking the result, so invalid IR is not reported by the compiler.
-(The test suite verifies the IR of all runtime tests with `opt`.)
-
 Issue #0019: End of an included file without newline continues with tokens of the including file
 Type: BUG
 Status: OPEN
@@ -101,23 +92,6 @@ After `enum F : u8;` the definition `enum F : u16 { A };` is accepted and
 `enum F : u8 { ... }` silently keeps int. A redefinition of the constants is
 rejected as incompatible. Expected: a definition whose type differs from the
 forward declaration is an incompatible redefinition.
-
-Issue #0037: A readonly array of arrays crashes the compiler
-Type: BUG
-Status: OPEN
-Covered by tests: #T0210 (runtime, XFAIL)
-
-Declarations like `readonly array[2] of array[1] of int` crash the compiler
-(stack overflow). The comparison
-of the array type set (`operator<` in `type/arraytype.cpp`) calls the
-virtual `refType()`, which for a readonly array creates the readonly element
-type with `ArrayType::create()` and thus inserts into the set that is being
-searched; this recurses endlessly. Whether the recursion is reached depends
-on the order of addresses in the heap: with builds against LLVM 21 to 23 two
-declarations crash, with builds against LLVM 17 to 20 more than 16 are
-needed; the test uses 64 (50 of 50 runs crash with every build). (The
-comparison also uses `x.dim()` for both operands.) Expected: the program
-compiles and runs.
 
 Issue #0045: --print-ast crashes after an initializer overrides another
 Type: BUG
@@ -175,16 +149,6 @@ Covered by tests: #T0227 (reject, XFAIL)
 `parseSuffixType()` (`parser/parseexpr.cpp`) parses a type after a literal
 as type suffix and returns no type if it is not arithmetic, after consuming
 its tokens: `x = 1 -> int;` compiles as `x = 1;`. Expected: an error.
-
-Issue #0054: @define followed by a // comment takes the next line into the macro
-Type: BUG
-Status: OPEN
-Covered by tests: #T0229 (runtime, XFAIL)
-
-`@define N 10 // comment` ends the directive only at the end of the next
-line: after a comment `getToken_()` (`lexer/lexer.cpp`) calls `getToken()`,
-which skips the newline that ends the directive. Expected: the comment ends
-at the end of its line and the directive with it.
 
 Issue #0057: @ <file> include is searched in a disabled @ifdef region
 Type: BUG
@@ -253,31 +217,6 @@ identifiers in the initializer have no static storage
 `.id`. Not a regression: commit ccf1be8 (before #0006) rejects it, too.
 Expected: like for global variables (#0006), the address of a static local
 variable is constant in the initializers of its own declaration.
-
-Issue #0070: extern array of unspecified dimension followed by its definition gives invalid IR
-Type: BUG
-Status: OPEN
-Covered by tests: #T0276 (runtime, XFAIL), #T0280 (example, XFAIL)
-
-`extern a: array[] of int; global a: array[] of int = {1, 2};` produces
-`@a = global [0 x i32] [i32 1, i32 2]`, which the LLVM verifier rejects
-("constant expression type mismatch"). `externalVariableDeclaration()`
-(`gen/variable.cpp`) creates the global with the type `[0 x i32]` of the
-extern declaration. The definition fixes the dimension in the symbol table
-(`fixUnbound` in `Symtab::add()`), but `globalVariableDefinition()` finds the
-existing global and only sets the initializer of type `[2 x i32]`, without
-changing the type of the global. The driver does not verify the module, so
-the compiler reports no error (`abc-example/misc/unbound_array.abc`).
-Expected: the global gets the complete type of its definition.
-
-Issue #0075: String literal is cut at an embedded null character
-Type: BUG
-Status: OPEN
-Covered by tests: #T0296 (runtime, XFAIL)
-
-`"a\0b"` has size 2 instead of 4: `parser/parseexpr.cpp` appends the value with
-`c_str()`, and `gen::getString()` takes a `const char *`. Expected: the literal
-keeps all its characters.
 
 ---
 
@@ -578,6 +517,20 @@ In `abc/abc.cpp`, `-L dir` added `-Ldir` to the linker flags but did not skip
 worked. Fixed like `-target` (#0035): the separate argument is consumed; a
 missing directory is reported (usage, exit status 1) like for -o, -I and -l.
 
+Issue #0018: Result of the LLVM function verifier is ignored
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0301 (unit, PASS)
+
+`functionDefinitionEnd()` (`gen/function.cpp`) calls `llvm::verifyFunction()`
+without checking the result, so invalid IR is not reported by the compiler.
+(The test suite verifies the IR of all runtime tests with `opt`.)
+
+Fixed: `gen::verifyModule()` checks the whole module, including global
+variables, before a file is written, and the driver stops with an internal
+compiler error if it is invalid. The call of `llvm::verifyFunction()` is no
+longer needed.
+
 Issue #0021: Documented type names long_long, unsigned_long, unsigned_long_long are undefined
 Type: BUG
 Status: RESOLVED
@@ -632,6 +585,26 @@ doc/llvm-issues/tailcallelim-byval). Workaround in ABC: calls with `byval`
 arguments are marked `notail` (`gen/abi.cpp`, `lowerFunctionCall`). T0209
 observes the caller's object through C and fails without the workaround on
 LLVM 17 to 23; T0196 fails without it on LLVM 17 to 19.
+
+Issue #0037: A readonly array of arrays crashes the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0210 (runtime, PASS), #T0298 (reject, PASS)
+
+Declarations like `readonly array[2] of array[1] of int` crash the compiler
+(stack overflow). The comparison
+of the array type set (`operator<` in `type/arraytype.cpp`) calls the
+virtual `refType()`, which for a readonly array creates the readonly element
+type with `ArrayType::create()` and thus inserts into the set that is being
+searched; this recurses endlessly. Whether the recursion is reached depends
+on the order of addresses in the heap: with builds against LLVM 21 to 23 two
+declarations crash, with builds against LLVM 17 to 20 more than 16 are
+needed; the test uses 64 (50 of 50 runs crash with every build). (The
+comparison also uses `x.dim()` for both operands.) Expected: the program
+compiles and runs.
+
+Fixed: the comparison uses the stored element type `refType_` and the
+dimension of each operand.
 
 Issue #0038: Shift operands of different width produce invalid LLVM IR
 Type: BUG
@@ -769,6 +742,19 @@ An unknown option starting with `--` prints the usage and exits with status
 0 (`abc/abc.cpp`), so build tools continue; an unknown short option exits
 with status 1. Expected: an error message and a nonzero exit status. Fixed: An unknown long option is an error.
 
+Issue #0054: @define followed by a // comment takes the next line into the macro
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0229 (runtime, PASS), #T0297 (runtime, PASS)
+
+`@define N 10 // comment` ends the directive only at the end of the next
+line: after a comment `getToken_()` (`lexer/lexer.cpp`) calls `getToken()`,
+which skips the newline that ends the directive. Expected: the comment ends
+at the end of its line and the directive with it.
+
+Fixed: after a comment the scan continues with `getToken_(skipNewline)`, so a
+directive still sees the newline that ends it.
+
 Issue #0055: @define in the last line of a file without newline hangs the compiler
 Type: BUG
 Status: RESOLVED
@@ -865,6 +851,26 @@ rejects declarations and definitions of main whose return type is not int
 return type is rejected for every function as incomplete). Without a return
 statement main still returns 0.
 
+Issue #0070: extern array of unspecified dimension followed by its definition gives invalid IR
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0276 (runtime, PASS), #T0299 (runtime, PASS), #T0300 (driver, PASS)
+
+`extern a: array[] of int; global a: array[] of int = {1, 2};` produces
+`@a = global [0 x i32] [i32 1, i32 2]`, which the LLVM verifier rejects
+("constant expression type mismatch"). `externalVariableDeclaration()`
+(`gen/variable.cpp`) creates the global with the type `[0 x i32]` of the
+extern declaration. The definition fixes the dimension in the symbol table
+(`fixUnbound` in `Symtab::add()`), but `globalVariableDefinition()` finds the
+existing global and only sets the initializer of type `[2 x i32]`, without
+changing the type of the global. The driver does not verify the module, so
+the compiler reports no error (`abc-example/misc/unbound_array.abc`).
+Expected: the global gets the complete type of its definition.
+
+Fixed: as the type of a global can not be changed, the definition replaces it
+with a new global of the complete type and the same linkage
+(`replaceAllUsesWith()`), which also updates the uses before the definition.
+
 Issue #0071: Local variable declared in unreachable code crashes the compiler
 Type: BUG
 Status: RESOLVED
@@ -913,3 +919,15 @@ For `p + n` with `n: u8 = 200` the offset kept its type, and `getelementptr`
 treats its index as signed: the result pointed 56 elements before `p`. `p += n`
 behaved alike. Fixed: the offset is converted to `ptrdiff_t` in `binaryPtr`
 (`expr/promotion.cpp`), which also applies to `p - n` and `p -= n`.
+
+Issue #0075: String literal is cut at an embedded null character
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0296 (runtime, PASS)
+
+`"a\0b"` has size 2 instead of 4: `parser/parseexpr.cpp` appends the value with
+`c_str()`, and `gen::getString()` takes a `const char *`. Expected: the literal
+keeps all its characters.
+
+Fixed: the parser appends all characters (`UStr::str()`), and
+`gen::getString()` and `gen::loadStringAddress()` take a `std::string`.

@@ -1,5 +1,4 @@
 // TEST: T0210
-// XFAIL: #0037
 // Readonly arrays whose element type is an array.  Creating the readonly
 // element type while the set of array types is searched recurses endlessly.
 // Whether the recursion is reached depends on the order of addresses in the

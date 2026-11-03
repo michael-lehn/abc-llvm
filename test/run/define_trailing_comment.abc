@@ -1,5 +1,4 @@
 // TEST: T0229
-// XFAIL: #0054
 // A // comment at the end of an @define line ends the directive; the next
 // line does not become part of the macro.
 
