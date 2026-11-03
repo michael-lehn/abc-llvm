@@ -61,11 +61,17 @@ call(ExprPtr &&fn, std::vector<ExprPtr> &&arg, lexer::Loc *loc)
 	    // - If an array is passed as varg it will always converted to a
 	    //	 pointer (required to interface with C)
 	    // - float is casted to double
+	    // - integers narrower than int are converted to int
 	    if (arg[i]->type->isArray()) {
 		auto argType = PointerType::create(arg[i]->type->refType());
 		arg[i] = ImplicitCast::create(std::move(arg[i]), argType);
 	    } else if (arg[i]->type->isFloat()) {
 		auto argType = FloatType::createDouble();
+		arg[i] = ImplicitCast::create(std::move(arg[i]), argType);
+	    } else if (arg[i]->type->isInteger() &&
+	               arg[i]->type->numBits() <
+	                   IntegerType::createInt()->numBits()) {
+		auto argType = IntegerType::createInt();
 		arg[i] = ImplicitCast::create(std::move(arg[i]), argType);
 	    }
 	}
@@ -167,12 +173,7 @@ binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	                 << error::setColor(error::NORMAL);
 	} else {
 	    type = newLeftType = left->type;
-	    if (kind != BinaryExpr::Kind::BITWISE_LEFT_SHIFT_ASSIGN &&
-	        kind != BinaryExpr::Kind::BITWISE_RIGHT_SHIFT_ASSIGN) {
-		newRightType = left->type;
-	    } else {
-		newRightType = right->type;
-	    }
+	    newRightType = left->type;
 	}
 	break;
     case BinaryExpr::Kind::ADD:
@@ -187,8 +188,8 @@ binaryInt(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	break;
     case BinaryExpr::Kind::BITWISE_LEFT_SHIFT:
     case BinaryExpr::Kind::BITWISE_RIGHT_SHIFT:
-	type = newLeftType = left->type;
-	newRightType = right->type;
+	// LLVM requires operands of the same width
+	type = newLeftType = newRightType = left->type;
 	break;
     case BinaryExpr::Kind::EQUAL:
     case BinaryExpr::Kind::NOT_EQUAL:
@@ -358,7 +359,7 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		             << error::setColor(error::NORMAL);
 	    } else {
 		type = newLeftType = left->type;
-		newRightType = right->type;
+		newRightType = IntegerType::createPtrdiffType();
 	    }
 	}
 	break;
@@ -383,12 +384,23 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 		newLeftType = left->type;
 		newRightType = right->type;
 	    }
+	} else if (right->type->isInteger()) {
+	    if (!left->isLValue()) {
+		error::out() << error::setColor(error::BOLD) << left->loc
+		             << ": " << error::setColor(error::BOLD_RED)
+		             << "error: " << error::setColor(error::BOLD)
+		             << "not an LValue\n"
+		             << error::setColor(error::NORMAL);
+	    } else {
+		type = newLeftType = left->type;
+		newRightType = IntegerType::createPtrdiffType();
+	    }
 	}
 	break;
     case BinaryExpr::ADD:
 	if (right->type->isInteger()) {
 	    type = newLeftType = left->type;
-	    newRightType = right->type;
+	    newRightType = IntegerType::createPtrdiffType();
 	}
 	break;
     case BinaryExpr::SUB:
@@ -397,7 +409,7 @@ binaryPtr(BinaryExpr::Kind kind, ExprPtr &&left, ExprPtr &&right,
 	    newLeftType = newRightType = Type::common(left->type, right->type);
 	} else if (left->type->isPointer() && right->type->isInteger()) {
 	    type = newLeftType = left->type;
-	    newRightType = right->type;
+	    newRightType = IntegerType::createPtrdiffType();
 	}
 	break;
     case BinaryExpr::Kind::EQUAL:
@@ -579,7 +591,7 @@ unary(UnaryExpr::Kind kind, ExprPtr &&child, lexer::Loc *loc)
 	}
 	if (child->isLValue()) {
 	    if (child->type->isInteger() || child->type->isPointer() ||
-	        child->type->isFloat()) {
+	        child->type->isFloatType()) {
 		type = newChildType = child->type;
 	    }
 	}

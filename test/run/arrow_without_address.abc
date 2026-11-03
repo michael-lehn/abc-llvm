@@ -1,5 +1,4 @@
 // TEST: T0223
-// XFAIL: #0048
 // Indirect member access (->) on a pointer expression that has no address.
 
 struct P

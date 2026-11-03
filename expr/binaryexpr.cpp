@@ -141,6 +141,14 @@ BinaryExpr::loadConstant() const
 	        refType, left->loadValue(), right->loadValue());
 	    assert(diff.has_value());
 	    return diff.value();
+	} else if (type->isPointer()) {
+	    // pointer - integer
+	    assert(right->type->isInteger());
+	    auto offset = -right->getSignedIntValue();
+	    auto addr = gen::pointerIncrement(left->type->refType(),
+	                                      left->loadConstant(), offset);
+	    assert(addr);
+	    return addr;
 	} else {
 	    return gen::instruction(getGenInstructionOp(kind, type),
 	                            left->loadConstant(),
@@ -218,7 +226,15 @@ BinaryExpr::handleArithmetricOperation(Kind kind) const
 	                            left->loadValue(), right->loadValue());
 	}
     case SUB:
-	if (kind == SUB && left->type->isPointer()) {
+	if (type->isPointer()) {
+	    // pointer - integer
+	    assert(right->type->isInteger());
+	    auto offset = gen::instruction(gen::SUB,
+	                                   gen::getConstantZero(right->type),
+	                                   right->loadValue());
+	    return gen::pointerIncrement(left->type->refType(),
+	                                 left->loadValue(), offset);
+	} else if (left->type->isPointer()) {
 	    // pointer - pointer
 	    assert(right->type->isPointer());
 	    assert(type->isInteger());

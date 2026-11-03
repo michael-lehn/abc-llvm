@@ -1,0 +1,27 @@
+// TEST: T0290
+// The integer of pointer + integer and pointer - integer can have any integer
+// type, also a small unsigned one, and is not taken for a negative offset (issue
+// #0074). Pointer arithmetic on constant addresses works in both directions.
+
+global a: array[300] of int;
+global p: -> int = &a[3] - 1;
+global q: -> int = &a[1] + 1;
+
+fn main(): int
+{
+    local n: u8 = 200;
+    local s: i8 = -2;
+    local r: -> int = &a[0];
+
+    assert(r + n - r == 200);
+    assert(r + n - n == r);
+    assert((r + 10) + s - r == 8);
+    assert((r + 10) - s - r == 12);
+    r += n;
+    assert(r - &a[0] == 200);
+    r -= n;
+    assert(r == &a[0]);
+    assert(p == &a[2]);
+    assert(q == &a[2]);
+    return 0;
+}

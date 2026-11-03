@@ -107,7 +107,7 @@ getCpu()
     if (mcu.starts_with("atmega") || mcu.starts_with("attiny"))
 	return mcu;
     if (mcu.starts_with("cortex-"))
-	return mcu.substr(7); // "cortex-m3" → "m3"
+	return mcu;
 
     llvm::errs() << "warning: unknown MCU '" << mcu << "', using generic CPU\n";
     return "generic";

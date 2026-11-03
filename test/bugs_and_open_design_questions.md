@@ -31,25 +31,6 @@ Format of an entry:
 
 ## Open
 
-Issue #0003: pointer - integer crashes the compiler
-Type: BUG
-Status: OPEN
-Covered by tests: #T0048 (runtime, XFAIL)
-
-Type checking (`expr/promotion.cpp`, `binaryPtr`) accepts `p - n`, but
-`BinaryExpr::handleArithmetricOperation()` (`expr/binaryexpr.cpp`) assumes
-pointer - pointer and fails an assertion. Expected: `p - n` points `n`
-elements before `p`.
-
-Issue #0004: pointer -= integer is rejected
-Type: BUG
-Status: OPEN
-Covered by tests: #T0049 (runtime, XFAIL)
-
-`binaryPtr` in `expr/promotion.cpp` requires a pointer on the right side of
-`-=`. `p += n` and `p--` are accepted. Expected: `p -= n` is equivalent to
-`p = p - n`.
-
 Issue #0005: Hexadecimal literals always have type i32 and are truncated
 Type: BUG
 Status: OPEN
@@ -72,16 +53,6 @@ element type merely converts to the referenced type, so
 pointer-to-pointer conversion, the element type and the referenced type must
 be equal (up to readonly).
 
-Issue #0008: Small integer arguments of variadic functions are not promoted
-Type: BUG
-Status: OPEN
-Covered by tests: #T0070 (runtime, XFAIL)
-
-`promotion::call()` (`expr/promotion.cpp`) converts variadic arguments of
-type float to double but passes i8/i16/u8/u16 values unchanged, so
-`printf("%d", (i8)-1)` prints 255. Expected (C interoperability): integers
-narrower than int are converted to int (sign or zero extended).
-
 Issue #0009: Type long has 32 bits
 Type: BUG
 Status: OPEN
@@ -93,23 +64,6 @@ so C functions declared with `long` in the ABC headers (e.g. `strtol` in
 `abc-include/stdio.hdr`) return truncated values. Expected: `long` matches
 the C type of the target.
 
-Issue #0010: Lexer hangs on a // comment at the end of a file without newline
-Type: BUG
-Status: OPEN
-Covered by tests: #T0009 (runtime, XFAIL)
-
-`getToken_()` in `lexer/lexer.cpp` skips a `//` comment until `'\n'` and
-loops forever at the end of the file. Expected: a comment ends at the end of
-the file.
-
-Issue #0011: Block comment at the end of a file without newline reported as unterminated
-Type: BUG
-Status: OPEN
-Covered by tests: #T0005 (runtime, XFAIL)
-
-After `*/` the lexer reads the next character and reports "multi line comment
-not terminated" if it is EOF. Expected: the comment is terminated.
-
 Issue #0012: Octal escape sequences in string literals corrupt the literal
 Type: BUG
 Status: OPEN
@@ -118,15 +72,6 @@ Covered by tests: #T0061 (runtime, XFAIL), #T0159 (unit, XFAIL)
 `parseStringLiteral()` in `lexer/lexer.cpp` stores the value of an octal
 escape in `reader->ch`, overwriting the next character: `"\101B"` becomes
 `"AA"`, and `"a\0"` consumes the closing quote. Expected: escapes as in C.
-
-Issue #0013: ++ and -- are rejected for double
-Type: BUG
-Status: OPEN
-Covered by tests: #T0014 (runtime, XFAIL)
-
-`promotion::unary()` (`expr/promotion.cpp`) accepts increment and decrement
-for integers, pointers and `float` (`isFloat()`), but not for `double`.
-Expected: all floating point types (`isFloatType()`).
 
 Issue #0014: Parenthesized expression starting with a compound literal is parsed as a cast
 Type: BUG
@@ -137,24 +82,6 @@ Covered by tests: #T0046 (runtime, XFAIL)
 cast, so `(u8{300} == 44)`, `(Point{1, 2}).y` and `assert(int{y} == 3)` are
 rejected. Expected: a compound literal is a primary expression and can be
 parenthesized.
-
-Issue #0015: Column numbers after a tab are off by one
-Type: BUG
-Status: OPEN
-Covered by tests: #T0160 (unit, XFAIL)
-
-`nextCh()` in `lexer/reader.cpp` advances the column of a tab with
-`tabStop - col % tabStop` for 1-based columns, so a token after a leading tab
-starts in column 8 instead of 9. Affects diagnostics.
-
-Issue #0016: Printing some token kinds aborts
-Type: BUG
-Status: OPEN
-Covered by tests: none
-
-`TokenKindCStr()` in `lexer/tokenkind.cpp` has no entries for `TRUE`, `FALSE`,
-`CARET_EQUAL`, `AND_EQUAL` and `OR_EQUAL` and fails an assertion, e.g. when
-`lexer/xtest_lexer` prints `a ^= b`. Not testable in-process (abort).
 
 Issue #0018: Result of the LLVM function verifier is ignored
 Type: BUG
@@ -232,78 +159,6 @@ needed; the test uses 64 (50 of 50 runs crash with every build). (The
 comparison also uses `x.dim()` for both operands.) Expected: the program
 compiles and runs.
 
-Issue #0038: Shift operands of different width produce invalid LLVM IR
-Type: BUG
-Status: OPEN
-Covered by tests: #T0211 (runtime, XFAIL), #T0212 (runtime, XFAIL), #T0279 (example, XFAIL)
-
-For `x << n`, `x >> n`, `x <<= n` and `x >>= n` the shift count keeps its own
-type (`expr/promotion.cpp`), so operands of different width produce invalid
-IR, e.g. `shl i64 %0, i32 3` for `x << 3` with `x: u64` (the IR cannot even be
-parsed by LLVM). Every combination of different widths is affected, e.g. a
-64-bit or 8-bit value shifted by an `int` literal; equal widths are fine. A
-compound shift assignment also stores with the alignment of the right
-operand's type (`store i8 ..., align 8` for `c: i8` and `n: i64`). The
-compiler does not notice because of #0018. Expected: the shift count is
-converted to the type of the left operand; the IR is valid.
-
-Issue #0039: A floating-point value as condition crashes the compiler
-Type: BUG
-Status: OPEN
-Covered by tests: #T0213 (runtime, XFAIL)
-
-`if (d)`, `while (d)` and `d ? x : y` with `d` of type `double` or `float`
-abort with an LLVM assertion: the value is compared with zero using an
-integer comparison (`gen::NE`, `icmp`) in `Expr::condition()`
-(`expr/expr.cpp`) and `ConditionalExpr` (`expr/conditionalexpr.cpp`).
-`Expr::condition()` accepts every scalar type, including floating-point
-types; `!d`, `d && x` and `(bool)d` are rejected with a diagnostic. Expected
-(as in C): zero is false, every other value, including NaN, is true.
-
-Issue #0040: switch over an alias of an enum type crashes the compiler
-Type: BUG
-Status: OPEN
-Covered by tests: #T0214 (runtime, XFAIL)
-
-The check for unhandled enumeration values in `AstSwitch`
-(`ast/ast.cpp`) casts the type of the switch expression with
-`dynamic_cast<const EnumType *>`; for an alias (`type MyColor: Color;`)
-`isEnum()` is true but the cast yields null and the assertion fails.
-Expected: the alias is resolved and the switch is checked like one over the
-enum type.
-
-Issue #0041: static with several variables and without initializer crashes
-Type: BUG
-Status: OPEN
-Covered by tests: #T0215 (runtime, XFAIL)
-
-`static a, b: int;` in a function aborts with an assertion in
-`AstStaticVar::codegen()` (`ast/ast.cpp`), which assumes an initializer for
-several variables; `static a: int;` works, and `AstGlobalVar::codegen()`
-handles the case. Expected: the variables are zero-initialized.
-
-Issue #0042: Hexadecimal literal with prefix 0X crashes the compiler
-Type: BUG
-Status: OPEN
-Covered by tests: #T0216 (runtime, XFAIL)
-
-`0XFF` aborts with the assertion `val[1] == 'x' || val[1] == 'Y'` in
-`gen::getConstantInt()` (`gen/constant.cpp`; typo `'Y'` for `'X'`). The lexer
-and the README accept the prefix `0X`. (#0005 concerns the type of
-hexadecimal literals.) Expected: `0XFF == 255`.
-
-Issue #0043: Cast of a readonly struct to the struct type crashes the compiler
-Type: BUG
-Status: OPEN
-Covered by tests: #T0217 (runtime, XFAIL)
-
-`(P)rp` with `rp: readonly P`, used as a by-value argument or for member
-access, crashes the compiler (segmentation fault). `ExplicitCast::hasAddress()`
-returns true, but `ExplicitCast::loadAddress()` (`expr/explicitcast.cpp`)
-returns a null pointer after storing the value in a temporary
-(`ImplicitCast::loadAddress()` returns the temporary). Expected: the cast
-yields the struct value.
-
 Issue #0045: --print-ast crashes after an initializer overrides another
 Type: BUG
 Status: OPEN
@@ -339,16 +194,6 @@ evaluated once for its value and once more for its address
 in `expr/unaryexpr.cpp`). Simple assignment is not affected. The README does
 not specify compound assignment; expected (as in C): the operand is
 evaluated once.
-
-Issue #0048: -> on a pointer expression without address is rejected
-Type: BUG
-Status: OPEN
-Covered by tests: #T0223 (runtime, XFAIL)
-
-`(p + 1)->x` is rejected with "p + 1 has no address (internal compiler
-error)": `Member::create()` (`expr/member.cpp`) requires an address of the
-operand also for `->`, where only its value is needed. Expected: `->` works
-for every pointer expression.
 
 Issue #0049: Coerced x86-64 aggregate arguments are accessed with too high alignment
 Type: BUG
@@ -395,15 +240,6 @@ Covered by tests: #T0227 (reject, XFAIL)
 as type suffix and returns no type if it is not arithmetic, after consuming
 its tokens: `x = 1 -> int;` compiles as `x = 1;`. Expected: an error.
 
-Issue #0053: Unknown long option exits with status 0
-Type: BUG
-Status: OPEN
-Covered by tests: #T0228 (reject, XFAIL)
-
-An unknown option starting with `--` prints the usage and exits with status
-0 (`abc/abc.cpp`), so build tools continue; an unknown short option exits
-with status 1. Expected: an error message and a nonzero exit status.
-
 Issue #0054: @define followed by a // comment takes the next line into the macro
 Type: BUG
 Status: OPEN
@@ -413,25 +249,6 @@ Covered by tests: #T0229 (runtime, XFAIL)
 line: after a comment `getToken_()` (`lexer/lexer.cpp`) calls `getToken()`,
 which skips the newline that ends the directive. Expected: the comment ends
 at the end of its line and the directive with it.
-
-Issue #0055: @define in the last line of a file without newline hangs the compiler
-Type: BUG
-Status: OPEN
-Covered by tests: #T0230 (runtime, XFAIL)
-
-The loop that reads the replacement of a macro (`lexer/lexer.cpp`) stops
-only at a newline token, not at the end of the input. (#0019 concerns the
-same situation in an included file, which does not hang.) Expected: the end
-of the file ends the directive.
-
-Issue #0056: @ <file without closing bracket hangs the compiler
-Type: BUG
-Status: OPEN
-Covered by tests: #T0231 (reject, XFAIL)
-
-The lexer reads the name of an `@ <...>` include up to the next `>`
-(`lexer/lexer.cpp`) without checking for the end of the line or the input;
-without `>` it loops forever at the end of the file. Expected: an error.
 
 Issue #0057: @ <file> include is searched in a disabled @ifdef region
 Type: BUG
@@ -462,15 +279,6 @@ When linking, each input file is compiled to `<temporary directory>/<name>.o`
 and the first is lost (link error). The temporary files are not removed
 either. Expected: unique temporary files, removed after linking.
 
-Issue #0061: With -c an input file that is not ABC source is compiled as ABC
-Type: BUG
-Status: OPEN
-Covered by tests: #T0236 (driver, XFAIL)
-
-`abc -c ok.abc other.c` warns that `other.c` (a linker input) is unused and
-then parses it as ABC source (`abc/abc.cpp`), which fails. Expected: the file
-is skipped after the warning.
-
 Issue #0062: Error at the end of the second input file is reported in the first
 Type: BUG
 Status: OPEN
@@ -491,26 +299,6 @@ With `-MD` and several input files only one dependency file is written,
 named after the first file and with its target, but with the dependencies of
 the last file (`abc/abc.cpp` sets the file name and target only once).
 Expected: one dependency file per input file.
-
-Issue #0064: Diagnostics show no source line for read-only files
-Type: BUG
-Status: OPEN
-Covered by tests: #T0239 (driver, XFAIL)
-
-The source line of a diagnostic is read with a `std::fstream` opened for
-reading and writing (`lexer/error.cpp`), which fails for files without write
-permission; the diagnostic then shows an empty line above the markers.
-Expected: the line is shown.
-
-Issue #0065: -mmcu=cortex-... selects an unknown processor
-Type: BUG
-Status: OPEN
-Covered by tests: #T0240 (driver, XFAIL)
-
-`getCpu()` (`gen/gen.cpp`) strips the prefix `cortex-` (`cortex-m3` becomes
-`m3`), which LLVM does not know: it warns "'m3' is not a recognized processor
-for this target (ignoring processor)" and generates code for a generic
-processor. Expected: the processor `cortex-m3`.
 
 Issue #0066: --print-ast of a struct with a union reads out of bounds
 Type: BUG
@@ -707,6 +495,25 @@ Covered by tests: #T0017 (runtime, PASS), #T0284 (runtime, PASS)
 target, so `for (...; ...; ++i) { continue; }` never incremented `i`. Fixed:
 the update expression has its own label, which is the continue target.
 
+Issue #0003: pointer - integer crashes the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0048 (runtime, PASS)
+
+Type checking (`expr/promotion.cpp`, `binaryPtr`) accepts `p - n`, but
+`BinaryExpr::handleArithmetricOperation()` (`expr/binaryexpr.cpp`) assumes
+pointer - pointer and fails an assertion. Expected: `p - n` points `n`
+elements before `p`. Fixed: `p - n` negates the offset and uses the same instruction as `p + n`.
+
+Issue #0004: pointer -= integer is rejected
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0049 (runtime, PASS)
+
+`binaryPtr` in `expr/promotion.cpp` requires a pointer on the right side of
+`-=`. `p += n` and `p--` are accepted. Expected: `p -= n` is equivalent to
+`p = p - n`. Fixed: `p -= n` is accepted like `p += n`.
+
 Issue #0006: Address of a global variable rejected in global initializers
 Type: BUG
 Status: RESOLVED
@@ -726,6 +533,60 @@ the flag is now `Identifier::hasStaticStorage`. Besides variables with linkage
 entries of all variables of a declaration exist before its initializer is
 parsed, so forward references within the declaration work. Locals and
 parameters that shadow a global are found first and remain non-constant.
+
+Issue #0008: Small integer arguments of variadic functions are not promoted
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0070 (runtime, PASS)
+
+`promotion::call()` (`expr/promotion.cpp`) converts variadic arguments of
+type float to double but passes i8/i16/u8/u16 values unchanged, so
+`printf("%d", (i8)-1)` prints 255. Expected (C interoperability): integers
+narrower than int are converted to int (sign or zero extended). Fixed: Integers narrower than int are converted to int.
+
+Issue #0010: Lexer hangs on a // comment at the end of a file without newline
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0009 (runtime, PASS)
+
+`getToken_()` in `lexer/lexer.cpp` skips a `//` comment until `'\n'` and
+loops forever at the end of the file. Expected: a comment ends at the end of
+the file. Fixed: The comment also ends at the end of the file.
+
+Issue #0011: Block comment at the end of a file without newline reported as unterminated
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0005 (runtime, PASS)
+
+After `*/` the lexer reads the next character and reports "multi line comment
+not terminated" if it is EOF. Expected: the comment is terminated. Fixed: The lexer remembers that the comment was closed.
+
+Issue #0013: ++ and -- are rejected for double
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0014 (runtime, PASS)
+
+`promotion::unary()` (`expr/promotion.cpp`) accepts increment and decrement
+for integers, pointers and `float` (`isFloat()`), but not for `double`.
+Expected: all floating point types (`isFloatType()`). Fixed: All floating point types are accepted.
+
+Issue #0015: Column numbers after a tab are off by one
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0152 (unit, PASS)
+
+`nextCh()` in `lexer/reader.cpp` advances the column of a tab with
+`tabStop - col % tabStop` for 1-based columns, so a token after a leading tab
+starts in column 8 instead of 9. Affects diagnostics. Fixed: The tab stop is computed for 1-based columns, which also aligns the markers of diagnostics after tabs.
+
+Issue #0016: Printing some token kinds aborts
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0152 (unit, PASS)
+
+`TokenKindCStr()` in `lexer/tokenkind.cpp` has no entries for `TRUE`, `FALSE`,
+`CARET_EQUAL`, `AND_EQUAL` and `OR_EQUAL` and fails an assertion, e.g. when
+`lexer/xtest_lexer` prints `a ^= b`. Not testable in-process (abort). Fixed: All token kinds have a name.
 
 Issue #0017: Driver option -L with separate argument is mishandled
 Type: BUG
@@ -780,6 +641,78 @@ arguments are marked `notail` (`gen/abi.cpp`, `lowerFunctionCall`). T0209
 observes the caller's object through C and fails without the workaround on
 LLVM 17 to 23; T0196 fails without it on LLVM 17 to 19.
 
+Issue #0038: Shift operands of different width produce invalid LLVM IR
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0211 (runtime, PASS), #T0212 (runtime, PASS), #T0278 (example, PASS)
+
+For `x << n`, `x >> n`, `x <<= n` and `x >>= n` the shift count keeps its own
+type (`expr/promotion.cpp`), so operands of different width produce invalid
+IR, e.g. `shl i64 %0, i32 3` for `x << 3` with `x: u64` (the IR cannot even be
+parsed by LLVM). Every combination of different widths is affected, e.g. a
+64-bit or 8-bit value shifted by an `int` literal; equal widths are fine. A
+compound shift assignment also stores with the alignment of the right
+operand's type (`store i8 ..., align 8` for `c: i8` and `n: i64`). The
+compiler does not notice because of #0018. Expected: the shift count is
+converted to the type of the left operand; the IR is valid. Fixed: The shift count is converted to the type of the left operand.
+
+Issue #0039: A floating-point value as condition crashes the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0213 (runtime, PASS)
+
+`if (d)`, `while (d)` and `d ? x : y` with `d` of type `double` or `float`
+abort with an LLVM assertion: the value is compared with zero using an
+integer comparison (`gen::NE`, `icmp`) in `Expr::condition()`
+(`expr/expr.cpp`) and `ConditionalExpr` (`expr/conditionalexpr.cpp`).
+`Expr::condition()` accepts every scalar type, including floating-point
+types; `!d`, `d && x` and `(bool)d` are rejected with a diagnostic. Expected
+(as in C): zero is false, every other value, including NaN, is true. Fixed: Conditions compare floating point values with zero using `gen::FNE`, which is now an unordered comparison. This also makes `nan != nan` true, as in C.
+
+Issue #0040: switch over an alias of an enum type crashes the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0214 (runtime, PASS)
+
+The check for unhandled enumeration values in `AstSwitch`
+(`ast/ast.cpp`) casts the type of the switch expression with
+`dynamic_cast<const EnumType *>`; for an alias (`type MyColor: Color;`)
+`isEnum()` is true but the cast yields null and the assertion fails.
+Expected: the alias is resolved and the switch is checked like one over the
+enum type. Fixed: The alias is resolved before the cast.
+
+Issue #0041: static with several variables and without initializer crashes
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0215 (runtime, PASS)
+
+`static a, b: int;` in a function aborts with an assertion in
+`AstStaticVar::codegen()` (`ast/ast.cpp`), which assumes an initializer for
+several variables; `static a: int;` works, and `AstGlobalVar::codegen()`
+handles the case. Expected: the variables are zero-initialized. Fixed: A missing initializer is handled like in `AstGlobalVar::codegen()`.
+
+Issue #0042: Hexadecimal literal with prefix 0X crashes the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0216 (runtime, PASS)
+
+`0XFF` aborts with the assertion `val[1] == 'x' || val[1] == 'Y'` in
+`gen::getConstantInt()` (`gen/constant.cpp`; typo `'Y'` for `'X'`). The lexer
+and the README accept the prefix `0X`. (#0005 concerns the type of
+hexadecimal literals.) Expected: `0XFF == 255`. Fixed: The assertion accepts `X`.
+
+Issue #0043: Cast of a readonly struct to the struct type crashes the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0217 (runtime, PASS)
+
+`(P)rp` with `rp: readonly P`, used as a by-value argument or for member
+access, crashes the compiler (segmentation fault). `ExplicitCast::hasAddress()`
+returns true, but `ExplicitCast::loadAddress()` (`expr/explicitcast.cpp`)
+returns a null pointer after storing the value in a temporary
+(`ImplicitCast::loadAddress()` returns the temporary). Expected: the cast
+yields the struct value. Fixed: `ExplicitCast::loadAddress()` returns the temporary.
+
 Issue #0044: By-value array parameters with 2 to 4 elements crash the compiler on x86-64
 Type: BUG
 Status: RESOLVED
@@ -790,6 +723,44 @@ the assertion `abcType->isStruct()` in `isHomogeneousAggregate()`
 (`gen/abi.cpp`): for an array whose element type was not the one checked for,
 the function fell through to the struct case. Other targets were not affected.
 Fixed: for an array the result only depends on the element type.
+
+Issue #0048: -> on a pointer expression without address is rejected
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0223 (runtime, PASS)
+
+`(p + 1)->x` is rejected with "p + 1 has no address (internal compiler
+error)": `Member::create()` (`expr/member.cpp`) requires an address of the
+operand also for `->`, where only its value is needed. Expected: `->` works
+for every pointer expression. Fixed: Only `.` requires the address of its operand.
+
+Issue #0053: Unknown long option exits with status 0
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0228 (reject, PASS)
+
+An unknown option starting with `--` prints the usage and exits with status
+0 (`abc/abc.cpp`), so build tools continue; an unknown short option exits
+with status 1. Expected: an error message and a nonzero exit status. Fixed: An unknown long option is an error.
+
+Issue #0055: @define in the last line of a file without newline hangs the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0230 (runtime, PASS)
+
+The loop that reads the replacement of a macro (`lexer/lexer.cpp`) stops
+only at a newline token, not at the end of the input. (#0019 concerns the
+same situation in an included file, which does not hang.) Expected: the end
+of the file ends the directive. Fixed: The end of the file ends the directive.
+
+Issue #0056: @ <file without closing bracket hangs the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0231 (reject, PASS)
+
+The lexer reads the name of an `@ <...>` include up to the next `>`
+(`lexer/lexer.cpp`) without checking for the end of the line or the input;
+without `>` it loops forever at the end of the file. Expected: an error. Fixed: A missing `>` at the end of the line or the file is an error.
 
 Issue #0059: Several input files for x86-64 crash the compiler (freed type)
 Type: BUG
@@ -803,6 +774,35 @@ aggregate in a later file then used freed memory. Depending on the heap, the
 compiler crashed or silently miscompiled: a struct of four `u8` was passed in
 memory (`byval`) instead of in a register, which breaks the ABI. Fixed with
 issue #0073: the classification no longer needs these types.
+
+Issue #0061: With -c an input file that is not ABC source is compiled as ABC
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0236 (driver, PASS)
+
+`abc -c ok.abc other.c` warns that `other.c` (a linker input) is unused and
+then parses it as ABC source (`abc/abc.cpp`), which fails. Expected: the file
+is skipped after the warning. Fixed: The file is skipped after the warning.
+
+Issue #0064: Diagnostics show no source line for read-only files
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0239 (driver, PASS)
+
+The source line of a diagnostic is read with a `std::fstream` opened for
+reading and writing (`lexer/error.cpp`), which fails for files without write
+permission; the diagnostic then shows an empty line above the markers.
+Expected: the line is shown. Fixed: The file is opened for reading only.
+
+Issue #0065: -mmcu=cortex-... selects an unknown processor
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0240 (driver, PASS)
+
+`getCpu()` (`gen/gen.cpp`) strips the prefix `cortex-` (`cortex-m3` becomes
+`m3`), which LLVM does not know: it warns "'m3' is not a recognized processor
+for this target (ignoring processor)" and generates code for a generic
+processor. Expected: the processor `cortex-m3`. Fixed: The name of the MCU is used as processor.
 
 Issue #0069: main without return type produces invalid IR
 Type: BUG
@@ -865,3 +865,13 @@ provided by the caller as C does. Calls between ABC functions worked as both
 sides used the same wrong convention. Fixed: aggregates are classified by
 eightbytes as specified by the System V x86-64 ABI, for arguments and return
 values, and passed in memory if the registers do not suffice.
+
+Issue #0074: Small unsigned offset of a pointer is taken for a negative one
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0290 (runtime, PASS)
+
+For `p + n` with `n: u8 = 200` the offset kept its type, and `getelementptr`
+treats its index as signed: the result pointed 56 elements before `p`. `p += n`
+behaved alike. Fixed: the offset is converted to `ptrdiff_t` in `binaryPtr`
+(`expr/promotion.cpp`), which also applies to `p - n` and `p -= n`.

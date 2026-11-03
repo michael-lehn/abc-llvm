@@ -1,7 +1,12 @@
 # TEST: T0240
-# XFAIL: #0065
 # -mmcu=cortex-m3 selects the LLVM processor cortex-m3 (LLVM reports an
 # unknown processor name and ignores it).
+
+if [ -x "$LLVM_BINDIR/llvm-config" ] &&
+    ! "$LLVM_BINDIR/llvm-config" --targets-built | grep -qw ARM; then
+    echo "LLVM was built without target ARM"
+    exit 77
+fi
 
 cat > f.abc <<'EOF'
 fn f(x: int): int

@@ -14,7 +14,7 @@ enum InstructionOp
     FMUL,
     FDIV,
     FEQ,
-    FNE,
+    FNE, // not equal or unordered: true for NaN, as in C
     FGT,
     FGE,
     FLT,
@@ -44,6 +44,10 @@ enum InstructionOp
     LSHR, // logical shift right
     ASHR, // arithmetic shift right
 };
+
+// Instruction for comparing a value used as condition with zero. As in C every
+// value but zero is true, including NaN.
+InstructionOp conditionOp(const abc::Type *type);
 
 Value instruction(InstructionOp op, Value left, Value right);
 Constant instruction(InstructionOp op, Constant left, Constant right);

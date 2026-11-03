@@ -16,7 +16,7 @@ getConstantInt(const char *val, const abc::Type *type, std::uint8_t radix)
 
     if (radix == 16) {
 	assert(val[0] == '0');
-	assert(val[1] == 'x' || val[1] == 'Y');
+	assert(val[1] == 'x' || val[1] == 'X');
 	val += 2;
     }
 
@@ -101,7 +101,7 @@ getConstantZero(const abc::Type *type)
 Constant
 getConstantOne(const abc::Type *type)
 {
-    assert(type->isInteger() || type->isFloat());
+    assert(type->isInteger() || type->isFloatType());
     if (type->isInteger()) {
 	return getConstantInt(1, type);
     } else {
@@ -112,7 +112,7 @@ getConstantOne(const abc::Type *type)
 Constant
 getConstantMinusOne(const abc::Type *type)
 {
-    assert(type->isInteger() || type->isFloat());
+    assert(type->isInteger() || type->isFloatType());
     if (type->isInteger()) {
 	return getConstantInt(-1, type);
     } else {

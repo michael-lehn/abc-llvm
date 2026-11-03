@@ -1,5 +1,4 @@
 // TEST: T0215
-// XFAIL: #0041
 // Several static local variables in one declaration without initializer
 // (zero-initialized, keep their values between calls).
 

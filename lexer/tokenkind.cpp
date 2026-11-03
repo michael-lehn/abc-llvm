@@ -116,6 +116,16 @@ TokenKindCStr(TokenKind kind)
 	return "RBRACKET";
     case TokenKind::CARET:
 	return "CARET";
+    case TokenKind::TRUE:
+	return "TRUE";
+    case TokenKind::FALSE:
+	return "FALSE";
+    case TokenKind::CARET_EQUAL:
+	return "CARET_EQUAL";
+    case TokenKind::AND_EQUAL:
+	return "AND_EQUAL";
+    case TokenKind::OR_EQUAL:
+	return "OR_EQUAL";
     case TokenKind::PLUS:
 	return "PLUS";
     case TokenKind::PLUS2:

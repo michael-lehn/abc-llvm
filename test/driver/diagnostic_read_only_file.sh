@@ -1,5 +1,4 @@
 # TEST: T0239
-# XFAIL: #0064
 # Diagnostics show the source line also for files without write permission.
 
 printf 'fn main(): int\n{\n    return 0 +;\n}\n' > ro.abc

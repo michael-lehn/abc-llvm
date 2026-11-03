@@ -1,5 +1,4 @@
 // TEST: T0212
-// XFAIL: #0038
 // Compound shift assignments whose operands have different widths.  The
 // generated LLVM IR must be valid.
 

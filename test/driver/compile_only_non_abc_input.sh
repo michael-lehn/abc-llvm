@@ -1,5 +1,4 @@
 # TEST: T0236
-# XFAIL: #0061
 # With -c an input file that is not an ABC source file is not used (warning)
 # and not compiled as ABC; the ABC file is compiled.
 

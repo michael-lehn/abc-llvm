@@ -55,7 +55,7 @@ nextCh()
     if (reader->ch) {
 	reader->val += reader->ch;
 	if (reader->ch == '\t') {
-	    reader->pos.col += tabStop - reader->pos.col % tabStop;
+	    reader->pos.col += tabStop - (reader->pos.col - 1) % tabStop;
 	} else if (reader->ch == '\n') {
 	    ++reader->pos.line;
 	    reader->pos.col = 1;

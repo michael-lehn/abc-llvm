@@ -1,5 +1,4 @@
 // TEST: T0216
-// XFAIL: #0042
 // Hexadecimal literals with the prefix 0X (documented in the README).
 
 fn main(): int

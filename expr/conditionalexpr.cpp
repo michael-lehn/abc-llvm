@@ -74,7 +74,8 @@ ConditionalExpr::isConst() const
     if (!cond->isConst()) {
 	return false;
     }
-    auto condValue = gen::instruction(gen::NE, cond->loadConstant(),
+    auto condValue = gen::instruction(gen::conditionOp(cond->type),
+	                                      cond->loadConstant(),
                                       gen::getConstantZero(cond->type));
     if (!condValue->isNullValue()) {
 	return trueExpr->isConst();
@@ -88,7 +89,8 @@ gen::Constant
 ConditionalExpr::loadConstant() const
 {
     assert(isConst());
-    auto condValue = gen::instruction(gen::NE, cond->loadConstant(),
+    auto condValue = gen::instruction(gen::conditionOp(cond->type),
+	                                      cond->loadConstant(),
                                       gen::getConstantZero(cond->type));
     if (!condValue->isNullValue()) {
 	return trueExpr->loadConstant();
@@ -141,7 +143,7 @@ void
 ConditionalExpr::condition(gen::Label trueLabel, gen::Label falseLabel) const
 {
     auto zero = gen::getConstantZero(type);
-    auto cond = gen::instruction(gen::NE, loadValue(), zero);
+    auto cond = gen::instruction(gen::conditionOp(type), loadValue(), zero);
     gen::jumpInstruction(cond, trueLabel, falseLabel);
 }
 

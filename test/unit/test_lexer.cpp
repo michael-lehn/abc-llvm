@@ -254,8 +254,19 @@ testLocations()
 	CHECK_EQ(tokens[1].loc.from.col, 3u);
 	CHECK_EQ(tokens[2].loc.from.line, 3u);
 	// tab stops every 8 columns
-	CHECK_KNOWN_BUG("T0160", "#0015", tokens[2].loc.from.col == 9);
+	CHECK_EQ(tokens[2].loc.from.col, 9u);
     }
+}
+
+static void
+testTokenKindNames()
+{
+    // printing a token kind must not abort, for all kinds (#0016)
+    CHECK_EQ(std::string(TokenKindCStr(TokenKind::TRUE)), "TRUE");
+    CHECK_EQ(std::string(TokenKindCStr(TokenKind::FALSE)), "FALSE");
+    CHECK_EQ(std::string(TokenKindCStr(TokenKind::CARET_EQUAL)), "CARET_EQUAL");
+    CHECK_EQ(std::string(TokenKindCStr(TokenKind::AND_EQUAL)), "AND_EQUAL");
+    CHECK_EQ(std::string(TokenKindCStr(TokenKind::OR_EQUAL)), "OR_EQUAL");
 }
 
 static void
@@ -294,6 +305,7 @@ main(int argc, char *argv[])
     testStringLiterals();
     testComments();
     testLocations();
+    testTokenKindNames();
     testMacros();
     testEndOfInput();
     return check::summary(argv[0]);

@@ -180,7 +180,9 @@ main(int argc, char *argv[])
 		    outputFileType = gen::LLVM_FILE;
 		    createExecutable = false;
 		} else {
-		    usage(argv[0], 0);
+		    std::cerr << argv[0] << ": error: unknown option '"
+		              << argv[i] << "'\n";
+		    usage(argv[0]);
 		}
 		break;
 	    case 'O':
@@ -404,8 +406,8 @@ main(int argc, char *argv[])
 	    } else {
 		ldFlags += " ";
 		ldFlags += infile[i];
-		continue;
 	    }
+	    continue;
 	}
 
 	abc::initTypeSystem();

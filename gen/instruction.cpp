@@ -27,7 +27,7 @@ instruction(InstructionOp op, Value left, Value right, bool forConstValue)
     case FEQ:
 	return llvmBuilder->CreateFCmpOEQ(left, right);
     case FNE:
-	return llvmBuilder->CreateFCmpONE(left, right);
+	return llvmBuilder->CreateFCmpUNE(left, right);
     case FGT:
 	return llvmBuilder->CreateFCmpOGT(left, right);
     case FGE:
@@ -87,6 +87,12 @@ instruction(InstructionOp op, Value left, Value right, bool forConstValue)
 	assert(0);
 	return nullptr;
     }
+}
+
+InstructionOp
+conditionOp(const abc::Type *type)
+{
+    return type->isFloatType() ? FNE : NE;
 }
 
 Value

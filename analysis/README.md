@@ -111,11 +111,11 @@ include these markers. Markdown files have no such markers.
 | `Makefile` | 74-76 | Add `analysis/*.cpp` to the compiler sources |
 | `abc/abc.cpp` | 8-10 | Include `analysis/analysis.hpp` |
 | `abc/abc.cpp` | 113-125 | Usage message: `-Wall`, `-Wuninitialized`, `-Wnull-dereference` and `-Wnull-dereference=strict` |
-| `abc/abc.cpp` | 243-258 | Parse these options; any other `-W` option is an error |
+| `abc/abc.cpp` | 245-260 | Parse these options; any other `-W` option is an error |
 | `ast/ast.cpp` | 5-7 | Include `analysis/analysis.hpp` |
 | `ast/ast.cpp` | 344-346 | `AstFuncDef::codegen()`: run the analyses once the function is complete and unreachable blocks are removed |
-| `ast/ast.cpp` | 816-821 | `AstLocalVar::codegen()`: record name and location of a local variable (declaration of a single variable) |
-| `ast/ast.cpp` | 831-836 | `AstLocalVar::codegen()`: record name and location of a local variable (declaration of a variable list) |
+| `ast/ast.cpp` | 817-822 | `AstLocalVar::codegen()`: record name and location of a local variable (declaration of a single variable) |
+| `ast/ast.cpp` | 832-837 | `AstLocalVar::codegen()`: record name and location of a local variable (declaration of a variable list) |
 | `expr/identifier.cpp` | 4-6 | Include `analysis/analysis.hpp` |
 | `expr/identifier.cpp` | 70-74 | `Identifier::loadValue()`: record the source location of a read |
 | `expr/member.cpp` | 3-5 | Include `<sstream>` for the source text of a read |

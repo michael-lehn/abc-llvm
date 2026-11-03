@@ -1,5 +1,4 @@
 // TEST: T0217
-// XFAIL: #0043
 // Explicit cast of a readonly struct to the non-readonly struct type, used as
 // a by-value argument and for member access.
 

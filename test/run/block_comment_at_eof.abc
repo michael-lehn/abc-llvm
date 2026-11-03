@@ -1,5 +1,4 @@
 // TEST: T0005
-// XFAIL: #0011 block comment at end of file without newline is "not terminated"
 
 fn main(): int
 {

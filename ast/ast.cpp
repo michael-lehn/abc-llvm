@@ -762,11 +762,12 @@ AstStaticVar::codegen()
 	                                  var->getType(0), initialValue);
 	} else {
 	    auto compExpr = dynamic_cast<const CompoundExpr *>(initializer);
-	    assert(compExpr);
+	    assert(!initializer || compExpr);
 	    for (std::size_t i = 0; i < var->count(); ++i) {
+		auto initialValue =
+		    initializer ? compExpr->loadConstant(i) : nullptr;
 		gen::globalVariableDefinition(var->getId(i).c_str(),
-		                              var->getType(i),
-		                              compExpr->loadConstant(i));
+		                              var->getType(i), initialValue);
 	    }
 	}
     }
@@ -1187,7 +1188,11 @@ AstSwitch::complete()
 	body.append(std::make_unique<AstExpr>(ExprPtr{}));
     }
     if (!hasDefault && expr->type->isEnum()) {
-	const auto type = dynamic_cast<const EnumType *>(expr->type);
+	auto enumType = expr->type;
+	while (enumType->isAlias()) {
+	    enumType = enumType->getUnalias();
+	}
+	const auto type = dynamic_cast<const EnumType *>(enumType);
 	assert(type);
 
 	std::unordered_map<std::uint64_t, UStr> valToEnum;

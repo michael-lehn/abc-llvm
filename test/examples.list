@@ -22,5 +22,4 @@ DIR: not-abc
 # input programs for the not-abc compiler, written in the not-abc language
 EXCLUDE: not-abc/examples
 
-XFAIL: T0279 #0038 abc-example/misc/bitwise.abc
 XFAIL: T0280 #0070 abc-example/misc/unbound_array.abc

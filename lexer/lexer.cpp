@@ -365,22 +365,24 @@ getToken_(bool skipNewline)
 	} else if (reader->ch == '/') {
 	    nextCh();
 	    // ignore rest of line and return next token
-	    while (reader->ch != '\n') {
+	    while (reader->ch != '\n' && reader->ch != EOF) {
 		nextCh();
 	    }
 	    return getToken();
 	} else if (reader->ch == '*') {
 	    nextCh();
 	    // skip to next '*', '/'
+	    bool terminated = false;
 	    while (reader->ch != EOF) {
 		char last = reader->ch;
 		nextCh();
 		if (last == '*' && reader->ch == '/') {
 		    nextCh();
+		    terminated = true;
 		    break;
 		}
 	    }
-	    if (reader->ch == EOF) {
+	    if (!terminated) {
 		error::out()
 		    << token.loc << ": multi line comment not terminated"
 		    << std::endl;
@@ -746,7 +748,8 @@ parseAddDirective()
 	auto from = token;
 	getToken_(false);
 	std::vector<Token> to;
-	while (token.kind != TokenKind::NEWLINE) {
+	while (token.kind != TokenKind::NEWLINE &&
+	       token.kind != TokenKind::EOI) {
 	    to.push_back(token);
 	    getToken_(false);
 	}
@@ -772,6 +775,11 @@ parseAddDirective()
     } else if (token.kind == TokenKind::LESS) {
 	std::string str;
 	while (reader->ch != '>') {
+	    if (reader->ch == '\n' || reader->ch == EOF) {
+		error::out() << token.loc << ": expected '>' after file name"
+		             << std::endl;
+		error::fatal();
+	    }
 	    str += reader->ch;
 	    nextCh();
 	}

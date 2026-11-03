@@ -41,7 +41,8 @@ Member::create(ExprPtr &&structure, bool derefStructPtr, UStr member,
     auto structureType =
         derefStructPtr ? structure->type->refType() : structure->type;
 
-    if (!structure->hasAddress()) {
+    // -> only needs the value of the pointer
+    if (!derefStructPtr && !structure->hasAddress()) {
 	error::location(loc);
 	error::out() << error::setColor(error::BOLD) << structure->loc << ": "
 	             << error::setColor(error::BOLD_RED)

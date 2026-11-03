@@ -1,5 +1,4 @@
 // TEST: T0213
-// XFAIL: #0039
 // Floating-point values as conditions (if, while, conditional expression):
 // zero is false, every other value (including NaN) is true.
 

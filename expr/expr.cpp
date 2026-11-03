@@ -34,7 +34,7 @@ Expr::condition(gen::Label trueLabel, gen::Label falseLabel) const
 	error::fatal();
     }
     auto zero = gen::getConstantZero(type);
-    auto cond = gen::instruction(gen::NE, loadValue(), zero);
+    auto cond = gen::instruction(gen::conditionOp(type), loadValue(), zero);
     gen::jumpInstruction(cond, trueLabel, falseLabel);
 }
 

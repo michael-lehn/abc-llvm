@@ -1,5 +1,4 @@
 // TEST: T0014
-// XFAIL: #0013 ++/-- are rejected for double (only float is accepted)
 
 fn main(): int
 {

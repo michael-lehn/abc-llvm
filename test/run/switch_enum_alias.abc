@@ -1,5 +1,4 @@
 // TEST: T0214
-// XFAIL: #0040
 // switch over a value whose type is an alias of an enum type, with all
 // enumeration values handled.
 

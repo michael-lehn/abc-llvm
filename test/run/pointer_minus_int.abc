@@ -1,5 +1,4 @@
 // TEST: T0048
-// XFAIL: #0003 compiler crashes on pointer - integer (assertion in binaryexpr.cpp)
 // Type checking accepts it, but code generation assumes pointer - pointer.
 
 fn main(): int

@@ -1,5 +1,4 @@
 // TEST: T0049
-// XFAIL: #0004 pointer -= integer is rejected (pointer += integer is accepted)
 
 fn main(): int
 {

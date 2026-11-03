@@ -232,7 +232,7 @@ expandTabs(const std::string &str)
 static std::pair<std::size_t, std::size_t>
 printLine(std::ostream &out, const char *path, std::size_t lineNumber)
 {
-    std::fstream file{path};
+    std::ifstream file{path};
 
     file.seekg(std::ios::beg);
     for (std::size_t i = 0; i + 1 < lineNumber; ++i) {

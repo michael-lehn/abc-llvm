@@ -1,5 +1,4 @@
 // TEST: T0070
-// XFAIL: #0008 i8/i16 variadic arguments are not promoted (sign extended) to int
 // C passes integer arguments narrower than int as int to variadic functions.
 
 @ <stdio.hdr>
