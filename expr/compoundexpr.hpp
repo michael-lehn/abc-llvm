@@ -25,14 +25,13 @@ class CompoundExpr : public Expr
 
     protected:
 	CompoundExpr(std::vector<ExprPtr> &&expr, const Type *type,
-	             std::vector<Designator> &&designator,
-	             std::vector<const Expr *> &&parsedExpr, lexer::Loc loc);
+	             std::vector<UStr> &&memberName, lexer::Loc loc);
 
 	UStr tmpId;
 	mutable DisplayOpt displayOpt = NONE;
 
-	const std::vector<Designator> designator;
-	const std::vector<const Expr *> parsedExpr;
+	// for a struct: the designator of each element, empty if it has none
+	const std::vector<UStr> memberName;
 
 	void initTmp() const;
 

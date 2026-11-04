@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -13,11 +14,8 @@
 namespace abc {
 
 CompoundExpr::CompoundExpr(std::vector<ExprPtr> &&expr, const Type *type,
-                           std::vector<Designator> &&designator,
-                           std::vector<const Expr *> &&parsedExpr,
-                           lexer::Loc loc)
-    : Expr{loc, type}, designator{std::move(designator)},
-      parsedExpr{std::move(parsedExpr)}, expr{std::move(expr)}
+                           std::vector<UStr> &&memberName, lexer::Loc loc)
+    : Expr{loc, type}, memberName{std::move(memberName)}, expr{std::move(expr)}
 {
     static std::size_t idCount;
     std::stringstream ss;
@@ -77,13 +75,14 @@ CompoundExpr::create(std::vector<Designator> &&designator,
     }
 
     std::vector<ExprPtr> expr(type->aggregateSize());
-    std::vector<const Expr *> parsedExpr_;
+    std::vector<UStr> memberName(type->isStruct() ? type->aggregateSize() : 0);
     for (std::size_t i = 0, index = 0; i < parsedExpr.size(); ++i, ++index) {
 	const Type *ty = nullptr;
+	UStr name;
 	if (designator.size()) {
 	    if (std::holds_alternative<lexer::Token>(designator[i])) {
 		assert(type->isStruct());
-		auto name = std::get<lexer::Token>(designator[i]).val;
+		name = std::get<lexer::Token>(designator[i]).val;
 		auto index_ = type->memberIndex(name);
 		assert(index_.has_value());
 		index = index_.value();
@@ -112,10 +111,11 @@ CompoundExpr::create(std::vector<Designator> &&designator,
 	                 << error::setColor(error::NORMAL);
 	}
 	expr[index] = ImplicitCast::create(std::move(parsedExpr[i]), ty);
-	parsedExpr_.push_back(expr[index].get());
+	if (type->isStruct()) {
+	    memberName[index] = name;
+	}
     }
-    auto p = new CompoundExpr{std::move(expr), type, std::move(designator),
-                              std::move(parsedExpr_), loc};
+    auto p = new CompoundExpr{std::move(expr), type, std::move(memberName), loc};
     return std::unique_ptr<CompoundExpr>{p};
 }
 
@@ -226,21 +226,33 @@ CompoundExpr::printFlat(std::ostream &out, int prec) const
     } else if (displayOpt == BRACE) {
 	out << type;
     }
+    // what the compiler sees: the elements that are initialized, in the order
+    // in which they are evaluated. A designator is printed where it is needed.
     out << "{";
-    for (std::size_t i = 0; i < parsedExpr.size(); ++i) {
-	if (designator.size()) {
-	    if (std::holds_alternative<lexer::Token>(designator[i])) {
-		out << "." << std::get<lexer::Token>(designator[i]).val;
-		out << " = ";
-	    } else if (std::holds_alternative<ExprPtr>(designator[i])) {
-		out << "[" << std::get<ExprPtr>(designator[i]) << "]";
-		out << " = ";
-	    }
+    bool first = true;
+    std::size_t next = 0;
+    for (std::size_t i = 0; i < expr.size(); ++i) {
+	if (!expr[i]) {
+	    continue;
 	}
-	out << parsedExpr[i];
-	if (i + 1 < parsedExpr.size()) {
+	if (!first) {
 	    out << ", ";
 	}
+	first = false;
+	if (type->isStruct()) {
+	    // without designator the first member of a union is initialized
+	    const auto &index = type->memberIndex();
+	    auto pos = std::find(index.begin(), index.end(), i) - index.begin();
+	    auto firstName = type->memberName()[pos];
+	    auto name = memberName[i].empty() ? firstName : memberName[i];
+	    if (i != next || !(name == firstName)) {
+		out << "." << name << " = ";
+	    }
+	} else if (i != next) {
+	    out << "[" << i << "] = ";
+	}
+	out << expr[i];
+	next = i + 1;
     }
     out << "}";
 }

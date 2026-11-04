@@ -62,18 +62,6 @@ Errors detected while scanning a token (invalid octal/hexadecimal literal,
 unterminated string or comment, ...) are reported at `token.loc`, the location
 of the previous token (`:1.1-1.1` without file name at the start of a file).
 
-Issue #0045: --print-ast crashes after an initializer overrides another
-Type: BUG
-Status: OPEN
-Covered by tests: #T0219 (driver, XFAIL)
-
-`{[0] = 1, [0] = 2}` produces the warning "initializer overrides prior
-initialization"; `--print-ast` and `-E` then crash (segmentation fault;
-AddressSanitizer: heap-use-after-free). `CompoundExpr::create()`
-(`expr/compoundexpr.cpp`) replaces the first expression but keeps a pointer
-to it in `parsedExpr`, which `printFlat()` uses. Expected: the AST is printed
-as written.
-
 Issue #0049: Coerced x86-64 aggregate arguments are accessed with too high alignment
 Type: BUG
 Status: OPEN
@@ -657,6 +645,21 @@ the assertion `abcType->isStruct()` in `isHomogeneousAggregate()`
 (`gen/abi.cpp`): for an array whose element type was not the one checked for,
 the function fell through to the struct case. Other targets were not affected.
 Fixed: for an array the result only depends on the element type.
+
+Issue #0045: Printing an initializer that overrides another crashes
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0219 (driver, PASS), #T0333 (driver, PASS)
+
+After `{[0] = 1, [0] = 2}` (warning "initializer overrides prior initialization")
+a crash occurred whenever the initializer was printed: with `--print-ast` and `-E`,
+but also in a normal compilation for the message of an error or of an assertion
+(heap-use-after-free). `CompoundExpr::create()` (`expr/compoundexpr.cpp`) replaced
+the first expression but kept a pointer to it in `parsedExpr`, which `printFlat()`
+used. Fixed: `parsedExpr` and `designator` are gone, `printFlat()` prints from
+`expr` what the compiler sees: the elements that are initialized, in the order of
+their evaluation, with a designator only where it is needed. `{[0] = 1, [0] = 2}`
+is printed as `{2}`, `{[2] = 1, [0] = 2}` as `{2, [2] = 1}`.
 
 Issue #0046: Positional initializer after a designator is converted to the wrong type
 Type: BUG
