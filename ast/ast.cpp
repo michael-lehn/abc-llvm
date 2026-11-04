@@ -277,7 +277,16 @@ AstFuncDef::appendParamName(std::vector<lexer::Token> &&fnParamName_)
 	auto addDecl = Symtab::addDeclaration(
 	    fnParamName[i].loc, fnParamName[i].val, fnType->paramType()[i]);
 	assert(addDecl.first);
-	assert(addDecl.second);
+	if (!addDecl.second) {
+	    error::location(fnParamName[i].loc);
+	    error::out() << error::setColor(error::BOLD) << fnParamName[i].loc
+	                 << ": " << error::setColor(error::BOLD_RED)
+	                 << "error: " << error::setColor(error::BOLD)
+	                 << "parameter '" << fnParamName[i].val
+	                 << "' is already defined\n"
+	                 << error::setColor(error::NORMAL);
+	    error::fatal();
+	}
 	fnParamId.push_back(addDecl.first->getId().c_str());
     }
 }

@@ -118,9 +118,9 @@ include these markers. Markdown files have no such markers.
 | `abc/abc.cpp` | 147-159 | Usage message: `-Wall`, `-Wuninitialized`, `-Wnull-dereference` and `-Wnull-dereference=strict` |
 | `abc/abc.cpp` | 279-294 | Parse these options; any other `-W` option is an error |
 | `ast/ast.cpp` | 5-7 | Include `analysis/analysis.hpp` |
-| `ast/ast.cpp` | 344-346 | `AstFuncDef::codegen()`: run the analyses once the function is complete and unreachable blocks are removed |
-| `ast/ast.cpp` | 817-822 | `AstLocalVar::codegen()`: record name and location of a local variable (declaration of a single variable) |
-| `ast/ast.cpp` | 832-837 | `AstLocalVar::codegen()`: record name and location of a local variable (declaration of a variable list) |
+| `ast/ast.cpp` | 353-355 | `AstFuncDef::codegen()`: run the analyses once the function is complete and unreachable blocks are removed |
+| `ast/ast.cpp` | 826-831 | `AstLocalVar::codegen()`: record name and location of a local variable (declaration of a single variable) |
+| `ast/ast.cpp` | 841-846 | `AstLocalVar::codegen()`: record name and location of a local variable (declaration of a variable list) |
 | `expr/identifier.cpp` | 4-6 | Include `analysis/analysis.hpp` |
 | `expr/identifier.cpp` | 76-80 | `Identifier::loadValueFrom()`: record the source location of a read |
 | `expr/member.cpp` | 3-5 | Include `<sstream>` for the source text of a read |

@@ -194,19 +194,24 @@ Symtab::add(UStr name, symtab::Entry &&entry)
 	    }
 
 	    if (!ok) {
+		// an enumeration constant is an expression and has no type of its own
+		auto typeOf = [](const symtab::Entry &e) {
+		    return e.expressionDeclaration() ? e.expr->type : e.type;
+		};
 		error::location(entry.loc);
 		error::out() << error::setColor(error::BOLD) << entry.loc
 		             << ": " << error::setColor(error::BOLD_RED)
 		             << "error: " << error::setColor(error::BOLD)
 		             << "incompatible redefinition with type '"
-		             << entry.type << "'\n"
+		             << typeOf(entry) << "'\n"
 		             << error::setColor(error::NORMAL);
 		error::location(found.loc);
 		error::out()
 		    << error::setColor(error::BOLD) << found.loc << ": "
 		    << error::setColor(error::BOLD_RED)
 		    << "error: " << error::setColor(error::BOLD)
-		    << "previous definition with type '" << found.type << "'\n"
+		    << "previous definition with type '" << typeOf(found)
+		    << "'\n"
 		    << error::setColor(error::NORMAL);
 		error::fatal();
 		return {nullptr, false};

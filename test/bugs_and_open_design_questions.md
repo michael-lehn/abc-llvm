@@ -1204,3 +1204,22 @@ Covered by tests: #T0331 (reject, PASS)
 `@ifdef NOT_DEFINED` without `@endif` kept the compiler busy: `getToken()` skips
 tokens as long as the region is disabled, and the end of the input is a token it
 gets again and again. Fixed: an error.
+
+Issue #0098: Two parameters with the same name crash the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0332 (driver, PASS)
+
+`fn f(a: int, a: int) { }` failed the assertion `addDecl.second` in
+`AstFuncDef::appendParamName()`. Fixed: an error. In a declaration without a body
+the names of the parameters have no meaning and are still accepted.
+
+Issue #0099: Name clash with an enumeration constant crashes the compiler
+Type: BUG
+Status: RESOLVED
+Covered by tests: #T0332 (driver, PASS)
+
+`enum E { f }; fn f() { }`, and any other redefinition in the same scope where
+one of the two is an enumeration constant, printed the error and then crashed:
+`Symtab::add()` printed the type of the entry, and an enumeration constant is an
+expression without one. Fixed: it prints the type of the expression.
